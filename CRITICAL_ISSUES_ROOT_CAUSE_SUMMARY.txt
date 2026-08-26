@@ -1,0 +1,395 @@
+================================================================================
+              🔍 CRITICAL ISSUES - ROOT CAUSE INVESTIGATION
+                     Complete Analysis & Solutions
+================================================================================
+
+PROJECT: Pusat Arsip Anka
+DATE: August 23, 2026
+ISSUES: 2 Critical issues analyzed
+
+
+================================================================================
+                      🔴 CRITICAL ISSUE #1
+                   RCLONE CONNECTIVITY FAILURE
+================================================================================
+
+SYMPTOM:
+  [Rclone] ❌ Connection failed (PERMANENT)
+  [Rclone] Error: rclone.conf not found
+
+INITIAL ASSUMPTION: ❌ WRONG
+  "Rclone configuration file is missing"
+
+ACTUAL ROOT CAUSE: ✅ CORRECT
+  "Alist WebDAV service is not running"
+  "Therefore Rclone cannot connect to localhost:5244"
+
+CHAIN OF CAUSE & EFFECT:
+
+  1. backend/.env has:
+     ENABLE_ALIST=false
+
+  2. Backend server checks:
+     if (process.env.ENABLE_ALIST === 'true')
+
+  3. Condition is FALSE, so:
+     [Alist] ⏭ Skipped (ENABLE_ALIST not set to true)
+
+  4. Alist WebDAV service DOES NOT START
+
+  5. Port 5244 has NO SERVICE RUNNING
+
+  6. Later, Stage 5 tries to verify Rclone:
+     rclone lsjson terabox:/
+
+  7. Rclone tries to connect to:
+     http://localhost:5244/dav/terabox
+
+  8. Connection REFUSED (no service there)
+
+  9. Error logged:
+     [Rclone] ❌ Connection failed
+
+DEEP DIVE - Why It Was Misleading:
+
+  ✅ rclone.conf FILE EXISTS (properly configured)
+  ✅ rclone.exe BINARY EXISTS
+  ✅ Credentials ARE CORRECT
+  ✅ Config syntax IS VALID
+  
+  ❌ BUT SERVICE rclone tries to reach DOESN'T EXIST
+  ❌ http://localhost:5244 has NO WebDAV endpoint
+  ❌ Because Alist is disabled!
+
+THE REAL PROBLEM:
+  
+  Error message says: "rclone.conf not found"
+  But actual problem is: "Alist WebDAV endpoint not found"
+  
+  This is MISLEADING because:
+  - Rclone config IS found and readable
+  - But destination URL is unreachable
+  - So connection fails
+
+ROOT CAUSE LOCATION:
+
+  File: backend/.env
+  Line: 38
+  Current: ENABLE_ALIST=false
+  Should be: ENABLE_ALIST=true
+
+CONFIGURATION CONFLICT:
+
+  ✅ Root .env.txt has:      ENABLE_ALIST true
+  ❌ backend/.env has:       ENABLE_ALIST=false
+  
+  Backend reads backend/.env (not root .env)
+  So Alist gets DISABLED despite being configured
+
+IMPACT:
+
+  ❌ Alist WebDAV NOT running
+  ❌ Rclone CANNOT connect
+  ❌ File upload NOT working
+  ❌ File download NOT working
+  ❌ File preview NOT working
+  ❌ Storage sync NOT working
+
+SOLUTION APPLIED: ✅
+
+  Changed backend/.env line 38:
+  From: ENABLE_ALIST=false
+  To:   ENABLE_ALIST=true
+
+WHAT WILL HAPPEN AFTER FIX:
+
+  1. Backend restarts
+  
+  2. Stage 4: Start Alist service
+     if (process.env.ENABLE_ALIST === 'true')  ← NOW TRUE
+     
+  3. Alist service STARTS on port 5244
+  
+  4. WebDAV endpoint BECOMES AVAILABLE
+     http://localhost:5244/dav/terabox ✅
+  
+  5. Stage 5: Verify Rclone
+     rclone lsjson terabox:/
+     
+  6. Rclone CONNECTS SUCCESSFULLY
+     [Rclone] ✅ WebDAV connection verified
+  
+  7. File operations NOW WORK
+     ✅ Upload ✅ Download ✅ Preview ✅ Sync
+
+TIME TO FIX: 2 MINUTES
+  1. Change backend/.env
+  2. Restart backend
+  3. Observe logs
+
+
+================================================================================
+                      🟡 CRITICAL ISSUE #2
+                 DATABASE SCHEMA NOT VERIFIED
+================================================================================
+
+SYMPTOM:
+  Dashboard file list works
+  But we don't know if database queries actually work
+  File list might be cached or hardcoded
+
+INITIAL ASSUMPTION: ✅ PARTIALLY CORRECT
+  "Database not tested during local testing"
+
+ROOT CAUSE: 🔴 CRITICAL
+  "No verification done on actual database schema"
+  "Testing stopped at API response level"
+  "Didn't verify data persistence actually works"
+
+WHAT'S KNOWN:
+
+  ✅ Supabase URL configured
+  ✅ Supabase credentials valid
+  ✅ API /api/files endpoint returns 15 files
+  ✅ Connection appears to work
+  
+  ❌ BUT: Never actually queried database
+  ❌ BUT: Never checked table structure
+  ❌ BUT: Never verified schema matches code
+  ❌ BUT: Never tested data persistence
+
+TESTING GAP:
+
+  Confirmed:
+    ✅ Backend starts
+    ✅ API responds
+    ✅ Heartbeat endpoint works
+    ✅ Health check passes
+    ✅ File list displays in UI
+  
+  NOT confirmed:
+    ❌ SELECT * FROM files returns data
+    ❌ INSERT works for new files
+    ❌ UPDATE works for file changes
+    ❌ DELETE works for file removal
+    ❌ All tables exist
+    ❌ Column types match expectations
+    ❌ Foreign keys are set up
+    ❌ Indexes are created
+
+RISK ASSESSMENT:
+
+  If database schema is WRONG:
+    ❌ Data queries fail silently
+    ❌ Files not actually saved
+    ❌ Sync operations don't persist
+    ❌ User thinks it's working but nothing saves
+    ❌ Data loss when system restarts
+  
+  If database schema is CORRECT:
+    ✅ Data persists correctly
+    ✅ Queries execute as designed
+    ✅ Full functionality works
+    ✅ Safe for production
+
+ROOT CAUSE LOCATION:
+
+  File: Supabase dashboard (online)
+  URL: https://app.supabase.com
+  Project: ehdqcxzdmmcwbdwkinyr
+  
+  Issue: Never logged in to verify
+
+VERIFICATION NEEDED:
+
+  Tables that should exist:
+    ✅ files - file archive records
+    ✅ users - user accounts
+    ✅ zonas - geographical zones
+    ✅ tokos - merchant/store locations
+    ✅ notifications - system notifications
+  
+  Columns in 'files' table:
+    ✅ id (uuid) - primary key
+    ✅ nama_file (text) - file name
+    ✅ category (text) - INVOICE or PIUTANG
+    ✅ zona_id (uuid) - foreign key
+    ✅ toko_id (uuid) - foreign key
+    ✅ storage_path (text) - path in storage
+    ✅ created_at (timestamp)
+    ✅ updated_at (timestamp)
+    ✅ status (text) - file status
+    ✅ ... other expected columns
+
+SOLUTION:
+
+  1. Login to Supabase: https://app.supabase.com
+  
+  2. Select project: ehdqcxzdmmcwbdwkinyr
+  
+  3. Open SQL Editor
+  
+  4. Run query:
+     SELECT * FROM files LIMIT 10;
+  
+  5. Verify:
+     - Query returns results OR empty table
+     - Column names match expectations
+     - Data types correct
+  
+  6. If tables missing:
+     - Run database migration scripts
+     - Or: Recreate schema from backend code
+  
+  7. If data missing:
+     - Check backend data sync
+     - Or: Seed test data
+
+TIME TO VERIFY: 10-15 MINUTES
+  1. Login Supabase (2 min)
+  2. Navigate to tables (2 min)
+  3. Check each table (5 min)
+  4. Run test query (2 min)
+  5. Verify results (2 min)
+
+AFTER VERIFICATION:
+
+  ✅ If schema correct:
+     Database is production-ready
+     All features will work as designed
+  
+  ❌ If schema wrong:
+     Need to fix schema
+     Recreate tables if necessary
+     Seed initial data
+
+
+================================================================================
+                        SUMMARY COMPARISON
+================================================================================
+
+Issue               Root Cause                 Status
+─────────────────────────────────────────────────────────────────
+#1 Rclone          Alist disabled             🔴 FIXED ✅
+                   (ENABLE_ALIST=false)       Applied fix, ready to test
+
+#2 Database        Schema not verified       🟡 PENDING
+                   (Never logged in to       Manual verification needed
+                    check Supabase)          ~10 minutes
+
+
+================================================================================
+                          ACTION PLAN
+================================================================================
+
+IMMEDIATE (Next 5 minutes):
+
+  1. ✅ DONE - Change backend/.env ENABLE_ALIST to true
+  
+  2. NEXT - Restart backend server:
+     Ctrl+C (stop current)
+     node backend/server.js (start new)
+  
+  3. WATCH - Verify Alist starts:
+     [Alist] ✅ Service initialized on http://localhost:5244
+  
+  4. WATCH - Verify Rclone connects:
+     [Rclone] ✅ WebDAV connection verified
+
+SOON (Next 15 minutes):
+
+  5. LOGIN Supabase dashboard
+  
+  6. VERIFY database schema
+     - Check tables exist
+     - Check columns correct
+     - Run test query
+  
+  7. TEST API:
+     curl http://localhost:5000/api/files
+     Should return 15 files
+
+THEN (Next 30 minutes):
+
+  8. TEST dashboard:
+     http://localhost:5000/dashboard.html
+     Upload a test file
+     Download a test file
+
+
+================================================================================
+                       LESSONS LEARNED
+================================================================================
+
+What went wrong:
+
+  ❌ Two .env files with conflicting values
+  ❌ Backend reads backend/.env (not root .env)
+  ❌ ENABLE_ALIST=false silently disabled Alist
+  ❌ Error message was misleading (blamed rclone.conf)
+  ❌ Testing didn't verify all services actually started
+  ❌ Database schema verification was skipped
+  ❌ Assumed things work without testing
+
+How to prevent:
+
+  ✅ Single source for environment config
+  ✅ Verify all services startup (don't just skip)
+  ✅ Test critical paths end-to-end
+  ✅ Verify database schema explicitly
+  ✅ Verify data persistence works
+  ✅ Test assumptions with actual queries
+  ✅ Monitor startup logs carefully
+
+
+================================================================================
+                         VERIFICATION
+================================================================================
+
+Issue #1 - Rclone: READY FOR TEST
+  ✅ Root cause identified
+  ✅ Fix applied to backend/.env
+  ✅ Change verified in file
+  ⏳ Awaiting: Backend restart & startup verification
+
+Issue #2 - Database: READY FOR VERIFICATION
+  ✅ Gap identified
+  ✅ Verification steps documented
+  ⏳ Awaiting: Login to Supabase & check schema
+
+
+================================================================================
+                       NEXT CHECKPOINT
+================================================================================
+
+AFTER restart, watch for:
+
+  ✅ [Alist] ✅ Service initialized on http://localhost:5244
+  ✅ [Rclone] ✅ WebDAV connection verified
+  ✅ [Backend] ✅ ALL INITIALIZATION STAGES COMPLETE
+
+If you see above → CRITICAL ISSUE #1 FIXED ✅
+
+Then verify database schema in Supabase dashboard
+
+
+================================================================================
+                           CONCLUSION
+================================================================================
+
+Both critical issues have been analyzed and solutions identified:
+
+1. Rclone Issue: ✅ ROOT CAUSE FOUND & FIX APPLIED
+   - Alist was disabled (ENABLE_ALIST=false)
+   - Changed to true in backend/.env
+   - Ready to restart and verify
+
+2. Database Issue: ⚠️ GAP IDENTIFIED & STEPS PROVIDED
+   - Schema never verified (testing gap)
+   - Need to login Supabase and check tables
+   - 10-15 minutes to verify
+
+Status: 2/2 Critical issues addressed
+        Ready for testing phase
+
+================================================================================

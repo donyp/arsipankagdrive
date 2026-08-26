@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kesehatan Sistem | Pusat Arsip Anka</title>
+    <link rel="stylesheet" href="css/tailwind.generated.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        document.documentElement.style.opacity = '0';
+        document.documentElement.classList.add('auth-loading');
+    </script>
+</head>
+<body class="bg-[#F0F2F5] min-h-screen text-gray-800">
+    <div id="mobile-overlay" class="mobile-overlay" onclick="toggleSidebar()"></div>
+    <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-40 hidden"></aside>
+    <main id="main-content" class="min-h-screen">
+        <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-5">
+            <h1 class="text-xl font-black text-gray-900">Kesehatan Sistem</h1>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Status layanan dan storage</p>
+        </header>
+        <section class="p-6 max-w-5xl mx-auto space-y-6">
+            <div id="health-overview"></div>
+            <div id="health-grid" class="grid md:grid-cols-2 gap-4"></div>
+            <div id="health-storage" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm"></div>
+            <p id="health-time" class="text-[10px] text-gray-400"></p>
+        </section>
+    </main>
+
+    <script src="js/sidebar.js?v=20260826085000"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar')?.classList.toggle('open');
+            document.getElementById('mobile-overlay')?.classList.toggle('active');
+        }
+
+        let healthRequest = null;
+
+        function healthButtonMarkup(disabled = false) {
+            return `<button id="health-recheck" type="button" ${disabled ? 'disabled' : ''} onclick="loadHealth()" class="px-4 py-2 rounded-xl bg-gray-900 text-white text-[10px] font-black uppercase disabled:opacity-50 disabled:cursor-wait">${disabled ? 'Memeriksa...' : 'Periksa ulang'}</button>`;
+        }
+
+        function renderHealthError(message) {
+            document.getElementById('health-overview').innerHTML = `<div class="bg-white rounded-3xl border border-red-100 p-6 shadow-sm flex items-center justify-between gap-4"><div><p class="text-[10px] font-black uppercase tracking-widest text-red-400">Pemeriksaan gagal</p><h2 class="text-xl font-black mt-2 text-red-600">${message || 'Tidak dapat memeriksa kesehatan sistem.'}</h2></div>${healthButtonMarkup()}</div>`;
+            document.getElementById('health-grid').innerHTML = '';
+            document.getElementById('health-storage').innerHTML = '';
+        }
+
+        function getServiceIcon(healthy) {
+            return healthy 
+                ? '<svg class="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>'
+                : '<svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>';
+        }
+
+        async function loadHealth() {
+            if (healthRequest) return healthRequest;
+            const overview = document.getElementById('health-overview');
+            if (overview) overview.innerHTML = `<div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm flex items-center justify-between">${healthButtonMarkup(true)}<p class="text-xs text-gray-500">Menghubungi layanan sistem...</p></div>`;
+            
+            healthRequest = (async () => {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 20000);
+                try {
+                    const data = await API.request('/api/system/health', { method: 'GET', signal: controller.signal });
+                    
+                    // Determine health based on critical services
+                    const criticalHealthy = data.services.backend.healthy && 
+                                           data.services.database.healthy && 
+                                           data.services.localStorage.healthy;
+                    
+                    document.getElementById('health-overview').innerHTML = `
+                        <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Status keseluruhan</p>
+                                <h2 class="text-3xl font-black mt-2 ${criticalHealthy ? 'text-emerald-600' : 'text-amber-600'}">
+                                    ${criticalHealthy ? 'Sistem Normal' : 'Perlu perhatian'}
+                                </h2>
+                            </div>
+                            ${healthButtonMarkup()}
+                        </div>`;
+                    
+                    // Display services
+                    const serviceLabels = {
+                        'backend': 'Backend Server',
+                        'database': 'Database',
+                        'localStorage': 'Local Storage',
+                        'alist': 'Google Drive',
+                        'backupStorage': 'Backup Storage'
+                    };
+                    
+                    document.getElementById('health-grid').innerHTML = Object.entries(data.services || {})
+                        .map(([key, item]) => {
+                            const label = serviceLabels[key] || key;
+                            return `
+                                <div class="bg-white rounded-2xl border border-gray-100 p-5 flex items-start gap-3">
+                                    <div class="mt-1">
+                                        ${getServiceIcon(item.healthy)}
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="font-black text-gray-900 text-sm">${label}</h3>
+                                        <p class="text-xs text-gray-500 mt-2">${item.detail || '-'}</p>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    
+                    // Display storage summary if available
+                    if (data.queue) {
+                        const queueHTML = data.queue.total > 0 
+                            ? `<span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold ${data.queue.failed > 0 ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}">${data.queue.total} pekerjaan tertunda</span>`
+                            : '<span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-600">Antrian bersih</span>';
+                        
+                        document.getElementById('health-storage').innerHTML = `
+                            <h3 class="font-black text-gray-900 text-sm mb-3">Status Sinkronisasi</h3>
+                            <div class="flex items-center gap-3">
+                                ${getServiceIcon(data.queue.failed === 0)}
+                                <div class="flex-1">
+                                    <p class="text-xs text-gray-600">
+                                        ${data.queue.total === 0 
+                                            ? 'Semua file sudah tersinkronisasi' 
+                                            : `${data.queue.total} item dalam antrian (${data.queue.failed} gagal)`}
+                                    </p>
+                                </div>
+                                ${queueHTML}
+                            </div>
+                        `;
+                    }
+                    
+                    document.getElementById('health-time').textContent = 'Diperiksa: ' + new Date(data.checkedAt).toLocaleString('id-ID');
+                } catch (err) {
+                    const message = err.name === 'AbortError' ? 'Pemeriksaan melebihi batas waktu.' : err.message;
+                    renderHealthError(message);
+                    Toast.error(message);
+                } finally {
+                    clearTimeout(timeout);
+                    healthRequest = null;
+                }
+            })();
+            return healthRequest;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (await initAuth(['super_admin', 'moderator'])) {
+                loadHealth();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    🚀 QUICK REFERENCE - GDRIVE & ARSIP ANKA               ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📂 FOLDER STRUKTUR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+gdrive:/ARSIP ANKA/
+├── zona-1/
+│   ├── TOKO-BANDUNG/
+│   │   ├── INVOICE/    ← File invoice
+│   │   ├── PPN/        ← Dokumen dengan PPN
+│   │   ├── NON_PPN/    ← Dokumen tanpa PPN
+│   │   └── PIUTANG/    ← Dokumen piutang
+│   ├── TOKO-CIANJUR/
+│   ├── TOKO-SUBANG/
+│   └── ... (toko lainnya)
+├── zona-2/
+├── zona-3/
+└── ... (zona lainnya)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔧 PERINTAH RCLONE YANG SERING DIPAKAI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣  LIST FILE DALAM FOLDER
+    $ rclone ls gdrive:/ARSIP\ ANKA/zona-1/TOKO-BANDUNG/INVOICE/
+
+2️⃣  COPY FILE LOKAL KE GDRIVE (BATCH)
+    $ rclone copy ./local/pdfs/ gdrive:/ARSIP\ ANKA/zona-1/TOKO-BANDUNG/INVOICE/
+
+3️⃣  DRY RUN (TEST TANPA UPLOAD)
+    $ rclone copy ./local/ gdrive:/ARSIP\ ANKA/ --dry-run
+
+4️⃣  COPY DENGAN PROGRESS
+    $ rclone copy ./local/ gdrive:/ARSIP\ ANKA/ --progress
+
+5️⃣  BUAT FOLDER BARU
+    $ rclone mkdir gdrive:/ARSIP\ ANKA/zona-1/TOKO-BARU/INVOICE/
+
+6️⃣  HAPUS FILE
+    $ rclone delete gdrive:/ARSIP\ ANKA/zona-1/TOKO-BANDUNG/INVOICE/file.pdf
+
+7️⃣  TREE VIEW
+    $ rclone tree gdrive:/ARSIP\ ANKA/zona-1/ -L 3
+
+8️⃣  HITUNG FILE
+    $ rclone count gdrive:/ARSIP\ ANKA/zona-1/TOKO-BANDUNG/
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST MIGRATION FILE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SEBELUM MULAI:
+ ☐ Backup semua file PDF lama
+ ☐ Tahu nama toko yang ada (TOKO-BANDUNG, TOKO-CIANJUR, dll)
+ ☐ Pastikan struktur zona-toko sudah ada di ARSIP ANKA
+ ☐ Test rclone dengan 5 file dulu
+
+PROSES UPLOAD:
+ ☐ Organizir file ke folder zona-toko
+ ☐ Upload dengan rclone copy (batch)
+ ☐ Verify file sudah ada di Google Drive
+ ☐ Update database references
+
+SETELAH SELESAI:
+ ☐ Test API: /api/files/list/zona-1
+ ☐ Test preview & download file
+ ☐ Archive file lama
+ ☐ Update dokumentasi
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📊 INFORMASI GDRIVE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Free Tier:          15 GB
+Primary Remote:     gdrive:/ARSIP ANKA/
+Cache Enabled:      ✅ Yes (2GB)
+Fast List:          ✅ Yes
+Auth Method:        OAuth2
+Status:             ✅ Connected
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 KATEGORI DOKUMEN PER TOKO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INVOICE   ← File invoice & bukti transaksi
+PPN       ← Dokumen dengan PPN (Pajak Pertambahan Nilai)
+NON_PPN   ← Dokumen tanpa PPN
+PIUTANG   ← Dokumen piutang / hutang
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🚀 UPLOAD CEPAT (3 LANGKAH)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LANGKAH 1: Organize file lokal
+  mkdir -p zona-1/TOKO-BANDUNG/INVOICE
+  cp /old/path/*.pdf zona-1/TOKO-BANDUNG/INVOICE/
+
+LANGKAH 2: DRY RUN (test dulu)
+  rclone copy ./zona-1/ gdrive:/ARSIP\ ANKA/zona-1/ --dry-run
+
+LANGKAH 3: Upload for real
+  rclone copy ./zona-1/ gdrive:/ARSIP\ ANKA/zona-1/ --progress
+
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️  PENTING!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ JANGAN HAPUS file lama sampai migration selesai 100%
+✓ TEST dulu dengan folder kecil (5-10 file)
+✓ VERIFY file di Google Drive sebelum lanjut batch berikutnya
+✓ MONITOR quota Google Drive (15GB)
+✓ BACKUP semua file sebelum mulai
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📖 DOKUMENTASI LENGKAP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Baca file ini untuk detail lengkap:
+  • ARSIP_ANKA_STRUCTURE.md ← Full guide migration
+  • GDRIVE_FOLDER_STRUCTURE.md ← Struktur folder detail
+  • GDRIVE_VISUAL_TREE.txt ← Visual diagram
+
+═══════════════════════════════════════════════════════════════════════════════
+
+💡 TIPS
+
+1. Gunakan rclone copy (bukan move) untuk aman
+2. Test dengan --dry-run dulu sebelum upload
+3. Monitor progress dengan --progress flag
+4. Jika error, retry dengan --retries 3
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Generated: August 25, 2026
+Status: ✅ Ready for file migration

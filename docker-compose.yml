@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  alist:
+    image: xhofe/alist:latest
+    container_name: arsip-alist
+    ports:
+      - "5244:5244"
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Asia/Jakarta
+    volumes:
+      - ./alist_data:/opt/alist/data
+    restart: unless-stopped
+    networks:
+      - arsip-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: arsip-backend
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      ENABLE_ALIST: "true"
+      ALIST_PORT: 5244
+      ALIST_ADMIN_PASSWORD: ${ALIST_ADMIN_PASSWORD}
+      FONNTE_TOKEN: ${FONNTE_TOKEN}
+    depends_on:
+      - alist
+    volumes:
+      - ./rclone.conf:/root/.config/rclone/rclone.conf:ro
+    restart: unless-stopped
+    networks:
+      - arsip-network
+
+networks:
+  arsip-network:
+    driver: bridge

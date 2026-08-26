@@ -1,0 +1,134 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                                                                    ║
+║              PUSAT ARSIP ANKA - QUICK ACTIONS MENU                ║
+║                                                                    ║
+╚════════════════════════════════════════════════════════════════════╝
+
+
+1️⃣  START SERVER (with auto-restart)
+    Action: Double-click  start-server.bat
+    Result: Server starts on http://localhost:5000
+            Auto-restarts if it crashes
+    Logs:   server-restart.log
+
+
+2️⃣  KILL OLD PROCESSES (cleanup)
+    Action: Double-click  kill-old-servers.bat
+    Result: All old Node processes killed
+            Port 5000 freed up
+    Use:    If server won't start (port in use)
+
+
+3️⃣  START MANUALLY (no auto-restart)
+    Action: Open terminal:
+            cd backend
+            node server.js
+    Result: Server starts, no auto-restart
+
+
+4️⃣  STOP SERVER
+    Action: Press Ctrl+C in terminal
+    Result: Server stops gracefully
+            All processes cleaned up
+
+
+5️⃣  CHECK SERVER STATUS
+    Action: Open browser: http://localhost:5000
+    Expected: Login page visible (not blank white)
+
+
+6️⃣  VIEW LOGS
+    Action: Open file: server-restart.log
+    Result: See startup logs & any errors
+
+
+7️⃣  TEST ENDPOINTS
+    Action: Open terminal:
+            curl http://localhost:5000/api/heartbeat
+    Result: Should return: {"status":"alive",...}
+
+
+8️⃣  CHECK PORT STATUS
+    Action: Open terminal:
+            netstat -ano | Select-String ":5000"
+    Result: Shows if port 5000 is in use
+
+
+❓ ISSUES?
+═════════════════════════════════════════════════════════════════════
+
+Web is blank white?
+  1. Double-click: kill-old-servers.bat
+  2. Double-click: start-server.bat
+  3. Check: server-restart.log for [ERROR]
+
+Server won't start?
+  1. netstat -ano | Select-String ":5000"
+  2. taskkill /IM node.exe /F
+  3. start-server.bat
+
+Need to run on different port?
+  1. Open: backend\.env
+  2. Change: PORT=8000
+  3. Restart: start-server.bat
+
+📚 DOCUMENTATION
+═════════════════════════════════════════════════════════════════════
+
+File                          Purpose
+────────────────────────────  ────────────────────────────────────
+QUICK_START.txt               This menu + quick overview
+SERVER_STARTUP_GUIDE.md       Complete startup guide
+FIX_SUMMARY_WEB_BLANK.md      What was fixed & why
+STARTUP_CHECKLIST.md          Pre/post startup verification
+IMPLEMENTATION_COMPLETE.md    Full technical report
+00_START_HERE.txt             Project overview
+
+
+🎯 RECOMMENDED WORKFLOW
+═════════════════════════════════════════════════════════════════════
+
+First Time Setup:
+  1. Read: QUICK_START.txt (this file)
+  2. Run:  start-server.bat
+  3. Open: http://localhost:5000
+  4. Done: Web should load
+
+Daily Use:
+  1. Double-click: start-server.bat
+  2. Browser opens: http://localhost:5000
+  3. Use app normally
+  4. Press Ctrl+C to stop
+
+Troubleshooting:
+  1. Check: server-restart.log
+  2. Run: kill-old-servers.bat
+  3. Restart: start-server.bat
+  4. Check docs if still issues
+
+
+⚡ KEY IMPROVEMENTS (Recent Fix)
+═════════════════════════════════════════════════════════════════════
+
+Before (Problem):
+  ❌ Web showed blank white page
+  ❌ Port 5000 already in use error
+  ❌ Manual restart required
+
+After (Solution):
+  ✅ Web loads login page correctly
+  ✅ Auto-cleans old processes on startup
+  ✅ Auto-restarts on crash
+  ✅ Detailed logging for debugging
+
+
+═════════════════════════════════════════════════════════════════════
+
+Questions? See: SERVER_STARTUP_GUIDE.md
+Issues? Check: server-restart.log
+Need help? Read: STARTUP_CHECKLIST.md
+
+═════════════════════════════════════════════════════════════════════
+
+Last Updated: August 23, 2026
+Status: ✅ READY FOR USE

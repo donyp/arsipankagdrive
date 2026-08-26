@@ -1,0 +1,13 @@
+- [Alist Docker fix](../ALIST_DOCKER_FIX.md) — Alist sekarang install dari GitHub official releases; start di background dengan nohup; tunggu port 5244 sebelum start Node.js
+- [Rclone path on Replit](rclone-path.md) — rclone binary harus di workspace, bukan /home/runner/.local/bin yang hilang saat restart
+- [Alist WebDAV permission](alist-webdav-permission.md) — admin user Alist butuh permission=32767 (semua bit) agar WebDAV berfungsi
+- [Alist storage via SQLite](alist-storage-sqlite.md) — POST /api/admin/storage/add selalu return HTML; insert langsung ke x_storages di data.db sebagai workaround
+- [Terabox sync pagination](terabox-sync.md) — gunakan lsjson recursive dan pagination Supabase; jangan mengandalkan batas default 1.000 baris saat deduplikasi
+- [Terabox file streaming](terabox-streaming.md) — preview/download harus membaca stdout child process rclone, bukan ChildProcess object atau LocalStorage
+- [Alist migration safety](alist-migration.md) — copy internal perlu API Alist dengan mount /terabox; listing rekursif Terabox dapat stale dan wajib diverifikasi per folder
+- [Invoice metadata normalization](invoice-metadata-normalization.md) — tipe NON disimpan sebagai `NON` dan tanggal dokumen selalu dinormalisasi ke ISO `YYYY-MM-DD`
+- [Maintenance notice details](maintenance-notice-details.md) — detail perbaikan disimpan sebagai daftar bernomor dan dikirim ke notice publik serta notifikasi global
+- [Legacy files schema](legacy-files-schema.md) — kolom sinkronisasi opsional tidak boleh diasumsikan tersedia saat insert metadata upload
+- [Terabox write CAPTCHA](terabox-write-captcha.md) — driver Terabox dapat membaca tetapi menolak upload dengan 405/CAPTCHA; pertahankan fallback lokal sampai cookie diperbarui
+- [Authenticated metadata downloads](authenticated-metadata-downloads.md) — file backup harus diunduh lewat fetch berheader JWT, bukan tautan biasa tanpa token
+- [Alist Docker implementation complete](../ALIST_IMPLEMENTATION_COMPLETE.md) — Alist install dari GitHub, start dengan nohup background, health check port 5244, graceful fallback; ready untuk deployment ke Cloud Run/HF Spaces

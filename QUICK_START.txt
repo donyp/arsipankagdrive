@@ -1,0 +1,97 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║                                                                   ║
+║         PUSAT ARSIP ANKA - QUICK START GUIDE (Updated)           ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+🚀 START SERVER (Choose One)
+═════════════════════════════════════════════════════════════════════
+
+  1. EASIEST - Double-click (Windows):
+     ► start-server.bat
+
+  2. TERMINAL - PowerShell:
+     ► cd d:\DOWNLOAD\arsipankanew-replit-source\arsipankanew-replit-source
+     ► .\start-server-with-restart.ps1
+
+  3. MANUAL - Node.js (no auto-restart):
+     ► cd d:\DOWNLOAD\arsipankanew-replit-source\arsipankanew-replit-source\backend
+     ► node server.js
+
+🌐 OPEN WEB
+═════════════════════════════════════════════════════════════════════
+
+  Once server is running:
+  ► Open browser: http://localhost:5000
+
+✅ EXPECTED OUTPUT
+═════════════════════════════════════════════════════════════════════
+
+  ✓ Backend listening on port 5000
+  ✓ Browser shows login page (NOT blank white)
+  ✓ Can enter credentials to login
+
+❌ TROUBLESHOOTING - If web still blank white
+═════════════════════════════════════════════════════════════════════
+
+  1. Kill old processes:
+     ► Double-click: kill-old-servers.bat
+     ► OR: .\cleanup-processes.ps1
+
+  2. Restart server:
+     ► Double-click: start-server.bat
+
+  3. Check port is free:
+     ► netstat -ano | Select-String ":5000"
+     ► If something is using it, close that application
+
+  4. Check logs:
+     ► Open: server-restart.log
+     ► Look for [ERROR] messages
+
+  5. Check dependencies:
+     ► cd backend
+     ► npm install
+     ► npm start
+
+📝 LOGS
+═════════════════════════════════════════════════════════════════════
+
+  Server logs:       server-restart.log
+  Backend startup:   Check terminal output
+
+🛑 STOP SERVER
+═════════════════════════════════════════════════════════════════════
+
+  In terminal running server:
+  ► Press Ctrl+C
+
+  Or force kill:
+  ► Double-click: kill-old-servers.bat
+
+📖 DETAILED GUIDES
+═════════════════════════════════════════════════════════════════════
+
+  ► SERVER_STARTUP_GUIDE.md  - Complete startup guide
+  ► FIX_SUMMARY_WEB_BLANK.md - What was fixed
+  ► 00_START_HERE.txt        - Project overview
+
+⚙️ KEY FEATURES (Auto-Restart Wrapper)
+═════════════════════════════════════════════════════════════════════
+
+  ✓ Automatically kills old Node processes on startup
+  ✓ Starts backend server on port 5000
+  ✓ Auto-restarts server if it crashes
+  ✓ Logs all activity with timestamps
+  ✓ Graceful shutdown (Ctrl+C)
+  ✓ Configurable restart attempts & delay
+
+═════════════════════════════════════════════════════════════════════
+
+Issue fixed: Port 5000 conflict → Web blank white
+Solution: Auto-restart wrapper + cleanup scripts
+
+Last Updated: August 23, 2026
+Status: ✅ WORKING
+
+═════════════════════════════════════════════════════════════════════

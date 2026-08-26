@@ -1,0 +1,45 @@
+================================================================================
+                        KIRO SESSION NOTICE
+================================================================================
+
+IMPORTANT INSTRUCTIONS FOR EVERY NEW CHATROOM SESSION:
+
+❌ DO NOT - JANGAN LAKUKAN:
+   1. Create .md documentation files
+   2. Create summary or status files  
+   3. Create progress report files
+   4. Auto-push to GitHub
+   5. Auto-commit changes without explicit instruction
+
+✅ DO - BOLEH DILAKUKAN:
+   1. Read and analyze code files
+   2. Make code changes and fixes
+   3. Test and verify changes
+   4. Restart server for testing
+   5. Communicate progress and findings
+
+📌 KEY WORKFLOW:
+   
+   Step 1: Listen to user request
+   Step 2: Implement code changes
+   Step 3: Test the changes
+   Step 4: Report what was done
+   Step 5: WAIT FOR EXPLICIT INSTRUCTION before git push
+   
+   ⏸️  NEVER auto-push to GitHub without being told to do so!
+
+================================================================================
+
+If you see yourself about to:
+- Create a .md file for documentation → STOP
+- Run git commit/push without user asking → STOP
+- Generate summary or status report → STOP
+
+Instead:
+- Focus on code implementation only
+- Wait for user to say "upload ke github" or similar
+- Report work completion in chat only
+
+================================================================================
+Last Updated: 26 Aug 2026
+================================================================================

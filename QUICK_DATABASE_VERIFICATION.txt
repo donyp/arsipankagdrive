@@ -1,0 +1,256 @@
+════════════════════════════════════════════════════════════════════════════════
+                    QUICK DATABASE VERIFICATION CHECKLIST
+════════════════════════════════════════════════════════════════════════════════
+
+Setelah ENABLE_ALIST=true, jalankan langkah-langkah ini untuk verify database:
+
+════════════════════════════════════════════════════════════════════════════════
+                            STEP 1: RESTART BACKEND
+════════════════════════════════════════════════════════════════════════════════
+
+Terminal:
+  1. Ctrl+C (stop current backend)
+  2. node backend/server.js (start backend baru)
+
+Lihat logs untuk:
+  ✅ [Alist] ✅ Service initialized on http://localhost:5244
+  ✅ [Rclone] ✅ WebDAV connection verified
+  ✅ [Backend] ✅ ALL INITIALIZATION STAGES COMPLETE
+
+Jika ada error → Stop dan check logs
+
+
+════════════════════════════════════════════════════════════════════════════════
+                        STEP 2: TEST API ENDPOINT
+════════════════════════════════════════════════════════════════════════════════
+
+Terminal (baru window):
+  curl http://localhost:5000/api/files
+
+Expected Response:
+  {
+    "files": [...15 files...],
+    "total": 1577,
+    "page": 1,
+    "limit": 15,
+    "totalPages": 106
+  }
+
+Jika berhasil:
+  ✅ Backend connected to database
+  ✅ Files query working
+  ✅ Data accessible
+
+Jika error:
+  ❌ Check backend logs
+  ❌ Database query failed
+
+
+════════════════════════════════════════════════════════════════════════════════
+                    STEP 3: LOGIN SUPABASE DASHBOARD
+════════════════════════════════════════════════════════════════════════════════
+
+1. Open browser: https://app.supabase.com
+2. Login dengan email kamu
+3. Pilih project: ehdqcxzdmmcwbdwkinyr
+4. Sidebar kiri → SQL Editor
+5. New Query
+
+
+════════════════════════════════════════════════════════════════════════════════
+                    STEP 4: RUN TEST QUERIES (Copy-Paste)
+════════════════════════════════════════════════════════════════════════════════
+
+TEST QUERY 1 - Check Tabel Ada
+──────────────────────────────────────────────────────────────────────────────
+
+SELECT 
+    table_name,
+    table_schema
+FROM 
+    information_schema.tables
+WHERE 
+    table_schema = 'public'
+    AND table_name IN ('files', 'users', 'zonas', 'tokos', 'notifications')
+ORDER BY 
+    table_name;
+
+Expected: 5 rows dengan tabel: files, notifications, tokos, users, zonas
+
+Result: ☐ PASS  ☐ FAIL
+
+
+TEST QUERY 2 - Check Kolom files
+──────────────────────────────────────────────────────────────────────────────
+
+SELECT 
+    column_name,
+    data_type,
+    is_nullable
+FROM 
+    information_schema.columns
+WHERE 
+    table_name = 'files'
+ORDER BY 
+    ordinal_position
+LIMIT 15;
+
+Expected: Columns seperti id, nama_file, category, zona_id, toko_id, etc
+
+Result: ☐ PASS  ☐ FAIL
+
+
+TEST QUERY 3 - Count Data
+──────────────────────────────────────────────────────────────────────────────
+
+SELECT 
+    'files' as table_name,
+    COUNT(*) as record_count
+FROM files
+UNION ALL
+SELECT 'users', COUNT(*) FROM users
+UNION ALL
+SELECT 'zonas', COUNT(*) FROM zonas
+UNION ALL
+SELECT 'tokos', COUNT(*) FROM tokos
+UNION ALL
+SELECT 'notifications', COUNT(*) FROM notifications;
+
+Expected: 
+  - files: 1577
+  - users: 1+
+  - zonas: 5+
+  - tokos: 50+
+  - notifications: 0+
+
+Result: ☐ PASS  ☐ FAIL
+
+
+TEST QUERY 4 - Get Sample Files
+──────────────────────────────────────────────────────────────────────────────
+
+SELECT 
+    id,
+    nama_file,
+    category,
+    status,
+    created_at
+FROM files
+LIMIT 5;
+
+Expected: 5 file records dengan data lengkap
+
+Result: ☐ PASS  ☐ FAIL
+
+
+TEST QUERY 5 - Check Users
+──────────────────────────────────────────────────────────────────────────────
+
+SELECT 
+    id,
+    email,
+    role,
+    name
+FROM users
+LIMIT 3;
+
+Expected: 3 user records, ada super_admin atau admin_zona
+
+Result: ☐ PASS  ☐ FAIL
+
+
+════════════════════════════════════════════════════════════════════════════════
+                        STEP 5: VERIFY RESULTS
+════════════════════════════════════════════════════════════════════════════════
+
+Semua 5 queries harus PASS:
+
+[✅] Query 1: Tabel ada
+[✅] Query 2: Kolom struktur valid
+[✅] Query 3: Data jumlah cocok
+[✅] Query 4: Sample data bisa diambil
+[✅] Query 5: User accounts ada
+
+Jika semua PASS:
+  ✅ DATABASE VERIFIED - READY FOR PRODUCTION
+
+Jika ada FAIL:
+  ❌ Database perlu repair/migration
+
+
+════════════════════════════════════════════════════════════════════════════════
+                        STEP 6: TEST DASHBOARD
+════════════════════════════════════════════════════════════════════════════════
+
+1. Open browser: http://localhost:5000/dashboard.html
+2. Hard refresh: Ctrl+Shift+R
+3. Check:
+   - ✅ Dashboard loads
+   - ✅ File list displays (15 items)
+   - ✅ No console errors (F12)
+   - ✅ Can see filters working
+
+Jika semua ada:
+  ✅ DATABASE & DASHBOARD VERIFIED
+
+
+════════════════════════════════════════════════════════════════════════════════
+                    TROUBLESHOOTING IF FAIL
+════════════════════════════════════════════════════════════════════════════════
+
+❌ Query 1: Tabel not found
+  → Database schema tidak ada
+  → Need to run migration
+  → Check: backend/migrations folder
+
+❌ Query 3: Count is 0
+  → Database kosong
+  → Need to seed data
+  → Or: Check if data is in wrong database
+
+❌ API error (curl step)
+  → Backend not connected to Supabase
+  → Check: SUPABASE_URL & SUPABASE_SERVICE_ROLE_KEY di backend/.env
+  → Verify: Credentials valid
+
+❌ Dashboard still blank
+  → Data might be cached
+  → Try: Hard refresh Ctrl+Shift+R
+  → Or: Clear browser cache completely
+
+❌ "Connection refused" at Rclone
+  → Alist still not running
+  → Check: ENABLE_ALIST=true applied?
+  → Backend logs should show: [Alist] ✅ Service initialized
+
+
+════════════════════════════════════════════════════════════════════════════════
+                        SUMMARY CHECKLIST
+════════════════════════════════════════════════════════════════════════════════
+
+Before Database Test:
+  ☐ ENABLE_ALIST=true applied to backend/.env
+  ☐ Backend restarted
+  ☐ Alist service started (check logs)
+  ☐ Rclone verified (check logs)
+
+Database Tests:
+  ☐ Supabase dashboard logged in
+  ☐ SQL Editor opened
+  ☐ Query 1 - Tables check (5/5 found)
+  ☐ Query 2 - Columns check (valid structure)
+  ☐ Query 3 - Data count (1577 files)
+  ☐ Query 4 - Sample data (can retrieve)
+  ☐ Query 5 - Users (at least 1 exists)
+
+Final Tests:
+  ☐ API endpoint responds (curl test)
+  ☐ Dashboard displays files
+  ☐ Console has no errors
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+Next: Run through all steps dan report results!
+
+════════════════════════════════════════════════════════════════════════════════

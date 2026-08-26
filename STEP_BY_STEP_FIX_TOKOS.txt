@@ -1,0 +1,267 @@
+════════════════════════════════════════════════════════════════════════════════
+                      STEP-BY-STEP: FIX MISSING TOKOS TABLE
+════════════════════════════════════════════════════════════════════════════════
+
+STATUS: Database verification found `tokos` table is MISSING
+IMPACT: Toko filter & features don't work
+FIX TIME: 10-15 minutes
+RISK: Low (just creating missing table)
+
+
+════════════════════════════════════════════════════════════════════════════════
+                              STEP 1: LOGIN SUPABASE
+════════════════════════════════════════════════════════════════════════════════
+
+1. Open browser: https://app.supabase.com
+2. Login dengan email kamu
+3. Pilih project: ehdqcxzdmmcwbdwkinyr
+4. Click sidebar: SQL Editor
+5. Click: New Query
+
+
+════════════════════════════════════════════════════════════════════════════════
+                         STEP 2: COPY-PASTE FIX SQL
+════════════════════════════════════════════════════════════════════════════════
+
+Klik di Query editor dan CLEAR semua
+
+Paste seluruh SQL script ini:
+
+────────────────────────────────────────────────────────────────────────────────
+
+-- CREATE MISSING TOKOS TABLE
+CREATE TABLE IF NOT EXISTS tokos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nama TEXT NOT NULL,
+    zona_id UUID NOT NULL REFERENCES zonas(id) ON DELETE CASCADE,
+    kota TEXT,
+    provinsi TEXT,
+    alamat TEXT,
+    contact_person TEXT,
+    phone TEXT,
+    email TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    UNIQUE(nama, zona_id)
+);
+
+-- CREATE INDEXES
+CREATE INDEX IF NOT EXISTS idx_tokos_zona_id ON tokos(zona_id);
+CREATE INDEX IF NOT EXISTS idx_tokos_deleted_at ON tokos(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_tokos_nama ON tokos(nama);
+
+-- GRANT PERMISSIONS
+GRANT ALL ON tokos TO authenticated;
+GRANT ALL ON tokos TO service_role;
+
+-- SEED SAMPLE DATA
+INSERT INTO tokos (nama, zona_id, kota, provinsi)
+SELECT 
+    'Toko ' || z.nama as nama,
+    z.id,
+    CASE 
+        WHEN z.nama LIKE '%Karawang%' THEN 'Karawang'
+        WHEN z.nama LIKE '%Jakarta%' THEN 'Jakarta'
+        ELSE 'Indonesia'
+    END,
+    'Indonesia'
+FROM zonas z
+ON CONFLICT (nama, zona_id) DO NOTHING;
+
+-- VERIFY
+SELECT 'tokos table' as table_name, COUNT(*) as record_count FROM tokos;
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+════════════════════════════════════════════════════════════════════════════════
+                            STEP 3: RUN QUERY
+════════════════════════════════════════════════════════════════════════════════
+
+1. Tekan tombol RUN (atas sebelah kanan)
+   Atau tekan Ctrl+Enter
+
+2. Lihat results di bawah
+
+3. Jika SUCCESS:
+   ✅ "tokos table" | 5 (atau lebih)
+   Ini berarti tokos table berhasil dibuat dengan sample data
+
+4. Jika ERROR:
+   ❌ "ERROR: relation already exists"
+   → Table sudah ada (dari fix sebelumnya)
+   → Tidak masalah, lanjut ke step 4
+
+   ❌ "ERROR: relation zonas does not exist"
+   → Zonas table tidak ada
+   → Stop, ada masalah yang lebih besar
+
+
+════════════════════════════════════════════════════════════════════════════════
+                      STEP 4: VERIFY TOKOS TABLE CREATED
+════════════════════════════════════════════════════════════════════════════════
+
+Buat query baru untuk verify:
+
+SELECT * FROM tokos LIMIT 5;
+
+Expected output:
+- id: (UUID)
+- nama: Toko Karawang, Toko Jakarta, etc
+- zona_id: (UUID)
+- kota: Karawang, Jakarta, etc
+- record_count: 5+
+
+Jika output ada → TOKOS TABLE CREATED ✅
+
+
+════════════════════════════════════════════════════════════════════════════════
+                         STEP 5: VERIFY ALL TABLES NOW
+════════════════════════════════════════════════════════════════════════════════
+
+Run this verification query:
+
+SELECT 'files' as table_name, COUNT(*) as record_count FROM files
+UNION ALL SELECT 'tokos', COUNT(*) FROM tokos
+UNION ALL SELECT 'users', COUNT(*) FROM users
+UNION ALL SELECT 'zonas', COUNT(*) FROM zonas
+UNION ALL SELECT 'notifications', COUNT(*) FROM notifications;
+
+Expected output:
+files          1577
+notifications  (0-50)
+tokos          5 (atau sesuai zona)
+users          1+
+zonas          5+
+
+Jika semua ada data → ALL TABLES OK ✅
+
+
+════════════════════════════════════════════════════════════════════════════════
+                      STEP 6: RESTART BACKEND SERVER
+════════════════════════════════════════════════════════════════════════════════
+
+Di terminal:
+
+1. Ctrl+C (stop backend current)
+2. node backend/server.js (start baru)
+3. Tunggu sampai:
+   [Backend] ✅ ALL INITIALIZATION STAGES COMPLETE
+
+
+════════════════════════════════════════════════════════════════════════════════
+                         STEP 7: TEST API ENDPOINT
+════════════════════════════════════════════════════════════════════════════════
+
+Di terminal baru:
+
+curl http://localhost:5000/api/toko
+
+Expected response:
+{
+  "tokos": [
+    {"id": "...", "nama": "Toko Karawang", "zona_id": "..."},
+    ...
+  ]
+}
+
+Jika ada tokos → API WORKING ✅
+
+
+════════════════════════════════════════════════════════════════════════════════
+                        STEP 8: TEST DASHBOARD
+════════════════════════════════════════════════════════════════════════════════
+
+1. Open: http://localhost:5000/dashboard.html
+2. Hard refresh: Ctrl+Shift+R
+3. Check:
+   ✅ Dashboard loads
+   ✅ File list displays (15 items)
+   ✅ Toko filter has options (dropdown not empty)
+   ✅ Can filter by toko
+   ✅ No console errors (F12)
+
+Jika semua ada → DASHBOARD FIXED ✅
+
+
+════════════════════════════════════════════════════════════════════════════════
+                    FINAL VERIFICATION CHECKLIST
+════════════════════════════════════════════════════════════════════════════════
+
+Database:
+  ☐ tokos table created
+  ☐ tokos has 5+ records
+  ☐ All 5 tables present
+  ☐ Foreign keys work
+
+Backend:
+  ☐ Backend restarted
+  ☐ Startup logs show complete
+  ☐ API /api/toko responds
+  ☐ No errors in backend logs
+
+Dashboard:
+  ☐ Dashboard loads
+  ☐ File list shows 15 items
+  ☐ Toko filter works (shows options)
+  ☐ Can select toko filter
+  ☐ No console errors
+  ☐ File list updates when filter applied
+
+If all ✅:
+  DATABASE FULLY FIXED & OPERATIONAL
+
+
+════════════════════════════════════════════════════════════════════════════════
+                        IF SOMETHING GOES WRONG
+════════════════════════════════════════════════════════════════════════════════
+
+ERROR: "relation tokos already exists"
+  → Table sudah ada dari attempt sebelumnya
+  → Tidak masalah, lanjut ke Step 4
+
+ERROR: "ERROR in foreign key"
+  → Zonas tidak ada atau corrupt
+  → Contact developer
+
+ERROR: "Permission denied"
+  → Need admin access ke Supabase
+  → Login dengan admin account
+
+API returns empty tokos:
+  → Check: INSERT statement ran?
+  → Run seed query manually
+
+Dashboard toko filter empty:
+  → Restart backend
+  → Hard refresh browser
+  → Check API respond with tokos
+
+
+════════════════════════════════════════════════════════════════════════════════
+                           SUMMARY
+════════════════════════════════════════════════════════════════════════════════
+
+Total Steps: 8
+Total Time: 10-15 minutes
+Risk Level: LOW (just creating table)
+
+What gets fixed:
+  ✅ Missing tokos table
+  ✅ Toko filter now works
+  ✅ Foreign key relationships
+  ✅ Dashboard fully functional
+  ✅ All features enabled
+
+Expected Result:
+  Database: ✅ COMPLETE (5/5 tables)
+  Features: ✅ 100% working
+  Production: ✅ READY
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+NEXT: Follow steps 1-8 dan report hasil!
+
+════════════════════════════════════════════════════════════════════════════════

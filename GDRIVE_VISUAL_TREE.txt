@@ -1,0 +1,121 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║           📂 GOOGLE DRIVE - STRUKTUR FOLDER VISUAL                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+ROOT (gdrive:/)
+│
+├── 📁 Produk & Alat
+│   ├── 📁 BATU GERINDA
+│   ├── 📁 BATU GERINDA ELLIP IRON NEW
+│   ├── 📁 BATU GERINDA MEGA TOOLS
+│   ├── 📁 MEGA TOOLS
+│   ├── 📁 MEGA TOOLS ALFA
+│   ├── 📁 SUPER THIN ELLIP IRON
+│   └── 📁 ALL PRODUCT
+│
+├── 📁 Media & Desain
+│   ├── 📁 Foto
+│   ├── 📁 ICON & LOGO
+│   ├── 📁 banner
+│   ├── 📁 COVER REELS
+│   ├── 📁 REELS
+│   └── 📁 FOOTAGE
+│
+├── 📁 Dokumen & File
+│   ├── 📁 pdf
+│   ├── 📁 BOOKLET
+│   ├── 📁 FILE RAGAT 2 TAK
+│   └── 📁 DUBBING
+│
+├── 📁 Organisasi & Admin
+│   ├── 📁 ANKA
+│   ├── 📁 ARSIP ANKA ⭐ (Main Archive)
+│   ├── 📁 INDOBUILDTECH 2026
+│   ├── 📁 recap rafi
+│   └── 📁 revisi
+│
+└── 📁 Lainnya
+    ├── 📁 1
+    ├── 📁 a
+    └── 📁 b
+
+════════════════════════════════════════════════════════════════════════════
+
+📊 STATISTIK
+
+Total Folders:        25+ (dari root listing)
+Total Items:          49 (terindeks rclone)
+Connection Status:    ✅ ACTIVE
+Last Verified:        August 25, 2026
+Storage Used:         ~? GB (dari 15GB free tier)
+Cache Enabled:        ✅ Yes (2GB)
+Auto-Sync:            ✅ Ready
+
+════════════════════════════════════════════════════════════════════════════
+
+🔧 CARA NAVIGATE
+
+Via Rclone Command Line:
+  $ rclone lsd gdrive:/
+  $ rclone ls gdrive:/ARSIP\ ANKA
+  $ rclone tree gdrive:/ -L 3
+
+Via Backend API:
+  GET http://localhost:5000/api/files/list/zona-1
+
+Via Google Drive Web:
+  https://drive.google.com/drive/home
+
+════════════════════════════════════════════════════════════════════════════
+
+💡 REKOMENDASI STRUKTUR UNTUK ARSIP ANKA
+
+Sebaiknya reorganisasi ke struktur berikut untuk konsistensi dengan database:
+
+gdrive:/
+├── arsip/
+│   ├── zona-1/
+│   │   ├── TOKO-BANDUNG/
+│   │   │   ├── INVOICE/
+│   │   │   ├── PPN/
+│   │   │   ├── NON_PPN/
+│   │   │   └── PIUTANG/
+│   │   ├── TOKO-CIANJUR/
+│   │   └── TOKO-SUBANG/
+│   ├── zona-2/
+│   ├── zona-3/
+│   └── ...
+├── ads-media/          (untuk media iklan)
+├── backup/             (untuk backup system)
+└── archive/            (untuk arsip lama)
+
+════════════════════════════════════════════════════════════════════════════
+
+⚠️ NOTES
+
+1. Struktur saat ini flat (semua folder di root)
+   - Bagus untuk akses cepat
+   - Tapi bisa membingungkan dengan banyak folder
+
+2. Belum ada struktur zona-toko
+   - Perlu dibuat jika ingin menggunakan API listing by zona
+   - Atau update database untuk reference folder baru
+
+3. Folder names punya encoding UTF-8
+   - Display saja, data aman di Google Drive
+   - Rclone handle dengan baik
+
+════════════════════════════════════════════════════════════════════════════
+
+🚀 NEXT STEPS
+
+[ ] Review folder structure dengan tim
+[ ] Reorganisasi ke struktur zona-toko jika perlu
+[ ] Update database references
+[ ] Test API file listing after reorganization
+[ ] Setup automated sync to B2/Storj (optional)
+
+════════════════════════════════════════════════════════════════════════════
+
+Generated: August 25, 2026
+Status: ✅ READY FOR REVIEW
