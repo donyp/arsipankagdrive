@@ -43,7 +43,14 @@ async function loadAllTokos() {
         // Handle both { tokos: [...] } and direct array response
         const toko = response.tokos || response || [];
         window._allTokos = Array.isArray(toko) ? toko : [];
-        console.log('[loadAllTokos] Loaded', window._allTokos.length, 'tokos:', window._allTokos);
+        console.log('[loadAllTokos] Loaded', window._allTokos.length, 'tokos');
+        
+        // VALIDATION: Check if zona_id is present in all tokos
+        const tokosWithoutZona = window._allTokos.filter(t => !t.zona_id);
+        if (tokosWithoutZona.length > 0) {
+            console.warn('[loadAllTokos] ⚠️  WARNING: Found tokos without zona_id:', tokosWithoutZona.map(t => t.nama).join(', '));
+            console.warn('[loadAllTokos] This could cause files to upload to wrong folders!');
+        }
         
         // If no tokos from API, use hardcoded defaults
         if (window._allTokos.length === 0) {
@@ -61,7 +68,7 @@ async function loadAllTokos() {
             ];
             console.log('[loadAllTokos] Using fallback tokos, count:', window._allTokos.length);
         }
-        console.log('[loadAllTokos] Complete. Final tokos:', window._allTokos);
+        console.log('[loadAllTokos] Complete. Final tokos loaded:', window._allTokos.length);
     } catch (err) {
         console.error('[loadAllTokos] Error:', err);
         // Fallback to hardcoded tokos if API fails
@@ -474,7 +481,13 @@ function setupForm() {
 
                 const formData = new FormData();
                 formData.append('file', item.file);
-                formData.append('zona_id', item.toko.zona_id);
+                
+                // IMPORTANT: zona_id MUST be sent, or files go to wrong folder
+                const zonaId = item.toko?.zona_id;
+                if (!zonaId) {
+                    throw new Error(`Toko ${item.toko?.nama || 'unknown'} tidak memiliki zona_id. Muat ulang halaman dan coba lagi.`);
+                }
+                formData.append('zona_id', zonaId);
                 formData.append('toko_id', item.toko.id);
                 formData.append('category', category);
                 formData.append('tanggal_dokumen', item.date || toLocalYYYYMMDD(new Date()));

@@ -155,7 +155,7 @@ function createRowHtml(u, i) {
             <td class="text-gray-500 text-xs">${formatDate(u.created_at)}</td>
             <td>
                 <div class="flex items-center justify-end gap-1">
-                    <button onclick='editUser(${JSON.stringify(u).replace(/'/g, "&#39;")})'
+                    <button onclick='editUserById("${u.id}")'
                         title="Edit" class="p-2 rounded-lg text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 transition-all">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     </button>
@@ -169,6 +169,16 @@ function createRowHtml(u, i) {
             </td>
         </tr>
     `;
+}
+
+// ---- Edit User by ID (lookup from users array) ----
+function editUserById(userId) {
+    const user = users.find(u => u.id === userId);
+    if (!user) {
+        Toast.error('User tidak ditemukan');
+        return;
+    }
+    editUser(user);
 }
 
 // ---- Render Users Table ----
@@ -242,6 +252,9 @@ function openUserModal() {
 
 // ---- Open Modal for Edit ----
 function editUser(user) {
+    console.log('[DEBUG] editUser called with user:', user);
+    console.log('[DEBUG] user.avatar:', user.avatar);
+    
     document.getElementById('modal-title').textContent = 'Edit User';
     document.getElementById('edit-user-id').value = user.id;
     document.getElementById('modal-name').value = user.name;
@@ -251,6 +264,16 @@ function editUser(user) {
     document.getElementById('modal-password').value = '';
     document.getElementById('modal-password').required = false;
     document.getElementById('password-hint').textContent = '(kosongkan jika tidak diubah)';
+    
+    // Set avatar preview if exists, otherwise use default
+    if (user.avatar) {
+        console.log('[DEBUG] Setting avatar from user.avatar');
+        document.getElementById('avatar-preview').src = user.avatar;
+    } else {
+        console.log('[DEBUG] No avatar, using default');
+        document.getElementById('avatar-preview').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=6366f1&color=fff`;
+    }
+    pendingAvatarFile = null;
 
     // Preserve existing internal permissions without exposing the optional
     // permissions form in the user interface.
@@ -345,6 +368,8 @@ function setupUserForm() {
         if (password) userData.password = password;
 
         try {
+            let userId = editId;
+            
             if (editId) {
                 const res = await API.put(`/api/users/${editId}`, userData);
                 console.log('[DEBUG] Update Response:', res);
@@ -352,12 +377,14 @@ function setupUserForm() {
             } else {
                 const res = await API.post('/api/users', userData);
                 console.log('[DEBUG] Create Response:', res);
+                userId = res.user.id;
                 Toast.success('User berhasil ditambahkan');
             }
 
             closeUserModal();
             await loadUsers();
         } catch (err) {
+            console.error('[DEBUG] Form submit error:', err);
             Toast.error('Gagal menyimpan user: ' + err.message);
         }
     });

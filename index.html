@@ -13,74 +13,269 @@
         .font-inter {
             font-family: 'Inter', sans-serif;
         }
+        .gradient-blue {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 50%, #1d4ed8 100%);
+        }
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .login-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .left-section {
+            flex: 1;
+            background: linear-gradient(135deg, #5051f5 0%, #3b5bdb 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 60px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+        .left-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 800px;
+            height: 800px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="100" height="100" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2"/></pattern></defs><rect width="800" height="800" fill="url(%23grid)"/></svg>');
+            transform: rotate(45deg) translate(200px, -200px);
+        }
+        .right-section {
+            flex: 1;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 40px;
+        }
+        .left-content {
+            position: relative;
+            z-10;
+            color: white;
+        }
+        .asterisk {
+            font-size: 100px;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 40px;
+            opacity: 0.95;
+        }
+        .left-heading {
+            font-size: 72px;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 30px;
+            letter-spacing: -0.5px;
+        }
+        .left-description {
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 1.6;
+            max-width: 500px;
+            opacity: 0.95;
+        }
+        .left-footer {
+            position: absolute;
+            bottom: 40px;
+            left: 80px;
+            font-size: 14px;
+            opacity: 0.6;
+            color: white;
+        }
+        .form-container {
+            width: 100%;
+            max-width: 420px;
+        }
+        .brand-name {
+            font-size: 24px;
+            font-weight: 900;
+            color: #3b5bdb;
+            margin-bottom: 30px;
+        }
+        .welcome-heading {
+            font-size: 32px;
+            font-weight: 900;
+            color: #3b5bdb;
+            margin-bottom: 15px;
+        }
+        .welcome-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        .welcome-subtitle a {
+            color: #3b5bdb;
+            font-weight: 900;
+            text-decoration: underline;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 0;
+            border: none;
+            border-bottom: 2px solid #ddd;
+            font-size: 14px;
+            font-weight: 500;
+            color: #3b5bdb;
+            background: transparent;
+            transition: border-color 0.3s;
+        }
+        .form-input::placeholder {
+            color: #a8afd8;
+        }
+        .form-input:focus {
+            outline: none;
+            border-bottom-color: #3b5bdb;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: #3b5bdb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 30px;
+        }
+        .login-btn:hover {
+            background: #2b4bbb;
+            transform: translateY(-2px);
+        }
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        .google-btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: white;
+            color: #000;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .google-btn:hover {
+            background: #f9f9f9;
+        }
+        .forgot-password {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #666;
+        }
+        .forgot-password a {
+            color: #3b5bdb;
+            font-weight: 900;
+            text-decoration: none;
+        }
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 1024px) {
+            .left-section {
+                display: none;
+            }
+            .right-section {
+                flex: 1;
+            }
+        }
     </style>
 </head>
 
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 font-inter">
-    <div class="w-full max-w-[400px] animate-fade-in-up">
-        <div class="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-10">
-            <div class="text-center mb-10">
-                <h1 class="text-3xl font-extrabold text-blue-600 tracking-tight">Arsip ANKA</h1>
-                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Sistem Arsip Invoice ANKA
-                </p>
+<body class="font-inter">
+    <div class="login-container">
+        <!-- Left Side -->
+        <div class="left-section">
+            <div class="left-content">
+                <div class="asterisk">✱</div>
+                <h1 class="left-heading">Sistem Arsip<br>Digital ANKA</h1>
+                <p class="left-description">Kelola arsip digital Anda dengan aman, mudah, dan efisien. Sistem manajemen arsip terpadu untuk kebutuhan bisnis modern.</p>
             </div>
-            <form id="login-form" class="space-y-6" autocomplete="on">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 ml-1">Username /
-                        Email</label>
-                    <input type="text" id="username" name="username" autocomplete="username" placeholder="Masukkan username" required
-                        class="w-full px-5 py-4 bg-white border border-blue-100 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-400 transition-all">
-                </div>
-                <div class="relative">
-                    <label
-                        class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 ml-1">Password</label>
-                    <div class="relative">
-                        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Masukkan password" required
-                            class="w-full px-5 py-4 bg-gray-50 border border-transparent rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:bg-white focus:border-blue-400 transition-all">
-                        <button type="button" onclick="togglePasswordVisibility()"
-                            class="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-blue-600 transition-colors">
-                            <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            <div class="left-footer">© 2026 Anka Aksesoris. All rights reserved.</div>
+        </div>
+
+        <!-- Right Side -->
+        <div class="right-section">
+            <div class="form-container">
+                <!-- Welcome Section -->
+                <h2 class="welcome-heading">Welcome Back!</h2>
+                <p class="welcome-subtitle">
+                    Belum memiliki akun? <a href="https://wa.me/6285117778351" target="_blank">hubungi admin ANKA.</a>
+                </p>
+
+                <!-- Maintenance Notice -->
+                <div id="maintenance-notice" class="hidden mb-6 p-4 bg-red-50 border border-red-100 rounded-xl">
+                    <div class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded bg-red-500/10 flex items-center justify-center text-red-500 flex-shrink-0 mt-0.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
-                        </button>
+                        </div>
+                        <div>
+                            <p style="font-size: 12px; font-weight: 900; color: #dc2626; text-transform: uppercase; margin-bottom: 4px;">System Maintenance</p>
+                            <p style="font-size: 13px; font-weight: 600; color: #991b1b;">Sistem sedang dalam pemeliharaan</p>
+                        </div>
                     </div>
                 </div>
-                <div class="pt-2">
-                    <button type="submit" id="login-btn"
-                        class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-blue-200 transition-all transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-3">
-                        Masuk Sekarang
-                    </button>
-                </div>
-            </form>
-            <div class="mt-12 text-center">
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Anka Aksesoris. Internal Use
-                    Only.</p>
+
+                <!-- Login Form -->
+                <form id="login-form" autocomplete="on">
+                    <div class="form-group">
+                        <input type="text" id="username" name="username" autocomplete="username" placeholder="Email" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <div style="position: relative;">
+                            <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Password" class="form-input" required>
+                            <button type="button" onclick="togglePasswordVisibility()" style="position: absolute; right: 0; top: 12px; background: none; border: none; cursor: pointer; padding: 0; color: #999;">
+                                <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="login-btn" class="login-btn">Login Now</button>
+                </form>
             </div>
         </div>
     </div>
 
     <!-- Custom Alert Box -->
-    <div id="custom-alert" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeAlert()"></div>
-        <div class="relative w-full max-w-[400px] bg-white rounded-[2.5rem] shadow-2xl p-10 transform scale-95 transition-all duration-300 opacity-0"
-            id="alert-content">
-            <div class="text-center">
-                <div
-                    class="w-16 h-16 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    <div id="custom-alert" class="hidden" style="position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px;">
+        <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.6);" onclick="closeAlert()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl p-8 transform scale-95 transition-all duration-300 opacity-0" id="alert-content" style="width: 100%; max-width: 400px; position: relative; z-index: 1;">
+            <div style="text-align: center;">
+                <div style="width: 56px; height: 56px; background: #fee2e2; color: #dc2626; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 -2px 4px rgba(0,0,0,0.05) inset;">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-black text-gray-900 mb-2">Informasi Sistem</h3>
-                <p id="alert-message"
-                    class="text-sm font-medium text-gray-600 leading-relaxed mb-10 text-pretty text-center">Sistem
-                    sedang dalam perbaikan (Maintenance Mode).</p>
-                <button onclick="closeAlert()"
-                    class="w-full py-4 bg-gray-900 text-white font-black rounded-2xl hover:bg-gray-800 transition-all active:scale-95 shadow-xl shadow-gray-200 uppercase tracking-widest text-[11px]">
+                <h3 style="font-size: 18px; font-weight: 900; color: #3b5bdb; margin-bottom: 8px;">Informasi Sistem</h3>
+                <p id="alert-message" style="font-size: 14px; font-weight: 500; color: #666; line-height: 1.5; margin-bottom: 32px;">Sistem sedang dalam perbaikan.</p>
+                <button onclick="closeAlert()" style="width: 100%; padding: 12px; background: #3b5bdb; color: white; font-weight: 900; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">
                     Oke, Mengerti
                 </button>
             </div>
@@ -100,24 +295,29 @@
             document.getElementById('alert-message').textContent = msg;
 
             modal.classList.remove('hidden');
+            modal.style.display = 'flex';
             setTimeout(() => {
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
+                content.classList.remove('scale-95');
+                content.classList.remove('opacity-0');
+                content.style.transform = 'scale(1)';
+                content.style.opacity = '1';
             }, 10);
         }
 
         function closeAlert() {
             const modal = document.getElementById('custom-alert');
             const content = document.getElementById('alert-content');
-            content.classList.add('scale-95', 'opacity-0');
-            content.classList.remove('scale-100', 'opacity-100');
-            setTimeout(() => modal.classList.add('hidden'), 300);
+            content.style.transform = 'scale(0.95)';
+            content.style.opacity = '0';
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+            }, 300);
         }
 
-        // Overwrite standard alert
         window.alert = showAlert;
 
-        // Check for Maintenance Mode on Load
+        // Check for Maintenance Mode
         async function checkMaintenanceOnLogin() {
             try {
                 const response = await fetch(`${CONFIG.API_URL}/api/system/maintenance`);
@@ -126,39 +326,19 @@
                 isMaintenanceActive = !!status.isMaintenance;
 
                 if (isMaintenanceActive) {
-                    // Format Date: 12.30 WIB, 14 Juni 2026
-                    let sinceText = '';
-                    if (status.updatedAt) {
-                        const d = new Date(status.updatedAt);
-                        const time = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(':', '.');
-                        const date = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-                        sinceText = `sejak : ${time} WIB, ${date}`;
-                    }
-
-                    const noticeEl = document.createElement('div');
-                    noticeEl.className = 'mb-8 p-4 bg-red-50 border border-red-100 rounded-3xl animate-fade-in-up';
-                    noticeEl.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 shadow-inner">
-                                <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-[10px] font-black text-red-600 uppercase tracking-widest leading-none mb-2">System Maintenance</p>
-                                <p class="text-[12px] font-bold text-red-700 leading-tight">Optimasi Sistem Sedang Berjalan</p>
-                                <p class="text-[10px] font-medium text-red-500/80 leading-relaxed mt-1">Akses sementara dibatasi untuk keperluan teknis. Silakan kembali lagi nanti.</p>
-                                ${sinceText ? `<p class="text-[9px] font-bold text-red-400 mt-2 flex items-center gap-1.5 opacity-80 uppercase tracking-wider">
-                                    <span class="w-1 h-1 rounded-full bg-red-300"></span> ${sinceText}
-                                </p>` : ''}
-                            </div>
-                        </div>
-                    `;
-                    document.getElementById('login-form').prepend(noticeEl);
+                    const noticeEl = document.getElementById('maintenance-notice');
+                    noticeEl?.classList.remove('hidden');
                     setButtonState('disabled');
+                } else {
+                    // Make sure alert is hidden if not in maintenance mode
+                    const modal = document.getElementById('custom-alert');
+                    modal?.classList.add('hidden');
                 }
             } catch (err) {
                 console.warn('Gagal mengecek status perbaikan:', err);
+                // Hide alert on error
+                const modal = document.getElementById('custom-alert');
+                modal?.classList.add('hidden');
             }
         }
 
@@ -167,66 +347,17 @@
             if (!btn) return;
 
             if (state === 'disabled') {
-                btn.className = 'w-full py-4 bg-gray-100 text-gray-400 font-bold rounded-2xl cursor-not-allowed transition-all opacity-70 flex items-center justify-center gap-3';
+                btn.style.background = '#d1d5db';
+                btn.style.color = '#9ca3af';
                 btn.disabled = true;
-                btn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg> Tidak Bisa Login`;
-            } else if (state === 'scanning') {
-                // Silent check - keep disabled and original text/state until confirmed
-                btn.disabled = true;
-            } else if (state === 'admin') {
-                btn.className = 'w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-blue-200 transition-all transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-3 animate-pulse';
-                btn.disabled = false;
-                btn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 4.908-3.333 9.277-8 10.125a12.866 12.866 0 01-8-10.125c0-.681.057-1.35.166-2.001zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg> Akses Admin Terdeteksi`;
+                btn.textContent = '⚠️ Tidak Bisa Login';
             } else {
-                btn.className = 'w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-blue-200 transition-all transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-3';
+                btn.style.background = '#1a1a1a';
+                btn.style.color = 'white';
                 btn.disabled = false;
-                btn.innerHTML = `Masuk Sekarang`;
+                btn.textContent = 'Login Now';
             }
         }
-
-        // Scanning Logic
-        let scanTimeout;
-        async function performScan() {
-            if (!isMaintenanceActive) return;
-
-            const email = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-
-            if (email.length < 3 || password.length < 4) {
-                setButtonState('disabled');
-                return;
-            }
-
-            // Silent check
-
-            try {
-                const response = await fetch(`${CONFIG.API_URL}/api/auth/verify-admin`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const { isAdmin } = await response.json();
-
-                if (isAdmin) {
-                    setButtonState('admin');
-                } else {
-                    setButtonState('disabled');
-                }
-            } catch (err) {
-                setButtonState('disabled');
-            }
-        }
-
-        ['input', 'change'].forEach(evt => {
-            document.getElementById('username').addEventListener(evt, () => {
-                clearTimeout(scanTimeout);
-                scanTimeout = setTimeout(performScan, 800);
-            });
-            document.getElementById('password').addEventListener(evt, () => {
-                clearTimeout(scanTimeout);
-                scanTimeout = setTimeout(performScan, 800);
-            });
-        });
 
         checkMaintenanceOnLogin();
 
@@ -235,15 +366,10 @@
             const eyeIcon = document.getElementById('eye-icon');
             if (pwdInput.type === 'password') {
                 pwdInput.type = 'text';
-                eyeIcon.innerHTML = `
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.04m5.752-1.854A9.959 9.959 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21m-4.221-4.221L3 3" />
-                `;
+                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.04m5.752-1.854A9.959 9.959 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21m-4.221-4.221L3 3" />`;
             } else {
                 pwdInput.type = 'password';
-                eyeIcon.innerHTML = `
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                `;
+                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
             }
         }
 
@@ -255,13 +381,12 @@
 
             const originalBtnHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = `<div class="flex items-center justify-center gap-2">
-                <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <span>Memproses...</span>
-            </div>`;
+            btn.innerHTML = `<span style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span style="width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;"></span>
+                Processing...
+            </span>`;
 
             try {
-                // Correct function name from auth.js
                 await loginWithCredentials(username, password);
             } catch (err) {
                 console.error(err);
@@ -277,6 +402,15 @@
                 }
             }
         });
+
+        // Add spinning animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 

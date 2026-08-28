@@ -409,13 +409,15 @@ function populateFilters() {
 
     // Inverted Permit: Inject restricted options ONLY for Super Admins
     const catSelect = document.getElementById('filter-category');
-
+    const catReadonly = document.getElementById('filter-category-readonly');
 
     if (catSelect) {
         if (isSuperAdmin()) {
             // Unlock and Inject
             catSelect.disabled = false;
             catSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+            catSelect.classList.add('block');
+            catReadonly?.classList.add('hidden');
 
             // Avoid duplicates
             if (!catSelect.querySelector('option[value=""]')) {
@@ -430,11 +432,17 @@ function populateFilters() {
                 piutangOpt.textContent = 'Bukti Pembayaran Piutang';
                 catSelect.appendChild(piutangOpt);
             }
+        } else if (currentUser && currentUser.role === 'admin_zona') {
+            // Admin Zona: Hide dropdown, show read-only label
+            catSelect.classList.add('hidden');
+            catReadonly?.classList.remove('hidden');
+            catSelect.value = 'INVOICE'; // Set to INVOICE internally
         } else {
-            // Force selection to INVOICE and ensure LOCKED for Admin Zona
-            catSelect.value = 'INVOICE';
-            catSelect.disabled = true;
-            catSelect.classList.add('opacity-50', 'cursor-not-allowed');
+            // Other roles: keep dropdown visible
+            catSelect.disabled = false;
+            catSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+            catSelect.classList.add('block');
+            catReadonly?.classList.add('hidden');
         }
     }
 
@@ -462,6 +470,15 @@ async function loadArchives(append = false) {
         let endpoint = viewMode === 'deleted' && isSuperAdmin() ? '/api/files/trash' : '/api/files';
 
         const getVal = (id) => document.getElementById(id)?.value || '';
+        console.log('[loadArchives] Current filter values:', {
+            category: getVal('filter-category'),
+            zona_id: getVal('filter-zona'),
+            toko_id: getVal('filter-toko'),
+            tipe_ppn: getVal('filter-tipe'),
+            search: document.getElementById('dashboard-search-input')?.value || '',
+            currentUserRole: currentUser?.role
+        });
+        
         const params = new URLSearchParams({
             page: currentPage,
             limit: CONFIG.PAGE_SIZE || 20,
@@ -485,6 +502,7 @@ async function loadArchives(append = false) {
 
         const fullUrl = `${endpoint}?${params.toString()}`;
         console.log('[loadArchives] Calling API:', fullUrl);
+        console.log('[loadArchives] Full params object:', Object.fromEntries(params));
         
         const res = await API.get(fullUrl);
         
@@ -504,6 +522,7 @@ async function loadArchives(append = false) {
         filteredArchives = archives;
         await loadSyncStatuses();
         renderTable();
+        await loadUploaderNames();  // Load uploader names for badges
         updateStats(res);
         if (!append) await populateTokoFilter();
     } catch (err) {
@@ -515,6 +534,44 @@ async function loadArchives(append = false) {
     }
 }
 
+// Load uploader names for file list badges
+async function loadUploaderNames() {
+    // Only for moderator and super_admin
+    if (!isSuperAdmin() && currentUser?.role !== 'moderator') {
+        return;
+    }
+
+    // Collect unique uploaded_by ids from current archives
+    const uploaderIds = [...new Set(archives
+        .filter(f => f.uploaded_by)
+        .map(f => f.uploaded_by))];
+    
+    if (!uploaderIds.length) return;
+
+    try {
+        const response = await API.get(`/api/users/names?ids=${uploaderIds.join(',')}`);
+        // response is { userId: userName, ... }
+        
+        // Update each badge with actual username
+        uploaderIds.forEach(userId => {
+            const badges = document.querySelectorAll(`[data-uploader-id="${userId}"]`);
+            const userName = response[userId] || 'Unknown User';
+            badges.forEach(badge => {
+                badge.textContent = userName;
+            });
+        });
+    } catch (err) {
+        console.warn('[loadUploaderNames] Error:', err.message);
+        // Fallback: show userId if fetch fails
+        archives.filter(f => f.uploaded_by).forEach(file => {
+            const badge = document.getElementById(`uploader-${file.id}`);
+            if (badge && badge.textContent === 'Memuat...') {
+                badge.textContent = `User #${file.uploaded_by}`;
+            }
+        });
+    }
+}
+
 async function loadSyncStatuses() {
     const paths = archives.map(file => file.storage_path).filter(Boolean);
     if (!paths.length) return;
@@ -523,7 +580,10 @@ async function loadSyncStatuses() {
         const response = await API.get(`/api/sync/statuses?paths=${query}`);
         syncStatuses = { ...syncStatuses, ...(response.statuses || {}) };
         const summary = document.getElementById('sync-status-summary');
-        if (summary && typeof currentUser !== 'undefined' && currentUser) summary.classList.remove('hidden');
+        // Only show sync summary for super_admin and moderator (hide for admin_zona)
+        if (summary && typeof currentUser !== 'undefined' && currentUser && (isSuperAdmin() || currentUser.role === 'moderator')) {
+            summary.classList.remove('hidden');
+        }
         const visible = paths.map(path => syncStatuses[path]).filter(Boolean);
         const primary = visible.filter(status => status.primaryStatus === 'verified').length;
         const backup = visible.filter(status => status.backupStatus === 'verified').length;
@@ -824,25 +884,17 @@ setInterval(() => {
 function renderTable() {
     console.log('[renderTable] START - Called with', archives.length, 'files');
     
-    console.log('[renderTable] Checking DOM structure...');
-    const mainContent = document.getElementById('main-content');
-    console.log('[renderTable] main-content found:', !!mainContent);
-    
-    const archiveTable = document.getElementById('archive-table');
-    console.log('[renderTable] archive-table found:', !!archiveTable);
-    
     let tbody = document.getElementById('archive-body');
-    console.log('[renderTable] archive-body found:', !!tbody);
     
     if (!tbody) {
-        console.warn('[renderTable] archive-body NOT FOUND - creating it');
+        const mainContent = document.getElementById('main-content');
+        const archiveTable = document.getElementById('archive-table');
         if (archiveTable) {
             tbody = document.createElement('div');
             tbody.id = 'archive-body';
             archiveTable.appendChild(tbody);
-            console.log('[renderTable] Created archive-body element');
         } else {
-            console.error('[renderTable] archive-table element also not found!');
+            console.error('[renderTable] archive-table element not found!');
             return;
         }
     }
@@ -854,7 +906,6 @@ function renderTable() {
     const pageItems = filteredArchives;
 
     if (filteredArchives.length === 0) {
-        console.log('[renderTable] No items to render, showing empty state');
         tbody.innerHTML = '';
         emptyState?.classList.remove('hidden');
         pagination?.classList.add('hidden');
@@ -862,17 +913,50 @@ function renderTable() {
     }
 
     console.log('[renderTable] Rendering', pageItems.length, 'items');
+    
+    // Client-side enrichment: for PIUTANG files with toko_id but no toko object, fetch toko data
+    const piutangFilesNeedingToko = pageItems.filter(f => f.category === 'PIUTANG' && f.toko_id && !f.toko);
+    if (piutangFilesNeedingToko.length > 0) {
+        console.log('[renderTable] Found', piutangFilesNeedingToko.length, 'PIUTANG files needing toko enrichment');
+        // Try to enrich from API
+        API.get('/api/toko').then(response => {
+            const allTokos = response.tokos || [];
+            const tokoMap = {};
+            allTokos.forEach(t => {
+                tokoMap[t.id] = t;
+            });
+            
+            pageItems.forEach(f => {
+                if (f.category === 'PIUTANG' && f.toko_id && !f.toko && tokoMap[f.toko_id]) {
+                    f.toko = tokoMap[f.toko_id];
+                    console.log('[renderTable] Enriched:', f.nama_file, '→ toko:', f.toko.nama);
+                }
+            });
+            
+            // Re-render after enrichment
+            renderTableHTML(tbody, pageItems);
+        }).catch(err => {
+            console.error('[renderTable] Error fetching toko data:', err);
+            renderTableHTML(tbody, pageItems);
+        });
+        return; // Don't continue rendering until enrichment completes
+    }
+    
+    renderTableHTML(tbody, pageItems);
+    
     emptyState?.classList.add('hidden');
     pagination?.classList.add('hidden'); // We now use infinite scroll instead of frontend pagination
+}
+
+// Helper function to render the HTML
+function renderTableHTML(tbody, pageItems) {
 
     tbody.innerHTML = pageItems.map((a, i) => {
         // Get original filename and strip nominal from database level
         let cleanName = a.nama_file.toUpperCase().replace(/^(NON\s+|PPN\s+)/i, '');
-        console.log('[DEBUG 1] After remove PPN/NON:', cleanName);
         
         // Strip out trailing or embedded dates like " 18 FEB"
         cleanName = cleanName.replace(/\s+\d{1,2}\s+(JAN|FEB|MAR|APR|MEI|MAY|JUN|JUL|AGU|AUG|SEP|OKT|OCT|NOV|DES|DEC)[A-Z]*\b/i, '').trim();
-        console.log('[DEBUG 2] After remove date:', cleanName);
         
         // Remove trailing space and numbers (any combination of digits and dots)
         const beforeClean = cleanName;
@@ -884,7 +968,6 @@ function renderTable() {
         cleanName = cleanName.replace(/\s+[\d\.,]+$/, '');
         // Add back .PDF
         cleanName = cleanName + '.PDF';
-        console.log('[DEBUG 3] Before nominal clean:', beforeClean, '→ After:', cleanName, 'Changed:', beforeClean !== cleanName);
 
         const isAnomali = a.status && a.status.includes('Anomali');
         
@@ -911,7 +994,7 @@ function renderTable() {
         let statusBadges = '';
         if (isAnomali) {
             statusBadges = '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-red-200 text-red-800 uppercase tracking-wide animate-pulse"><span class="w-2 h-2 rounded-full bg-red-600"></span>ANOMALI</span>';
-        } else if (a.status === 'Unread' && !isSuperAdmin()) {
+        } else if (a.status === 'Unread' && !isSuperAdmin() && !(currentUser && currentUser.role === 'admin_zona')) {
             statusBadges = '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-blue-100 text-blue-700 uppercase tracking-wide"><span class="w-2 h-2 rounded-full bg-blue-600"></span>Belum Dibaca</span>';
         } else if (isSuperAdmin() && a.status && a.status.includes('Read')) {
             statusBadges = '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-100 text-emerald-700 uppercase tracking-wide"><span class="w-2 h-2 rounded-full bg-emerald-600"></span>Dibaca</span>';
@@ -961,11 +1044,11 @@ function renderTable() {
                         <!-- Quick Action Buttons (Compact Icons) -->
                         <div class="flex gap-1.5 pl-2 border-l border-gray-150">
                             ${viewMode === 'active' ? `
-                                <button onclick="openPreview('${a.id}', '${a.nama_file}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Preview">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                <button onclick="openPreview('${a.id}', '${a.nama_file}')" style="padding: ${(currentUser && currentUser.role === 'admin_zona') ? '0.75rem' : '0.375rem'}" class="text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Preview">
+                                    <svg class="transition-all" style="width: ${(currentUser && currentUser.role === 'admin_zona') ? '1.5rem' : '1rem'}; height: ${(currentUser && currentUser.role === 'admin_zona') ? '1.5rem' : '1rem'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                 </button>
-                                <a href="${CONFIG.API_URL}/api/files/${a.id}/download?token=${API.getToken()}" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" title="Download">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <a href="${CONFIG.API_URL}/api/files/${a.id}/download?token=${API.getToken()}" style="padding: ${(currentUser && currentUser.role === 'admin_zona') ? '0.75rem' : '0.375rem'}" class="text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" title="Download">
+                                    <svg class="transition-all" style="width: ${(currentUser && currentUser.role === 'admin_zona') ? '1.5rem' : '1rem'}; height: ${(currentUser && currentUser.role === 'admin_zona') ? '1.5rem' : '1rem'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 </a>
 
                                 ${isSuperAdmin() || currentUser?.role === 'moderator' ? `
@@ -987,13 +1070,13 @@ function renderTable() {
                     </div>
                 </div>
 
-                <!-- Bottom Row: Metadata (Tanggal dokumen saja + spacing) -->
+                <!-- Bottom Row: Metadata (Hidden for PIUTANG) -->
                 <div class="mt-2 pt-2 border-t border-gray-150"></div>
                 <div class="flex items-center gap-4 text-[12px] font-bold text-gray-700 pl-10 py-2">
+                    <!-- Category/Type Badge -->
                     <div class="flex items-center gap-0.5">
                         <span class="text-gray-400 text-lg">📁</span>
                         ${(() => {
-                            console.log('[Rendering Badge] File:', a.nama_file, 'Category:', a.category, 'Tipe_PPn:', a.tipe_ppn);
                             const badges = getCategoryBadges(a.category, a.tipe_ppn);
                             let display = '';
                             if (badges.typeLabel) {
@@ -1001,30 +1084,60 @@ function renderTable() {
                             } else {
                                 display = badges.categoryLabel;
                             }
-                            console.log('[Rendering Badge Result]', display);
                             return `<span class="font-bold text-gray-800">${display}</span>`;
                         })()}
                     </div>
-                    ${a.total_jual ? `
-                    <div class="flex items-center gap-0.5">
-                        <span class="text-gray-400 text-lg">💰</span>
-                        <span class="font-mono text-gray-800 font-bold text-[13px]">Rp ${(a.total_jual || 0).toLocaleString('id-ID')}</span>
-                    </div>
-                    ` : extractNominalFromFilename(a.nama_file) ? `
+                    
+                    <!-- Nominal Badge (ONLY for INVOICE files, not PIUTANG) -->
+                    ${a.category !== 'PIUTANG' && a.total_jual ? `
                     <div class="flex items-center gap-0.5">
                         <span class="text-gray-400">💰</span>
-                        <span>${extractNominalFromFilename(a.nama_file)}</span>
+                        <span class="text-xs font-bold text-gray-900">Rp ${new Intl.NumberFormat('id-ID').format(a.total_jual)}</span>
                     </div>
                     ` : ''}
+                    
+                    <!-- Toko Badge (ONLY for PIUTANG) -->
+                    ${a.category === 'PIUTANG' && a.toko?.nama ? `
+                    <div class="flex items-center gap-0.5">
+                        <span class="text-gray-400">🏪</span>
+                        <span class="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded-full">${a.toko.nama}</span>
+                    </div>
+                    ` : ''}
+                    
+                    <!-- Tanggal Badge (ONLY for PIUTANG) -->
+                    ${a.category === 'PIUTANG' && a.tanggal_dokumen ? `
+                    <div class="flex items-center gap-0.5">
+                        <span class="text-gray-400">📅</span>
+                        <span class="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-1 rounded-full">${new Date(a.tanggal_dokumen).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
+                    </div>
+                    ` : ''}
+                    
+                    <!-- Zona Badge (HIDE for PIUTANG) -->
+                    ${a.category !== 'PIUTANG' && a.zonas?.nama ? `
                     <div class="flex items-center gap-0.5">
                         <span class="text-gray-400">📍</span>
                         <span>${a.zonas?.nama || '-'}</span>
                     </div>
+                    ` : ''}
+                    
+                    <!-- Date Badge (HIDE for PIUTANG) -->
+                    ${a.category !== 'PIUTANG' ? `
                     <div class="flex items-center gap-0.5">
                         <span class="text-gray-400">📅</span>
                         <span>${docDate}</span>
                     </div>
-                    ${syncStatusBadge(a.storage_path) ? `
+                    ` : ''}
+                    
+                    <!-- Uploader Badge (HIDE for PIUTANG) -->
+                    ${a.category !== 'PIUTANG' && (isSuperAdmin() || currentUser?.role === 'moderator') && a.uploaded_by ? `
+                    <div class="flex items-center gap-0.5">
+                        <span class="text-gray-400">👤</span>
+                        <span class="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-bold border border-blue-100" id="uploader-${a.id}" data-uploader-id="${a.uploaded_by}">Memuat...</span>
+                    </div>
+                    ` : ''}
+                    
+                    <!-- Sync Status Badge (HIDE for PIUTANG) -->
+                    ${a.category !== 'PIUTANG' && syncStatusBadge(a.storage_path) ? `
                         <div class="ml-auto">
                             ${syncStatusBadge(a.storage_path)}
                         </div>
@@ -1038,6 +1151,11 @@ function renderTable() {
 }
 
 function syncStatusBadge(storagePath) {
+    // Only show sync status for super_admin and moderator
+    if (!(isSuperAdmin() || currentUser?.role === 'moderator')) {
+        return '';
+    }
+    
     const status = syncStatuses[storagePath];
     if (!status) return '';
     const primaryOk = status.primaryStatus === 'verified';

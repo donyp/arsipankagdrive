@@ -23,7 +23,7 @@ async function initAuth(requiredRole = null) {
     }
 
     try {
-        // Verify token with backend and get fresh user data
+        // Verify token with backend
         const { user } = await API.get('/api/auth/me');
 
         if (!user || !user.is_active) {
@@ -44,6 +44,7 @@ async function initAuth(requiredRole = null) {
         }
 
         currentUser = user;
+        updateUserUI();
 
     } catch (err) {
         console.error('[Auth] Init Auth Error:', err.message);
@@ -106,14 +107,34 @@ async function loginWithCredentials(email, password) {
 
 // ---- Logout ----
 async function logout() {
-    try {
-        await API.post('/api/auth/logout', { session_id: API.getSessionId() });
-    } catch (_) {
-        // Silent fail — we're logging out anyway
+    // Show confirmation dialog
+    const result = await Swal.fire({
+        title: '<span class="text-lg font-black">Logout Akun?</span>',
+        text: 'Apakah Anda yakin ingin keluar dari sistem?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Logout',
+        cancelButtonText: 'Batal',
+        customClass: {
+            popup: 'rounded-[1.5rem] border border-gray-100',
+            confirmButton: 'rounded-lg text-[11px] font-black uppercase px-6 py-3',
+            cancelButton: 'rounded-lg text-[11px] font-black uppercase px-6 py-3'
+        }
+    });
+
+    // If user confirmed logout
+    if (result.isConfirmed) {
+        try {
+            await API.post('/api/auth/logout', { session_id: API.getSessionId() });
+        } catch (_) {
+            // Silent fail — we're logging out anyway
+        }
+        API.clearAuth();
+        currentUser = null;
+        window.location.href = 'index.html';
     }
-    API.clearAuth();
-    currentUser = null;
-    window.location.href = 'index.html';
 }
 
 /**
@@ -190,6 +211,17 @@ function updateUserUI() {
         const allowedRoles = el.getAttribute('data-role').split(',').map(role => role.trim());
         const isAllowed = allowedRoles.includes(currentUser.role)
             || (allowedRoles.includes('super_admin') && currentUser.role === 'moderator');
+        
+        // Debug logging for dashboard
+        if (el.textContent.includes('Dashboard')) {
+            console.log('[Auth Guard] Dashboard check:', {
+                allowedRoles,
+                currentRole: currentUser.role,
+                isAllowed,
+                element: el.textContent
+            });
+        }
+        
         if (!isAllowed) {
             if (el.tagName === 'OPTION') el.remove();
             else el.style.display = 'none';

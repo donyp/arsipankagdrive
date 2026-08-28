@@ -736,10 +736,11 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 app.get('/api/files', authenticateToken, authorizeZone, async (req, res) => {
     try {
         console.log(`[/api/files] User role: ${req.user.role}, zona_id: ${req.user.zona_id}`);
+        console.log(`[/api/files] Query params:`, { category: req.query.category, tipe_ppn: req.query.tipe_ppn, zona_id: req.query.zona_id });
         
         let query = supabase
             .from('files')
-            .select('id, nama_file, storage_path, ukuran_bytes, category, tipe_ppn, tanggal_dokumen, zona_id, toko_id, status, created_at, total_jual, zonas(kode, nama)', { count: 'exact' })
+            .select('id, nama_file, storage_path, ukuran_bytes, category, tipe_ppn, tanggal_dokumen, zona_id, toko_id, status, created_at, total_jual, uploaded_by, zonas(kode, nama)', { count: 'exact' })
             .is('deleted_at', null)
             .order('created_at', { ascending: false });
 
@@ -747,7 +748,14 @@ app.get('/api/files', authenticateToken, authorizeZone, async (req, res) => {
         if (req.user.role === 'admin_zona') {
             console.log(`[/api/files] Filtering as admin_zona for zona_id: ${req.user.zona_id}`);
             query = query.eq('zona_id', req.user.zona_id)
-                .eq('category', 'INVOICE'); // Strict: admin_zona only sees INVOICE category
+                .in('category', ['INVOICE', 'PPN', 'NON', 'NON_PPN']); // Admin zona sees all invoice-related files
+            console.log(`[/api/files] Applied filters: zona_id=${req.user.zona_id}, category IN (INVOICE, PPN, NON, NON_PPN)`);
+            
+            // Admin_zona can optionally filter by tipe_ppn (PPN/NON)
+            if (req.query.tipe_ppn) {
+                console.log(`[/api/files] Admin_zona filtering by tipe_ppn: ${req.query.tipe_ppn}`);
+                query = query.eq('tipe_ppn', req.query.tipe_ppn);
+            }
         } 
         // Moderator and super_admin see all files (no automatic zona filter)
         // But can optionally filter by zona_id query param
@@ -758,9 +766,19 @@ app.get('/api/files', authenticateToken, authorizeZone, async (req, res) => {
             console.log(`[/api/files] ${req.user.role} viewing ALL files (no zona filter)`);
         }
 
-        // Category filter
-        if (req.query.category) {
-            query = query.eq('category', req.query.category);
+        // Category filter (only for moderator/super_admin, not admin_zona)
+        if (req.query.category && (req.user.role === 'moderator' || req.user.role === 'super_admin')) {
+            console.log(`[/api/files] Applying category filter for ${req.user.role}: ${req.query.category}`);
+            
+            // Special handling for INVOICE category: includes PPN, NON, and INVOICE
+            if (req.query.category === 'INVOICE') {
+                console.log(`[/api/files] INVOICE filter: searching for category IN ('INVOICE', 'PPN', 'NON', 'NON_PPN')`);
+                query = query.in('category', ['INVOICE', 'PPN', 'NON', 'NON_PPN']);
+            } else {
+                query = query.eq('category', req.query.category);
+            }
+        } else if (req.query.category) {
+            console.log(`[/api/files] Ignoring category param "${req.query.category}" for ${req.user.role} (only moderator/super_admin can filter by category)`);
         }
 
         // Toko filter - only apply if toko_id is valid number
@@ -771,8 +789,8 @@ app.get('/api/files', authenticateToken, authorizeZone, async (req, res) => {
             console.log(`[/api/files] WARNING: Invalid toko_id parameter: ${req.query.toko_id} (ignoring)`);
         }
 
-        // Filter by Tipe PPN (PPN/NON)
-        if (req.query.tipe_ppn) {
+        // Filter by Tipe PPN (PPN/NON) - only for non-admin_zona (admin_zona filters in zona section)
+        if (req.query.tipe_ppn && req.user.role !== 'admin_zona') {
             query = query.eq('tipe_ppn', req.query.tipe_ppn);
         }
 
@@ -809,13 +827,33 @@ app.get('/api/files', authenticateToken, authorizeZone, async (req, res) => {
         const { data, error, count } = await query;
         if (error) {
             console.error('[/api/files] Query error:', error);
+            console.error('[/api/files] Error message:', error.message);
             throw error;
         }
 
-        console.log(`[/api/files] Success: found ${data?.length || 0} files, total: ${count || 0}`);
+        console.log(`[/api/files] Query success! Found ${data?.length || 0} files out of total ${count || 0}`);
+        if (data && data.length > 0) {
+            console.log(`[/api/files] Sample files:`, data.slice(0, 2).map(f => ({ 
+                id: f.id, 
+                nama_file: f.nama_file, 
+                category: f.category, 
+                toko_id: f.toko_id,
+                toko: f.toko,
+                tanggal_dokumen: f.tanggal_dokumen
+            })));
+        }
+
+        // Enrich files with toko data if relationship join failed
+        const enrichedData = await enrichTokoData(data || []);
+        
+        console.log(`[/api/files] After enrichment:`, enrichedData.slice(0, 2).map(f => ({ 
+            nama_file: f.nama_file, 
+            toko_id: f.toko_id,
+            toko: f.toko
+        })));
 
         res.json({
-            files: data || [],
+            files: enrichedData,
             total: count || 0,
             page,
             limit,
@@ -825,6 +863,78 @@ app.get('/api/files', authenticateToken, authorizeZone, async (req, res) => {
     } catch (err) {
         console.error('List Files Error:', err);
         res.status(500).json({ error: 'Gagal memuat daftar file.' });
+    }
+});
+
+// ---- Helper: Enrich files with toko data if relationship failed ----
+async function enrichTokoData(files) {
+    const tokoIds = [...new Set(files.filter(f => f.toko_id && !f.toko).map(f => f.toko_id))];
+    
+    console.log('[enrichTokoData] Files needing toko enrichment:', tokoIds);
+    
+    if (tokoIds.length === 0) {
+        console.log('[enrichTokoData] No files need enrichment');
+        return files;
+    }
+    
+    console.log('[enrichTokoData] Fetching toko data for IDs:', tokoIds);
+    const { data: tokos, error: tokoError } = await supabase
+        .from('toko')
+        .select('id, nama')
+        .in('id', tokoIds);
+    
+    console.log('[enrichTokoData] Toko query error:', tokoError);
+    console.log('[enrichTokoData] Toko query result count:', tokos?.length);
+    console.log('[enrichTokoData] Toko query result:', tokos);
+    
+    const tokoMap = {};
+    if (tokos) {
+        tokos.forEach(t => {
+            tokoMap[t.id] = t;
+            console.log('[enrichTokoData] Mapped toko:', t.id, '→', t.nama);
+        });
+    }
+    
+    const enrichedFiles = files.map(f => {
+        if (f.toko_id && !f.toko) {
+            if (tokoMap[f.toko_id]) {
+                console.log('[enrichTokoData] Enriching file:', f.nama_file, 'with toko:', tokoMap[f.toko_id].nama);
+                f.toko = tokoMap[f.toko_id];
+            } else {
+                console.log('[enrichTokoData] No toko found for toko_id:', f.toko_id, '(file:', f.nama_file, ')');
+            }
+        }
+        return f;
+    });
+    
+    console.log('[enrichTokoData] Final enriched result - sample:', enrichedFiles.filter(f => f.toko_id).slice(0, 3).map(f => ({
+        nama_file: f.nama_file,
+        toko_id: f.toko_id,
+        toko: f.toko
+    })));
+    
+    return enrichedFiles;
+}
+
+// ---- Diagnostic: Check all toko entries ----
+app.get('/api/diagnostic/all-tokos', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'super_admin' && req.user.role !== 'moderator') {
+            return res.status(403).json({ error: 'Akses ditolak' });
+        }
+        
+        const { data: tokos, error } = await supabase
+            .from('toko')
+            .select('id, nama, zona_id')
+            .order('id', { ascending: true });
+        
+        if (error) throw error;
+        
+        console.log('[Diagnostic] All tokos:', tokos);
+        res.json({ tokos, total: tokos?.length || 0 });
+    } catch (err) {
+        console.error('Diagnostic error:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -1788,6 +1898,173 @@ app.post('/api/files/upload', authenticateToken, requireUploadPermission, upload
     }
 });
 
+// ============================================================
+// POST /api/files/upload-piutang — Upload PIUTANG files
+// ============================================================
+app.post('/api/files/upload-piutang', authenticateToken, requireUploadPermission, upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'Tidak ada file yang diupload.' });
+        }
+
+        // Only moderator and super_admin can upload PIUTANG
+        if (!['moderator', 'super_admin'].includes(req.user.role)) {
+            return res.status(403).json({ error: 'Akses ditolak. Hanya moderator dan super_admin dapat mengupload Bukti Piutang.' });
+        }
+
+        const toko_id = req.body?.toko_id;
+        const tanggal_dokumen = req.body?.tanggal_dokumen;
+        console.log(`[PIUTANG Upload] User: ${req.user.userId}, File: ${req.file.originalname}`);
+        console.log(`[PIUTANG Upload] req.body:`, req.body);
+        console.log(`[PIUTANG Upload] Received toko_id: ${toko_id}, tanggal_dokumen: ${tanggal_dokumen}`);
+        
+        // Parse toko_id - it comes as string from FormData, convert to number
+        const parsedTokoId = toko_id ? parseInt(toko_id) : null;
+        console.log(`[PIUTANG Upload] Parsed toko_id: ${parsedTokoId}`);
+
+        // Extract nominal from filename (e.g., "1.520.000.pdf" → "1.520.000")
+        const nominal = req.file.originalname.replace(/\.[^/.]+$/, "").trim();
+
+        // Validate that nominal is not empty
+        if (!nominal) {
+            return res.status(400).json({ error: 'Nama file harus berisi nominal (contoh: 1.520.000.pdf).' });
+        }
+
+        // For PIUTANG, we use a default "PIUTANG" zona-like identifier
+        // This bypasses normal zona restrictions
+        const defaultZonaId = 1; // Use zona 1 as default for PIUTANG
+        const defaultZonaCode = 'zona-1';
+
+        // Determine storage path based on toko_id
+        let storagePath;
+        if (parsedTokoId) {
+            // Fetch toko name/kode
+            const { data: tokoData } = await supabase
+                .from('toko')
+                .select('nama')
+                .eq('id', parsedTokoId)
+                .single();
+            
+            if (tokoData) {
+                // Convert toko name to kode format (e.g., "Balaraja" → "balaraja")
+                const tokoKode = tokoData.nama.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                storagePath = `ARSIP ANKA/${defaultZonaCode}/toko-${tokoKode}/BUKTI PIUTANG/${req.file.originalname}`;
+                console.log(`[PIUTANG Storage] With toko: ${storagePath}`);
+            } else {
+                // Fallback if toko not found
+                storagePath = `ARSIP ANKA/PIUTANG/${req.file.originalname}`;
+                console.log(`[PIUTANG Storage] Toko ID ${parsedTokoId} not found, using fallback: ${storagePath}`);
+            }
+        } else {
+            // No toko selected - use default PIUTANG path
+            storagePath = `ARSIP ANKA/PIUTANG/${req.file.originalname}`;
+            console.log(`[PIUTANG Storage] No toko, using default: ${storagePath}`);
+        }
+        
+        const size = req.file.buffer.length;
+        console.log(`[PIUTANG] File size: ${size} bytes`);
+
+        // Duplicate Detection - only block if file exists AND is NOT deleted
+        const { data: existingFile } = await supabase
+            .from('files')
+            .select('id')
+            .eq('nama_file', req.file.originalname)
+            .eq('category', 'PIUTANG')
+            .is('deleted_at', null)
+            .limit(1)
+            .maybeSingle();
+
+        if (existingFile) {
+            return res.status(409).json({ error: 'File dengan nama yang sama sudah ada di Bukti Piutang.' });
+        }
+
+        // Validate Date (tanggal_dokumen)
+        let normalizedDocumentDate = null;
+        if (tanggal_dokumen) {
+            normalizedDocumentDate = normalizeDocumentDate(tanggal_dokumen);
+            if (!normalizedDocumentDate) {
+                return res.status(400).json({ error: 'Format tanggal_dokumen tidak valid atau tidak terbaca kalender.' });
+            }
+            console.log(`[PIUTANG Date] From request body: ${normalizedDocumentDate}`);
+        }
+
+        // Use today as default if no date provided
+        if (!normalizedDocumentDate) {
+            normalizedDocumentDate = new Date().toISOString().split('T')[0];
+            console.log(`[PIUTANG Date] Default to today: ${normalizedDocumentDate}`);
+        }
+
+        // Upload to Local Storage first
+        const fileBuffer = Buffer.from(req.file.buffer);
+        try {
+            console.log(`[PIUTANG] Uploading to local storage - path: ${storagePath}`);
+            await LocalStorage.uploadDirect(fileBuffer, req.file.originalname, storagePath);
+            console.log(`[PIUTANG] Local storage upload complete for: ${req.file.originalname}`);
+        } catch (localErr) {
+            console.error(`[PIUTANG] Local storage upload failed:`, localErr.message);
+            console.error(`[PIUTANG] Stack:`, localErr.stack);
+            throw new Error(`Penyimpanan lokal gagal: ${localErr.message}`);
+        }
+
+        // Background upload to Google Drive (fire and forget)
+        setImmediate(async () => {
+            try {
+                console.log(`[PIUTANG Background] Starting async upload for: ${req.file.originalname}`);
+                const result = await RcloneStorage.uploadInBackground(
+                    fileBuffer,
+                    req.file.originalname,
+                    'PIUTANG',
+                    'bukti',
+                    'PIUTANG'
+                );
+                console.log(`[PIUTANG Background] Async upload result:`, result);
+            } catch (gdErr) {
+                console.error(`[PIUTANG Background] Google Drive upload failed (non-critical):`, gdErr.message);
+            }
+        });
+
+        // Insert into database
+        const { data: fileRecord, error: dbError } = await supabase
+            .from('files')
+            .insert({
+                nama_file: req.file.originalname,
+                storage_path: storagePath,
+                zona_id: defaultZonaId,
+                toko_id: parsedTokoId, // Store parsed toko_id
+                category: 'PIUTANG',
+                ukuran_bytes: size,
+                uploaded_by: req.user.userId,
+                tanggal_dokumen: normalizedDocumentDate,
+                total_jual: parseFloat(nominal.replace(/\./g, '')) || 0, // Store numeric nominal value
+                status: 'Unread'
+            })
+            .select()
+            .single();
+
+        if (dbError) throw dbError;
+
+        // Audit log
+        await supabase.from('audit_logs').insert({
+            user_id: req.user.userId,
+            action: 'Upload PIUTANG File',
+            context: `Uploaded ${req.file.originalname} (Nominal: ${nominal})`
+        });
+
+        console.log(`[PIUTANG] ✅ Upload successful:`, req.file.originalname);
+
+        res.status(200).json({
+            success: true,
+            message: 'File Bukti Piutang berhasil diupload.',
+            file: fileRecord
+        });
+
+    } catch (err) {
+        console.error('PIUTANG Upload Error:', err.message);
+        console.error('PIUTANG Upload Stack:', err.stack);
+        res.status(500).json({ error: 'Gagal upload file Piutang: ' + err.message });
+    }
+});
+
 // DELETE /api/files/:id
 app.delete('/api/files/:id', authenticateToken, async (req, res) => {
     try {
@@ -2162,6 +2439,35 @@ app.get('/api/users', authenticateToken, requirePermission('manage_users'), asyn
         res.json({ users: data || [] });
     } catch (err) {
         res.status(500).json({ error: 'Gagal memuat daftar user.' });
+    }
+});
+
+// GET /api/users/names?ids=id1,id2,id3 — Get user names by IDs for badges
+app.get('/api/users/names', authenticateToken, async (req, res) => {
+    try {
+        const { ids } = req.query;
+        if (!ids) return res.json({});
+
+        const idList = ids.split(',').map(id => id.trim()).filter(Boolean);
+        if (idList.length === 0) return res.json({});
+
+        const { data, error } = await supabase
+            .from('users')
+            .select('id, name')
+            .in('id', idList);
+
+        if (error) throw error;
+
+        // Convert to object: { userId: userName, ... }
+        const result = {};
+        (data || []).forEach(user => {
+            result[user.id] = user.name || user.id;
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('[/api/users/names] Error:', err);
+        res.status(500).json({ error: 'Gagal memuat nama user.' });
     }
 });
 

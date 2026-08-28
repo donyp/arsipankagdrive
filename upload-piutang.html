@@ -4,16 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Invoice Merah | Pusat Arsip Anka</title>
-    <meta name="description" content="Upload dokumen arsip ke Google Drive">
+    <title>Upload Bukti Piutang | Pusat Arsip Anka</title>
+    <meta name="description" content="Upload bukti pembayaran piutang ke Google Drive">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="css/tailwind.generated.css">
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Cloak the page until Auth and UI checks are done
         document.documentElement.style.opacity = '0';
         document.documentElement.classList.add('auth-loading');
+        
+        // Safety timeout to uncloak page after 5 seconds regardless
+        setTimeout(() => {
+            if (document.documentElement.style.opacity === '0') {
+                console.warn('[Safety Uncloak] Page was still cloaked after 5 seconds, uncloaking now');
+                document.documentElement.style.opacity = '1';
+                document.documentElement.classList.remove('auth-loading');
+            }
+        }, 5000);
     </script>
 </head>
 
@@ -23,14 +33,13 @@
     <div id="mobile-overlay" class="mobile-overlay" onclick="toggleSidebar()"></div>
 
     <!-- Sidebar -->
-    <!-- Sidebar (rendered by js/sidebar.js?v=ULTRACLEAN_2026) -->
     <aside id="sidebar"
-        class="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-40 hidden">
+        class="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-40">
+        <!-- Content injected by sidebar.js -->
     </aside>
 
     <!-- Main Content -->
-    <!-- Main Content (Default to 0 margin, will be set to ml-64 via JS if not admin_zona) -->
-    <main id="main-content" class="min-h-screen transition-all duration-300">
+    <main id="main-content" class="ml-64 min-h-screen transition-all duration-300">
         <!-- Top Bar -->
         <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4">
             <div class="flex items-center gap-4">
@@ -41,9 +50,8 @@
                     </svg>
                 </button>
                 <div>
-                    <h2 class="text-xl font-bold text-gray-900">Upload Doc</h2>
-                    <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Antrian Upload Dokumen
-                        Arsip</p>
+                    <h2 class="text-xl font-bold text-gray-900">Upload Bukti Piutang</h2>
+                    <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Antrian Upload Bukti Pembayaran Piutang</p>
                 </div>
             </div>
         </header>
@@ -63,6 +71,13 @@
                     </div>
 
                     <form id="upload-form" class="space-y-6 relative z-10">
+                        <!-- Info Box -->
+                        <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                            <p class="text-sm font-bold text-blue-900">
+                                💡 Format File: Nama file hanya nominal saja (contoh: <code class="bg-white px-2 py-1 rounded font-mono">1.520.000.pdf</code>)
+                            </p>
+                        </div>
+
                         <!-- Drag & Drop Zone -->
                         <div>
                             <div class="flex items-center justify-between mb-3 px-1">
@@ -72,9 +87,8 @@
                                     PDF/JPG/PNG</span>
                             </div>
                             <div id="drop-zone"
-                                class="drop-zone rounded-3xl p-16 text-center cursor-pointer border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-all duration-300"
-                                onclick="document.getElementById('file-input').click()">
-                                <div id="drop-zone-content">
+                                class="drop-zone rounded-3xl p-16 text-center border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-all duration-300">
+                                <div id="drop-zone-intro" class="text-center">
                                     <div
                                         class="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-200">
                                         <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor"
@@ -83,11 +97,14 @@
                                                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                         </svg>
                                     </div>
-                                    <p class="text-base text-gray-900 mb-1 font-bold">Klik atau seret file ke sini</p>
-                                    <p class="text-xs text-gray-400 font-medium">Dokumen akan diproses dalam antrian
-                                        otomatis</p>
+                                    <p class="text-base text-gray-900 mb-1 font-bold">Seret file ke sini</p>
+                                    <p class="text-xs text-gray-400 font-medium mb-6">atau gunakan tombol di bawah</p>
                                 </div>
-                                <div id="file-info" class="hidden text-left w-full">
+                                <button type="button" onclick="document.getElementById('file-input').click()" 
+                                    class="px-6 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors">
+                                    Pilih File
+                                </button>
+                                <div id="file-info" class="hidden text-left w-full mt-6">
                                     <div class="flex justify-between items-center mb-4 pb-2 border-b border-white/5">
                                         <div class="flex items-center gap-2">
                                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -99,23 +116,23 @@
                                             Antrean</button>
                                     </div>
                                     <ul id="file-list-display"
-                                        class="grid grid-cols-1 gap-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-                                        <!-- Files injected here by JS -->
+                                        class="grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar relative">
+                                        <!-- Files injected here by JS with expandable forms -->
                                     </ul>
                                 </div>
                             </div>
+                            <div id="upload-btn-container" class="hidden mt-4">
+                                <button id="upload-btn" type="button"
+                                    class="w-full btn-primary py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed shadow-xl shadow-indigo-600/20 active:scale-[0.98] transition-all">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                    </svg>
+                                    Mulai Upload
+                                </button>
+                            </div>
                             <input id="file-input" type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png" multiple
                                 onchange="handleFileSelect(this)">
-                        </div>
-
-                        <!-- Description -->
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Catatan
-                                Tambahan</label>
-                            <textarea id="upload-description" rows="3"
-                                placeholder="Misal: Nomor PO, nama cabang, atau detail lainnya..."
-                                class="input-field w-full px-4 py-3.5 rounded-xl text-sm resize-none transition-all focus:scale-[1.01]"></textarea>
                         </div>
 
                         <!-- Progress Bar -->
@@ -134,16 +151,6 @@
                                 <div id="upload-progress-bar" class="progress-bar-fill h-2" style="width: 0%"></div>
                             </div>
                         </div>
-
-                        <!-- Submit Button -->
-                        <button id="upload-btn" type="submit"
-                            class="btn-primary w-full py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed shadow-xl shadow-indigo-600/20 active:scale-[0.98] transition-all">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                            </svg>
-                            Mulai Upload Antrean
-                        </button>
                     </form>
                 </div>
 
@@ -164,13 +171,7 @@
                             class="text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em] animate-pulse">Live</span>
                     </div>
                     <div id="recent-uploads" class="space-y-3">
-                        <div class="flex flex-col items-center justify-center py-10 opacity-30">
-                            <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <p class="text-sm font-medium">Memuat unggahan terbaru...</p>
-                        </div>
+                        <!-- Recent uploads will be loaded here -->
                     </div>
                 </div>
             </div>
@@ -178,12 +179,12 @@
     </main>
 
     <!-- Scripts -->
-    <script src="js/sidebar.js?v=ULTRACLEAN_2026"></script>
-    <script src="js/config.js"></script>
-    <script src="js/supabase.js"></script>
-    <script src="js/utils.js?v=1778387279965"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/upload.js?v=20260827235100"></script>
+    <script src="js/config.js?v=20260827230000"></script>
+    <script src="js/supabase.js?v=20260827230000"></script>
+    <script src="js/utils.js?v=20260827230000"></script>
+    <script src="js/sidebar.js?v=20260827230000"></script>
+    <script src="js/auth.js?v=20260827230000"></script>
+    <script src="js/upload-piutang.js?v=20260827230000"></script>
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');

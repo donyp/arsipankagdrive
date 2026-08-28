@@ -315,12 +315,16 @@
                         <div class="flex-1 min-w-[150px]">
                             <label
                                 class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Kategori</label>
-                            <select id="filter-category" onchange="loadArchives()" data-role="super_admin"
+                            <select id="filter-category" onchange="loadArchives()"
                                 class="w-full bg-gray-50 border border-gray-100 text-xs font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-100 transition-all">
                                 <option value="">Semua Kat</option>
                                 <option value="INVOICE">Invoice Merah</option>
                                 <option value="PIUTANG">Bukti Pembayaran</option>
                             </select>
+                            <!-- For admin_zona: read-only label instead of dropdown -->
+                            <div id="filter-category-readonly" class="hidden w-full bg-gray-100 border border-gray-200 text-xs font-bold rounded-xl px-4 py-2.5 text-gray-600 flex items-center cursor-not-allowed">
+                                Invoice Merah
+                            </div>
                         </div>
                         <div class="flex-1 min-w-[120px]">
                             <label
@@ -737,11 +741,14 @@
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Document Viewer</p>
                     </div>
                 </div>
-                <button onclick="closePreview()"
-                    class="p-3 text-gray-400 hover:text-red-500 bg-white border border-gray-100 rounded-xl transition-all shadow-sm"><svg
-                        class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M6 18L18 6M6 6l12 12" stroke-width="2" />
-                    </svg></button>
+                <div class="flex items-center gap-4">
+                    <p class="text-xs font-bold text-amber-600 italic">*Disarankan langsung download jika preview tidak muncul</p>
+                    <button onclick="closePreview()"
+                        class="p-3 text-gray-400 hover:text-red-500 bg-white border border-gray-100 rounded-xl transition-all shadow-sm"><svg
+                            class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 18L18 6M6 6l12 12" stroke-width="2" />
+                        </svg></button>
+                </div>
             </div>
             <div class="flex-1 bg-gray-100 relative">
                 <!-- Loading Spinner -->
@@ -797,10 +804,10 @@
     <script src="js/sidebar.js?v=20260826081000"></script>
     <script src="js/config.js?v=20260826081000"></script>
     <script src="js/supabase.js?v=20260826081000"></script>
-    <script src="js/utils.js?v=20260826084000"></script>
-    <script src="js/auth.js?v=20260826084000"></script>
-    <script src="js/dashboard.js?v=20260826084000"></script>
-    <script src="js/sidebar.js?v=20260826084000"></script>
+    <script src="js/utils.js?v=20260827235200"></script>
+    <script src="js/auth.js?v=20260827235200"></script>
+    <script src="js/dashboard.js?v=20260827235200"></script>
+    <script src="js/sidebar.js?v=20260827235200"></script>
 </body>
 
 </html>

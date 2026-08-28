@@ -412,22 +412,20 @@ const RcloneStorage = {
         // Convert zona code from database format to Google Drive format
         const gdriveZonaKode = this.convertZonaCodeForGDrive(zonaKode);
         
-        // Category mapping:
-        // 'NON' -> goes to INVOICE/NON/
-        // 'PPN' -> goes to INVOICE/PPN/
+        // Category mapping (based on actual Google Drive structure):
+        // 'NON' -> goes to NON/
+        // 'PPN' -> goes to PPN/
         // 'INVOICE' -> goes to INVOICE/
-        // 'BUKTI PIUTANG' -> goes to BUKTI PIUTANG/
+        // 'PIUTANG' or 'BUKTI PIUTANG' -> goes to BUKTI PIUTANG/
         let categoryPath = 'INVOICE'; // default
         if (category) {
             const catUpper = String(category).toUpperCase();
-            if (catUpper === 'NON') {
-                categoryPath = 'INVOICE/NON';
+            if (catUpper === 'NON' || catUpper === 'NON_PPN') {
+                categoryPath = 'NON';
             } else if (catUpper === 'PPN') {
-                categoryPath = 'INVOICE/PPN';
-            } else if (catUpper === 'PIUTANG') {
+                categoryPath = 'PPN';
+            } else if (catUpper === 'PIUTANG' || catUpper === 'BUKTI PIUTANG') {
                 categoryPath = 'BUKTI PIUTANG';
-            } else if (catUpper === 'NON_PPN') {
-                categoryPath = 'INVOICE/NON';
             }
         }
         
@@ -464,11 +462,12 @@ const RcloneStorage = {
      * - syncError: error message if failed, null if successful
      * - storagePath: path where file is stored
      */
-    async uploadInBackground(fileBuffer, originalName, zonaKode, tokoKode, category) {
+    async uploadInBackground(fileBuffer, originalName, zonaKode, tokoKode, category, tokoNamaOriginal = null) {
         const storagePath = this.buildStoragePath(zonaKode, tokoKode, category, originalName);
         
         console.log(`[Background Upload] Starting upload for ${originalName}`);
         console.log(`[Background Upload] Storage path: ${storagePath}`);
+        console.log(`[Background Upload] TokoKode: ${tokoKode}${tokoNamaOriginal ? ` (original nama: ${tokoNamaOriginal})` : ''}`);
         console.log(`[Background Upload] File size: ${fileBuffer.length} bytes`);
         console.log(`[Background Upload] Rclone path: ${rclonePath}`);
         console.log(`[Background Upload] Rclone config: ${configPath}`);
@@ -486,9 +485,9 @@ const RcloneStorage = {
         
         // Use retryWithBackoff to handle transient failures with exponential delays
         const result = await retryWithBackoff(
-            () => this.uploadDirect(fileBuffer, originalName, storagePath),
+            () => this.uploadDirect(fileBuffer, originalName, storagePath, tokoNamaOriginal),
             {
-                maxAttempts: 3,
+                maxAttempts: 10,
                 baseDelay: 5000, // 5 seconds
                 shouldRetry: shouldRetryError,
                 onRetry: (attemptNumber, delay, error) => {
@@ -578,8 +577,12 @@ const RcloneStorage = {
 
     /**
      * The internal upload method using Rclone directly
+     * Now includes proper folder creation before upload
+     * 
+     * tokoNamaOriginal: Original toko name (e.g., "Pasar Kemis") for fallback path
+     *                   Used if converted tokoKode path fails
      */
-    async uploadDirect(fileBuffer, originalName, storagePath) {
+    async uploadDirect(fileBuffer, originalName, storagePath, tokoNamaOriginal = null) {
         try {
             logOperation('uploadDirect', { 
                 action: 'Starting upload',
@@ -588,76 +591,161 @@ const RcloneStorage = {
                 storagePath: storagePath,
                 rclonePath: rclonePath,
                 configPath: configPath,
-                primaryRemote: PRIMARY_REMOTE
+                primaryRemote: PRIMARY_REMOTE,
+                tokoNamaOriginal: tokoNamaOriginal
             });
 
-            // For Google Drive via rclone, use rcat for streaming upload
-            const parentFolderPath = storagePath.substring(0, storagePath.lastIndexOf('/'));
-            if (!createdDirsCache.has(parentFolderPath)) {
-                try {
-                    console.log(`[uploadDirect] Creating directory: ${PRIMARY_REMOTE}:${parentFolderPath}`);
-                    await rcloneExec(['mkdir', `${PRIMARY_REMOTE}:${parentFolderPath}`]);
-                    createdDirsCache.add(parentFolderPath);
-                } catch (err) {
-                    const message = err.message || '';
-                    if (/409|conflict|already exists/i.test(message)) {
-                        console.log(`[uploadDirect] Directory already exists: ${parentFolderPath}`);
-                        createdDirsCache.add(parentFolderPath);
-                    } else {
-                        console.error(`[uploadDirect] Failed to create directory:`, err);
-                        throw err;
-                    }
-                }
-            }
-            
-            // Upload using rclone copyto from stdin (streaming)
-            // First, we need to use a temporary local file since rcat needs proper stdin handling
             const tmpFile = path.join(__dirname, `tmp_${Date.now()}_${originalName}`);
-            
-            // Write buffer to temporary file
             fs.writeFileSync(tmpFile, fileBuffer);
             console.log(`[uploadDirect] Created temp file: ${tmpFile}`);
             
             try {
                 const remotePath = `${PRIMARY_REMOTE}:${storagePath}`;
-                console.log(`[uploadDirect] Uploading to: ${remotePath}`);
-                console.log(`[uploadDirect] File size: ${fileBuffer.length} bytes`);
-                console.log(`[uploadDirect] Using rclone at: ${rclonePath}`);
+                const remoteDir = `${PRIMARY_REMOTE}:${path.dirname(storagePath)}`;
                 
-                // Use copyto to upload from local temp file to remote
+                console.log(`[uploadDirect] Direct upload to: ${remotePath}`);
+                console.log(`[uploadDirect] Parent directory: ${remoteDir}`);
+                console.log(`[uploadDirect] File size: ${fileBuffer.length} bytes`);
+                
+                // Step 1: Create parent directory structure using mkdir
+                console.log(`[uploadDirect] Creating parent directories...`);
+                let mkdirSuccess = false;
+                
+                // Get the parent toko folder path to check if folder with same name exists
+                const storageDirParts = storagePath.split('/');
+                const tokoFolderIndex = storageDirParts.findIndex(p => p.startsWith('toko-'));
+                
+                if (tokoFolderIndex > 0) {
+                    // Check for existing toko folder (including duplicates like toko-pasar-kemis (1))
+                    const tokoFolderParent = storageDirParts.slice(0, tokoFolderIndex).join('/');
+                    const tokoFolderName = storageDirParts[tokoFolderIndex];
+                    
+                    console.log(`[uploadDirect] Checking for existing toko folders in: ${tokoFolderParent}`);
+                    
+                    try {
+                        const listOutput = await new Promise((resolve, reject) => {
+                            let output = '';
+                            const child = spawn(rclonePath, ['lsjson', `${PRIMARY_REMOTE}:${tokoFolderParent}`], {
+                                env: { 
+                                    ...process.env, 
+                                    RCLONE_CONFIG: configPath
+                                },
+                                timeout: 30000
+                            });
+                            
+                            child.stdout.on('data', (chunk) => { output += chunk.toString(); });
+                            child.stderr.on('data', (chunk) => { console.log(`[uploadDirect] lsjson stderr: ${chunk.toString()}`); });
+                            child.on('close', (code) => {
+                                if (code === 0) {
+                                    try {
+                                        resolve(JSON.parse(output));
+                                    } catch (e) {
+                                        console.warn(`[uploadDirect] Failed to parse lsjson output`);
+                                        resolve([]);
+                                    }
+                                } else {
+                                    resolve([]);
+                                }
+                            });
+                            child.on('error', () => resolve([]));
+                        });
+                        
+                        // Find matching toko folder (including duplicates)
+                        const existingTokoFolder = Array.isArray(listOutput) && listOutput.find(item => 
+                            item.IsDir && (
+                                item.Name === tokoFolderName || 
+                                item.Name.startsWith(tokoFolderName + ' (')
+                            )
+                        );
+                        
+                        if (existingTokoFolder) {
+                            console.log(`[uploadDirect] Found existing toko folder: ${existingTokoFolder.Name}`);
+                            // Use the existing folder instead of creating new one
+                            // Update remoteDir to use the existing folder
+                            const actualTokoPath = storageDirParts.slice(0, tokoFolderIndex + 1).map((p, i) => 
+                                i === tokoFolderIndex ? existingTokoFolder.Name : p
+                            ).join('/');
+                            const updatedRemoteDir = `${PRIMARY_REMOTE}:${actualTokoPath}/${storageDirParts.slice(tokoFolderIndex + 1, -1).join('/')}`;
+                            console.log(`[uploadDirect] Updated parent directory: ${updatedRemoteDir}`);
+                            remoteDir = updatedRemoteDir;
+                            // Also update remotePath for consistency
+                            remotePath = `${PRIMARY_REMOTE}:${actualTokoPath}/${storageDirParts.slice(tokoFolderIndex + 1).join('/')}`;
+                            console.log(`[uploadDirect] Updated upload path: ${remotePath}`);
+                        }
+                    } catch (listErr) {
+                        console.warn(`[uploadDirect] Failed to list existing folders, continuing with mkdir:`, listErr.message);
+                    }
+                }
+                
                 await new Promise((resolve, reject) => {
-                    const args = ['copyto', tmpFile, remotePath];
-                    console.log(`[uploadDirect] Rclone args:`, args);
+                    const args = ['mkdir', '-p', remoteDir];
+                    console.log(`[uploadDirect] Running: rclone ${args.join(' ')}`);
                     
                     const child = spawn(rclonePath, args, {
                         env: { 
                             ...process.env, 
                             RCLONE_CONFIG: configPath
-                        }
+                        },
+                        timeout: 60000 // 1 minute timeout for mkdir
                     });
-                    
-                    console.log(`[uploadDirect] Rclone process spawned, PID: ${child.pid}`);
                     
                     let stdErr = '';
                     let stdOut = '';
                     child.stderr.on('data', (chunk) => { 
                         const msg = chunk.toString();
                         stdErr += msg;
-                        console.log(`[uploadDirect] Stderr: ${msg}`);
+                        console.log(`[uploadDirect] mkdir stderr: ${msg}`);
                     });
                     child.stdout.on('data', (chunk) => {
                         const msg = chunk.toString();
                         stdOut += msg;
-                        console.log(`[uploadDirect] Stdout: ${msg}`);
+                        console.log(`[uploadDirect] mkdir stdout: ${msg}`);
                     });
                     child.on('error', (err) => {
-                        console.error(`[uploadDirect] Process error:`, err);
+                        console.error(`[uploadDirect] mkdir process error:`, err);
+                        // Don't reject here - mkdir might fail but copyto could still work
+                        resolve();
+                    });
+                    child.on('close', (code) => {
+                        console.log(`[uploadDirect] mkdir closed with code: ${code}`);
+                        mkdirSuccess = (code === 0);
+                        // Accept both success and "already exists" errors
+                        resolve();
+                    });
+                });
+                
+                // Step 2: Upload file using copyto
+                console.log(`[uploadDirect] Uploading file...`);
+                await new Promise((resolve, reject) => {
+                    const args = ['copyto', tmpFile, remotePath, '--ignore-checksum'];
+                    console.log(`[uploadDirect] Running: rclone ${args.join(' ')}`);
+                    
+                    const child = spawn(rclonePath, args, {
+                        env: { 
+                            ...process.env, 
+                            RCLONE_CONFIG: configPath
+                        },
+                        timeout: 300000 // 5 minute timeout
+                    });
+                    
+                    let stdErr = '';
+                    let stdOut = '';
+                    child.stderr.on('data', (chunk) => { 
+                        const msg = chunk.toString();
+                        stdErr += msg;
+                        console.log(`[uploadDirect] copyto stderr: ${msg}`);
+                    });
+                    child.stdout.on('data', (chunk) => {
+                        const msg = chunk.toString();
+                        stdOut += msg;
+                        console.log(`[uploadDirect] copyto stdout: ${msg}`);
+                    });
+                    child.on('error', (err) => {
+                        console.error(`[uploadDirect] copyto process error:`, err);
                         reject(err);
                     });
                     child.on('close', (code) => {
-                        console.log(`[uploadDirect] Process closed with code: ${code}`);
-                        console.log(`[uploadDirect] Final stderr:`, stdErr);
-                        console.log(`[uploadDirect] Final stdout:`, stdOut);
+                        console.log(`[uploadDirect] copyto closed with code: ${code}`);
                         if (code !== 0) {
                             const errMsg = `rclone copyto failed with code ${code}: ${stdErr}`;
                             console.error(`[uploadDirect] ${errMsg}`);
@@ -668,7 +756,6 @@ const RcloneStorage = {
                     });
                 });
             } finally {
-                // Clean up temp file
                 try {
                     fs.unlinkSync(tmpFile);
                     console.log(`[uploadDirect] Deleted temp file`);
@@ -685,6 +772,88 @@ const RcloneStorage = {
 
             return { storagePath, size: fileBuffer.length };
         } catch (err) {
+            // FALLBACK: If upload failed and we have original toko name, try with original path
+            if (tokoNamaOriginal && err.message.includes('copyto')) {
+                console.log(`[uploadDirect] Primary path failed, trying fallback with original toko name: ${tokoNamaOriginal}`);
+                try {
+                    // Replace toko-converted-name with toko-original-name in storage path
+                    const tokoConvertedPattern = `toko-${tokoNamaOriginal.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/, '')}`;
+                    const fallbackTokoPath = `toko-${tokoNamaOriginal.replace(/\s+/g, ' ').trim()}`; // Keep spaces as-is for fallback
+                    
+                    const fallbackStoragePath = storagePath.replace(tokoConvertedPattern, fallbackTokoPath);
+                    const fallbackRemotePath = `${PRIMARY_REMOTE}:${fallbackStoragePath}`;
+                    const fallbackRemoteDir = `${PRIMARY_REMOTE}:${path.dirname(fallbackStoragePath)}`;
+                    
+                    console.log(`[uploadDirect] Fallback storage path: ${fallbackStoragePath}`);
+                    
+                    const tmpFile2 = path.join(__dirname, `tmp_${Date.now()}_${originalName}`);
+                    fs.writeFileSync(tmpFile2, fileBuffer);
+                    
+                    // Try mkdir for fallback directory
+                    await new Promise((resolve) => {
+                        const mkdirArgs = ['mkdir', '-p', fallbackRemoteDir];
+                        console.log(`[uploadDirect] Fallback mkdir: rclone ${mkdirArgs.join(' ')}`);
+                        
+                        const mkdirChild = spawn(rclonePath, mkdirArgs, {
+                            env: { 
+                                ...process.env, 
+                                RCLONE_CONFIG: configPath
+                            },
+                            timeout: 60000
+                        });
+                        
+                        mkdirChild.on('close', () => resolve());
+                        mkdirChild.on('error', () => resolve());
+                    });
+                    
+                    // Try copyto with fallback path
+                    await new Promise((resolve, reject) => {
+                        const copytoArgs = ['copyto', tmpFile2, fallbackRemotePath, '--ignore-checksum'];
+                        console.log(`[uploadDirect] Fallback copyto: rclone ${copytoArgs.join(' ')}`);
+                        
+                        const copytoChild = spawn(rclonePath, copytoArgs, {
+                            env: { 
+                                ...process.env, 
+                                RCLONE_CONFIG: configPath
+                            },
+                            timeout: 300000
+                        });
+                        
+                        let stdErr = '';
+                        copytoChild.stderr.on('data', (chunk) => {
+                            stdErr += chunk.toString();
+                            console.log(`[uploadDirect] Fallback copyto stderr: ${chunk.toString()}`);
+                        });
+                        copytoChild.on('close', (code) => {
+                            if (code === 0) {
+                                console.log(`[uploadDirect] ✅ Fallback upload succeeded!`);
+                                try { fs.unlinkSync(tmpFile2); } catch (e) {}
+                                resolve();
+                            } else {
+                                reject(new Error(`Fallback copyto failed: ${stdErr}`));
+                            }
+                        });
+                        copytoChild.on('error', reject);
+                    });
+                    
+                    logOperation('uploadDirect', { 
+                        status: '✅ Upload successful (via fallback)',
+                        filename: originalName,
+                        storagePath: fallbackStoragePath 
+                    });
+                    
+                    return { storagePath: fallbackStoragePath, size: fileBuffer.length };
+                } catch (fallbackErr) {
+                    console.error(`[uploadDirect] Fallback also failed:`, fallbackErr.message);
+                    logOperation('uploadDirect', { 
+                        status: '❌ Upload failed (both primary and fallback)',
+                        error: fallbackErr.message,
+                        storagePath: storagePath 
+                    });
+                    throw fallbackErr;
+                }
+            }
+            
             logOperation('uploadDirect', { 
                 status: '❌ Upload failed',
                 error: err.message,
