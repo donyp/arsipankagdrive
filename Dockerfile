@@ -42,6 +42,7 @@ RUN mkdir -p /app/data/log /app/data/temp /app/backend/data/log /app/backend/dat
 ENV PORT=${PORT:-8080}
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=512
+ENV LOG_LEVEL=warn
 
 # Expose port
 # 8080 for Cloud Run / Node backend
