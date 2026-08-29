@@ -201,8 +201,12 @@ module.exports = {
         }
     },
     
-    // Initialize mock files for testing
+    // Initialize mock files for testing (disabled on production/Railway)
     initializeMockFiles() {
+        if (process.env.NODE_ENV === 'production') {
+            console.log('[LocalStorage] Mock files initialization skipped (production mode)');
+            return;
+        }
         createMockFiles();
     },
 
