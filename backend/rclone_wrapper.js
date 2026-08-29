@@ -368,30 +368,49 @@ const RcloneStorage = {
             const remotePath = `${PRIMARY_REMOTE}:${storagePath}`;
             
             return new Promise((resolve, reject) => {
-                const child = spawn(rclonePath, ['cat', remotePath], {
-                    env: { ...process.env, RCLONE_CONFIG: rcloneConfig.configPath }
+                const child = spawn(rclonePath, ['cat', remotePath, '--config', rcloneConfig.configPath], {
+                    stdio: ['ignore', 'pipe', 'pipe']
                 });
                 
-                let hasStarted = false;
-                child.stdout.on('data', () => { hasStarted = true; });
-                child.on('error', reject);
+                let hasError = false;
+                let errorMessage = '';
+                
+                // Collect stderr for debugging
                 child.stderr.on('data', (chunk) => {
-                    if (!hasStarted) console.warn(`[rclone cat stderr] ${chunk.toString()}`);
+                    errorMessage += chunk.toString();
+                    console.warn(`[rclone cat stderr] ${chunk.toString()}`);
                 });
                 
+                // Handle process errors
+                child.on('error', (err) => {
+                    hasError = true;
+                    reject(new Error(`Failed to spawn rclone: ${err.message}`));
+                });
+                
+                // Handle process exit
                 child.on('close', (code) => {
-                    if (code !== 0 && !hasStarted) {
-                        reject(new Error(`rclone cat failed with code ${code}`));
+                    if (code !== 0 && hasError === false) {
+                        console.error(`[rclone cat] Failed with code ${code}: ${errorMessage}`);
+                        reject(new Error(`rclone cat failed with code ${code}: ${errorMessage}`));
                     }
                 });
                 
+                // Return stdout stream (this is the file data)
                 resolve(child.stdout);
             });
         } catch (remoteError) {
-            if (LocalStorage.fileExists(storagePath)) {
-                console.warn(`[Storage] Google Drive preview unavailable; serving local copy for ${storagePath}: ${remoteError.message}`);
-                return LocalStorage.createReadStream(storagePath);
+            console.error('[getStream] Remote stream error:', remoteError.message);
+            
+            // Fallback to local storage if available
+            try {
+                if (LocalStorage && LocalStorage.fileExists && LocalStorage.fileExists(storagePath)) {
+                    console.warn(`[Storage] Google Drive unavailable; serving local copy: ${storagePath}`);
+                    return LocalStorage.createReadStream(storagePath);
+                }
+            } catch (localErr) {
+                console.error('[getStream] Local fallback also failed:', localErr.message);
             }
+            
             throw remoteError;
         }
     },

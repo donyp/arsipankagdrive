@@ -1203,97 +1203,31 @@ app.get('/api/files/:id/view', authenticateToken, async (req, res) => {
             }
         }
 
-        // Try to stream from Google Drive via rclone
+        // Stream from Google Drive via rclone
         try {
-            console.log('[Files:View] Attempting to stream from Google Drive:', file.storage_path);
+            console.log('[Files:View] Streaming from Google Drive:', file.storage_path);
             
-            // Use rclone to get file stream
             const fileStream = await RcloneStorage.getStream(file.storage_path);
             
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', 'inline; filename="' + file.nama_file + '"');
+            res.setHeader('Cache-Control', 'no-cache');
             
-            console.log('[Files:View] Streaming PDF from Google Drive:', file.nama_file);
+            console.log('[Files:View] ✅ Streaming PDF:', file.nama_file);
+            
+            // Handle stream errors
+            fileStream.on('error', (err) => {
+                console.error('[Files:View] Stream error:', err.message);
+                if (!res.headersSent) {
+                    res.status(500).json({ error: 'Gagal membaca file dari Google Drive' });
+                }
+            });
+            
             fileStream.pipe(res);
             
         } catch (streamErr) {
-            console.warn('[Files:View] Google Drive streaming failed, attempting local storage fallback:', streamErr.message);
-            
-            // Fallback: Try local storage
-            try {
-                const localPath = require('./local_storage').getLocalPath(file.storage_path);
-                const fs = require('fs');
-                
-                if (fs.existsSync(localPath)) {
-                    console.log('[Files:View] Using local storage fallback:', localPath);
-                    res.setHeader('Content-Type', 'application/pdf');
-                    res.setHeader('Content-Disposition', 'inline; filename="' + file.nama_file + '"');
-                    
-                    const fileStream = fs.createReadStream(localPath);
-                    fileStream.pipe(res);
-                    return;
-                }
-            } catch (localErr) {
-                console.warn('[Files:View] Local storage fallback also failed:', localErr.message);
-            }
-            
-            // Last resort: Generate demo PDF
-            console.log('[Files:View] All streaming failed, generating demo PDF as fallback');
-            
-            const demoPdfContent = `%PDF-1.1
-%âãÏÓ
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
-endobj
-3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
-endobj
-4 0 obj
-<< /Length 544 >>
-stream
-BT
-/F1 16 Tf
-50 750 Td
-(PUSAT ARSIP ANKA - DEMO) Tj
-0 -30 Td
-(Sample PDF Preview) Tj
-0 -30 Td
-(File: ${file.nama_file}) Tj
-0 -30 Td
-(ID: ${file.id}) Tj
-0 -60 Td
-(This is a demo PDF for preview functionality) Tj
-0 -20 Td
-(Google Drive OAuth needs configuration) Tj
-ET
-endstream
-endobj
-5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
-endobj
-xref
-0 6
-0000000000 65535 f 
-0000000015 00000 n 
-0000000074 00000 n 
-0000000133 00000 n 
-0000000281 00000 n 
-0000000877 00000 n 
-trailer
-<< /Size 6 /Root 1 0 R >>
-startxref
-0974
-%%EOF`;
-            
-            const buffer = Buffer.from(demoPdfContent, 'utf8');
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'inline; filename="' + file.nama_file + '"');
-            res.setHeader('Content-Length', buffer.length);
-            
-            res.send(buffer);
+            console.error('[Files:View] Failed to stream from Google Drive:', streamErr.message);
+            return res.status(500).json({ error: 'Gagal membaca file dari Google Drive: ' + streamErr.message });
         }
 
     } catch (err) {
