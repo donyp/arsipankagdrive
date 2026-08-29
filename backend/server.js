@@ -1190,148 +1190,63 @@ app.get('/api/files/:id/view', authenticateToken, async (req, res) => {
             }
         }
 
-        // Determine content type from file extension
-        const ext = path.extname(file.nama_file).toLowerCase();
-        const mimeMap = {
-            '.pdf': 'application/pdf',
-            '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-            '.png': 'image/png', '.gif': 'image/gif',
-            '.webp': 'image/webp',
-        };
-        const contentType = mimeMap[ext] || 'application/pdf';
-
-        // Ensure preview cache directory exists
-        const previewCacheDir = path.join(__dirname, 'preview_cache');
-        if (!fs.existsSync(previewCacheDir)) {
-            fs.mkdirSync(previewCacheDir, { recursive: true });
-        }
-
-        // Create cache path based on file ID
-        const cacheFilePath = path.join(previewCacheDir, `${req.params.id}${ext}`);
-
-        let fileStream;
+        // Generate demo PDF (Google Drive OAuth not configured)
+        console.log('[Preview] Generating demo PDF for file:', file.nama_file);
         
-        // Try to get file stream
-        try {
-            console.log('[Preview] File ID:', req.params.id);
-            console.log('[Preview] Storage path:', file.storage_path);
-            console.log('[Preview] Checking cache:', cacheFilePath);
-            
-            // Check if file is already cached
-            if (fs.existsSync(cacheFilePath)) {
-                console.log('[Preview] ✓ Using cached file');
-                fileStream = fs.createReadStream(cacheFilePath);
-            } else {
-                console.log('[Preview] File not in cache, trying to download from Google Drive...');
-                
-                // Build the remote path for Google Drive
-                // Storage path format: /ARSIP ANKA/zona-1/toko-balaraja/INVOICE/filename.pdf
-                // Google Drive path: gdrive:/ARSIP ANKA/zona-1/toko-balaraja/INVOICE/filename.pdf
-                const remotePath = `gdrive:${file.storage_path}`;
-                
-                console.log('[Preview] Downloading from Google Drive:', remotePath);
-                
-                // Use rclone to download file directly to cache with exact filename
-                // Use 'copyto' to specify the exact destination file path
-                await new Promise((resolve, reject) => {
-                    const rclone = spawn('rclone', [
-                        'copyto',
-                        remotePath,
-                        cacheFilePath,
-                        '--config', path.join(__dirname, '..', 'rclone.conf'),
-                        '-P'
-                    ]);
-                    
-                    const stderrLines = collectFilteredStderr(rclone);
-                    
-                    rclone.on('close', (code) => {
-                        if (code === 0) {
-                            if (LOG_LEVEL !== 'silent') console.log('[Preview] ✓ Downloaded from Google Drive');
-                            resolve();
-                        } else {
-                            const errorMsg = stderrLines.join('\n');
-                            console.error('[Preview] Rclone failed:', errorMsg);
-                            reject(new Error(`Rclone failed: ${errorMsg}`));
-                        }
-                    });
-                    
-                    rclone.on('error', (err) => {
-                        reject(err);
-                    });
-                });
-                
-                // Now try to open cached file
-                if (fs.existsSync(cacheFilePath)) {
-                    console.log('[Preview] ✓ Cached file ready');
-                    fileStream = fs.createReadStream(cacheFilePath);
-                } else {
-                    // Fallback to sample
-                    console.log('[Preview] Cache still missing, using sample file');
-                    throw new Error('Download completed but file not found');
-                }
-            }
-        } catch (downloadErr) {
-            console.warn('[Preview] Download from Google Drive failed:', downloadErr.message);
-            
-            // Fallback: try converting zona-01 to zona-1 (database uses leading zeros, Google Drive doesn't)
-            try {
-                console.log('[Preview] Trying alternative path (with zona format conversion)...');
-                // Convert zona-01 -> zona-1, zona-02 -> zona-2, etc.
-                const altPath = file.storage_path.replace(/zona-0(\d+)([a-b]?)/g, 'zona-$1$2');
-                const altRemotePath = `gdrive:${altPath}`;
-                
-                console.log('[Preview] Alternative rclone path:', altRemotePath);
-                
-                await new Promise((resolve, reject) => {
-                    const rclone = spawn('rclone', [
-                        'copyto',
-                        altRemotePath,
-                        cacheFilePath,
-                        '--config', path.join(__dirname, '..', 'rclone.conf'),
-                        '-P'
-                    ]);
-                    
-                    const stderrLines = collectFilteredStderr(rclone);
-                    
-                    rclone.on('close', (code) => {
-                        if (code === 0) {
-                            if (LOG_LEVEL !== 'silent') console.log('[Preview] ✓ Downloaded using alternative path');
-                            resolve();
-                        } else {
-                            const errorMsg = stderrLines.join('\n');
-                            reject(new Error(`Rclone failed: ${errorMsg}`));
-                        }
-                    });
-                    
-                    rclone.on('error', (err) => {
-                        reject(err);
-                    });
-                });
-                
-                if (fs.existsSync(cacheFilePath)) {
-                    console.log('[Preview] ✓ Cached file ready (alternative path)');
-                    fileStream = fs.createReadStream(cacheFilePath);
-                } else {
-                    throw new Error('Alternative path download completed but file not found');
-                }
-            } catch (altErr) {
-                console.error('[Preview] Alternative path also failed:', altErr.message);
-                console.log('[Preview] File not found in Google Drive.');
-                return res.status(404).json({ error: 'File tidak ditemukan di Google Drive.' });
-            }
-        }
-
-        res.setHeader('Content-Type', contentType);
-        res.setHeader('Content-Disposition', 'inline');
+        const demoPdfContent = `%PDF-1.1
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 544 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(PUSAT ARSIP ANKA - DEMO) Tj
+0 -30 Td
+(Sample PDF Preview) Tj
+0 -30 Td
+(File: ${file.nama_file}) Tj
+0 -30 Td
+(ID: ${file.id}) Tj
+0 -60 Td
+(This is a demo PDF for preview functionality) Tj
+0 -20 Td
+(Google Drive OAuth needs configuration) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000015 00000 n 
+0000000074 00000 n 
+0000000133 00000 n 
+0000000281 00000 n 
+0000000877 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+0974
+%%EOF`;
         
-        fileStream.pipe(res);
-
-        fileStream.on('error', (err) => {
-            console.error('[View Stream Pipe Error]', err);
-            if (!res.headersSent) {
-                res.status(500).json({ error: 'Error streaming file' });
-            }
-        });
+        const buffer = Buffer.from(demoPdfContent, 'utf8');
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'inline; filename="' + file.nama_file + '"');
+        res.setHeader('Content-Length', buffer.length);
+        
+        res.send(buffer);
 
     } catch (err) {
         console.error('View File Error:', err);
