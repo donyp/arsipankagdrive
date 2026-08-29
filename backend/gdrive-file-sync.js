@@ -148,9 +148,16 @@ function parseStoragePath(relPath) {
  */
 function listGdriveFiles() {
     try {
-        const cmd = `rclone lsjson "gdrive:/ARSIP ANKA" --config "${RCLONE_CONFIG}" --recursive`;
-        const output = execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] });
+        // Use environment variable for config path if set (Railway), otherwise use local path
+        const configPath = process.env.RCLONE_CONFIG_PATH || RCLONE_CONFIG;
+        const cmd = `rclone lsjson "gdrive:/ARSIP ANKA" --config "${configPath}" --recursive`;
+        
+        console.log('[GDriveSync] Listing files with config:', configPath);
+        
+        const output = execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
         const files = JSON.parse(output);
+        
+        console.log('[GDriveSync] Found', files.length, 'total items');
         
         return files
             .filter(f => !f.IsDir && f.Name.toLowerCase().endsWith('.pdf'))
@@ -162,6 +169,7 @@ function listGdriveFiles() {
             }));
     } catch (err) {
         console.error('[GDriveSync] Error listing files:', err.message);
+        console.error('[GDriveSync] Command failed - check rclone config path and Google Drive connection');
         return [];
     }
 }
