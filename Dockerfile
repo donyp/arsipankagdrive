@@ -1,5 +1,5 @@
-# Use Node.js 18 slim as base image
-FROM node:18-slim
+# Use Node.js 22 slim as base image (Node 18 deprecated for Supabase WebSocket support)
+FROM node:22-slim
 
 # Set working directory early
 WORKDIR /app
