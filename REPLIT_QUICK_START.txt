@@ -1,0 +1,173 @@
+═══════════════════════════════════════════════════════════════════
+⚡ REPLIT QUICK START - COPY & PASTE
+═══════════════════════════════════════════════════════════════════
+
+Panduan paling cepat untuk deploy ke Replit.
+
+═══════════════════════════════════════════════════════════════════
+🎯 5 LANGKAH CEPAT
+═══════════════════════════════════════════════════════════════════
+
+LANGKAH 1: Buka Replit Import
+───────────────────────────────
+1. Buka: https://replit.com
+2. Login
+3. Klik "+ Create" atau "New Repl"
+4. Pilih: "Import from GitHub"
+
+LANGKAH 2: Import Repository
+──────────────────────────────
+URL yang di-paste:
+  https://github.com/donyp/arsipankagdrive
+
+Klik Import, tunggu ~2 menit.
+
+LANGKAH 3: Add Secrets (Environment Variables)
+───────────────────────────────────────────────
+Di Replit, klik icon "🔐 Secrets" (atau gembok) di sidebar:
+
+Secret #1:
+  Key: SUPABASE_URL
+  Val: https://xxx.supabase.co
+
+Secret #2:
+  Key: SUPABASE_SERVICE_ROLE_KEY
+  Val: eyJhbGc... [paste dari Supabase]
+
+Klik "Add Secret" setelah tiap entry.
+
+LANGKAH 4: Jalankan Aplikasi
+─────────────────────────────
+Klik tombol "▶️ Run" di atas.
+
+Tunggu sampai output menunjukkan:
+  ✅ Backend listening on port 5000
+
+LANGKAH 5: Buka Aplikasi
+─────────────────────────
+Replit otomatis buka webview dengan URL:
+  https://[your-replit-username].repl.co
+
+SELESAI! ✨
+
+
+═══════════════════════════════════════════════════════════════════
+🔑 KETERANGAN ENVIRONMENT VARIABLES
+═══════════════════════════════════════════════════════════════════
+
+SUPABASE_URL
+  - Dari: Supabase Dashboard → Settings → General
+  - Format: https://xxxxx.supabase.co
+  - Contoh: https://ehdqcxzd.supabase.co
+
+SUPABASE_SERVICE_ROLE_KEY
+  - Dari: Supabase Dashboard → Settings → API
+  - Cari: "Service role key" (bukan "anon")
+  - Format: eyJhbGc... (panjang)
+  - ⚠️ JANGAN share key ini!
+
+═══════════════════════════════════════════════════════════════════
+🧪 TEST APLIKASI (AFTER DEPLOYMENT)
+═══════════════════════════════════════════════════════════════════
+
+1. Buka: https://[your-replit-username].repl.co
+2. Test login dengan akun test Anda
+3. Cek Update History button muncul
+4. Lihat notification badge
+5. Publish update dan cek notifikasi
+
+═══════════════════════════════════════════════════════════════════
+⏰ KEEP ALIVE (24/7 UPTIME)
+═══════════════════════════════════════════════════════════════════
+
+Replit free tier auto-pause setelah 1 jam tidak ada activity.
+
+SOLUSI: Setup UptimeRobot (gratis)
+  1. Buka: https://uptimerobot.com
+  2. Daftar akun
+  3. Add Monitor → HTTP(s)
+  4. URL: https://[your-replit-username].repl.co
+  5. Interval: 5 minutes
+  6. Simpan
+
+Dengan ini, app tetap online 24/7!
+
+═══════════════════════════════════════════════════════════════════
+🆘 TROUBLESHOOTING CEPAT
+═══════════════════════════════════════════════════════════════════
+
+PROBLEM: Error "Cannot read SUPABASE_URL"
+FIX: 
+  - Verifikasi Secrets sudah di-add dengan benar
+  - Klik Run lagi untuk restart
+  - Values harus di-copy lengkap (no extra spaces)
+
+PROBLEM: Port 5000 error
+FIX:
+  - Biasanya auto-resolve, tunggu 30 detik
+  - Kalau tetap error, restart Repl (klik Run lagi)
+
+PROBLEM: Aplikasi lambat/timeout
+FIX:
+  - Check connection ke Supabase
+  - Lihat logs di Replit console
+  - Pastikan Supabase project active
+
+PROBLEM: Aplikasi offline setelah 1 jam
+FIX:
+  - Setup UptimeRobot (lihat bagian KEEP ALIVE)
+
+═══════════════════════════════════════════════════════════════════
+📊 LOGS & MONITORING
+═══════════════════════════════════════════════════════════════════
+
+Untuk lihat logs:
+  - Replit console otomatis muncul di bawah
+  - Lihat output dari server startup
+
+Untuk debug mode:
+  - Edit .replit file
+  - Tambah: LOG_LEVEL=debug
+  - Restart aplikasi
+
+═══════════════════════════════════════════════════════════════════
+🎯 URL ANDA
+═══════════════════════════════════════════════════════════════════
+
+Setelah deploy berhasil, URL aplikasi akan:
+  https://[your-replit-username].repl.co
+
+Contoh:
+  https://john-arsip-anka.repl.co
+
+═══════════════════════════════════════════════════════════════════
+✅ CHECKLIST DEPLOY
+═══════════════════════════════════════════════════════════════════
+
+Before Deploy:
+  ☐ Akun GitHub dengan repo disiapkan
+  ☐ Akun Replit sudah buat (gratis)
+  ☐ Supabase credentials siap (URL + key)
+
+During Deploy:
+  ☐ Repository imported ke Replit
+  ☐ Secrets di-add dengan benar
+  ☐ Klik Run, tunggu server start
+
+After Deploy:
+  ☐ App bisa di-akses via https URL
+  ☐ Login berhasil
+  ☐ Features berfungsi normal
+  ☐ Setup UptimeRobot untuk 24/7 uptime
+
+═══════════════════════════════════════════════════════════════════
+🚀 DONE!
+═══════════════════════════════════════════════════════════════════
+
+Aplikasi Anda sekarang live di Replit!
+
+Untuk panduan lengkap, baca: REPLIT_DEPLOYMENT_GUIDE.txt
+Untuk status, baca: REPLIT_READY.txt
+
+═══════════════════════════════════════════════════════════════════
+
