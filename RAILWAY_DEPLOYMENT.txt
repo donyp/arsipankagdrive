@@ -1,30 +1,26 @@
-═══════════════════════════════════════════════════════════════════
-🚀 DEPLOY KE RAILWAY - PANDUAN CEPAT
-═══════════════════════════════════════════════════════════════════
+==================================================
+DEPLOY KE RAILWAY - PANDUAN CEPAT
+==================================================
 
 Railway menawarkan 24/7 uptime gratis dengan $5/bulan trial.
 
-═══════════════════════════════════════════════════════════════════
-📋 LANGKAH-LANGKAH DEPLOYMENT
-═══════════════════════════════════════════════════════════════════
+==================================================
+LANGKAH-LANGKAH DEPLOYMENT
+==================================================
 
 LANGKAH 1: Buka Railway
-────────────────────────
 1. Go to: https://railway.app
 2. Login/Signup dengan GitHub
 3. Klik "New Project" atau "Create"
 
 
 LANGKAH 2: Connect Repository
-──────────────────────────────
 1. Pilih: "Deploy from GitHub"
 2. Select repository: arsipankagdrive
 3. Confirm authorization
 
 
 LANGKAH 3: Add Environment Variables
-──────────────────────────────────────
-
 Di Railway dashboard, klik "Variables" dan tambahkan:
 
 Variable 1:
@@ -39,163 +35,126 @@ Variable 3:
   Key: ENABLE_ALIST
   Value: false
 
-Variable 4 (OPTIONAL):
-  Key: NODE_ENV
-  Value: production
-
 Klik "Save" setelah semua var di-add.
 
 
-LANGKAH 4: Configure Build
-────────────────────────────
-1. Railway auto-detect Node.js dari package.json
-2. Build command: npm install (auto)
-3. Start command: bash start.sh (auto-detect dari Dockerfile)
-
-
-LANGKAH 5: Deploy
-──────────────────
+LANGKAH 4: Deploy
 1. Railway otomatis mulai build saat push ke GitHub
 2. ATAU: Klik "Deploy" button di dashboard
 3. Tunggu build selesai (~3-5 menit)
-4. Lihat logs untuk progress
 
 
-LANGKAH 6: Get URL
-───────────────────
+LANGKAH 5: Get URL
 Setelah deploy sukses:
 1. Buka Railway dashboard
 2. URL aplikasi: https://[project-name].railway.app
-3. Atau: Klik "View" di dashboard
 
 
-═══════════════════════════════════════════════════════════════════
-🔑 ENVIRONMENT VARIABLES PENTING
-═══════════════════════════════════════════════════════════════════
+==================================================
+ENVIRONMENT VARIABLES PENTING
+==================================================
 
 REQUIRED:
-  ✓ SUPABASE_URL
-  ✓ SUPABASE_SERVICE_ROLE_KEY
+  - SUPABASE_URL
+  - SUPABASE_SERVICE_ROLE_KEY
 
-IMPORTANT FOR RAILWAY BUILD FIX:
-  ✓ ENABLE_ALIST=false (sudah di-disable di Dockerfile)
+IMPORTANT FOR BUILD FIX:
+  - ENABLE_ALIST=false (sudah di-disable di Dockerfile)
 
 OPTIONAL:
   - NODE_ENV=production
   - PORT=8080 (Railway auto-set)
-  - LOG_LEVEL=info
 
 
-═══════════════════════════════════════════════════════════════════
-✅ VERIFIKASI DEPLOYMENT
-═══════════════════════════════════════════════════════════════════
+==================================================
+VERIFIKASI DEPLOYMENT
+==================================================
 
 Setelah Railway berhasil deploy:
 
 1. Test health check:
    https://[project-name].railway.app/api/heartbeat
-   Harusnya: {"status":"alive","version":"..."}
 
 2. Test login page:
    https://[project-name].railway.app
-   Harusnya: Halaman login muncul
 
-3. Lihat logs di Railway:
-   Dashboard → Logs tab
-   Cari: "Backend listening on port 8080"
+3. Lihat logs di Railway Dashboard → Logs tab
 
 
-═══════════════════════════════════════════════════════════════════
-🆘 TROUBLESHOOTING
-═══════════════════════════════════════════════════════════════════
+==================================================
+BUILD FAILURE FIX
+==================================================
 
-PROBLEM: Build failed with "Alist download error"
-SOLUTION:
-  ✅ SUDAH FIX! Dockerfile updated untuk disable Alist
-  - Push latest code ke GitHub
-  - Click "Redeploy" di Railway
-  - Build akan sukses
+Jika sebelumnya build gagal dengan "Alist download error":
 
-PROBLEM: "Cannot read SUPABASE_URL"
-SOLUTION:
-  - Verifikasi env vars di Railway dashboard
-  - Var names harus EXACT (case-sensitive):
-    SUPABASE_URL (bukan supabase_url)
-    SUPABASE_SERVICE_ROLE_KEY
-  - Redeploy setelah update vars
+SUDAH FIX! Dockerfile sudah updated:
+- Alist di-disable untuk Railway
+- Menggunakan rclone storage sebagai gantinya
+- Cukup set ENABLE_ALIST=false (default sudah false)
 
-PROBLEM: Deployment timeout
-SOLUTION:
-  - Railway free tier build timeout normal
-  - Tunggu sampai selesai
-  - Atau upgrade untuk faster builds
-
-PROBLEM: App crashes setelah deploy
-SOLUTION:
-  - Check logs di Railway dashboard
-  - Verify env vars lengkap
-  - Cek database connection
+Langkah fix:
+1. Pull latest code dari GitHub
+2. Repository auto-pull terbaru
+3. Click "Redeploy" di Railway
+4. Build akan sukses kali ini!
 
 
-═══════════════════════════════════════════════════════════════════
-⏰ 24/7 UPTIME - GUARANTEED
-═══════════════════════════════════════════════════════════════════
+==================================================
+24/7 UPTIME - GUARANTEED
+==================================================
 
 ✅ Railway free tier tidak auto-pause
 ✅ App tetap online 24/7
 ✅ Tidak perlu UptimeRobot
 ✅ Performance stabil
 
-Jika ingin lebih banyak resources:
-- Upgrade ke paid plan (~$5/bulan)
-- Atau gunakan $5 trial gratis per bulan
+Upgrade ke paid plan (~$5/bulan) untuk lebih banyak resources.
 
 
-═══════════════════════════════════════════════════════════════════
-📊 MONITORING
-═══════════════════════════════════════════════════════════════════
+==================================================
+TROUBLESHOOTING
+==================================================
 
-Di Railway dashboard:
+Problem: Build still fails with Alist error
+Solution:
+  - Make sure ENABLE_ALIST=false di environment vars
+  - Or wait for new build (repo sudah fixed)
 
-1. Logs - lihat output real-time
-2. Deployments - history deploys
-3. Variables - manage env vars
-4. Domains - custom domain (optional)
-5. Health - uptime status
+Problem: "Cannot read SUPABASE_URL"
+Solution:
+  - Verify env vars di Railway dashboard
+  - Names harus EXACT (case-sensitive)
+  - Redeploy setelah update vars
 
-
-═══════════════════════════════════════════════════════════════════
-🎯 NEXT STEPS
-═══════════════════════════════════════════════════════════════════
-
-1. ✅ Verifikasi app berjalan dengan test heartbeat
-2. ✅ Login dengan test account
-3. ✅ Test Update History feature
-4. ✅ Monitor logs jika ada error
-5. ✅ Setup custom domain (optional)
+Problem: App crashes setelah deploy
+Solution:
+  - Check logs di Railway dashboard
+  - Verify env vars lengkap
+  - Cek database connection ke Supabase
 
 
-═══════════════════════════════════════════════════════════════════
-💰 PRICING
-═══════════════════════════════════════════════════════════════════
+==================================================
+PRICING
+==================================================
 
 Railway Pricing:
-- Free trial: $5/bulan gratis per 3 bulan
+- Free trial: $5/bulan per 3 bulan
 - Paid: $5-$20/bulan tergantung usage
 - Unlimited deployments
 - 24/7 uptime guaranteed
 
-Supabase:
-- Database included dalam Supabase free tier
+Supabase Database: Gratis (included)
 
 
-═══════════════════════════════════════════════════════════════════
-✨ SELESAI!
-═══════════════════════════════════════════════════════════════════
+==================================================
+SELESAI!
+==================================================
 
 Aplikasi Anda sekarang live di Railway dengan 24/7 uptime!
 
 URL: https://[project-name].railway.app
 
-═══════════════════════════════════════════════════════════════════
+Next: Setup custom domain (optional di Railway settings)
+
+==================================================
 
