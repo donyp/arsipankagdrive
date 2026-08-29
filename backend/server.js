@@ -1185,7 +1185,7 @@ app.get('/api/files/:id/view', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'File tidak ditemukan.' });
         }
 
-        console.log('[Files:View] File found:', file.nama_file, '| Category:', file.category);
+        console.log('[Files:View] File found:', file.nama_file, '| Storage path:', file.storage_path);
 
         // Zone access check
         if (req.user.role === 'admin_zona') {
@@ -1202,10 +1202,44 @@ app.get('/api/files/:id/view', authenticateToken, async (req, res) => {
             }
         }
 
-        // Generate demo PDF (Google Drive OAuth not configured)
-        console.log('[Files:View] Generating demo PDF for file:', file.nama_file);
-        
-        const demoPdfContent = `%PDF-1.1
+        // Try to stream from Google Drive via rclone
+        try {
+            console.log('[Files:View] Attempting to stream from Google Drive:', file.storage_path);
+            
+            // Use rclone to get file stream
+            const fileStream = await RcloneStorage.getStream(file.storage_path);
+            
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'inline; filename="' + file.nama_file + '"');
+            
+            console.log('[Files:View] Streaming PDF from Google Drive:', file.nama_file);
+            fileStream.pipe(res);
+            
+        } catch (streamErr) {
+            console.warn('[Files:View] Google Drive streaming failed, attempting local storage fallback:', streamErr.message);
+            
+            // Fallback: Try local storage
+            try {
+                const localPath = require('./local_storage').getLocalPath(file.storage_path);
+                const fs = require('fs');
+                
+                if (fs.existsSync(localPath)) {
+                    console.log('[Files:View] Using local storage fallback:', localPath);
+                    res.setHeader('Content-Type', 'application/pdf');
+                    res.setHeader('Content-Disposition', 'inline; filename="' + file.nama_file + '"');
+                    
+                    const fileStream = fs.createReadStream(localPath);
+                    fileStream.pipe(res);
+                    return;
+                }
+            } catch (localErr) {
+                console.warn('[Files:View] Local storage fallback also failed:', localErr.message);
+            }
+            
+            // Last resort: Generate demo PDF
+            console.log('[Files:View] All streaming failed, generating demo PDF as fallback');
+            
+            const demoPdfContent = `%PDF-1.1
 %âãÏÓ
 1 0 obj
 << /Type /Catalog /Pages 2 0 R >>
@@ -1252,14 +1286,14 @@ trailer
 startxref
 0974
 %%EOF`;
-        
-        const buffer = Buffer.from(demoPdfContent, 'utf8');
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'inline; filename="' + file.nama_file + '"');
-        res.setHeader('Content-Length', buffer.length);
-        
-        console.log('[Files:View] Sending PDF buffer, size:', buffer.length);
-        res.send(buffer);
+            
+            const buffer = Buffer.from(demoPdfContent, 'utf8');
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'inline; filename="' + file.nama_file + '"');
+            res.setHeader('Content-Length', buffer.length);
+            
+            res.send(buffer);
+        }
 
     } catch (err) {
         console.error('[Files:View] Error:', err.message, err.stack);
