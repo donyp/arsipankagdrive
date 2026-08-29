@@ -1,0 +1,69 @@
+==================================================
+RAILWAY DEPLOYMENT - FINAL FIX
+==================================================
+
+Status: App running but GDrive sync causing errors
+
+Quick Fix for Railway:
+
+1. DISABLE GDrive Auto-Sync
+   - In Railway Variables, add:
+     ENABLE_GDRIVE_SYNC=false
+
+2. Reduce Log Verbosity
+   - In Railway Variables, set:
+     LOG_LEVEL=info
+
+3. Redeploy
+   - Click "Redeploy" on Railway dashboard
+
+==================================================
+WHY THESE FIXES:
+==================================================
+
+Problem 1: GDrive rclone sync fails in Railway
+- Rclone needs proper OAuth token setup
+- Not needed for basic operation
+- Disable it to reduce errors
+
+Problem 2: Excessive logging hits Railway rate limit
+- Railway rate limit: 500 logs/sec
+- Auto-sync generates too many logs
+- Setting LOG_LEVEL=info reduces verbosity
+
+==================================================
+AFTER FIXES:
+==================================================
+
+App should:
+✅ Start successfully
+✅ Serve frontend
+✅ Accept logins
+✅ Handle API requests
+✅ Not spam logs
+✅ Stay within Railway limits
+
+==================================================
+ENVIRONMENT VARIABLES TO SET IN RAILWAY:
+==================================================
+
+Production Environment Variables:
+1. SUPABASE_URL = https://xxx.supabase.co
+2. SUPABASE_SERVICE_ROLE_KEY = eyJhbGc...
+3. ENABLE_ALIST = false
+4. ENABLE_GDRIVE_SYNC = false
+5. LOG_LEVEL = info
+6. NODE_ENV = production
+
+==================================================
+TEST AFTER DEPLOY:
+==================================================
+
+1. Go to Railway app URL
+2. Login page should load
+3. Try login with test account
+4. Check Update History feature
+5. Verify no error logs spike
+
+==================================================
+
