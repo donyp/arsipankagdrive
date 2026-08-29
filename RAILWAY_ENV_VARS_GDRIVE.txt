@@ -1,0 +1,143 @@
+==================================================
+RAILWAY ENVIRONMENT VARIABLES - GOOGLE DRIVE
+==================================================
+
+CRITICAL: Add these 3 variables to Railway for Google Drive OAuth to work
+
+Go to: https://railway.app → Your Project → Variables
+
+==================================================
+VARIABLE 1: Google Drive OAuth Token
+==================================================
+
+Key: GDRIVE_OAUTH_TOKEN
+
+Value: 
+- Open your local rclone config file:
+  * Windows: %APPDATA%\rclone\rclone.conf
+  * Linux/Mac: ~/.config/rclone/rclone.conf
+  
+- Find section [drive1]
+- Copy the entire "token = {...}" JSON object
+- Paste into Railway
+
+Format: {"access_token":"ya29.xxxxx...","token_type":"Bearer","refresh_token":"1//0gxxxxx...","expiry":"YYYY-MM-DDTHH:MM:SS+07:00","expires_in":3599}
+
+==================================================
+VARIABLE 2: Google Drive Client ID
+==================================================
+
+Key: GDRIVE_CLIENT_ID
+
+Value:
+- From your rclone.conf file
+- Find the "client_id = " line in [drive1] section
+- Copy the value (looks like: XXXXXXXXX-XXXX...apps.googleusercontent.com)
+- Paste into Railway
+
+==================================================
+VARIABLE 3: Google Drive Client Secret
+==================================================
+
+Key: GDRIVE_CLIENT_SECRET
+
+Value:
+- From your rclone.conf file
+- Find the "client_secret = " line in [drive1] section
+- Copy the value (looks like: GOCSPX-XXXXXXXXXXXXX)
+- Paste into Railway
+
+==================================================
+OTHER IMPORTANT VARIABLES (should already exist)
+==================================================
+
+Check that these are set in Railway:
+
+✓ SUPABASE_URL = https://ehdqcxzdmmcwbdwkinyr.supabase.co
+✓ SUPABASE_SERVICE_ROLE_KEY = (your key - from Supabase)
+✓ ENABLE_GDRIVE_SYNC = true
+✓ RCLONE_REMOTE = gdrive
+✓ RCLONE_BASE_PATH = /ARSIP ANKA
+
+==================================================
+SETUP STEPS
+==================================================
+
+1. Open your local rclone config file:
+   Windows: %APPDATA%\rclone\rclone.conf
+   Linux/Mac: ~/.config/rclone/rclone.conf
+
+2. Look for [drive1] section and note the values:
+   - token = {...}
+   - client_id = ...
+   - client_secret = ...
+
+3. Open Railway Dashboard: https://railway.app
+
+4. Select project: arsipankagdrive
+
+5. Click "Variables" tab
+
+6. Add 3 new variables (copy exact values from your rclone.conf):
+   - Key: GDRIVE_OAUTH_TOKEN → Value: (the token JSON)
+   - Key: GDRIVE_CLIENT_ID → Value: (the client_id)
+   - Key: GDRIVE_CLIENT_SECRET → Value: (the client_secret)
+
+7. Click "Save"
+
+8. Go to "Deployments" tab
+
+9. Click "Redeploy" button
+
+10. Wait for build complete (2-3 minutes)
+
+==================================================
+VERIFY IT'S WORKING
+==================================================
+
+After redeploy, check Railway logs:
+
+Should see:
+✅ [RcloneConfig] rclone.conf generated successfully
+✅ [RcloneConfig] Remote [gdrive] configured: ✓
+✅ [Files:View] Attempting to stream from Google Drive
+✅ [Files:View] Streaming PDF from Google Drive
+
+If you see these, PDF preview is working!
+
+==================================================
+TROUBLESHOOTING
+==================================================
+
+Problem: "didn't find section in config file"
+Solution:
+  - Not all 3 variables added to Railway
+  - Double-check values match exactly from rclone.conf
+  - No extra spaces or newlines
+  - JSON token must include all quotes and brackets
+
+Problem: Still showing demo PDF after redeploy
+Solution:
+  - Hard refresh browser (Ctrl+Shift+R)
+  - Check Railway logs for [RcloneConfig] messages
+  - Verify redeploy actually completed
+
+Problem: PDF not loading / blank preview
+Solution:
+  - File might not exist at Google Drive path
+  - Check database: storage_path column
+  - Expected path format: /ARSIP ANKA/zona-X/toko-X/CATEGORY/filename.pdf
+  - Verify files actually exist in Google Drive
+
+==================================================
+SECURITY NOTES
+==================================================
+
+⚠️  IMPORTANT - These credentials are SENSITIVE:
+  - Keep them secure in Railway only
+  - NEVER commit to git or share publicly
+  - Don't share in chat/email/messages
+  - OAuth token will auto-refresh
+  - If compromised, regenerate in Google Cloud Console
+
+==================================================

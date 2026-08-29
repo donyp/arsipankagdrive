@@ -20,6 +20,7 @@ const { initializeRcloneConnectivity, verifyRcloneConnectivity } = require('./rc
 const { runBackendInitialization } = require('./backendInitializer');
 const { startAutoSync } = require('./gdrive-file-sync');
 const registerFeatureEndpoints = require('./feature-endpoints');
+const { generateRcloneConfig, verifyRcloneConfig } = require('./generate-rclone-config');
 
 // Load environment variables FIRST (before using them)
 // In local development: loads from .env file
@@ -5041,6 +5042,19 @@ const HOST = '0.0.0.0';
 // Initialize storage credentials at startup
 (async () => {
     try {
+        // ================================================================
+        // Step 0: Generate rclone.conf from environment variables
+        // This is critical for Railway deployment where .gitignore prevents
+        // committing rclone.conf, so we generate it from Railway env vars
+        // ================================================================
+        console.log('[Startup] Step 0: Generating rclone configuration...');
+        generateRcloneConfig();
+        const rcloneValid = verifyRcloneConfig();
+        
+        if (!rcloneValid) {
+            console.warn('[Startup] ⚠️  rclone.conf verification failed - will use fallback');
+        }
+        
         // ================================================================
         // Run complete backend initialization (includes Google Drive setup)
         // ================================================================
