@@ -362,8 +362,14 @@ const RcloneStorage = {
         });
 
         try {
-            // Download file to temp location using rclone copyto (more reliable than cat)
-            const remotePath = `${PRIMARY_REMOTE}:${storagePath}`;
+            // Normalize the path for rclone
+            // Remove leading slash if present, then add it back in the correct format
+            let normalizedPath = storagePath;
+            if (normalizedPath.startsWith('/')) {
+                normalizedPath = normalizedPath.substring(1);
+            }
+            
+            const remotePath = `${PRIMARY_REMOTE}:/${normalizedPath}`;
             const tmpDir = path.join(__dirname, '..', 'tmp');
             
             // Ensure tmp dir exists
@@ -379,7 +385,8 @@ const RcloneStorage = {
             const configPath = process.env.RCLONE_CONFIG_PATH || rcloneConfig.configPath;
             const downloadCmd = ['copyto', remotePath, tmpFile, '--config', configPath];
             
-            console.log('[getStream] Downloading to temp:', tmpFile);
+            console.log('[getStream] Remote path:', remotePath);
+            console.log('[getStream] Temp file:', tmpFile);
             console.log('[getStream] Using rclone:', rclonePath);
             
             return new Promise((resolve, reject) => {
