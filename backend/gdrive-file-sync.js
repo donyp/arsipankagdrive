@@ -347,7 +347,9 @@ async function insertFileToDb(fileInfo, zonaMap, tokoMap, systemUserId) {
  * Sync files from Google Drive to database
  */
 async function syncGdriveFiles() {
-    console.log(`[GDriveSync] Starting scan at ${new Date().toISOString()}`);
+    if (process.env.LOG_LEVEL === 'debug') {
+        console.log(`[GDriveSync] Starting scan at ${new Date().toISOString()}`);
+    }
     
     try {
         // Fetch zona mappings

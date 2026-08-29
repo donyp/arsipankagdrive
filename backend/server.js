@@ -5132,9 +5132,14 @@ const HOST = '0.0.0.0';
             console.log(`   Alist: WebDAV on http://localhost:5244`);
             console.log('================================================\n');
             
-            // Start Google Drive auto-sync (every 5 minutes)
-            console.log('[GDriveSync] 🚀 Starting Google Drive file auto-sync...');
-            startAutoSync(5 * 60 * 1000);  // 5 minutes
+            // Start Google Drive auto-sync (disabled by default, enable with ENABLE_GDRIVE_SYNC=true)
+            const ENABLE_GDRIVE_SYNC = process.env.ENABLE_GDRIVE_SYNC === 'true';
+            if (ENABLE_GDRIVE_SYNC) {
+                console.log('[GDriveSync] 🚀 Starting Google Drive file auto-sync...');
+                startAutoSync(5 * 60 * 1000);  // 5 minutes
+            } else {
+                console.log('[GDriveSync] ⏸️  Auto-sync disabled (set ENABLE_GDRIVE_SYNC=true to enable)');
+            }
         });
 
     // Task 3.1: Error handler for port binding failures
