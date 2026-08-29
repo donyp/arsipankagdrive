@@ -28,49 +28,57 @@ echo "[INIT] Generating rclone.conf from environment variables..."
 node /app/generate-rclone-config.js
 
 # ============================================================
-# START ALIST SERVICE (Background)
+# START ALIST SERVICE (Background) - CONDITIONAL
 # ============================================================
 
-echo "[INIT] Starting Alist service on port 5244..."
+ENABLE_ALIST=${ENABLE_ALIST:-false}
 
-# Create Alist config directory
-mkdir -p /root/.config/alist
-
-# Start Alist in background with nohup
-# Alist logs go to /app/data/log/alist.log
-nohup /usr/local/bin/alist server > /app/data/log/alist.log 2>&1 &
-ALIST_PID=$!
-echo "[ALIST] Process ID: $ALIST_PID"
-
-# Wait for Alist to start and check if port 5244 is listening
-MAX_ATTEMPTS=30
-ATTEMPT=0
-
-while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-    sleep 1
-    if nc -z localhost 5244 2>/dev/null; then
-        echo "[ALIST] ✅ Service is listening on port 5244"
-        break
-    fi
-    ATTEMPT=$((ATTEMPT + 1))
+if [ "$ENABLE_ALIST" = "true" ] && command -v alist &> /dev/null; then
+    echo "[INIT] Starting Alist service on port 5244..."
     
-    # Check if Alist process is still running
-    if ! kill -0 $ALIST_PID 2>/dev/null; then
-        echo "[ALIST] ⚠️  Process died, checking logs:"
-        tail -20 /app/data/log/alist.log
-        echo "[ALIST] WARNING: Alist process exited unexpectedly, continuing with Node.js..."
-        break
-    fi
+    # Create Alist config directory
+    mkdir -p /root/.config/alist
     
-    echo "[ALIST] Waiting for service... (attempt $ATTEMPT/$MAX_ATTEMPTS)"
-done
-
-# If Alist didn't start, show warning but continue
-if ! nc -z localhost 5244 2>/dev/null; then
-    echo "[ALIST] ⚠️  WARNING: Alist service may not be running on port 5244"
-    echo "[ALIST] Check logs at: /app/data/log/alist.log"
+    # Start Alist in background with nohup
+    # Alist logs go to /app/data/log/alist.log
+    nohup /usr/local/bin/alist server > /app/data/log/alist.log 2>&1 &
+    ALIST_PID=$!
+    echo "[ALIST] Process ID: $ALIST_PID"
+    
+    # Wait for Alist to start and check if port 5244 is listening
+    MAX_ATTEMPTS=30
+    ATTEMPT=0
+    
+    while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+        sleep 1
+        if nc -z localhost 5244 2>/dev/null; then
+            echo "[ALIST] ✅ Service is listening on port 5244"
+            break
+        fi
+        ATTEMPT=$((ATTEMPT + 1))
+        
+        # Check if Alist process is still running
+        if ! kill -0 $ALIST_PID 2>/dev/null; then
+            echo "[ALIST] ⚠️  Process died, checking logs:"
+            tail -20 /app/data/log/alist.log 2>/dev/null || true
+            echo "[ALIST] WARNING: Alist process exited unexpectedly, continuing with Node.js..."
+            break
+        fi
+        
+        echo "[ALIST] Waiting for service... (attempt $ATTEMPT/$MAX_ATTEMPTS)"
+    done
+    
+    # If Alist didn't start, show warning but continue
+    if ! nc -z localhost 5244 2>/dev/null; then
+        echo "[ALIST] ⚠️  WARNING: Alist service may not be running on port 5244"
+        echo "[ALIST] Check logs at: /app/data/log/alist.log"
+    else
+        echo "[ALIST] ✅ Alist service started successfully"
+    fi
 else
-    echo "[ALIST] ✅ Alist service started successfully"
+    echo "[INIT] Alist service disabled (ENABLE_ALIST=$ENABLE_ALIST)"
+    echo "[INIT] Using rclone for storage backend instead"
+    ALIST_PID=""
 fi
 
 # ============================================================
@@ -90,9 +98,6 @@ cleanup() {
     
     exit 0
 }
-
-# Trap signals for graceful shutdown
-trap cleanup SIGTERM SIGINT
 
 # ============================================================
 # START NODE.JS BACKEND
