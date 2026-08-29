@@ -233,35 +233,67 @@ app.get('/api/preview/:filePath(*)', async (req, res) => {
         if (!fs.existsSync(localFilePath)) {
             console.warn('[PREVIEW] File not found:', localFilePath);
             
-            // Try to serve a sample file instead for testing
-            const samplePath = path.join(
-                __dirname,
-                'local_files',
-                'zona-1',
-                'TOKO-CIANJUR',
-                'INVOICE',
-                'Sample_INVOICE_1.pdf'
-            );
+            // Fallback: Generate a sample PDF on-the-fly
+            console.log('[PREVIEW] Generating sample PDF for demo...');
             
-            if (fs.existsSync(samplePath)) {
-                console.log('[PREVIEW] Serving sample file for testing...');
-                
-                const fileSize = fs.statSync(samplePath).size;
-                res.setHeader('Content-Type', 'application/pdf');
-                res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
-                res.setHeader('Content-Length', fileSize);
-                res.setHeader('Cache-Control', 'public, max-age=3600');
-                res.setHeader('X-Preview-Mode', 'sample');
-                res.setHeader('X-Original-Path', filePath);
-                
-                const fileStream = fs.createReadStream(samplePath);
-                fileStream.pipe(res);
-                return;
-            }
+            const samplePdfContent = `%PDF-1.1
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 544 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(PUSAT ARSIP ANKA - DEMO) Tj
+0 -30 Td
+(Sample PDF Preview) Tj
+0 -30 Td
+(File: ${fileName}) Tj
+0 -30 Td
+(Path: ${filePath}) Tj
+0 -60 Td
+(This is a demo PDF generated for) Tj
+0 -20 Td
+(preview functionality testing.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000015 00000 n 
+0000000074 00000 n 
+0000000133 00000 n 
+0000000281 00000 n 
+0000000877 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+0974
+%%EOF`;
             
-            return res.status(404).json({
-                error: 'File not found: ' + fileName
-            });
+            const buffer = Buffer.from(samplePdfContent, 'utf8');
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+            res.setHeader('Content-Length', buffer.length);
+            res.setHeader('Cache-Control', 'public, max-age=3600');
+            res.setHeader('X-Preview-Mode', 'demo-sample');
+            res.setHeader('X-Original-Path', filePath);
+            
+            res.send(buffer);
+            return;
         }
         
         // Serve the actual file
