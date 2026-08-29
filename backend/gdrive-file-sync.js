@@ -40,6 +40,27 @@ function normalizeZonaCode(folderName) {
 }
 
 /**
+ * Normalize category ke valid values sesuai database constraint
+ */
+function normalizeCategory(categoryStr) {
+    if (!categoryStr) return null;
+    
+    const cat = categoryStr.toUpperCase().trim();
+    
+    // Map berbagai input ke canonical values
+    const validCategories = {
+        'INVOICE': 'INVOICE',
+        'PPN': 'PPN',
+        'NON_PPN': 'NON_PPN',
+        'NON': 'NON_PPN',  // NON folder maps to NON_PPN category
+        'PIUTANG': 'PIUTANG',
+        'BUKTI PIUTANG': 'PIUTANG'
+    };
+    
+    return validCategories[cat] || null;
+}
+
+/**
  * Parse storage path to extract metadata
  * Path format: TOKO-NAME/CATEGORY/[subcategory/]filename.pdf
  * OR (legacy): zona-X/TOKO-NAME/CATEGORY/[subcategory/]filename.pdf
@@ -83,7 +104,7 @@ function parseStoragePath(relPath) {
             zonaFolder: parts[0],
             zonaKode: zonaKode,
             tokoKode: tokoKode,
-            category: category,
+            category: normalizeCategory(category) || category,
             subCategory: subCategory,
             filename: cleanFilename,
             relativePath: relPath
@@ -114,7 +135,7 @@ function parseStoragePath(relPath) {
             zonaFolder: 'zona-1',  // Default to zona-1 if not specified
             zonaKode: 'zona-01',    // Normalized
             tokoKode: tokoKode,
-            category: category,
+            category: normalizeCategory(category) || category,
             subCategory: subCategory,
             filename: cleanFilename,
             relativePath: relPath
@@ -258,7 +279,9 @@ async function insertFileToDb(fileInfo, zonaMap, tokoMap, systemUserId) {
     try {
         const metadata = parseStoragePath(fileInfo.path);
         if (!metadata) {
-            console.warn(`[GDriveSync] Cannot parse path: ${fileInfo.path}`);
+            if (process.env.LOG_LEVEL === 'debug') {
+                console.warn(`[GDriveSync] Cannot parse path: ${fileInfo.path}`);
+            }
             return false;
         }
 
@@ -266,8 +289,10 @@ async function insertFileToDb(fileInfo, zonaMap, tokoMap, systemUserId) {
         const zonaKey = metadata.zonaKode.toLowerCase();
         const zona = zonaMap.get(zonaKey);
         if (!zona) {
-            console.warn(`[GDriveSync] ❌ Zona not found: "${metadata.zonaFolder}" → normalized to "${metadata.zonaKode}"`);
-            console.log(`[GDriveSync] Available zonas: ${Array.from(zonaMap.keys()).join(', ')}`);
+            if (process.env.LOG_LEVEL === 'debug') {
+                console.warn(`[GDriveSync] ❌ Zona not found: "${metadata.zonaFolder}" → normalized to "${metadata.zonaKode}"`);
+                console.log(`[GDriveSync] Available zonas: ${Array.from(zonaMap.keys()).join(', ')}`);
+            }
             return false;
         }
 
@@ -276,7 +301,9 @@ async function insertFileToDb(fileInfo, zonaMap, tokoMap, systemUserId) {
         const toko = tokoMap.get(tokoKey);
         // Note: toko can be null - file will still be saved with toko_id=null
         if (!toko) {
-            console.log(`[GDriveSync] ⚠️  Toko not found: "${metadata.tokoKode}" (will insert with toko_id=null)`);
+            if (process.env.LOG_LEVEL === 'debug') {
+                console.log(`[GDriveSync] ⚠️  Toko not found: "${metadata.tokoKode}" (will insert with toko_id=null)`);
+            }
         }
 
         const storagePath = `${ALIST_BASE}/${fileInfo.path}`;
@@ -302,11 +329,13 @@ async function insertFileToDb(fileInfo, zonaMap, tokoMap, systemUserId) {
             }]);
 
         if (error) {
-            console.error(`[GDriveSync] ❌ Insert error: ${error.message}`);
+            if (process.env.LOG_LEVEL === 'debug') {
+                console.error(`[GDriveSync] ❌ Insert error: ${error.message}`);
+            }
             return false;
         }
 
-        console.log(`[GDriveSync] ✅ Inserted: ${metadata.zonaFolder}/${metadata.tokoKode}/${metadata.category}${metadata.subCategory ? '/'+metadata.subCategory : ''} → ${metadata.filename} (size: ${fileInfo.size} bytes)`);
+        console.log(`[GDriveSync] ✅ Inserted: ${metadata.filename} (${fileInfo.size} bytes)`);
         return true;
     } catch (err) {
         console.error(`[GDriveSync] Error inserting file: ${err.message}`);
@@ -350,7 +379,9 @@ async function syncGdriveFiles() {
         const systemUserId = await getSystemUserId();
         
         const files = listGdriveFiles();
-        console.log(`[GDriveSync] Found ${files.length} PDF files in ARSIP ANKA`);
+        if (process.env.LOG_LEVEL === 'debug') {
+            console.log(`[GDriveSync] Found ${files.length} PDF files in ARSIP ANKA`);
+        }
         
         let synced = 0;
         let skipped = 0;

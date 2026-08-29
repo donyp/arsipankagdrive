@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Quality Assurance | Pusat Arsip Anka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tailwind.generated.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        // Cloak the page until Auth check is done
+        document.documentElement.style.opacity = '0';
+        document.documentElement.classList.add('auth-loading');
+    </script>
+    <style>
+        .issue-card {
+            border-left: 4px solid;
+            padding: 16px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+        .issue-card.error { border-left-color: #ef4444; }
+        .issue-card.warning { border-left-color: #f59e0b; }
+        .issue-card.info { border-left-color: #3b82f6; }
+
+        .issue-type {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .issue-type.error { background: #fee2e2; color: #7f1d1d; }
+        .issue-type.warning { background: #fef3c7; color: #78350f; }
+
+        .validation-result {
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 6px;
+        }
+        .validation-result.valid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .validation-result.invalid {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body class="bg-[#F0F2F5]">
+    <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-40"></aside>
+
+    <main id="main-content" class="ml-64 p-8">
+        <div class="max-w-6xl">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">Data Quality Assurance</h1>
+                <p class="text-gray-600 mt-2">Validasi dan perbaikan kualitas data file</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-issues">0</div>
+                    <div class="stat-label">Total Issues</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="unresolved-issues">0</div>
+                    <div class="stat-label">Unresolved</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="critical-issues">0</div>
+                    <div class="stat-label">Critical</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="resolved-issues">0</div>
+                    <div class="stat-label">Resolved</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid #e5e7eb;">
+                <button class="tab-btn active" onclick="switchTab('unresolved')" style="padding: 12px 16px; border-bottom: 2px solid #3b82f6; cursor: pointer;">
+                    🔴 Unresolved
+                </button>
+                <button class="tab-btn" onclick="switchTab('all')" style="padding: 12px 16px; border-bottom: 2px solid transparent; cursor: pointer;">
+                    📋 All
+                </button>
+                <button class="tab-btn" onclick="switchTab('validator')" style="padding: 12px 16px; border-bottom: 2px solid transparent; cursor: pointer;">
+                    🧪 Validator
+                </button>
+            </div>
+
+            <!-- Issues List -->
+            <div id="issues-container" class="bg-white rounded-lg p-6">
+                <p style="text-align: center; color: #9ca3af;">Loading...</p>
+            </div>
+
+            <!-- Validation Tool -->
+            <div id="validator-tab" class="hidden" style="background: white; padding: 24px; border-radius: 8px; margin-top: 24px;">
+                <h2 class="text-xl font-bold mb-4">File Validator</h2>
+                <p class="text-gray-600 mb-4">Validasi file sebelum upload</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Filename</label>
+                        <input type="text" id="val-filename" placeholder="PPN 1.500.000 - Balaraja.pdf" class="w-full p-2 border rounded" style="border: 1px solid #e5e7eb;">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Nominal</label>
+                        <input type="number" id="val-nominal" placeholder="1500000" class="w-full p-2 border rounded" style="border: 1px solid #e5e7eb;">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Tanggal Dokumen</label>
+                        <input type="date" id="val-date" class="w-full p-2 border rounded" style="border: 1px solid #e5e7eb;">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Toko</label>
+                        <select id="val-toko" class="w-full p-2 border rounded" style="border: 1px solid #e5e7eb;">
+                            <option value="">-- Pilih Toko --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="validateFile()" style="margin-top: 16px; padding: 10px 20px; background: #3b82f6; color: white; border-radius: 6px; cursor: pointer;">
+                    ✓ Validasi
+                </button>
+
+                <div id="validation-result"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/config.js?v=20260828"></script>
+    <script src="js/supabase.js?v=20260828"></script>
+    <script src="js/auth.js?v=20260828"></script>
+    <script src="js/utils.js?v=20260828"></script>
+    <script src="js/sidebar.js?v=20260828"></script>
+
+    <script>
+        // Initialize auth and check role
+        (async function() {
+            const user = await initAuth(['super_admin', 'moderator']);
+            if (!user) {
+                // initAuth already redirected
+                return;
+            }
+
+            console.log('User authenticated as:', user.role);
+            
+            // Unhide page after auth check
+            document.documentElement.style.opacity = '1';
+            document.documentElement.classList.remove('auth-loading');
+        })();
+
+        let allIssues = [];
+        let currentTab = 'unresolved';
+
+        async function loadIssues() {
+            try {
+                const response = await API.get('/api/data-quality/issues?resolved=false&limit=100');
+                allIssues = response.issues || [];
+                updateStats();
+                renderIssues();
+            } catch (err) {
+                console.error('Error loading issues:', err);
+                Toast.error('Gagal memuat data quality issues');
+            }
+        }
+
+        function updateStats() {
+            const unresolved = allIssues.filter(i => !i.resolved).length;
+            const critical = allIssues.filter(i => i.severity === 'error').length;
+            const resolved = allIssues.filter(i => i.resolved).length;
+
+            document.getElementById('total-issues').textContent = allIssues.length;
+            document.getElementById('unresolved-issues').textContent = unresolved;
+            document.getElementById('critical-issues').textContent = critical;
+            document.getElementById('resolved-issues').textContent = resolved;
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.style.borderBottomColor = 'transparent';
+            });
+            event.target.style.borderBottomColor = '#3b82f6';
+
+            if (tab === 'validator') {
+                document.getElementById('issues-container').style.display = 'none';
+                document.getElementById('validator-tab').classList.remove('hidden');
+            } else {
+                document.getElementById('issues-container').style.display = 'block';
+                document.getElementById('validator-tab').classList.add('hidden');
+                renderIssues();
+            }
+        }
+
+        function renderIssues() {
+            let issues = allIssues;
+
+            if (currentTab === 'unresolved') {
+                issues = issues.filter(i => !i.resolved);
+            }
+
+            const container = document.getElementById('issues-container');
+            
+            if (issues.length === 0) {
+                container.innerHTML = '<p style="text-center; color: #9ca3af;">Tidak ada data quality issues</p>';
+                return;
+            }
+
+            container.innerHTML = issues.map(issue => `
+                <div class="issue-card ${issue.severity}">
+                    <div class="issue-type ${issue.severity}">${issue.issue_type}</div>
+                    <p style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">
+                        ${issue.files?.nama_file || 'Unknown File'}
+                    </p>
+                    <p style="font-size: 14px; color: #4b5563; margin-bottom: 8px;">
+                        ${issue.issue_description}
+                    </p>
+                    ${issue.suggested_fix ? `
+                        <div style="padding: 8px; background: #f0fdf4; border-radius: 4px; font-size: 12px; margin-bottom: 8px;">
+                            <strong>💡 Saran:</strong> ${JSON.stringify(issue.suggested_fix).substring(0, 100)}...
+                        </div>
+                    ` : ''}
+                    <div style="display: flex; gap: 8px; font-size: 12px;">
+                        <button onclick="markIssueResolved('${issue.id}')" style="color: #10b981; cursor: pointer;">
+                            ✓ Tandai Selesai
+                        </button>
+                        <button onclick="alert('Preview akan membuka file')" style="color: #3b82f6; cursor: pointer;">
+                            👁 Preview
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function markIssueResolved(issueId) {
+            // TODO: Implement API endpoint to mark issue as resolved
+            Toast.success('Issue ditandai selesai');
+            loadIssues();
+        }
+
+        async function validateFile() {
+            const filename = document.getElementById('val-filename').value;
+            const nominal = document.getElementById('val-nominal').value;
+            const date = document.getElementById('val-date').value;
+            const tokoId = document.getElementById('val-toko').value;
+
+            if (!filename || !nominal) {
+                Toast.warning('Isi filename dan nominal');
+                return;
+            }
+
+            try {
+                const result = await API.post('/api/validation/check-file', {
+                    filename,
+                    nominal: parseInt(nominal),
+                    tanggal_dokumen: date,
+                    toko_id: tokoId
+                });
+
+                const resultEl = document.getElementById('validation-result');
+                const statusClass = result.valid ? 'valid' : 'invalid';
+                const statusText = result.valid ? '✓ Valid' : '✗ Invalid';
+
+                resultEl.innerHTML = `
+                    <div class="validation-result ${statusClass}">
+                        <p style="font-weight: 600; margin-bottom: 12px;">${statusText}</p>
+                        ${result.errors.length > 0 ? `
+                            <p style="font-weight: 500; margin-bottom: 4px;">Errors:</p>
+                            ${result.errors.map(e => `<p>- ${e.message}</p>`).join('')}
+                        ` : ''}
+                        ${result.warnings.length > 0 ? `
+                            <p style="font-weight: 500; margin: 12px 0 4px 0;">Warnings:</p>
+                            ${result.warnings.map(w => `<p>⚠️ ${w.message}</p>`).join('')}
+                        ` : ''}
+                        ${result.suggestions.length > 0 ? `
+                            <p style="font-weight: 500; margin: 12px 0 4px 0;">Suggestions:</p>
+                            ${result.suggestions.map(s => `<p>💡 ${s}</p>`).join('')}
+                        ` : ''}
+                    </div>
+                `;
+
+            } catch (err) {
+                Toast.error('Gagal validasi file: ' + err.message);
+            }
+        }
+
+        // Load tokos for validator
+        async function loadTokos() {
+            try {
+                const res = await API.get('/api/toko');
+                const select = document.getElementById('val-toko');
+                const tokos = res.tokos || res;
+                
+                tokos.forEach(toko => {
+                    const opt = document.createElement('option');
+                    opt.value = toko.id;
+                    opt.textContent = toko.nama;
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                console.error('Error loading tokos:', err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadIssues();
+            loadTokos();
+        });
+    </script>
+</body>
+</html>

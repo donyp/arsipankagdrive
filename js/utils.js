@@ -245,3 +245,194 @@ function formatCurrency(val) {
         maximumFractionDigits: 0
     }).format(val);
 }
+
+// ---- Cross-Page Update History Notification ----
+async function initUpdateHistoryNotification() {
+    // Only initialize once per page load
+    if (window._updateHistoryNotificationInitialized) {
+        console.log('[Update Notify] Already initialized, skipping');
+        return;
+    }
+    window._updateHistoryNotificationInitialized = true;
+
+    try {
+        console.log('[Update Notify] Starting check...');
+        
+        // Get latest update
+        const response = await API.get('/api/update-history');
+        console.log('[Update Notify] API response:', response);
+        
+        // Handle different response formats
+        let updates = [];
+        if (response && Array.isArray(response)) {
+            updates = response;
+        } else if (response && response.updates && Array.isArray(response.updates)) {
+            updates = response.updates;
+        }
+        
+        if (!updates || updates.length === 0) {
+            console.log('[Update Notify] No updates found');
+            return;
+        }
+        
+        const latestUpdate = updates[0];
+        if (!latestUpdate || !latestUpdate.id) {
+            console.log('[Update Notify] Latest update invalid:', latestUpdate);
+            return;
+        }
+        
+        console.log('[Update Notify] Latest update ID:', latestUpdate.id);
+        console.log('[Update Notify] Latest update created_at:', latestUpdate.created_at);
+        
+        const lastSeenUpdateId = localStorage.getItem('lastSeenUpdateId');
+        console.log('[Update Notify] Last seen update ID:', lastSeenUpdateId);
+        
+        // Check if update was just created (within last 5 minutes)
+        // This works even across different user logins since we check the server timestamp
+        const updateCreatedTime = new Date(latestUpdate.created_at).getTime();
+        const now = Date.now();
+        const timeSincePublish = now - updateCreatedTime;
+        const isRecentUpdate = timeSincePublish < (5 * 60 * 1000); // 5 minutes
+        
+        console.log('[Update Notify] Time since publish:', timeSincePublish, 'ms (', (timeSincePublish/1000), 'seconds )');
+        console.log('[Update Notify] Is recent update:', isRecentUpdate);
+        
+        // Show if:
+        // 1. User hasn't seen this update yet (lastSeenUpdateId !== latestUpdate.id), OR
+        // 2. It's a recent update (published within 5 minutes)
+        if (lastSeenUpdateId === String(latestUpdate.id) && !isRecentUpdate) {
+            console.log('[Update Notify] User already saw this update and it\'s not recent - skipping');
+            return;
+        }
+        
+        console.log('[Update Notify] Should show popup!');
+        
+        // Mark as seen
+        localStorage.setItem('lastSeenUpdateId', String(latestUpdate.id));
+        
+        // Show notification badge if element exists
+        const badge = document.getElementById('update-history-badge');
+        if (badge) {
+            badge.classList.remove('hidden');
+        }
+        
+        // Load items for this update
+        const itemsResp = await fetch(`${CONFIG.API_URL}/api/update-history-items/${latestUpdate.id}`, {
+            headers: { 'Authorization': `Bearer ${API.getToken()}` }
+        });
+        
+        if (!itemsResp.ok) {
+            console.log('[Update Notify] Failed to load items');
+            return;
+        }
+        const itemsData = await itemsResp.json();
+        const items = itemsData.items || [];
+        
+        // Group by type
+        const groupedByType = {};
+        items.forEach(item => {
+            if (!groupedByType[item.type]) {
+                groupedByType[item.type] = [];
+            }
+            groupedByType[item.type].push(item);
+        });
+        
+        // Build HTML
+        let itemsHtml = '';
+        const typeOrder = ['UPDATE', 'BUG_FIX', 'FEATURE', 'IMPROVEMENT'];
+        let isFirst = true;
+        typeOrder.forEach(type => {
+            if (groupedByType[type]) {
+                const typeIcon = type === 'UPDATE' ? '📦' : type === 'BUG_FIX' ? '🐛' : type === 'FEATURE' ? '✨' : '⚡';
+                const typeBadge = {
+                    'UPDATE': 'background: #dbeafe; color: #1e40af;',
+                    'BUG_FIX': 'background: #fee2e2; color: #991b1b;',
+                    'FEATURE': 'background: #dcfce7; color: #166534;',
+                    'IMPROVEMENT': 'background: #fef3c7; color: #92400e;'
+                }[type] || 'background: #f3f4f6; color: #4b5563;';
+                
+                const itemsOfType = groupedByType[type];
+                const separator = !isFirst ? '<div style="height: 1px; background: linear-gradient(to right, transparent, #e5e7eb, transparent); margin: 12px 0;"></div>' : '';
+                isFirst = false;
+                
+                itemsHtml += `
+                    ${separator}
+                    <div style="margin-bottom: 12px; margin-top: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; padding: 5px 10px; border-radius: 6px; ${typeBadge} box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);">
+                                ${typeIcon} ${type.replace('_', ' ')}
+                            </span>
+                        </div>
+                        <div style="margin-left: 0;">
+                            ${itemsOfType.map((item, idx) => `
+                                <div style="margin-bottom: 10px; padding-left: 0;">
+                                    <p style="margin: 0 0 4px 0; font-weight: 700; color: #1e293b; font-size: 14px; line-height: 1.3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">${idx + 1}. ${item.title}</p>
+                                    <p style="margin: 0; color: #64748b; font-size: 13px; line-height: 1.4; padding-left: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">• ${item.description || '(Tidak ada deskripsi)'}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        const date = new Date(latestUpdate.created_at).toLocaleDateString('id-ID', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric'
+        });
+        
+        const content = `
+            <div style="text-align: center; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0;">
+                <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.95; filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.12));">📦</div>
+                <h2 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #0f172a; letter-spacing: -0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">Update Sistem Anka</h2>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0;">
+                    <span style="font-size: 14px; color: #667eea; font-weight: 700; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">v${latestUpdate.version}</span>
+                    <span style="width: 3px; height: 3px; background: #cbd5e1; border-radius: 50%;"></span>
+                    <span style="font-size: 11px; color: #94a3b8; font-weight: 500; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">${date}</span>
+                </div>
+            </div>
+                <div style="margin-bottom: 0; text-align: left;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.8px; padding-bottom: 0; border-bottom: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">✨ Daftar Perubahan</h3>
+                    ${itemsHtml}
+                </div>
+            `;
+        
+        Swal.fire({
+            html: content,
+            confirmButtonText: 'Lihat Detail',
+            cancelButtonText: 'Tutup',
+            confirmButtonColor: '#667eea',
+            showCancelButton: true,
+            width: 520,
+            padding: '28px 24px',
+            allowOutsideClick: false,
+            didOpen: () => {
+                const modal = Swal.getHtmlContainer().closest('.swal2-modal');
+                if (modal) {
+                    modal.style.borderRadius = '16px';
+                    modal.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08)';
+                }
+                const btn = document.querySelector('.swal2-confirm');
+                if (btn) {
+                    btn.style.borderRadius = '8px';
+                    btn.style.padding = '10px 32px';
+                    btn.style.fontWeight = '700';
+                    btn.style.fontSize = '13px';
+                    btn.style.letterSpacing = '0.2px';
+                    btn.style.textTransform = 'uppercase';
+                    btn.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = 'update-history.html';
+            }
+        });
+        
+    } catch (err) {
+        console.error('[Update Notify] Error:', err);
+        console.error('[Update Notify] Error message:', err.message);
+        console.error('[Update Notify] Stack:', err.stack);
+    }
+}

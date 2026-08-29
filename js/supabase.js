@@ -130,6 +130,13 @@ const API = {
         });
     },
 
+    patch(endpoint, body) {
+        return this.request(endpoint, {
+            method: 'PATCH',
+            body: JSON.stringify(body)
+        });
+    },
+
     put(endpoint, body) {
         return this.request(endpoint, {
             method: 'PUT',

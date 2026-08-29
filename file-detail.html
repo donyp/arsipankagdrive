@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Detail | Pusat Arsip Anka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tailwind.generated.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.documentElement.style.opacity = '0';
+        document.documentElement.classList.add('auth-loading');
+    </script>
+    <style>
+        .file-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .file-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .category-badge.invoice {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .category-badge.piutang {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .category-badge.ppn {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #667eea;
+            text-decoration: none;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-[#F0F2F5]">
+    <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-40"></aside>
+
+    <main id="main-content" class="ml-64 p-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Back Link -->
+            <a href="javascript:history.back()" class="back-link">
+                ← Kembali
+            </a>
+
+            <!-- File Header -->
+            <div id="file-header" class="file-header hidden">
+                <h1 id="file-title" class="text-2xl font-bold mb-2">Loading...</h1>
+                <p id="file-category" class="text-gray-200">Loading...</p>
+            </div>
+
+            <!-- File Info Grid -->
+            <div id="file-info" class="file-info-grid hidden"></div>
+
+            <!-- Alerts -->
+            <div id="alerts-container"></div>
+
+            <!-- File Preview / Download -->
+            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #e5e7eb;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="font-weight: 600; margin: 0;">File</h3>
+                    <button id="download-btn" onclick="downloadFile()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                        ⬇️ Download
+                    </button>
+                </div>
+                <div id="file-preview" style="background: #f9fafb; padding: 40px; border-radius: 6px; text-align: center; color: #9ca3af;">
+                    Loading preview...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/config.js?v=20260828"></script>
+    <script src="js/supabase.js?v=20260828"></script>
+    <script src="js/auth.js?v=20260828"></script>
+    <script src="js/utils.js?v=20260828"></script>
+    <script src="js/sidebar.js?v=20260828"></script>
+
+    <script>
+        let currentFileId = null;
+        let currentFile = null;
+
+        // Get file ID from URL
+        function getFileIdFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('id');
+        }
+
+        // Initialize page
+        (async function() {
+            const user = await initAuth();
+            if (!user) return;
+
+            window.currentUser = user;
+
+            currentFileId = getFileIdFromURL();
+            if (!currentFileId) {
+                showError('File ID tidak ditemukan');
+                return;
+            }
+
+            await loadFileDetails();
+
+            document.documentElement.style.opacity = '1';
+            document.documentElement.classList.remove('auth-loading');
+        })();
+
+        async function loadFileDetails() {
+            try {
+                // Get all files with high limit to find our file
+                const response = await API.get('/api/files?limit=1000&page=1');
+                
+                console.log('[loadFileDetails] API Response:', response);
+                
+                // Handle different response formats
+                let files = [];
+                if (Array.isArray(response)) {
+                    files = response;
+                } else if (response.data && Array.isArray(response.data)) {
+                    files = response.data;
+                } else if (response.files && Array.isArray(response.files)) {
+                    files = response.files;
+                }
+
+                console.log('[loadFileDetails] Found', files.length, 'files, looking for:', currentFileId);
+
+                currentFile = files.find(f => f.id === currentFileId);
+
+                if (!currentFile) {
+                    console.error('File not found. Available IDs:', files.map(f => f.id).slice(0, 5));
+                    showError('File tidak ditemukan di database');
+                    return;
+                }
+
+                console.log('[loadFileDetails] Found file:', currentFile.nama_file);
+                console.log('[loadFileDetails] Category value:', currentFile.category);
+                console.log('[loadFileDetails] Tipe PPN:', currentFile.tipe_ppn);
+                renderFileHeader();
+                renderFileInfo();
+                renderPreview();
+
+            } catch (err) {
+                console.error('[loadFileDetails] Error:', err);
+                showError('Gagal memuat detail file: ' + err.message);
+            }
+        }
+
+        function renderFileHeader() {
+            const header = document.getElementById('file-header');
+            header.classList.remove('hidden');
+            document.getElementById('file-title').textContent = currentFile.nama_file;
+            
+            // Map category to display name and color
+            const mapCategory = (category) => {
+                const cat = (category || '').toUpperCase().trim();
+                
+                // Map all variations to main categories
+                // INVOICE category includes: INVOICE, PPN, NON_PPN (these are all types of invoices)
+                if (cat === 'INVOICE' || cat === 'PPN' || cat === 'NON' || cat === 'NON_PPN') {
+                    return { name: 'INVOICE', class: 'invoice' };
+                } else if (cat.includes('PIUTANG') || cat === 'PIUTANG') {
+                    return { name: 'PIUTANG', class: 'piutang' };
+                }
+                return { name: cat, class: 'ppn' };
+            };
+            
+            const categoryInfo = mapCategory(currentFile.category);
+            const categoryBadge = `<span class="category-badge ${categoryInfo.class}">${categoryInfo.name}</span>`;
+            
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            const date = new Date(currentFile.created_at);
+            const formattedDate = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+            
+            document.getElementById('file-category').innerHTML = `${categoryBadge} • ${formattedDate}`;
+        }
+
+        function renderFileInfo() {
+            const infoGrid = document.getElementById('file-info');
+            infoGrid.classList.remove('hidden');
+            
+            // Format tanggal dengan nama bulan Indonesia
+            const formatDateWithMonth = (dateStr) => {
+                if (!dateStr) return '-';
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return '-';
+                const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+            };
+            
+            // Map category to display name and color
+            const mapCategory = (category) => {
+                const cat = (category || '').toUpperCase().trim();
+                
+                // Map all variations to main categories
+                // INVOICE category includes: INVOICE, PPN, NON_PPN (these are all types of invoices)
+                if (cat === 'INVOICE' || cat === 'PPN' || cat === 'NON' || cat === 'NON_PPN') {
+                    return { name: 'INVOICE', class: 'invoice' };
+                } else if (cat.includes('PIUTANG') || cat === 'PIUTANG') {
+                    return { name: 'PIUTANG', class: 'piutang' };
+                }
+                return { name: cat, class: 'ppn' };
+            };
+            
+            const categoryInfo = mapCategory(currentFile.category);
+            const categoryBadge = `<span class="category-badge ${categoryInfo.class}">${categoryInfo.name}</span>`;
+            
+            const info = [
+                { label: 'Jenis Dokumen', value: categoryBadge, isHtml: true },
+                { label: 'Nominal', value: currentFile.total_jual ? `Rp ${formatNumber(currentFile.total_jual)}` : '-' },
+                { label: 'Status Pajak', value: currentFile.tipe_ppn || '-' },
+                { label: 'Tanggal Dokumen', value: formatDateWithMonth(currentFile.tanggal_dokumen) },
+                { label: 'Di-upload Oleh', value: currentFile.users?.name || currentFile.uploaded_by_name || '-' },
+                { label: 'Tanggal Upload', value: formatDateWithMonth(currentFile.created_at) }
+            ];
+
+            infoGrid.innerHTML = info.map(item => `
+                <div class="info-card">
+                    <div class="info-label">${item.label}</div>
+                    <div class="info-value">${item.isHtml ? item.value : item.value}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderPreview() {
+            const preview = document.getElementById('file-preview');
+            if (currentFile.category === 'PDF' || currentFile.nama_file.endsWith('.pdf')) {
+                // Show loading animation dengan progress
+                preview.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; gap: 16px;">
+                        <div style="width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        <div style="text-align: center;">
+                            <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">Memuat preview file...</p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px;">Ini mungkin memakan waktu beberapa saat</p>
+                        </div>
+                    </div>
+                    <style>
+                        @keyframes spin {
+                            to { transform: rotate(360deg); }
+                        }
+                    </style>
+                `;
+                
+                // Load PDF preview
+                loadPDFPreview();
+            } else {
+                preview.innerHTML = `<div style="font-size: 48px; margin-bottom: 12px;">📄</div><p style="margin: 0; color: #6b7280;">File dapat didownload</p>`;
+            }
+        }
+
+        async function loadPDFPreview() {
+            try {
+                const token = API.getToken();
+                const pdfUrl = `${CONFIG.API_URL}/api/files/${currentFileId}/view?token=${token}`;
+                
+                console.log('[PDF] Loading from:', pdfUrl);
+                
+                const preview = document.getElementById('file-preview');
+                
+                // Keep loading animation visible during entire process
+                const showLoading = () => {
+                    preview.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; gap: 16px;">
+                            <div style="width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                            <p style="margin: 0; color: #6b7280; font-size: 14px;">Memuat preview file...</p>
+                            <style>
+                                @keyframes spin {
+                                    to { transform: rotate(360deg); }
+                                }
+                            </style>
+                        </div>
+                    `;
+                };
+                
+                showLoading();
+                
+                // Load PDF.js library first
+                if (!window.pdfjsLib) {
+                    console.log('[PDF] Loading PDF.js library...');
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                }
+                
+                console.log('[PDF] Setting worker...');
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                
+                try {
+                    console.log('[PDF] Loading PDF document from URL...');
+                    
+                    // Try to fetch with HEAD request first to check if file exists
+                    try {
+                        const headResponse = await fetch(pdfUrl, { method: 'HEAD' });
+                        if (headResponse.status === 404) {
+                            console.warn('[PDF] File returned 404 - not found in Google Drive');
+                            showPDFError('File tidak ditemukan', true);
+                            return;
+                        }
+                    } catch (headErr) {
+                        console.warn('[PDF] HEAD request failed (will try to load anyway):', headErr.message);
+                    }
+                    
+                    const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+                    const totalPages = pdf.numPages;
+                    console.log('[PDF] PDF loaded successfully, total pages:', totalPages);
+                    
+                    // Determine default page
+                    let defaultPage = totalPages === 1 ? 1 : 2;
+                    
+                    // Get stored page number from localStorage
+                    const storedPage = parseInt(localStorage.getItem(`pdf_page_${currentFileId}`));
+                    const currentPage = storedPage ? Math.min(Math.max(storedPage, 1), totalPages) : defaultPage;
+                    
+                    console.log('[PDF] Default page:', defaultPage, 'Current page:', currentPage);
+                    
+                    // Keep showing loading while rendering
+                    showLoading();
+                    
+                    // Render page selector and canvas
+                    console.log('[PDF] Rendering page selector...');
+                    renderPageSelector(totalPages, currentPage);
+                    
+                    // Store global state
+                    window.currentPDF = pdf;
+                    window.currentPDFPage = currentPage;
+                    window.totalPDFPages = totalPages;
+                    
+                    // Render the page
+                    console.log('[PDF] Rendering page', currentPage, '...');
+                    await renderPDFPage(pdf, currentPage);
+                    console.log('[PDF] Page rendered successfully');
+                    
+                } catch (pdfErr) {
+                    console.error('[PDF] PDF load error:', pdfErr);
+                    
+                    // Check if error indicates file not found in Google Drive
+                    const errorMsg = pdfErr.message || '';
+                    const isNotFound = errorMsg.includes('404') || 
+                                      errorMsg.includes('not found') || 
+                                      errorMsg.includes('directory not found') ||
+                                      pdfErr.name === 'NetworkError';
+                    
+                    if (isNotFound) {
+                        showPDFError('File tidak ditemukan', true);
+                    } else {
+                        showPDFError('Gagal membaca file PDF', false);
+                    }
+                }
+                
+            } catch (err) {
+                console.error('[PDF] Error:', err);
+                showPDFError('Gagal memuat preview PDF', false);
+            }
+        }
+
+        function renderPageSelector(totalPages, currentPage) {
+            const preview = document.getElementById('file-preview');
+            preview.innerHTML = '';
+            preview.style.padding = '0';
+            preview.style.background = '#f9fafb';
+            
+            // Create canvas container
+            const canvasContainer = document.createElement('div');
+            canvasContainer.id = 'pdf-canvas-container';
+            canvasContainer.style.cssText = `
+                text-align: center;
+                background: #f9fafb;
+                padding: 20px;
+                max-height: 700px;
+                overflow-y: auto;
+            `;
+            
+            const canvas = document.createElement('canvas');
+            canvas.id = 'pdf-canvas';
+            canvas.style.cssText = `
+                max-width: 100%;
+                height: auto;
+                border: 1px solid #e5e7eb;
+                border-radius: 4px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            `;
+            
+            canvasContainer.appendChild(canvas);
+            preview.appendChild(canvasContainer);
+        }
+
+        async function renderPDFPage(pdf, pageNum) {
+            try {
+                console.log('[renderPDFPage] Getting page', pageNum);
+                const page = await pdf.getPage(pageNum);
+                console.log('[renderPDFPage] Page retrieved');
+                
+                const scale = 1.5;
+                const viewport = page.getViewport({ scale });
+                console.log('[renderPDFPage] Viewport size:', viewport.width, 'x', viewport.height);
+                
+                const canvas = document.getElementById('pdf-canvas');
+                if (!canvas) {
+                    console.error('[renderPDFPage] Canvas not found!');
+                    throw new Error('Canvas element tidak ditemukan');
+                }
+                
+                const context = canvas.getContext('2d');
+                
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                
+                console.log('[renderPDFPage] Rendering page to canvas...');
+                await page.render(renderContext).promise;
+                console.log('[renderPDFPage] Rendering complete');
+                
+                // Save to localStorage
+                localStorage.setItem(`pdf_page_${currentFileId}`, pageNum);
+                console.log('[renderPDFPage] Page', pageNum, 'saved to localStorage');
+                
+            } catch (err) {
+                console.error('[renderPDFPage] Error:', err);
+                showPDFError('Gagal render halaman: ' + err.message);
+            }
+        }
+
+        async function goToNextPage() {
+            // Fungsi navigasi dihapus - tidak ada tombol lagi
+        }
+
+        async function goToPreviousPage() {
+            // Fungsi navigasi dihapus - tidak ada tombol lagi
+        }
+
+        async function goToPageByInput() {
+            // Fungsi navigasi dihapus - tidak ada tombol lagi
+        }
+
+        function showPDFError(message, isFileMissing = false) {
+            const preview = document.getElementById('file-preview');
+            
+            // Sama untuk kedua kasus - tampilkan pesan user-friendly biasa saja
+            preview.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; gap: 16px; text-align: center; padding: 24px;">
+                    <div style="font-size: 48px;">📥</div>
+                    <div>
+                        <p style="margin: 0 0 8px 0; color: #1f2937; font-weight: 600; font-size: 16px;">Preview tidak tersedia</p>
+                        <p style="margin: 0; color: #6b7280; font-size: 14px;">Gunakan tombol Download di atas untuk mengakses file.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function downloadFile() {
+            if (!currentFile) return;
+            const token = API.getToken();
+            const downloadUrl = `${CONFIG.API_URL}/api/files/${currentFileId}/download?token=${token}`;
+            
+            // Create temporary link and trigger download
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = currentFile.nama_file;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showError(message) {
+            const container = document.getElementById('alerts-container');
+            container.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

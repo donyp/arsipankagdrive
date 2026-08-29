@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Check for Post-Maintenance Update Notice (Run for ALL users)
-    await checkUpdateNotice();
+    await initUpdateHistoryNotification();
 
     // Search Visibility Logic
     if (user.role === 'super_admin') {
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// ---- Check for Post-Maintenance Update Notice ("What's New") ----
+
 function escapeNoticeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({
         '&': '&amp;',
@@ -447,6 +447,16 @@ function populateFilters() {
     }
 
     populateTokoFilter();
+    
+    // Show scan missing files button for admin only
+    const scanBtn = document.getElementById('scan-missing-btn');
+    if (scanBtn) {
+        if (isSuperAdmin() || currentUser?.role === 'moderator') {
+            scanBtn.classList.remove('hidden');
+        } else {
+            scanBtn.classList.add('hidden');
+        }
+    }
 }
 
 // ---- Load Archives from Backend API ----
@@ -667,6 +677,40 @@ async function updateStats(res = {}) {
 // ---- Apply Filters ----
 function applyFilters() {
     loadArchives(false);
+}
+
+// ---- Scan Missing Files (Admin Only) ----
+async function scanMissingFiles() {
+    if (!isSuperAdmin() && !(currentUser?.role === 'moderator')) {
+        Toast.error('Akses ditolak');
+        return;
+    }
+    
+    const btn = document.getElementById('scan-missing-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="inline-block animate-spin">⏳</span> Scanning...';
+    
+    try {
+        console.log('[Scan Missing] Starting scan...');
+        const res = await API.post('/api/admin/scan-missing-files');
+        
+        if (res.status === 'success') {
+            Toast.success(`✓ Scan selesai: ${res.missing} file hilang ditemukan`);
+            console.log('[Scan Missing] Result:', res);
+            
+            // Reload archives to show updated missing status
+            await loadArchives();
+        } else {
+            Toast.error('Scan gagal: ' + (res.error || 'Unknown error'));
+        }
+    } catch (err) {
+        console.error('[Scan Missing] Error:', err);
+        Toast.error('Gagal melakukan scan: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
 }
 
 // ---- Export CSV ----
@@ -1028,9 +1072,12 @@ function renderTableHTML(tbody, pageItems) {
 
                         <!-- Filename -->
                         <div class="flex-1 min-w-0">
-                            <p class="font-bold text-sm truncate ${nameColorClass} transition-colors" title="${a.nama_file}">
-                                ${truncate(cleanName, 45)}
-                            </p>
+                            <div class="flex items-center gap-2 min-w-0">
+                                <p class="font-bold text-sm truncate ${nameColorClass} transition-colors" title="${a.nama_file}">
+                                    ${truncate(cleanName, 45)}
+                                </p>
+                                ${a.is_missing ? `<span class="px-2 py-0.5 rounded bg-red-100 text-red-700 text-[10px] font-bold whitespace-nowrap flex-shrink-0" title="File tidak ditemukan di Google Drive">⚠️ Missing</span>` : ''}
+                            </div>
                         </div>
                     </div>
 
@@ -1044,8 +1091,8 @@ function renderTableHTML(tbody, pageItems) {
                         <!-- Quick Action Buttons (Compact Icons) -->
                         <div class="flex gap-1.5 pl-2 border-l border-gray-150">
                             ${viewMode === 'active' ? `
-                                <button onclick="openPreview('${a.id}', '${a.nama_file}')" style="padding: ${(currentUser && currentUser.role === 'admin_zona') ? '0.75rem' : '0.375rem'}" class="text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Preview">
-                                    <svg class="transition-all" style="width: ${(currentUser && currentUser.role === 'admin_zona') ? '1.5rem' : '1rem'}; height: ${(currentUser && currentUser.role === 'admin_zona') ? '1.5rem' : '1rem'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                <button onclick="openFileDetail('${a.id}')" style="padding: ${(currentUser && currentUser.role === 'admin_zona') ? '0.75rem' : '0.375rem'}" class="text-purple-600 hover:bg-purple-50 rounded-md transition-colors" title="Lihat Detail & Komentar">
+                                    <svg class="transition-all" style="width: ${(currentUser && currentUser.role === 'admin_zona') ? '1.5rem' : '1rem'}; height: ${(currentUser && currentUser.role === 'admin_zona') ? '1.5rem' : '1rem'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
                                 </button>
                                 <a href="${CONFIG.API_URL}/api/files/${a.id}/download?token=${API.getToken()}" style="padding: ${(currentUser && currentUser.role === 'admin_zona') ? '0.75rem' : '0.375rem'}" class="text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" title="Download">
                                     <svg class="transition-all" style="width: ${(currentUser && currentUser.role === 'admin_zona') ? '1.5rem' : '1rem'}; height: ${(currentUser && currentUser.role === 'admin_zona') ? '1.5rem' : '1rem'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -2256,84 +2303,17 @@ async function toggleMaintenance() {
 
         showConfirm(
             'Selesaikan Perbaikan',
-            formHtml,
+            'Sistem akan kembali online dan update tersedia di menu Update History.',
             async () => {
-                const title = document.getElementById('maint-res-title').value;
-                const details = Array.from(document.querySelectorAll('.maint-detail-item'))
-                    .map(item => ({
-                        summary: item.querySelector('.maint-detail-summary')?.value.trim() || '',
-                        description: item.querySelector('.maint-detail-description')?.value.trim() || ''
-                    }))
-                    .filter(item => item.summary || item.description);
-
-                if (!title) {
-                    Toast.error('Harap pilih judul perbaikan');
-                    return false;
-                }
-                if (details.length === 0) {
-                    Toast.error('Harap isi minimal satu detail');
-                    return false;
-                }
-                if (details.some(item => !item.summary)) {
-                    Toast.error('Isi ringkasan perbaikan pada setiap item');
-                    return false;
-                }
-
-                await API.put('/api/system/maintenance', { is_maintenance: false, result: { title, details } });
+                await API.put('/api/system/maintenance', { is_maintenance: false });
                 Toast.success('Sistem kembali Online');
                 loadMaintenanceStatus();
                 return true;
             },
-            'Simpan & Selesaikan',
+            'Selesaikan',
             'Batal',
             false // Light mode
         );
-
-        // Handle dynamic detail inputs
-        setTimeout(() => {
-            const addBtn = document.getElementById('btn-add-detail');
-            const container = document.getElementById('maint-detail-list');
-            if (addBtn && container) {
-                const renumberDetails = () => {
-                    container.querySelectorAll('.maint-detail-item').forEach((item, index) => {
-                        const number = item.querySelector('.maint-detail-number');
-                        if (number) number.textContent = `${index + 1}.`;
-                    });
-                };
-                const updateDetailScroll = () => {
-                    const shouldScroll = container.querySelectorAll('.maint-detail-item').length > 2;
-                    container.style.maxHeight = shouldScroll ? '240px' : '';
-                    container.style.overflowY = shouldScroll ? 'auto' : '';
-                    container.style.paddingRight = shouldScroll ? '4px' : '';
-                    container.classList.toggle('custom-scrollbar', shouldScroll);
-                };
-
-                addBtn.onclick = () => {
-                    const div = document.createElement('div');
-                    div.className = 'maint-detail-item rounded-2xl border border-gray-200 bg-gray-50/70 p-3 animate-fade-in';
-                    div.innerHTML = `
-                        <div class="flex items-center gap-2">
-                            <span class="maint-detail-number w-7 h-7 shrink-0 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-black"></span>
-                            <input type="text" class="maint-detail-summary flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/10 transition-all" placeholder="Ringkasan perbaikan...">
-                            <button type="button" data-remove-detail title="Hapus detail" aria-label="Hapus detail" class="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                        </div>
-                        <input type="text" class="maint-detail-description mt-2 ml-9 w-[calc(100%-2.25rem)] bg-white border border-gray-200 rounded-lg px-3 py-2 text-[11px] text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/10 transition-all" placeholder="Detail penjelasan (subteks, opsional)...">
-                    `;
-                    container.appendChild(div);
-                    renumberDetails();
-                    div.querySelector('[data-remove-detail]')?.addEventListener('click', () => {
-                        div.remove();
-                        renumberDetails();
-                        updateDetailScroll();
-                    });
-                    updateDetailScroll();
-                    div.querySelector('.maint-detail-summary')?.focus();
-                };
-                updateDetailScroll();
-            }
-        }, 100);
 
     } else {
         showConfirm(
@@ -2480,4 +2460,11 @@ function extractNominalFromFilename(filename) {
     }
     
     return null;
+}
+
+// ============================================================
+// File Detail View Function
+// ============================================================
+function openFileDetail(fileId) {
+    window.location.href = `file-detail.html?id=${fileId}`;
 }

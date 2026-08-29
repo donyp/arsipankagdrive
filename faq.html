@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ Knowledge Base | Pusat Arsip Anka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tailwind.generated.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .faq-container { max-width: 900px; margin: 0 auto; }
+        .search-box { margin-bottom: 24px; }
+        .search-box input { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 8px; 
+            font-size: 14px;
+        }
+        .category-tabs { display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; }
+        .category-btn {
+            padding: 8px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .category-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .faq-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .faq-question {
+            padding: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        .faq-question:hover { background: #f9fafb; }
+        .faq-question-text { font-weight: 600; color: #1f2937; }
+        .faq-toggle { font-size: 18px; transition: transform 0.2s; }
+        .faq-toggle.open { transform: rotate(180deg); }
+        .faq-answer {
+            padding: 0 16px 16px 16px;
+            color: #4b5563;
+            line-height: 1.6;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .faq-answer.open { max-height: 1000px; }
+        .faq-footer {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .faq-footer button {
+            padding: 6px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            background: white;
+        }
+        .faq-footer button:hover { background: #f3f4f6; }
+        .tags {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body class="bg-[#F0F2F5]">
+    <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-40"></aside>
+
+    <main id="main-content" class="ml-64 p-8">
+        <div class="faq-container">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">FAQ Knowledge Base</h1>
+                <p class="text-gray-600 mt-2">Jawaban untuk pertanyaan umum tentang sistem Arsip ANKA</p>
+            </div>
+
+            <!-- Search Box -->
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="🔍 Cari artikel FAQ..." onkeyup="filterFAQ()">
+            </div>
+
+            <!-- Category Tabs -->
+            <div class="category-tabs" id="category-tabs"></div>
+
+            <!-- FAQ Items -->
+            <div id="faq-items-container"></div>
+
+            <!-- No Results -->
+            <div id="no-results" class="text-center py-12 hidden">
+                <p class="text-gray-500 text-lg">Tidak ada artikel ditemukan</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/config.js?v=20260828"></script>
+    <script src="js/supabase.js?v=20260828"></script>
+    <script src="js/auth.js?v=20260828"></script>
+    <script src="js/utils.js?v=20260828"></script>
+    <script src="js/sidebar.js?v=20260828"></script>
+
+    <script>
+        let allArticles = [];
+        let allCategories = [];
+        let selectedCategory = null;
+
+        async function loadFAQ() {
+            try {
+                // Load categories
+                const catRes = await API.get('/api/faq/categories');
+                allCategories = catRes.categories;
+
+                // Load articles
+                const artRes = await API.get('/api/faq/articles');
+                allArticles = artRes.articles;
+
+                renderCategories();
+                renderArticles();
+
+            } catch (err) {
+                console.error('Error loading FAQ:', err);
+                Toast.error('Gagal memuat FAQ');
+            }
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('category-tabs');
+            container.innerHTML = '<button class="category-btn active" onclick="selectCategory(null)">Semua</button>';
+            
+            allCategories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'category-btn';
+                btn.textContent = `${cat.icon || '📁'} ${cat.name}`;
+                btn.onclick = () => selectCategory(cat.id);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectCategory(catId) {
+            selectedCategory = catId;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            renderArticles();
+        }
+
+        function renderArticles() {
+            let articles = allArticles;
+
+            if (selectedCategory) {
+                articles = articles.filter(a => a.category_id === selectedCategory);
+            }
+
+            const search = document.getElementById('search-input').value.toLowerCase();
+            if (search) {
+                articles = articles.filter(a => 
+                    a.question.toLowerCase().includes(search) ||
+                    a.answer.toLowerCase().includes(search)
+                );
+            }
+
+            const container = document.getElementById('faq-items-container');
+            const noResults = document.getElementById('no-results');
+
+            if (articles.length === 0) {
+                container.innerHTML = '';
+                noResults.classList.remove('hidden');
+                return;
+            }
+
+            noResults.classList.add('hidden');
+            container.innerHTML = articles.map((art, idx) => `
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleAnswer(this)">
+                        <span class="faq-question-text">${art.question}</span>
+                        <span class="faq-toggle">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <div>${art.answer.split('\\n').join('<br>')}</div>
+                        ${art.tags && art.tags.length > 0 ? `
+                            <div class="tags">
+                                ${art.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        <div class="faq-footer">
+                            <button onclick="markHelpful(${art.id}, true)">👍 Membantu (${art.helpful_count})</button>
+                            <button onclick="markHelpful(${art.id}, false)">👎 Tidak (${art.not_helpful_count})</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleAnswer(el) {
+            const answer = el.nextElementSibling;
+            const toggle = el.querySelector('.faq-toggle');
+            answer.classList.toggle('open');
+            toggle.classList.toggle('open');
+
+            // Increment views
+            const articleId = el.closest('.faq-item').dataset.id;
+            // API call to increment views would go here
+        }
+
+        function filterFAQ() {
+            renderArticles();
+        }
+
+        async function markHelpful(articleId, helpful) {
+            try {
+                await API.post(`/api/faq/articles/${articleId}/helpful`, { helpful });
+                Toast.success('Terima kasih atas feedback Anda!');
+                loadFAQ(); // Reload to update counts
+            } catch (err) {
+                Toast.error('Gagal menyimpan feedback');
+            }
+        }
+
+        // Load on page init
+        document.addEventListener('DOMContentLoaded', loadFAQ);
+    </script>
+</body>
+</html>

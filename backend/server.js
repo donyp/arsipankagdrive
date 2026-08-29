@@ -19,11 +19,44 @@ const { initializeAlist } = require('./alistStartupHandler');
 const { initializeRcloneConnectivity, verifyRcloneConnectivity } = require('./rcloneConnectivityHandler');
 const { runBackendInitialization } = require('./backendInitializer');
 const { startAutoSync } = require('./gdrive-file-sync');
+const registerFeatureEndpoints = require('./feature-endpoints');
 
 // Load environment variables FIRST (before using them)
 // In local development: loads from .env file
 // In production (Hugging Face): process.env is already set via Secrets
 require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+// Initialize LOG_LEVEL for debug logging control
+const LOG_LEVEL = (process.env.LOG_LEVEL || 'info').toLowerCase();
+
+// Helper function to filter and suppress non-critical rclone messages
+function filterRcloneStderr(stderrLine) {
+    // Suppress rclone NOTICE messages (client_id retirement, etc)
+    if (stderrLine.includes('NOTICE:')) return false;
+    // Suppress success messages during transfer
+    if (stderrLine.includes('Transferred:')) return false;
+    if (stderrLine.includes('Elapsed time:')) return false;
+    if (stderrLine.includes('Total transferred:')) return false;
+    // Keep errors and warnings
+    return true;
+}
+
+// Helper to collect and filter rclone stderr
+function collectFilteredStderr(rcloneProcess) {
+    let stderrLines = [];
+    rcloneProcess.stderr.on('data', (data) => {
+        const lines = data.toString().split('\n');
+        lines.forEach(line => {
+            if (line.trim() && filterRcloneStderr(line)) {
+                stderrLines.push(line);
+                if (LOG_LEVEL === 'debug') {
+                    console.log('[rclone]', line);
+                }
+            }
+        });
+    });
+    return stderrLines;
+}
 
 // Initialize Secret Manager client (if on Cloud Run)
 initializeSecretManager();
@@ -347,13 +380,13 @@ const MAINTENANCE_FILE = path.join(__dirname, 'maintenance_status.json');
 async function getMaintenanceStatus() {
     // Immediately return safe default instead of querying Supabase
     // Supabase query seems to hang on Windows environment
-    console.log('[Maintenance] Returning safe default (Supabase query skipped)');
+    if (LOG_LEVEL === 'debug') console.log('[Maintenance] Returning safe default (Supabase query skipped)');
     
     try {
         // Try local file first
         if (fs.existsSync(MAINTENANCE_FILE)) {
             const data = JSON.parse(fs.readFileSync(MAINTENANCE_FILE, 'utf8'));
-            console.log('[Maintenance] Loaded from local file');
+            if (LOG_LEVEL === 'debug') console.log('[Maintenance] Loaded from local file');
             return data;
         }
     } catch (err) {
@@ -542,6 +575,14 @@ async function notifyModerators(title, message, link = null) {
         console.error('[NOTIF] Moderator Alert Error:', err);
     }
 }
+
+// ============================================================
+// REGISTER FEATURE ENDPOINTS (Phase 1 Features)
+// ============================================================
+// Features: System Health & Monitoring, Data Quality, Comments, FAQ
+console.log('[INIT] Registering Phase 1 feature endpoints...');
+registerFeatureEndpoints(app, supabase, authenticateToken, authorizeRole);
+console.log('[INIT] Phase 1 feature endpoints registered ✅');
 
 // ============================================================
 // AUTH ENDPOINTS
@@ -735,58 +776,58 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 // GET /api/files â€” list files (auto-filtered by zona for admin_zona)
 app.get('/api/files', authenticateToken, authorizeZone, async (req, res) => {
     try {
-        console.log(`[/api/files] User role: ${req.user.role}, zona_id: ${req.user.zona_id}`);
-        console.log(`[/api/files] Query params:`, { category: req.query.category, tipe_ppn: req.query.tipe_ppn, zona_id: req.query.zona_id });
+        if (LOG_LEVEL === "debug") console.log(`[/api/files] User role: ${req.user.role}, zona_id: ${req.user.zona_id}`);
+        if (LOG_LEVEL === "debug") console.log(`[/api/files] Query params:`, { category: req.query.category, tipe_ppn: req.query.tipe_ppn, zona_id: req.query.zona_id });
         
         let query = supabase
             .from('files')
-            .select('id, nama_file, storage_path, ukuran_bytes, category, tipe_ppn, tanggal_dokumen, zona_id, toko_id, status, created_at, total_jual, uploaded_by, zonas(kode, nama)', { count: 'exact' })
+            .select('id, nama_file, storage_path, ukuran_bytes, category, tipe_ppn, tanggal_dokumen, zona_id, toko_id, status, created_at, total_jual, uploaded_by, zonas(kode, nama), users!uploaded_by(name)', { count: 'exact' })
             .is('deleted_at', null)
             .order('created_at', { ascending: false });
 
         // Auto-filter by zona for admin_zona (INVOICE only)
         if (req.user.role === 'admin_zona') {
-            console.log(`[/api/files] Filtering as admin_zona for zona_id: ${req.user.zona_id}`);
+            if (LOG_LEVEL === "debug") console.log(`[/api/files] Filtering as admin_zona for zona_id: ${req.user.zona_id}`);
             query = query.eq('zona_id', req.user.zona_id)
                 .in('category', ['INVOICE', 'PPN', 'NON', 'NON_PPN']); // Admin zona sees all invoice-related files
-            console.log(`[/api/files] Applied filters: zona_id=${req.user.zona_id}, category IN (INVOICE, PPN, NON, NON_PPN)`);
+            if (LOG_LEVEL === "debug") console.log(`[/api/files] Applied filters: zona_id=${req.user.zona_id}, category IN (INVOICE, PPN, NON, NON_PPN)`);
             
             // Admin_zona can optionally filter by tipe_ppn (PPN/NON)
             if (req.query.tipe_ppn) {
-                console.log(`[/api/files] Admin_zona filtering by tipe_ppn: ${req.query.tipe_ppn}`);
+                if (LOG_LEVEL === "debug") console.log(`[/api/files] Admin_zona filtering by tipe_ppn: ${req.query.tipe_ppn}`);
                 query = query.eq('tipe_ppn', req.query.tipe_ppn);
             }
         } 
         // Moderator and super_admin see all files (no automatic zona filter)
         // But can optionally filter by zona_id query param
         else if (req.query.zona_id) {
-            console.log(`[/api/files] Filtering by optional zona_id: ${req.query.zona_id}`);
+            if (LOG_LEVEL === "debug") console.log(`[/api/files] Filtering by optional zona_id: ${req.query.zona_id}`);
             query = query.eq('zona_id', parseInt(req.query.zona_id));
         } else if (req.user.role === 'moderator' || req.user.role === 'super_admin') {
-            console.log(`[/api/files] ${req.user.role} viewing ALL files (no zona filter)`);
+            if (LOG_LEVEL === "debug") console.log(`[/api/files] ${req.user.role} viewing ALL files (no zona filter)`);
         }
 
         // Category filter (only for moderator/super_admin, not admin_zona)
         if (req.query.category && (req.user.role === 'moderator' || req.user.role === 'super_admin')) {
-            console.log(`[/api/files] Applying category filter for ${req.user.role}: ${req.query.category}`);
+            if (LOG_LEVEL === "debug") console.log(`[/api/files] Applying category filter for ${req.user.role}: ${req.query.category}`);
             
             // Special handling for INVOICE category: includes PPN, NON, and INVOICE
             if (req.query.category === 'INVOICE') {
-                console.log(`[/api/files] INVOICE filter: searching for category IN ('INVOICE', 'PPN', 'NON', 'NON_PPN')`);
+                if (LOG_LEVEL === "debug") console.log(`[/api/files] INVOICE filter: searching for category IN ('INVOICE', 'PPN', 'NON', 'NON_PPN')`);
                 query = query.in('category', ['INVOICE', 'PPN', 'NON', 'NON_PPN']);
             } else {
                 query = query.eq('category', req.query.category);
             }
         } else if (req.query.category) {
-            console.log(`[/api/files] Ignoring category param "${req.query.category}" for ${req.user.role} (only moderator/super_admin can filter by category)`);
+            if (LOG_LEVEL === "debug") console.log(`[/api/files] Ignoring category param "${req.query.category}" for ${req.user.role} (only moderator/super_admin can filter by category)`);
         }
 
         // Toko filter - only apply if toko_id is valid number
         if (req.query.toko_id && !isNaN(parseInt(req.query.toko_id))) {
-            console.log(`[/api/files] Filtering by toko_id: ${req.query.toko_id}`);
+            if (LOG_LEVEL === "debug") console.log(`[/api/files] Filtering by toko_id: ${req.query.toko_id}`);
             query = query.eq('toko_id', parseInt(req.query.toko_id));
         } else if (req.query.toko_id) {
-            console.log(`[/api/files] WARNING: Invalid toko_id parameter: ${req.query.toko_id} (ignoring)`);
+            if (LOG_LEVEL === "debug") console.log(`[/api/files] WARNING: Invalid toko_id parameter: ${req.query.toko_id} (ignoring)`);
         }
 
         // Filter by Tipe PPN (PPN/NON) - only for non-admin_zona (admin_zona filters in zona section)
@@ -811,7 +852,7 @@ app.get('/api/files', authenticateToken, authorizeZone, async (req, res) => {
                     query = query.ilike('nama_file', `%${term}%`);
                 }
 
-                console.log(`[Search] Query: "${searchVal}" | Split into ${terms.length} terms: [${terms.join(', ')}]`);
+                if (LOG_LEVEL === "debug") console.log(`[Search] Query: "${searchVal}" | Split into ${terms.length} terms: [${terms.join(', ')}]`);
             }
         }
 
@@ -831,9 +872,9 @@ app.get('/api/files', authenticateToken, authorizeZone, async (req, res) => {
             throw error;
         }
 
-        console.log(`[/api/files] Query success! Found ${data?.length || 0} files out of total ${count || 0}`);
+        if (LOG_LEVEL === "debug") console.log(`[/api/files] Query success! Found ${data?.length || 0} files out of total ${count || 0}`);
         if (data && data.length > 0) {
-            console.log(`[/api/files] Sample files:`, data.slice(0, 2).map(f => ({ 
+            if (LOG_LEVEL === "debug") console.log(`[/api/files] Sample files:`, data.slice(0, 2).map(f => ({ 
                 id: f.id, 
                 nama_file: f.nama_file, 
                 category: f.category, 
@@ -846,7 +887,7 @@ app.get('/api/files', authenticateToken, authorizeZone, async (req, res) => {
         // Enrich files with toko data if relationship join failed
         const enrichedData = await enrichTokoData(data || []);
         
-        console.log(`[/api/files] After enrichment:`, enrichedData.slice(0, 2).map(f => ({ 
+        if (LOG_LEVEL === "debug") console.log(`[/api/files] After enrichment:`, enrichedData.slice(0, 2).map(f => ({ 
             nama_file: f.nama_file, 
             toko_id: f.toko_id,
             toko: f.toko
@@ -870,48 +911,51 @@ app.get('/api/files', authenticateToken, authorizeZone, async (req, res) => {
 async function enrichTokoData(files) {
     const tokoIds = [...new Set(files.filter(f => f.toko_id && !f.toko).map(f => f.toko_id))];
     
-    console.log('[enrichTokoData] Files needing toko enrichment:', tokoIds);
+    if (LOG_LEVEL === 'debug') console.log('[enrichTokoData] Files needing toko enrichment:', tokoIds);
     
     if (tokoIds.length === 0) {
-        console.log('[enrichTokoData] No files need enrichment');
+        if (LOG_LEVEL === 'debug') console.log('[enrichTokoData] No files need enrichment');
         return files;
     }
     
-    console.log('[enrichTokoData] Fetching toko data for IDs:', tokoIds);
+    if (LOG_LEVEL === 'debug') console.log('[enrichTokoData] Fetching toko data for IDs:', tokoIds);
     const { data: tokos, error: tokoError } = await supabase
         .from('toko')
         .select('id, nama')
         .in('id', tokoIds);
     
-    console.log('[enrichTokoData] Toko query error:', tokoError);
-    console.log('[enrichTokoData] Toko query result count:', tokos?.length);
-    console.log('[enrichTokoData] Toko query result:', tokos);
+    if (LOG_LEVEL === 'debug') {
+        console.log('[enrichTokoData] Toko query error:', tokoError);
+        console.log('[enrichTokoData] Toko query result count:', tokos?.length);
+    }
     
     const tokoMap = {};
     if (tokos) {
         tokos.forEach(t => {
             tokoMap[t.id] = t;
-            console.log('[enrichTokoData] Mapped toko:', t.id, '→', t.nama);
+            if (LOG_LEVEL === 'debug') console.log('[enrichTokoData] Mapped toko:', t.id, '→', t.nama);
         });
     }
     
     const enrichedFiles = files.map(f => {
         if (f.toko_id && !f.toko) {
             if (tokoMap[f.toko_id]) {
-                console.log('[enrichTokoData] Enriching file:', f.nama_file, 'with toko:', tokoMap[f.toko_id].nama);
+                if (LOG_LEVEL === 'debug') console.log('[enrichTokoData] Enriching file:', f.nama_file, 'with toko:', tokoMap[f.toko_id].nama);
                 f.toko = tokoMap[f.toko_id];
-            } else {
+            } else if (LOG_LEVEL === 'debug') {
                 console.log('[enrichTokoData] No toko found for toko_id:', f.toko_id, '(file:', f.nama_file, ')');
             }
         }
         return f;
     });
     
-    console.log('[enrichTokoData] Final enriched result - sample:', enrichedFiles.filter(f => f.toko_id).slice(0, 3).map(f => ({
-        nama_file: f.nama_file,
-        toko_id: f.toko_id,
-        toko: f.toko
-    })));
+    if (LOG_LEVEL === 'debug') {
+        console.log('[enrichTokoData] Final enriched result - sample:', enrichedFiles.filter(f => f.toko_id).slice(0, 3).map(f => ({
+            nama_file: f.nama_file,
+            toko_id: f.toko_id,
+            toko: f.toko
+        })));
+    }
     
     return enrichedFiles;
 }
@@ -1222,18 +1266,16 @@ app.get('/api/files/:id/view', authenticateToken, async (req, res) => {
                         '-P'
                     ]);
                     
-                    let stderr = '';
-                    rclone.stderr.on('data', (data) => {
-                        stderr += data.toString();
-                    });
+                    const stderrLines = collectFilteredStderr(rclone);
                     
                     rclone.on('close', (code) => {
                         if (code === 0) {
-                            console.log('[Preview] ✓ Downloaded from Google Drive');
+                            if (LOG_LEVEL !== 'silent') console.log('[Preview] ✓ Downloaded from Google Drive');
                             resolve();
                         } else {
-                            console.error('[Preview] Rclone failed:', stderr);
-                            reject(new Error(`Rclone failed: ${stderr}`));
+                            const errorMsg = stderrLines.join('\n');
+                            console.error('[Preview] Rclone failed:', errorMsg);
+                            reject(new Error(`Rclone failed: ${errorMsg}`));
                         }
                     });
                     
@@ -1273,17 +1315,15 @@ app.get('/api/files/:id/view', authenticateToken, async (req, res) => {
                         '-P'
                     ]);
                     
-                    let stderr = '';
-                    rclone.stderr.on('data', (data) => {
-                        stderr += data.toString();
-                    });
+                    const stderrLines = collectFilteredStderr(rclone);
                     
                     rclone.on('close', (code) => {
                         if (code === 0) {
-                            console.log('[Preview] ✓ Downloaded using alternative path');
+                            if (LOG_LEVEL !== 'silent') console.log('[Preview] ✓ Downloaded using alternative path');
                             resolve();
                         } else {
-                            reject(new Error(`Rclone failed: ${stderr}`));
+                            const errorMsg = stderrLines.join('\n');
+                            reject(new Error(`Rclone failed: ${errorMsg}`));
                         }
                     });
                     
@@ -2062,6 +2102,380 @@ app.post('/api/files/upload-piutang', authenticateToken, requireUploadPermission
         console.error('PIUTANG Upload Error:', err.message);
         console.error('PIUTANG Upload Stack:', err.stack);
         res.status(500).json({ error: 'Gagal upload file Piutang: ' + err.message });
+    }
+});
+
+// ============================================================
+// GET /api/admin/missing-files — Get list of files marked as missing
+// ============================================================
+app.get('/api/admin/missing-files', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+    try {
+        console.log('[Missing Files] Fetching missing files list...');
+        
+        const { data: missingFiles, error } = await supabase
+            .from('files')
+            .select('id, nama_file, storage_path, zona_id, toko_id, category, created_at, last_synced_at, sync_error, zonas(kode, nama)')
+            .eq('is_missing', true)
+            .is('deleted_at', null)
+            .order('last_synced_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        console.log(`[Missing Files] Found ${missingFiles?.length || 0} missing files`);
+        
+        res.json({
+            status: 'success',
+            total: missingFiles?.length || 0,
+            files: missingFiles || [],
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        console.error('[Missing Files] Error:', err.message);
+        res.status(500).json({
+            status: 'error',
+            error: err.message
+        });
+    }
+});
+
+// ============================================================
+// POST /api/admin/scan-missing-files — Manual trigger to scan for missing files
+// ============================================================
+app.post('/api/admin/scan-missing-files', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+    try {
+        console.log('[Scan Missing] Starting manual scan...');
+        
+        const { data: files } = await supabase
+            .from('files')
+            .select('id, storage_path, nama_file')
+            .is('deleted_at', null);
+        
+        if (!files) {
+            return res.json({
+                status: 'success',
+                message: 'No files to scan',
+                scanned: 0,
+                missing: 0
+            });
+        }
+
+        let missingCount = 0;
+        let checkedCount = 0;
+
+        for (const f of files) {
+            checkedCount++;
+            try {
+                const exists = await RcloneStorage.checkFileExists(f.storage_path);
+                if (!exists) {
+                    await supabase
+                        .from('files')
+                        .update({ 
+                            is_missing: true,
+                            last_synced_at: new Date().toISOString(),
+                            sync_error: 'File not found in Google Drive'
+                        })
+                        .eq('id', f.id);
+                    missingCount++;
+                    console.log(`[Scan Missing] Found missing: ${f.nama_file}`);
+                } else {
+                    await supabase
+                        .from('files')
+                        .update({ 
+                            is_missing: false,
+                            last_synced_at: new Date().toISOString(),
+                            sync_error: null
+                        })
+                        .eq('id', f.id);
+                }
+            } catch (err) {
+                console.warn(`[Scan Missing] Error checking ${f.nama_file}:`, err.message);
+            }
+        }
+        
+        console.log(`[Scan Missing] ✓ Scanned ${checkedCount}, found ${missingCount} missing`);
+        
+        res.json({
+            status: 'success',
+            message: `Scan complete: ${missingCount} missing file(s) found`,
+            scanned: checkedCount,
+            missing: missingCount,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        console.error('[Scan Missing] Error:', err.message);
+        res.status(500).json({
+            status: 'error',
+            error: err.message
+        });
+    }
+});
+
+// ============================================================
+// DELETE /api/admin/missing-files/:id — Delete a missing file from database
+// ============================================================
+app.delete('/api/admin/missing-files/:id', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        console.log(`[Delete Missing] Deleting missing file: ${id}`);
+        
+        // Soft delete by setting deleted_at
+        const { error } = await supabase
+            .from('files')
+            .update({ deleted_at: new Date().toISOString() })
+            .eq('id', id);
+        
+        if (error) throw error;
+        
+        console.log(`[Delete Missing] ✓ Deleted missing file: ${id}`);
+        
+        res.json({
+            status: 'success',
+            message: 'File has been deleted'
+        });
+    } catch (err) {
+        console.error('[Delete Missing] Error:', err.message);
+        res.status(500).json({
+            status: 'error',
+            error: err.message
+        });
+    }
+});
+
+// ============================================================
+// Update History Endpoints
+// ============================================================
+
+// GET /api/update-history — Get all published updates
+app.get('/api/update-history', authenticateToken, async (req, res) => {
+    try {
+        const { data: updates, error } = await supabase
+            .from('update_history')
+            .select('*')
+            .eq('status', 'PUBLISHED')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+
+        // Jika ada updates dan ada created_by, fetch user info
+        let enrichedUpdates = updates || [];
+        
+        if (enrichedUpdates.length > 0) {
+            // Get unique user IDs
+            const userIds = [...new Set(enrichedUpdates.map(u => u.created_by).filter(Boolean))];
+            
+            if (userIds.length > 0) {
+                // Fetch user info dari public.users table (bukan auth.users)
+                const { data: users, error: userError } = await supabase
+                    .from('users')
+                    .select('id, email, full_name, username')
+                    .in('id', userIds);
+                
+                if (!userError && users) {
+                    // Map user info ke updates
+                    const userMap = {};
+                    users.forEach(u => {
+                        userMap[u.id] = u;
+                    });
+                    
+                    enrichedUpdates = enrichedUpdates.map(update => ({
+                        ...update,
+                        created_by_user: userMap[update.created_by] || null
+                    }));
+                }
+            }
+        }
+        
+        res.json({
+            status: 'success',
+            updates: enrichedUpdates,
+            total: enrichedUpdates.length
+        });
+    } catch (err) {
+        console.error('[Update History] Error:', err.message);
+        res.status(500).json({
+            status: 'error',
+            error: err.message
+        });
+    }
+});
+
+// POST /api/update-history — Create new update (moderator/super_admin only)
+app.post('/api/update-history', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+    try {
+        const { version, type, title, description, category, severity, impact_areas, requires_action, is_breaking_change, status } = req.body;
+        
+        if (!type || !title) {
+            return res.status(400).json({
+                status: 'error',
+                error: 'Type and title are required'
+            });
+        }
+
+        const { data: update, error } = await supabase
+            .from('update_history')
+            .insert({
+                version: version || '1.0.0',
+                type,
+                title,
+                description,
+                category,
+                severity,
+                impact_areas,
+                requires_action: requires_action || false,
+                is_breaking_change: is_breaking_change || false,
+                status: status || 'PUBLISHED',
+                created_by: req.user.id
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        
+        console.log(`[Update History] ✅ Created: ${type} - ${title}`);
+        
+        res.json({
+            status: 'success',
+            update
+        });
+    } catch (err) {
+        console.error('[Update History] Error:', err.message);
+        res.status(500).json({
+            status: 'error',
+            error: err.message
+        });
+    }
+});
+
+// DELETE /api/update-history/:id — Delete update (moderator/super_admin only)
+app.delete('/api/update-history/:id', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const { error } = await supabase
+            .from('update_history')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        
+        console.log(`[Update History] ✅ Deleted: ${id}`);
+        
+        res.json({
+            status: 'success',
+            message: 'Update deleted'
+        });
+    } catch (err) {
+        console.error('[Update History] Error:', err.message);
+        res.status(500).json({
+            status: 'error',
+            error: err.message
+        });
+    }
+});
+
+// ============================================================
+// UPDATE HISTORY ITEMS API
+// ============================================================
+
+// GET /api/update-history-items/:updateId — Get all items for an update
+app.get('/api/update-history-items/:updateId', authenticateToken, async (req, res) => {
+    try {
+        const { updateId } = req.params;
+
+        const { data: items, error } = await supabase
+            .from('update_history_items')
+            .select('*')
+            .eq('update_id', updateId)
+            .order('item_number', { ascending: true });
+
+        if (error) throw error;
+
+        res.json({
+            status: 'success',
+            items: items || [],
+            total: items?.length || 0
+        });
+    } catch (err) {
+        console.error('[Update History Items] Error:', err.message);
+        res.status(500).json({
+            status: 'error',
+            error: err.message
+        });
+    }
+});
+
+// POST /api/update-history-items — Create new item (moderator/super_admin only)
+app.post('/api/update-history-items', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+    try {
+        const { update_id, item_number, type, title, description } = req.body;
+
+        console.log(`[Create Item] Received: update_id=${update_id}, item_number=${item_number}, type=${type}, title=${title}`);
+
+        if (!update_id || !type || !title || item_number === undefined) {
+            console.error('[Create Item] Missing fields:', { update_id, item_number, type, title });
+            return res.status(400).json({
+                status: 'error',
+                error: 'Missing required fields: update_id, item_number, type, title'
+            });
+        }
+
+        const { data: item, error } = await supabase
+            .from('update_history_items')
+            .insert([{
+                update_id,
+                item_number,
+                type,
+                title,
+                description
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[Create Item] Database error:', error);
+            throw error;
+        }
+
+        console.log(`[Create Item] ✅ Created: id=${item.id}, update_id=${update_id}`);
+
+        res.json({
+            status: 'success',
+            item: item
+        });
+    } catch (err) {
+        console.error('[Create Item] Error:', err.message);
+        res.status(500).json({
+            status: 'error',
+            error: err.message
+        });
+    }
+});
+
+// DELETE /api/update-history-items/:id — Delete item (moderator/super_admin only)
+app.delete('/api/update-history-items/:id', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const { error } = await supabase
+            .from('update_history_items')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        console.log(`[Update History Items] ✅ Deleted: ${id}`);
+
+        res.json({
+            status: 'success',
+            message: 'Item deleted'
+        });
+    } catch (err) {
+        console.error('[Update History Items] Error:', err.message);
+        res.status(500).json({
+            status: 'error',
+            error: err.message
+        });
     }
 });
 
@@ -3943,19 +4357,60 @@ app.get('/api/sync/storage', authenticateToken, async (req, res) => {
     }
 });
 
-// Periodic Sync Background Task (Every 6 hours)
+// Periodic Sync Background Task (Every 6 hours) - Check for missing files
 setInterval(async () => {
-    console.log('[Background Task] Running periodic storage sync...');
+    console.log('[Background Task] Running periodic file integrity check...');
     try {
-        const { data: files } = await supabase.from('files').select('id, storage_path').is('deleted_at', null);
-        if (!files) return;
+        const { data: files } = await supabase
+            .from('files')
+            .select('id, storage_path, nama_file')
+            .is('deleted_at', null);
+        
+        if (!files || files.length === 0) return;
+
+        let missingCount = 0;
+        let checkedCount = 0;
 
         for (const f of files) {
-            const exists = await RcloneStorage.checkFileExists(f.storage_path);
-            if (!exists) {
-                await supabase.from('files').update({ deleted_at: new Date() }).eq('id', f.id);
+            checkedCount++;
+            try {
+                const exists = await RcloneStorage.checkFileExists(f.storage_path);
+                if (!exists) {
+                    // Mark file as missing instead of deleting
+                    await supabase
+                        .from('files')
+                        .update({ 
+                            is_missing: true,
+                            last_synced_at: new Date().toISOString(),
+                            sync_error: 'File not found in Google Drive'
+                        })
+                        .eq('id', f.id);
+                    missingCount++;
+                    console.log(`[Background Task] Marked missing: ${f.nama_file}`);
+                } else {
+                    // File exists, mark as not missing
+                    await supabase
+                        .from('files')
+                        .update({ 
+                            is_missing: false,
+                            last_synced_at: new Date().toISOString(),
+                            sync_error: null
+                        })
+                        .eq('id', f.id);
+                }
+            } catch (err) {
+                console.warn(`[Background Task] Error checking file ${f.nama_file}:`, err.message);
+                await supabase
+                    .from('files')
+                    .update({ 
+                        last_synced_at: new Date().toISOString(),
+                        sync_error: err.message
+                    })
+                    .eq('id', f.id);
             }
         }
+        
+        console.log(`[Background Task] ✓ Checked ${checkedCount} files, found ${missingCount} missing`);
     } catch (err) {
         console.error('[Background Task] Sync failed:', err);
     }
@@ -4718,6 +5173,10 @@ const HOST = '0.0.0.0';
         
         // Handle socket-level errors (always active regardless of environment)
         socket.on('error', (err) => {
+            // Suppress timeout errors (normal for client disconnects)
+            if (err.code === 'ERR_HTTP_REQUEST_TIMEOUT') {
+                return;
+            }
             console.error(`[Server] Socket error from ${remoteAddress}:${remotePort}:`, err.message);
             console.error('[Server] Socket error code:', err.code);
             console.error('[Server] Stack trace:', err.stack);
@@ -4775,4 +5234,6 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('   The application will exit gracefully.');
     process.exit(1);
 });
+
+
 
