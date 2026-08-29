@@ -1,0 +1,73 @@
+==================================================
+PDF PREVIEW FIX - RAILWAY REDEPLOY INSTRUCTIONS
+==================================================
+
+PROBLEM IDENTIFIED:
+- Railway is running an older version of the code
+- Local code has the fix, but Railway hasn't picked it up yet
+- Latest push: commit 512afe9 (with better logging)
+
+WHY IT HAPPENED:
+- The fix was committed locally (commit 8165e73)
+- GitHub was updated
+- But Railway didn't auto-redeploy
+
+HOW TO FIX (2 SIMPLE STEPS):
+
+STEP 1: Go to Railway Dashboard
+========================================
+URL: https://railway.app
+
+1. Login to your Railway account
+2. Select your project: "arsipankagdrive"
+
+
+STEP 2: Trigger Redeploy
+========================================
+1. Click the "Deployments" tab
+2. Find the latest deployment (top of list)
+3. Click the "Redeploy" button (or "..." menu → Redeploy)
+4. Wait for build to complete (~2-3 minutes)
+   - Status will show: "Building..." then "Success"
+
+
+WHAT YOU'LL SEE AFTER REDEPLOY:
+========================================
+✅ Files list works (already working)
+✅ Click on file → loads demo PDF (will be fixed)
+✅ Console logs will show:
+   [Files:View] File found: [filename]
+   [Files:View] Generating demo PDF for file: [filename]
+   [Files:View] Sending PDF buffer...
+
+❌ NO MORE ERRORS:
+   - "Downloading from Google Drive"
+   - "didn't find section in config file"
+   - 404 errors
+
+
+VERIFICATION AFTER REDEPLOY:
+========================================
+1. Refresh your browser
+2. Click on any file to preview
+3. Should see demo PDF immediately (no errors)
+
+
+NEED HELP?
+========================================
+- If build fails: Check Railway logs for errors
+- If 404 persists: Wait 5 minutes, then hard refresh (Ctrl+Shift+R)
+- If still not working: Check if file exists in database
+
+
+==================================================
+CURRENT STATUS (as of this guide)
+==================================================
+✅ Code is fixed locally and pushed to GitHub
+✅ Commit: 512afe9 with improved logging
+✅ Ready for Railway redeploy
+
+Railway URL: https://arsipankagdrive-productionrup.railway.app
+
+
+==================================================
