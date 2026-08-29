@@ -1,0 +1,133 @@
+==================================================
+GOOGLE DRIVE OAUTH SETUP - RAILWAY DEPLOYMENT
+==================================================
+
+COMPLETED STEPS:
+✅ Google Drive OAuth credentials generated
+✅ rclone.conf updated with credentials
+✅ Backend code updated to stream from Google Drive
+✅ Commit pushed to GitHub: 2cbd60c
+
+NEXT STEPS: Add credentials to Railway Dashboard
+
+==================================================
+RAILWAY SETUP (5 MINUTES)
+==================================================
+
+1. Go to Railway Dashboard
+   URL: https://railway.app
+   
+2. Select your project: arsipankagdrive
+
+3. Click "Variables" tab
+
+4. ADD NEW VARIABLES:
+
+Variable 1:
+  Key: RCLONE_REMOTE
+  Value: gdrive
+
+Variable 2:
+  Key: ENABLE_GDRIVE_SYNC
+  Value: true
+
+Variable 3 (IMPORTANT - Base path):
+  Key: RCLONE_BASE_PATH
+  Value: /ARSIP ANKA
+
+Variable 4 (Rclone config file path):
+  Key: RCLONE_CONFIG_PATH
+  Value: /app/rclone.conf
+
+5. UPLOAD rclone.conf to Railway
+
+   Railway doesn't auto-upload files, so we need to:
+   a) Deploy with rclone.conf (it's in repo now)
+   b) Railway will pick it up during build
+   
+   OR if needed: Use Railway CLI to upload file
+   
+6. Click "Save" after adding all variables
+
+7. Trigger REDEPLOY:
+   - Go to Deployments tab
+   - Click "Redeploy" button
+   - Wait for build complete (~2-3 minutes)
+
+==================================================
+VERIFY IT'S WORKING
+==================================================
+
+1. Open Railway app:
+   https://arsipankagdrive-productionrup.railway.app
+
+2. Login
+
+3. Click any file to preview
+   - Should stream actual PDF from Google Drive
+   - Console should show: [Files:View] Streaming PDF from Google Drive
+
+4. Check Railway logs for:
+   ✅ [Files:View] Attempting to stream from Google Drive
+   ✅ [Files:View] Streaming PDF from Google Drive
+
+TROUBLESHOOTING:
+
+Problem: Still showing demo PDF
+Solution:
+  - Check Railway logs for errors
+  - Verify RCLONE_REMOTE=gdrive variable is set
+  - Make sure rclone.conf exists in repo root
+
+Problem: 404 file not found
+Solution:
+  - File might not have storage_path in database
+  - Check database files table: storage_path column
+
+Problem: "didn't find section in config file" error
+Solution:
+  - rclone.conf not deployed
+  - Re-push latest commit with rclone.conf
+  - Wait for redeploy
+
+==================================================
+FILE PATHS IN GOOGLE DRIVE
+==================================================
+
+Files should be stored in Google Drive following this path structure:
+
+/ARSIP ANKA/
+├── zona-1/
+│   ├── toko-balaraja/
+│   │   ├── INVOICE/
+│   │   ├── PPN/
+│   │   └── NON/
+│   └── [other tokos]/
+└── [other zones]/
+
+The system will automatically:
+1. List files from Google Drive
+2. Stream PDFs for preview
+3. Cache frequently accessed files
+
+==================================================
+CURRENT STATUS
+==================================================
+
+Code: Ready ✅ (commit 2cbd60c)
+rclone.conf: Updated with OAuth ✅
+Railway: Needs redeploy 🔄
+Variables: Needs to be added ⏳
+
+Next action: Add variables to Railway & redeploy
+
+==================================================
+QUESTIONS?
+==================================================
+
+If preview still doesn't work after redeploy:
+1. Check Railway logs
+2. Verify file exists in Google Drive
+3. Verify storage_path in database matches Google Drive path
+
+==================================================
