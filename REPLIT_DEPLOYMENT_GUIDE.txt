@@ -1,0 +1,194 @@
+═══════════════════════════════════════════════════════════════════
+         🚀 DEPLOY KE REPLIT - PANDUAN LENGKAP
+═══════════════════════════════════════════════════════════════════
+
+Ini adalah panduan step-by-step untuk deploy aplikasi Pusat Arsip 
+Anka ke Replit (gratis, tanpa perlu kartu kredit).
+
+═══════════════════════════════════════════════════════════════════
+✅ CHECKLIST PRE-DEPLOYMENT
+═══════════════════════════════════════════════════════════════════
+
+Pastikan Anda sudah siapkan:
+
+☑ Akun GitHub dengan repo: donyp/arsipankagdrive
+☑ Akun Replit (gratis di https://replit.com)
+☑ Akun Supabase dengan:
+   - SUPABASE_URL (cth: https://xxx.supabase.co)
+   - SUPABASE_SERVICE_ROLE_KEY (secret key)
+
+═══════════════════════════════════════════════════════════════════
+📋 LANGKAH-LANGKAH DEPLOYMENT
+═══════════════════════════════════════════════════════════════════
+
+LANGKAH 1: Import Repository ke Replit
+─────────────────────────────────────────
+
+1. Buka https://replit.com
+2. Login dengan akun Anda
+3. Klik "+ Create" atau "New Repl"
+4. Pilih "Import from GitHub"
+5. Paste GitHub URL: https://github.com/donyp/arsipankagdrive
+6. Biarkan konfigurasi default (Replit auto-detect Node.js)
+7. Klik "Import Repl"
+
+Tunggu proses import selesai (~1-2 menit).
+
+
+LANGKAH 2: Setup Environment Variables di Replit
+──────────────────────────────────────────────────
+
+1. Di Replit, klik "Secrets" (icon gembok) di sidebar kiri
+2. Tambahkan 2 environment variables:
+
+   Var 1:
+   Key:   SUPABASE_URL
+   Value: https://xxx.supabase.co  [copy dari Supabase dashboard]
+
+   Var 2:
+   Key:   SUPABASE_SERVICE_ROLE_KEY
+   Value: eyJhbGciOiJIUzI1NiIs...  [copy secret key dari Supabase]
+
+3. Klik "Add Secret" setelah tiap var
+4. Verifikasi kedua vars sudah muncul di list
+
+
+LANGKAH 3: Jalankan Aplikasi
+──────────────────────────────
+
+1. Di Replit, klik tombol "Run" (▶️) di atas
+2. Replit akan:
+   - Install dependencies (npm install)
+   - Start server dengan command dari .replit file
+
+Tunggu sampai output menunjukkan:
+   ✅ Backend listening on port 5000
+
+
+LANGKAH 4: Akses Aplikasi
+──────────────────────────
+
+1. Replit akan otomatis buka webview dengan URL:
+   https://[REPLIT_USERNAME].repl.co
+
+2. Copy URL tersebut - itulah URL aplikasi Anda
+3. Aplikasi siap digunakan!
+
+
+LANGKAH 5 (OPTIONAL): Setup UptimeRobot - Jaga Aplikasi Tetap Online
+──────────────────────────────────────────────────────────────────────
+
+Replit free tier auto-pause jika tidak ada activity selama 1 jam.
+Gunakan UptimeRobot untuk "ping" app setiap 5 menit agar tetap online:
+
+1. Buka https://uptimerobot.com
+2. Daftar akun (gratis)
+3. Klik "+ Add New Monitor"
+4. Pilih tipe: HTTP(s)
+5. Paste URL aplikasi: https://[REPLIT_USERNAME].repl.co
+6. Monitor Interval: 5 minutes
+7. Klik "Create Monitor"
+
+Dengan ini, aplikasi akan tetap online 24/7!
+
+═══════════════════════════════════════════════════════════════════
+🔍 VERIFIKASI DEPLOYMENT
+═══════════════════════════════════════════════════════════════════
+
+Setelah aplikasi running, test fitur-fitur:
+
+1. Halaman Login
+   - Buka https://[REPLIT_USERNAME].repl.co
+   - Coba login dengan akun test
+
+2. Update History Notification
+   - Login sebagai admin_zona
+   - Lihat Update History button dengan badge
+   - Coba publish update dan lihat notifikasi muncul
+
+3. Check Backend Health
+   - Buka https://[REPLIT_USERNAME].repl.co/api/heartbeat
+   - Seharusnya tampil: {"status":"alive","version":"..."}
+
+
+═══════════════════════════════════════════════════════════════════
+🐛 TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════
+
+PROBLEM: "Module not found" error
+SOLUTION:
+  1. Di Replit shell, jalankan: npm install
+  2. Cek package.json ada di root directory
+
+PROBLEM: "Cannot find module 'dotenv'"
+SOLUTION:
+  1. npm install dotenv
+  2. Cek backend/.env file ada dan berisi environment vars
+
+PROBLEM: SUPABASE_URL atau SERVICE_ROLE_KEY tidak terbaca
+SOLUTION:
+  1. Cek Secrets di Replit sudah ditambah dengan benar
+  2. Restart aplikasi (klik Run lagi)
+  3. Verifikasi values sudah di-copy dengan lengkap (tanpa spasi)
+
+PROBLEM: Port sudah terpakai
+SOLUTION:
+  1. Replit auto-assign port 5000
+  2. Jika error, edit .replit file dan ubah port ke 3000
+  3. Restart aplikasi
+
+PROBLEM: Aplikasi auto-pause/offline setelah 1 jam
+SOLUTION:
+  1. Setup UptimeRobot (lihat LANGKAH 5)
+  2. Atau: ping aplikasi manual setiap jam dari browser
+
+═══════════════════════════════════════════════════════════════════
+📊 MONITORING & LOGS
+═══════════════════════════════════════════════════════════════════
+
+Untuk lihat logs aplikasi di Replit:
+
+1. Buka Replit console (bawah window)
+2. Output akan menampilkan:
+   - Server startup messages
+   - API request logs
+   - Error messages
+
+Untuk debug lebih detail:
+1. Edit .replit file
+2. Tambah: LOG_LEVEL=debug
+3. Restart aplikasi
+
+═══════════════════════════════════════════════════════════════════
+🎯 NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+
+Setelah deployment berhasil:
+
+1. Backup URL aplikasi Anda
+2. Bagikan ke tim untuk testing
+3. Monitor dengan UptimeRobot
+4. Jika ada bugs, check logs di Replit console
+5. Untuk update code: push ke GitHub, pull di Replit
+
+═══════════════════════════════════════════════════════════════════
+❓ BANTUAN TAMBAHAN
+═══════════════════════════════════════════════════════════════════
+
+Docs Replit: https://docs.replit.com/
+Docs Supabase: https://supabase.com/docs
+UptimeRobot: https://uptimerobot.com/help
+
+═══════════════════════════════════════════════════════════════════
+✨ SELAMAT! APLIKASI ANDA SUDAH LIVE!
+═══════════════════════════════════════════════════════════════════
+
+URL aplikasi: https://[REPLIT_USERNAME].repl.co
+
+Jika ada pertanyaan atau masalah, check bagian TROUBLESHOOTING 
+di atas atau refer ke dokumentasi official.
+
+Selamat menggunakan Pusat Arsip Anka! 🚀
+
+═══════════════════════════════════════════════════════════════════
+
