@@ -1167,31 +1167,43 @@ app.get('/api/files/download/:id', authenticateToken, (req, res, next) => {
 // GET /api/files/:id/view — inline preview (PDF in iframe)
 app.get('/api/files/:id/view', authenticateToken, async (req, res) => {
     try {
+        console.log('[Files:View] Starting preview request for ID:', req.params.id);
+        
         const { data: file, error } = await supabase
             .from('files')
             .select('*')
             .eq('id', req.params.id)
             .single();
 
-        if (error || !file) {
+        if (error) {
+            console.error('[Files:View] Database error:', error);
+            return res.status(404).json({ error: 'File tidak ditemukan di database.' });
+        }
+
+        if (!file) {
+            console.warn('[Files:View] File returned null for ID:', req.params.id);
             return res.status(404).json({ error: 'File tidak ditemukan.' });
         }
+
+        console.log('[Files:View] File found:', file.nama_file, '| Category:', file.category);
 
         // Zone access check
         if (req.user.role === 'admin_zona') {
             if (file.zona_id !== req.user.zona_id) {
+                console.warn('[Files:View] Access denied - zona mismatch');
                 return res.status(403).json({ error: 'Anda tidak memiliki akses ke file ini.' });
             }
             if (file.category === 'PIUTANG') {
                 const userPerms = req.user.permissions || [];
                 if (!userPerms.includes('view_piutang')) {
+                    console.warn('[Files:View] Access denied - no piutang permission');
                     return res.status(403).json({ error: 'Anda tidak memiliki akses ke kategori Piutang.' });
                 }
             }
         }
 
         // Generate demo PDF (Google Drive OAuth not configured)
-        console.log('[Preview] Generating demo PDF for file:', file.nama_file);
+        console.log('[Files:View] Generating demo PDF for file:', file.nama_file);
         
         const demoPdfContent = `%PDF-1.1
 %âãÏÓ
@@ -1246,11 +1258,12 @@ startxref
         res.setHeader('Content-Disposition', 'inline; filename="' + file.nama_file + '"');
         res.setHeader('Content-Length', buffer.length);
         
+        console.log('[Files:View] Sending PDF buffer, size:', buffer.length);
         res.send(buffer);
 
     } catch (err) {
-        console.error('View File Error:', err);
-        res.status(500).json({ error: 'Gagal memuat preview file.' });
+        console.error('[Files:View] Error:', err.message, err.stack);
+        res.status(500).json({ error: 'Gagal memuat preview file: ' + err.message });
     }
 });
 
