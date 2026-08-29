@@ -257,9 +257,7 @@ const BACKUP_REMOTE = process.env.RCLONE_BACKUP_REMOTE || 'b2';  // Optional bac
 const BASE_PATH = process.env.RCLONE_BASE_PATH || '/ARSIP ANKA';
 
 const isWindows = process.platform === 'win32';
-const rclonePath = isWindows
-    ? path.resolve(__dirname, '..', 'rclone.exe')
-    : (process.env.RCLONE_BIN || path.resolve(__dirname, '..', 'rclone'));
+const rclonePath = process.env.RCLONE_BIN || 'rclone';  // Use PATH in Railway, local binary path in local dev
 const configPath = process.env.RCLONE_CONFIG || path.resolve(__dirname, '..', 'rclone.conf');
 
 /**
@@ -378,9 +376,11 @@ const RcloneStorage = {
             const tmpFile = path.join(tmpDir, `${Date.now()}-${filename}`);
             
             // Download using rclone copyto
-            const downloadCmd = ['copyto', remotePath, tmpFile, '--config', process.env.RCLONE_CONFIG_PATH || rcloneConfig.configPath];
+            const configPath = process.env.RCLONE_CONFIG_PATH || rcloneConfig.configPath;
+            const downloadCmd = ['copyto', remotePath, tmpFile, '--config', configPath];
             
             console.log('[getStream] Downloading to temp:', tmpFile);
+            console.log('[getStream] Using rclone:', rclonePath);
             
             return new Promise((resolve, reject) => {
                 const child = spawn(rclonePath, downloadCmd, {
@@ -389,12 +389,18 @@ const RcloneStorage = {
                 
                 let errorMsg = '';
                 
+                child.on('error', (err) => {
+                    console.error('[getStream] Failed to spawn rclone:', err.message);
+                    reject(new Error(`rclone not found. Make sure rclone is installed and in PATH or set RCLONE_BIN env var. Error: ${err.message}`));
+                });
+                
                 child.stderr.on('data', (chunk) => {
                     errorMsg += chunk.toString();
                 });
                 
                 child.on('close', (code) => {
                     if (code !== 0) {
+                        console.error('[getStream] rclone copyto failed:', errorMsg);
                         reject(new Error(`rclone copyto failed: ${errorMsg}`));
                         return;
                     }
