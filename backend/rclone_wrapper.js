@@ -364,42 +364,79 @@ const RcloneStorage = {
         });
 
         try {
-            // Stream file directly from Google Drive via rclone
+            // Download file to temp location using rclone copyto (more reliable than cat)
             const remotePath = `${PRIMARY_REMOTE}:${storagePath}`;
+            const tmpDir = path.join(__dirname, '..', 'tmp');
+            
+            // Ensure tmp dir exists
+            if (!fs.existsSync(tmpDir)) {
+                fs.mkdirSync(tmpDir, { recursive: true });
+            }
+            
+            // Create temp file path with timestamp
+            const filename = path.basename(storagePath);
+            const tmpFile = path.join(tmpDir, `${Date.now()}-${filename}`);
+            
+            // Download using rclone copyto
+            const downloadCmd = ['copyto', remotePath, tmpFile, '--config', process.env.RCLONE_CONFIG_PATH || rcloneConfig.configPath];
+            
+            console.log('[getStream] Downloading to temp:', tmpFile);
             
             return new Promise((resolve, reject) => {
-                const child = spawn(rclonePath, ['cat', remotePath, '--config', rcloneConfig.configPath], {
+                const child = spawn(rclonePath, downloadCmd, {
                     stdio: ['ignore', 'pipe', 'pipe']
                 });
                 
-                let hasError = false;
-                let errorMessage = '';
+                let errorMsg = '';
                 
-                // Collect stderr for debugging
                 child.stderr.on('data', (chunk) => {
-                    errorMessage += chunk.toString();
-                    console.warn(`[rclone cat stderr] ${chunk.toString()}`);
+                    errorMsg += chunk.toString();
                 });
                 
-                // Handle process errors
-                child.on('error', (err) => {
-                    hasError = true;
-                    reject(new Error(`Failed to spawn rclone: ${err.message}`));
-                });
-                
-                // Handle process exit
                 child.on('close', (code) => {
-                    if (code !== 0 && hasError === false) {
-                        console.error(`[rclone cat] Failed with code ${code}: ${errorMessage}`);
-                        reject(new Error(`rclone cat failed with code ${code}: ${errorMessage}`));
+                    if (code !== 0) {
+                        reject(new Error(`rclone copyto failed: ${errorMsg}`));
+                        return;
+                    }
+                    
+                    // Check if file exists and has content
+                    try {
+                        if (!fs.existsSync(tmpFile)) {
+                            reject(new Error('Downloaded file does not exist'));
+                            return;
+                        }
+                        
+                        const stats = fs.statSync(tmpFile);
+                        if (stats.size === 0) {
+                            reject(new Error('Downloaded file is empty'));
+                            return;
+                        }
+                        
+                        console.log('[getStream] ✅ Downloaded', stats.size, 'bytes');
+                        
+                        // Return readable stream from temp file
+                        const fileStream = fs.createReadStream(tmpFile);
+                        
+                        // Auto-delete temp file after stream closes
+                        fileStream.on('end', () => {
+                            setTimeout(() => {
+                                try {
+                                    fs.unlinkSync(tmpFile);
+                                    console.log('[getStream] Cleaned up temp file:', tmpFile);
+                                } catch (err) {
+                                    console.warn('[getStream] Failed to clean up temp file:', err.message);
+                                }
+                            }, 1000);
+                        });
+                        
+                        resolve(fileStream);
+                    } catch (err) {
+                        reject(err);
                     }
                 });
-                
-                // Return stdout stream (this is the file data)
-                resolve(child.stdout);
             });
         } catch (remoteError) {
-            console.error('[getStream] Remote stream error:', remoteError.message);
+            console.error('[getStream] Remote download error:', remoteError.message);
             
             // Fallback to local storage if available
             try {
