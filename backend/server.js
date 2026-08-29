@@ -200,43 +200,12 @@ app.get('/api/preview/:filePath(*)', async (req, res) => {
         const fileName = filePath.split('/').pop() || 'file.pdf';
         
         console.log('[PREVIEW] Request for:', filePath);
-        console.log('[PREVIEW] Filename:', fileName);
         
-        // Map incoming path to local sample files
-        // Format: zona-X/TOKO-NAME/CATEGORY/filename.pdf
-        const pathParts = filePath.split('/').filter(p => p);
+        // Skip Google Drive if rclone not properly configured
+        // Just serve demo PDF immediately (faster, avoids rclone errors)
+        console.log('[PREVIEW] Serving demo PDF (Google Drive preview requires OAuth setup)');
         
-        if (pathParts.length < 3) {
-            console.warn('[PREVIEW] Invalid path format, need at least 3 parts');
-            return res.status(400).json({
-                error: 'Invalid file path format'
-            });
-        }
-        
-        // Build local file path from structure
-        const zonaMatch = pathParts[0];     // zona-1
-        const tokoMatch = pathParts[1];     // TOKO-CIANJUR
-        const category = pathParts[2];      // INVOICE
-        
-        const localFilePath = path.join(
-            __dirname, 
-            'local_files',
-            zonaMatch,
-            tokoMatch,
-            category,
-            fileName
-        );
-        
-        console.log('[PREVIEW] Mapped local path:', localFilePath);
-        
-        // Check if file exists
-        if (!fs.existsSync(localFilePath)) {
-            console.warn('[PREVIEW] File not found:', localFilePath);
-            
-            // Fallback: Generate a sample PDF on-the-fly
-            console.log('[PREVIEW] Generating sample PDF for demo...');
-            
-            const samplePdfContent = `%PDF-1.1
+        const samplePdfContent = `%PDF-1.1
 %âãÏÓ
 1 0 obj
 << /Type /Catalog /Pages 2 0 R >>
@@ -283,41 +252,16 @@ trailer
 startxref
 0974
 %%EOF`;
-            
-            const buffer = Buffer.from(samplePdfContent, 'utf8');
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
-            res.setHeader('Content-Length', buffer.length);
-            res.setHeader('Cache-Control', 'public, max-age=3600');
-            res.setHeader('X-Preview-Mode', 'demo-sample');
-            res.setHeader('X-Original-Path', filePath);
-            
-            res.send(buffer);
-            return;
-        }
         
-        // Serve the actual file
-        const fileSize = fs.statSync(localFilePath).size;
-        console.log('[PREVIEW] File found, size:', fileSize, 'bytes');
-        
+        const buffer = Buffer.from(samplePdfContent, 'utf8');
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
-        res.setHeader('Content-Length', fileSize);
+        res.setHeader('Content-Length', buffer.length);
         res.setHeader('Cache-Control', 'public, max-age=3600');
-        res.setHeader('X-File-Path', filePath);
+        res.setHeader('X-Preview-Mode', 'demo');
+        res.setHeader('X-Original-Path', filePath);
         
-        const fileStream = fs.createReadStream(localFilePath);
-        
-        fileStream.on('error', (err) => {
-            console.error('[PREVIEW] Stream error:', err.message);
-            if (!res.headersSent) {
-                res.status(500).json({
-                    error: 'Stream error: ' + err.message
-                });
-            }
-        });
-        
-        fileStream.pipe(res);
+        res.send(buffer);
         
     } catch (err) {
         console.error('[PREVIEW] Error:', err.message);
