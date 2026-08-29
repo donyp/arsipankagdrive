@@ -404,8 +404,8 @@ async function initUpdateHistoryNotification() {
             cancelButtonText: 'Tutup',
             confirmButtonColor: '#667eea',
             showCancelButton: true,
-            width: 520,
-            padding: '28px 24px',
+            width: 440,
+            padding: '20px 18px',
             allowOutsideClick: false,
             didOpen: () => {
                 const modal = Swal.getHtmlContainer().closest('.swal2-modal');
