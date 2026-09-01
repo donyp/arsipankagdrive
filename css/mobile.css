@@ -1,0 +1,492 @@
+/* ============================================================
+   MOBILE-FRIENDLY UI ENHANCEMENTS
+   Responsive design for all screen sizes
+   ============================================================ */
+
+/* Base responsive improvements */
+* {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    -webkit-touch-callout: none;
+}
+
+/* Minimum touch target size (44x44px for accessibility) */
+button, 
+a.btn, 
+.btn,
+input[type="submit"],
+input[type="button"],
+.clickable {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Mobile Breakpoints */
+@media (max-width: 1024px) {
+    /* Tablet adjustments */
+    .container {
+        padding: 0 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Hide desktop sidebar, show mobile nav */
+    #sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+    }
+    
+    #sidebar.mobile-open {
+        transform: translateX(0);
+    }
+    
+    /* Adjust main content for mobile */
+    #main-content {
+        margin-left: 0 !important;
+        padding: 16px !important;
+    }
+    
+    /* Mobile header */
+    .mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: white;
+        border-bottom: 1px solid #e5e7eb;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .mobile-header-visible {
+        display: flex !important;
+    }
+    
+    /* Hamburger menu button */
+    .hamburger-btn {
+        width: 44px;
+        height: 44px;
+        padding: 10px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 5px;
+    }
+    
+    .hamburger-btn span {
+        display: block;
+        width: 24px;
+        height: 2px;
+        background: #374151;
+        transition: all 0.3s ease;
+    }
+    
+    .hamburger-btn.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    
+    .hamburger-btn.active span:nth-child(2) {
+        opacity: 0;
+    }
+    
+    .hamburger-btn.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(7px, -7px);
+    }
+    
+    /* Mobile overlay */
+    .mobile-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+    
+    .mobile-overlay.active {
+        display: block;
+    }
+    
+    /* Tables - Card view on mobile */
+    table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .mobile-card-view {
+        display: block !important;
+    }
+    
+    .mobile-card-view thead {
+        display: none;
+    }
+    
+    .mobile-card-view tbody {
+        display: block;
+    }
+    
+    .mobile-card-view tr {
+        display: block;
+        margin-bottom: 16px;
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .mobile-card-view td {
+        display: block;
+        text-align: left !important;
+        padding: 8px 0 !important;
+        border: none !important;
+    }
+    
+    .mobile-card-view td:before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #6b7280;
+        font-size: 12px;
+        display: block;
+        margin-bottom: 4px;
+    }
+    
+    /* Form inputs - larger on mobile */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    input[type="tel"],
+    select,
+    textarea {
+        font-size: 16px !important; /* Prevents zoom on iOS */
+        padding: 12px !important;
+    }
+    
+    /* Buttons - full width on mobile */
+    .btn-mobile-full {
+        width: 100% !important;
+        margin-bottom: 8px;
+    }
+    
+    /* Modal adjustments */
+    .modal-content,
+    [class*="modal"] > div {
+        width: 95% !important;
+        max-width: 95% !important;
+        margin: 8px;
+    }
+    
+    /* Grid adjustments */
+    .grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Typography */
+    h1 {
+        font-size: 24px !important;
+    }
+    
+    h2 {
+        font-size: 20px !important;
+    }
+    
+    h3 {
+        font-size: 18px !important;
+    }
+}
+
+@media (max-width: 640px) {
+    /* Extra small screens */
+    body {
+        font-size: 14px;
+    }
+    
+    /* Stats cards - stack vertically */
+    .stats-grid,
+    .stat-card {
+        display: block !important;
+    }
+    
+    .stat-card {
+        margin-bottom: 12px;
+    }
+    
+    /* Reduce padding */
+    .card,
+    .settings-card,
+    [class*="card"] {
+        padding: 16px !important;
+    }
+    
+    /* File detail actions */
+    .file-actions {
+        flex-direction: column !important;
+    }
+    
+    .file-actions button {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+}
+
+/* Bottom Navigation (Mobile) */
+.bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    padding: 8px 0;
+    z-index: 100;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+    .bottom-nav {
+        display: flex;
+        justify-content: space-around;
+    }
+    
+    /* Add padding to main content to account for bottom nav */
+    #main-content {
+        padding-bottom: 80px !important;
+    }
+}
+
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    text-decoration: none;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.bottom-nav-item.active {
+    color: #667eea;
+}
+
+.bottom-nav-item svg,
+.bottom-nav-item .icon {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 4px;
+}
+
+.bottom-nav-item .badge {
+    position: absolute;
+    top: 4px;
+    right: 20%;
+    background: #ef4444;
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 10px;
+    min-width: 16px;
+    text-align: center;
+}
+
+/* Floating Action Button (FAB) */
+.fab {
+    position: fixed;
+    bottom: 80px;
+    right: 16px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    cursor: pointer;
+    z-index: 99;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+@media (max-width: 768px) {
+    .fab {
+        display: flex;
+    }
+}
+
+.fab:active {
+    transform: scale(0.95);
+}
+
+.fab:hover {
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+
+/* Swipe Actions (for lists) */
+.swipe-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.swipe-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    display: flex;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+}
+
+.swipe-container.swiped .swipe-actions {
+    transform: translateX(0);
+}
+
+.swipe-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    color: white;
+    font-weight: 600;
+    min-width: 80px;
+    cursor: pointer;
+}
+
+.swipe-action.delete {
+    background: #ef4444;
+}
+
+.swipe-action.share {
+    background: #10b981;
+}
+
+/* Touch-friendly spacing */
+@media (max-width: 768px) {
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .btn-group button {
+        width: 100%;
+    }
+    
+    /* Increase spacing between interactive elements */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    /* Filter sections */
+    .filter-section {
+        flex-direction: column !important;
+    }
+    
+    .filter-section > * {
+        width: 100% !important;
+        margin-bottom: 8px;
+    }
+}
+
+/* Landscape orientation optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+    #sidebar {
+        width: 200px;
+    }
+    
+    .mobile-header {
+        padding: 8px 16px;
+    }
+    
+    .bottom-nav {
+        padding: 4px 0;
+    }
+    
+    .bottom-nav-item {
+        font-size: 10px;
+        padding: 4px;
+    }
+}
+
+/* Pull to refresh indicator */
+.pull-to-refresh {
+    position: absolute;
+    top: -60px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #667eea;
+    font-weight: 600;
+    transition: top 0.3s ease;
+}
+
+.pull-to-refresh.active {
+    top: 0;
+}
+
+/* Loading skeleton for mobile */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+    border-radius: 8px;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+    .mobile-header,
+    .bottom-nav {
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+    }
+    
+    .bottom-nav {
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .mobile-header,
+    .bottom-nav {
+        background: #1f2937;
+        border-color: #374151;
+    }
+    
+    .bottom-nav-item {
+        color: #9ca3af;
+    }
+    
+    .bottom-nav-item.active {
+        color: #818cf8;
+    }
+}

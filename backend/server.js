@@ -1272,6 +1272,305 @@ app.post('/api/files/:id/share', authenticateToken, async (req, res) => {
     }
 });
 
+// ============================================================
+// ENHANCED FILE SHARING WITH EXPIRY LINKS
+// ============================================================
+
+// POST /api/files/:id/share-advanced - Create shareable link with custom expiry
+app.post('/api/files/:id/share-advanced', authenticateToken, async (req, res) => {
+    try {
+        const { expiryHours = 24, maxAccessCount = null } = req.body;
+        const fileId = req.params.id;
+
+        // Validate file exists and user has access
+        const { data: file, error: fileError } = await supabase
+            .from('files')
+            .select('*')
+            .eq('id', fileId)
+            .single();
+
+        if (fileError || !file) {
+            return res.status(404).json({ error: 'File tidak ditemukan.' });
+        }
+
+        // Zone access check
+        if (req.user.role !== 'super_admin' && req.user.role !== 'moderator') {
+            if (Number(file.zona_id) !== Number(req.user.zona_id)) {
+                return res.status(403).json({ error: 'Anda tidak memiliki akses ke file ini.' });
+            }
+        }
+
+        // Generate unique share token
+        const crypto = require('crypto');
+        const shareToken = crypto.randomBytes(32).toString('hex');
+        
+        // Calculate expiry time
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + Number(expiryHours));
+
+        // Create share record
+        const { data: share, error: shareError } = await supabase
+            .from('file_shares')
+            .insert({
+                file_id: fileId,
+                created_by: req.user.userId,
+                share_token: shareToken,
+                expires_at: expiresAt.toISOString(),
+                max_access_count: maxAccessCount,
+                is_active: true
+            })
+            .select()
+            .single();
+
+        if (shareError) throw shareError;
+
+        // Log activity
+        await supabase.from('audit_logs').insert({
+            user_id: req.user.userId,
+            action: 'CREATE',
+            context: `Membuat link berbagi untuk file: ${file.nama_file}`
+        });
+
+        res.json({
+            share,
+            shareUrl: `${req.protocol}://${req.get('host')}/shared/${shareToken}`
+        });
+
+    } catch (err) {
+        console.error('Create Share Link Error:', err);
+        res.status(500).json({ error: 'Gagal membuat link berbagi.' });
+    }
+});
+
+// GET /api/files/:id/shares - List all shares for a file
+app.get('/api/files/:id/shares', authenticateToken, async (req, res) => {
+    try {
+        const fileId = req.params.id;
+
+        // Verify file exists and user has access
+        const { data: file, error: fileError } = await supabase
+            .from('files')
+            .select('*')
+            .eq('id', fileId)
+            .single();
+
+        if (fileError || !file) {
+            return res.status(404).json({ error: 'File tidak ditemukan.' });
+        }
+
+        // Zone access check
+        if (req.user.role !== 'super_admin' && req.user.role !== 'moderator') {
+            if (Number(file.zona_id) !== Number(req.user.zona_id)) {
+                return res.status(403).json({ error: 'Anda tidak memiliki akses ke file ini.' });
+            }
+        }
+
+        // Get all shares for this file
+        const { data: shares, error: sharesError } = await supabase
+            .from('file_shares')
+            .select('*, users(name, email)')
+            .eq('file_id', fileId)
+            .order('created_at', { ascending: false });
+
+        if (sharesError) throw sharesError;
+
+        res.json({ shares: shares || [] });
+
+    } catch (err) {
+        console.error('List Shares Error:', err);
+        res.status(500).json({ error: 'Gagal memuat daftar share.' });
+    }
+});
+
+// DELETE /api/files/:id/share/:shareId - Revoke share link
+app.delete('/api/files/:id/share/:shareId', authenticateToken, async (req, res) => {
+    try {
+        const { id: fileId, shareId } = req.params;
+
+        // Get share record
+        const { data: share, error: shareError } = await supabase
+            .from('file_shares')
+            .select('*, files(*)')
+            .eq('id', shareId)
+            .eq('file_id', fileId)
+            .single();
+
+        if (shareError || !share) {
+            return res.status(404).json({ error: 'Link berbagi tidak ditemukan.' });
+        }
+
+        // Check if user is the creator or has sufficient permissions
+        if (share.created_by !== req.user.userId && 
+            req.user.role !== 'super_admin' && 
+            req.user.role !== 'moderator') {
+            return res.status(403).json({ error: 'Anda tidak memiliki izin untuk mencabut link ini.' });
+        }
+
+        // Deactivate the share
+        const { error: updateError } = await supabase
+            .from('file_shares')
+            .update({ is_active: false })
+            .eq('id', shareId);
+
+        if (updateError) throw updateError;
+
+        // Log activity
+        await supabase.from('audit_logs').insert({
+            user_id: req.user.userId,
+            action: 'DELETE',
+            context: `Mencabut link berbagi untuk file: ${share.files.nama_file}`
+        });
+
+        res.json({ success: true, message: 'Link berbagi berhasil dicabut.' });
+
+    } catch (err) {
+        console.error('Revoke Share Error:', err);
+        res.status(500).json({ error: 'Gagal mencabut link berbagi.' });
+    }
+});
+
+// GET /api/share/:token - Access file via share token (PUBLIC - No auth required)
+app.get('/api/share/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const clientIp = req.ip || req.connection.remoteAddress;
+        const userAgent = req.get('user-agent');
+
+        // Get share record
+        const { data: share, error: shareError } = await supabase
+            .from('file_shares')
+            .select('*, files(*)')
+            .eq('share_token', token)
+            .eq('is_active', true)
+            .single();
+
+        if (shareError || !share) {
+            return res.status(404).json({ error: 'Link berbagi tidak valid atau sudah tidak aktif.' });
+        }
+
+        // Check if expired
+        if (new Date(share.expires_at) < new Date()) {
+            // Log failed access
+            await supabase.from('file_share_access_logs').insert({
+                share_id: share.id,
+                ip_address: clientIp,
+                user_agent: userAgent,
+                success: false
+            });
+            
+            return res.status(410).json({ error: 'Link berbagi sudah kadaluarsa.' });
+        }
+
+        // Check max access count
+        if (share.max_access_count !== null && share.access_count >= share.max_access_count) {
+            await supabase.from('file_share_access_logs').insert({
+                share_id: share.id,
+                ip_address: clientIp,
+                user_agent: userAgent,
+                success: false
+            });
+            
+            return res.status(403).json({ error: 'Batas akses link telah tercapai.' });
+        }
+
+        // Increment access count
+        await supabase
+            .from('file_shares')
+            .update({ access_count: share.access_count + 1 })
+            .eq('id', share.id);
+
+        // Log successful access
+        await supabase.from('file_share_access_logs').insert({
+            share_id: share.id,
+            ip_address: clientIp,
+            user_agent: userAgent,
+            success: true
+        });
+
+        // Return file metadata (not the actual file, just info)
+        res.json({
+            file: {
+                id: share.files.id,
+                nama_file: share.files.nama_file,
+                kategori: share.files.kategori,
+                file_size: share.files.file_size,
+                uploaded_at: share.files.uploaded_at
+            },
+            share: {
+                expires_at: share.expires_at,
+                access_count: share.access_count + 1,
+                max_access_count: share.max_access_count
+            }
+        });
+
+    } catch (err) {
+        console.error('Access Share Error:', err);
+        res.status(500).json({ error: 'Gagal mengakses file berbagi.' });
+    }
+});
+
+// GET /api/share/:token/download - Download file via share token (PUBLIC)
+app.get('/api/share/:token/download', async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        // Get and validate share (reuse validation logic)
+        const { data: share, error: shareError } = await supabase
+            .from('file_shares')
+            .select('*, files(*)')
+            .eq('share_token', token)
+            .eq('is_active', true)
+            .single();
+
+        if (shareError || !share) {
+            return res.status(404).json({ error: 'Link berbagi tidak valid.' });
+        }
+
+        if (new Date(share.expires_at) < new Date()) {
+            return res.status(410).json({ error: 'Link berbagi sudah kadaluarsa.' });
+        }
+
+        if (share.max_access_count !== null && share.access_count >= share.max_access_count) {
+            return res.status(403).json({ error: 'Batas akses link telah tercapai.' });
+        }
+
+        // Stream the file (use existing download logic)
+        const file = share.files;
+        const remotePath = file.rclone_path || file.folder_path;
+        
+        // Set download headers
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.nama_file)}"`);
+        res.setHeader('Content-Type', 'application/octet-stream');
+
+        // Stream file from rclone
+        const rclone = spawn('rclone', [
+            'cat',
+            `gdrive:${remotePath}`
+        ]);
+
+        rclone.stdout.pipe(res);
+        
+        rclone.stderr.on('data', (data) => {
+            console.error('Rclone error:', data.toString());
+        });
+
+        rclone.on('error', (err) => {
+            console.error('Rclone spawn error:', err);
+            if (!res.headersSent) {
+                res.status(500).json({ error: 'Gagal mengunduh file.' });
+            }
+        });
+
+    } catch (err) {
+        console.error('Share Download Error:', err);
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Gagal mengunduh file.' });
+        }
+    }
+});
+
+// ============================================================
+
 // POST /api/files/:id/acknowledge - mark file as read
 app.post('/api/files/:id/acknowledge', authenticateToken, async (req, res) => {
     try {

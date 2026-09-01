@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengaturan Notifikasi | Pusat Arsip Anka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tailwind.generated.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+        }
+        
+        .settings-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #667eea;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        
+        .notification-type-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+        
+        .notification-type-item:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .notification-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+    </style>
+    <script>
+        document.documentElement.style.opacity = '0';
+        document.documentElement.classList.add('auth-loading');
+    </script>
+</head>
+<body>
+    <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-40" style="display: none;"></aside>
+
+    <main id="main-content" class="p-8" style="margin-left: 0;">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-800 text-gray-900 mb-2">⚙️ Pengaturan Notifikasi</h1>
+                <p class="text-gray-600">Kelola bagaimana Anda menerima notifikasi</p>
+            </div>
+
+            <!-- Email Notifications -->
+            <div class="settings-card">
+                <h2 class="text-xl font-700 text-gray-900 mb-4">📧 Notifikasi Email</h2>
+                
+                <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+                    <div>
+                        <p class="font-600 text-gray-900">Aktifkan Email Notifikasi</p>
+                        <p class="text-sm text-gray-600">Terima notifikasi melalui email</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="email-enabled" onchange="updatePreferences()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div id="email-frequency-section">
+                    <label class="block font-600 text-gray-900 mb-2">Frekuensi Email</label>
+                    <select id="email-frequency" onchange="updatePreferences()" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <option value="instant">Langsung (Setiap notifikasi)</option>
+                        <option value="daily">Harian (Ringkasan per hari)</option>
+                        <option value="weekly">Mingguan (Ringkasan per minggu)</option>
+                        <option value="never">Tidak Pernah</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Notification Types -->
+            <div class="settings-card">
+                <h2 class="text-xl font-700 text-gray-900 mb-4">🔔 Jenis Notifikasi</h2>
+                <p class="text-sm text-gray-600 mb-4">Pilih jenis notifikasi yang ingin Anda terima</p>
+
+                <div id="notification-types">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="settings-card">
+                <h2 class="text-xl font-700 text-gray-900 mb-4">🗑️ Bersihkan Notifikasi</h2>
+                
+                <div class="flex gap-3">
+                    <button onclick="clearReadNotifications()" class="px-4 py-2 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-all">
+                        Hapus Notifikasi yang Sudah Dibaca
+                    </button>
+                    <button onclick="markAllAsRead()" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all">
+                        Tandai Semua Sudah Dibaca
+                    </button>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="text-right">
+                <button onclick="window.location.href='dashboard.html'" class="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all">
+                    Kembali ke Dashboard
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/sidebar.js"></script>
+
+    <script>
+        let currentPreferences = null;
+
+        const notificationTypes = [
+            { key: 'update', icon: '🔄', name: 'Update Sistem', description: 'Notifikasi update dan perubahan sistem' },
+            { key: 'file_upload', icon: '📁', name: 'Upload File', description: 'File baru diupload di zona/toko Anda' },
+            { key: 'comment', icon: '💬', name: 'Komentar', description: 'Seseorang berkomentar pada file Anda' },
+            { key: 'quota', icon: '⚠️', name: 'Peringatan Quota', description: 'Peringatan kapasitas penyimpanan' },
+            { key: 'maintenance', icon: '🔧', name: 'Maintenance', description: 'Jadwal maintenance sistem' },
+            { key: 'approval', icon: '✅', name: 'Persetujuan', description: 'Status persetujuan berubah' },
+            { key: 'share', icon: '🔗', name: 'File Sharing', description: 'File dibagikan kepada Anda' },
+            { key: 'system', icon: '🔔', name: 'Sistem', description: 'Notifikasi sistem lainnya' }
+        ];
+
+        async function init() {
+            const user = await initAuth();
+            if (!user) return;
+
+            // Show sidebar for non-admin_zona
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            
+            if (user.role === 'admin_zona') {
+                sidebar.style.display = 'none';
+                mainContent.style.marginLeft = '0';
+            } else {
+                sidebar.style.display = 'flex';
+                mainContent.style.marginLeft = '16rem';
+            }
+
+            await loadPreferences();
+            renderNotificationTypes();
+        }
+
+        async function loadPreferences() {
+            try {
+                const { preferences } = await API.get('/api/notifications/preferences');
+                currentPreferences = preferences;
+
+                // Update UI
+                document.getElementById('email-enabled').checked = preferences.email_enabled;
+                document.getElementById('email-frequency').value = preferences.email_frequency;
+
+                updateEmailSectionVisibility();
+
+            } catch (err) {
+                console.error('Load preferences error:', err);
+                Swal.fire('Error', 'Gagal memuat pengaturan', 'error');
+            }
+        }
+
+        function renderNotificationTypes() {
+            const container = document.getElementById('notification-types');
+            
+            container.innerHTML = notificationTypes.map(type => {
+                const isEnabled = currentPreferences?.types_enabled?.[type.key] !== false;
+                
+                return `
+                    <div class="notification-type-item">
+                        <div class="flex items-center flex-1">
+                            <span class="notification-icon">${type.icon}</span>
+                            <div>
+                                <p class="font-600 text-gray-900">${type.name}</p>
+                                <p class="text-xs text-gray-600">${type.description}</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" 
+                                   data-type="${type.key}" 
+                                   ${isEnabled ? 'checked' : ''} 
+                                   onchange="updateTypePreference('${type.key}', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateEmailSectionVisibility() {
+            const emailEnabled = document.getElementById('email-enabled').checked;
+            const frequencySection = document.getElementById('email-frequency-section');
+            
+            if (emailEnabled) {
+                frequencySection.style.opacity = '1';
+                frequencySection.style.pointerEvents = 'auto';
+            } else {
+                frequencySection.style.opacity = '0.5';
+                frequencySection.style.pointerEvents = 'none';
+            }
+        }
+
+        async function updatePreferences() {
+            try {
+                const emailEnabled = document.getElementById('email-enabled').checked;
+                const emailFrequency = document.getElementById('email-frequency').value;
+
+                await API.put('/api/notifications/preferences', {
+                    email_enabled: emailEnabled,
+                    email_frequency: emailFrequency
+                });
+
+                updateEmailSectionVisibility();
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Pengaturan berhasil disimpan',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+
+            } catch (err) {
+                console.error('Update preferences error:', err);
+                Swal.fire('Error', 'Gagal menyimpan pengaturan', 'error');
+            }
+        }
+
+        async function updateTypePreference(typeKey, isEnabled) {
+            try {
+                const newTypesEnabled = { ...currentPreferences.types_enabled };
+                newTypesEnabled[typeKey] = isEnabled;
+
+                const { preferences } = await API.put('/api/notifications/preferences', {
+                    types_enabled: newTypesEnabled
+                });
+
+                currentPreferences = preferences;
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Pengaturan berhasil disimpan',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+
+            } catch (err) {
+                console.error('Update type preference error:', err);
+                Swal.fire('Error', 'Gagal menyimpan pengaturan', 'error');
+                // Revert checkbox
+                document.querySelector(`[data-type="${typeKey}"]`).checked = !isEnabled;
+            }
+        }
+
+        async function clearReadNotifications() {
+            try {
+                const result = await Swal.fire({
+                    title: 'Hapus Notifikasi?',
+                    text: 'Semua notifikasi yang sudah dibaca akan dihapus permanen',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Ya, Hapus',
+                    cancelButtonText: 'Batal'
+                });
+
+                if (!result.isConfirmed) return;
+
+                await API.delete('/api/notifications/clear-all');
+
+                Swal.fire('Berhasil', 'Notifikasi yang sudah dibaca telah dihapus', 'success');
+
+            } catch (err) {
+                console.error('Clear notifications error:', err);
+                Swal.fire('Error', 'Gagal menghapus notifikasi', 'error');
+            }
+        }
+
+        async function markAllAsRead() {
+            try {
+                await API.put('/api/notifications/read-all');
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Semua notifikasi ditandai sudah dibaca',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+
+            } catch (err) {
+                console.error('Mark all read error:', err);
+                Swal.fire('Error', 'Gagal menandai notifikasi', 'error');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

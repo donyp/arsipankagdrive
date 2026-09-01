@@ -143,13 +143,24 @@
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #e5e7eb;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <h3 style="font-weight: 600; margin: 0;">File</h3>
-                    <button id="download-btn" onclick="downloadFile()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
-                        ⬇️ Download
-                    </button>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="share-btn" onclick="openShareModal()" style="padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            🔗 Share
+                        </button>
+                        <button id="download-btn" onclick="downloadFile()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            ⬇️ Download
+                        </button>
+                    </div>
                 </div>
                 <div id="file-preview" style="background: #f9fafb; padding: 40px; border-radius: 6px; text-align: center; color: #9ca3af;">
                     Loading preview...
                 </div>
+            </div>
+
+            <!-- Active Shares Section -->
+            <div id="shares-section" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #e5e7eb; display: none;">
+                <h3 style="font-weight: 600; margin-bottom: 16px;">🔗 Active Share Links</h3>
+                <div id="shares-list"></div>
             </div>
         </div>
     </main>
@@ -631,5 +642,74 @@
             return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
         }
     </script>
+
+    <!-- Share Modals and Script -->
+    <!-- Share Modal -->
+    <div id="share-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 32px; border-radius: 16px; max-width: 500px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 style="font-size: 20px; font-weight: 700; margin: 0;">🔗 Create Share Link</h2>
+                <button onclick="closeShareModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">⏰ Link Expiry</label>
+                <select id="expiry-select" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                    <option value="1">1 Hour</option>
+                    <option value="24" selected>24 Hours (1 Day)</option>
+                    <option value="168">7 Days (1 Week)</option>
+                    <option value="720">30 Days (1 Month)</option>
+                    <option value="8760">1 Year</option>
+                    <option value="custom">Custom Hours</option>
+                </select>
+            </div>
+
+            <div id="custom-hours-input" style="margin-bottom: 20px; display: none;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">Custom Hours</label>
+                <input type="number" id="custom-hours" min="1" max="87600" placeholder="Enter hours" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">
+                    👁️ Max Access Count (Optional)
+                </label>
+                <input type="number" id="max-access" min="1" placeholder="Leave empty for unlimited" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                <p style="font-size: 12px; color: #6b7280; margin-top: 4px;">How many times this link can be accessed</p>
+            </div>
+
+            <button onclick="createShareLink()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 16px;">
+                ✨ Generate Share Link
+            </button>
+        </div>
+    </div>
+
+    <!-- Share Result Modal -->
+    <div id="share-result-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 32px; border-radius: 16px; max-width: 600px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 style="font-size: 20px; font-weight: 700; margin: 0;">✅ Share Link Created!</h2>
+                <button onclick="closeShareResultModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
+            </div>
+
+            <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e5e7eb;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="text" id="share-url-input" readonly style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; font-family: monospace;">
+                    <button onclick="copyShareLink()" style="padding: 10px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; white-space: nowrap;">
+                        📋 Copy
+                    </button>
+                </div>
+            </div>
+
+            <div id="share-details" style="font-size: 14px; color: #6b7280;"></div>
+
+            <button onclick="closeShareResultModal()" style="width: 100%; padding: 12px; background: #e5e7eb; color: #374151; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 16px;">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- Active Shares Section (will be inserted dynamically after file-preview section) -->
+    <script src="js/file-share.js"></script>
+
 </body>
 </html>
