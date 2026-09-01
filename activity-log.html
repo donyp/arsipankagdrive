@@ -129,6 +129,53 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+        
+        .tab-btn {
+            background: white;
+            border: 1.5px solid #e5e7eb;
+            color: #6b7280;
+        }
+        
+        .tab-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .tab-btn.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+        
+        .session-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+        
+        .session-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+        }
+        
+        .session-card.current {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+        
+        .device-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
     </style>
     <script>
         document.documentElement.style.opacity = '0';
@@ -157,8 +204,18 @@
                     </div>
                 </div>
                 
+                <!-- Tabs -->
+                <div class="flex gap-2 mb-6">
+                    <button onclick="switchTab('activity')" id="tab-activity" class="tab-btn active px-6 py-3 rounded-xl text-sm font-bold transition-all">
+                        📋 Activity Log
+                    </button>
+                    <button onclick="switchTab('sessions')" id="tab-sessions" class="tab-btn px-6 py-3 rounded-xl text-sm font-bold transition-all">
+                        🔐 Active Sessions
+                    </button>
+                </div>
+                
                 <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" id="activity-stats">
                     <div class="stat-card">
                         <p class="text-xs font-bold text-gray-500 uppercase mb-1">Total Activities</p>
                         <p class="stat-number" id="stat-total">0</p>
@@ -168,7 +225,7 @@
                         <p class="stat-number text-green-600" id="stat-today">0</p>
                     </div>
                     <div class="stat-card">
-                        <p class="text-xs font-bold text-gray-500 uppercase mb-1">Active Users</p>
+                        <p class="text-xs font-bold text-gray-500 uppercase mb-1">Active Users (24h)</p>
                         <p class="stat-number text-blue-600" id="stat-users">0</p>
                     </div>
                     <div class="stat-card">
@@ -176,7 +233,26 @@
                         <p class="stat-number text-purple-600" id="stat-hour">0</p>
                     </div>
                 </div>
+                
+                <!-- Session Stats (hidden by default) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 hidden" id="session-stats">
+                    <div class="stat-card">
+                        <p class="text-xs font-bold text-gray-500 uppercase mb-1">Active Sessions</p>
+                        <p class="stat-number text-green-600" id="stat-active-sessions">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-xs font-bold text-gray-500 uppercase mb-1">Desktop Devices</p>
+                        <p class="stat-number text-blue-600" id="stat-desktop">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-xs font-bold text-gray-500 uppercase mb-1">Mobile Devices</p>
+                        <p class="stat-number text-purple-600" id="stat-mobile">0</p>
+                    </div>
+                </div>
             </div>
+
+            <!-- Activity Tab Content -->
+            <div id="activity-tab-content">
 
             <!-- Filters -->
             <div class="bg-white rounded-2xl p-6 mb-6 border border-gray-200">
@@ -228,6 +304,41 @@
             <div id="loading-state" class="text-center py-16">
                 <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-blue-600 mb-4"></div>
                 <p class="text-gray-600 font-semibold">Loading activity logs...</p>
+            </div>
+            </div>
+            
+            <!-- Sessions Tab Content (hidden by default) -->
+            <div id="sessions-tab-content" class="hidden">
+                <!-- Session Header Actions -->
+                <div class="bg-white rounded-2xl p-6 mb-6 border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">Kelola semua perangkat yang terhubung dengan akun Anda</p>
+                            <p class="text-xs text-gray-500">Anda dapat logout dari perangkat tertentu atau semua perangkat sekaligus</p>
+                        </div>
+                        <button onclick="logoutAllDevices()" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition-all">
+                            🚫 Logout Semua Perangkat Lain
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Sessions List -->
+                <div id="sessions-feed" class="space-y-4">
+                    <!-- Sessions will be rendered here by JavaScript -->
+                </div>
+                
+                <!-- Empty State -->
+                <div id="sessions-empty-state" class="hidden text-center py-16">
+                    <div class="text-6xl mb-4">🔒</div>
+                    <p class="text-xl font-semibold text-gray-600 mb-2">Tidak ada sesi aktif</p>
+                    <p class="text-gray-500">Belum ada perangkat yang terhubung</p>
+                </div>
+                
+                <!-- Loading State -->
+                <div id="sessions-loading-state" class="hidden text-center py-16">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-blue-600 mb-4"></div>
+                    <p class="text-gray-600 font-semibold">Loading sessions...</p>
+                </div>
             </div>
         </div>
     </main>
@@ -510,6 +621,227 @@
         
         // Initialize
         document.addEventListener('DOMContentLoaded', init);
+        
+        // ============================================================
+        // SESSION MANAGEMENT FUNCTIONS
+        // ============================================================
+        
+        let allSessions = [];
+        let currentSessionToken = null;
+        
+        function switchTab(tab) {
+            const activityTab = document.getElementById('activity-tab-content');
+            const sessionsTab = document.getElementById('sessions-tab-content');
+            const activityBtn = document.getElementById('tab-activity');
+            const sessionsBtn = document.getElementById('tab-sessions');
+            const activityStats = document.getElementById('activity-stats');
+            const sessionStats = document.getElementById('session-stats');
+            
+            if (tab === 'activity') {
+                activityTab.classList.remove('hidden');
+                sessionsTab.classList.add('hidden');
+                activityBtn.classList.add('active');
+                sessionsBtn.classList.remove('active');
+                activityStats.classList.remove('hidden');
+                sessionStats.classList.add('hidden');
+            } else {
+                activityTab.classList.add('hidden');
+                sessionsTab.classList.remove('hidden');
+                activityBtn.classList.remove('active');
+                sessionsBtn.classList.add('active');
+                activityStats.classList.add('hidden');
+                sessionStats.classList.remove('hidden');
+                loadSessions();
+            }
+        }
+        
+        async function loadSessions() {
+            const loadingState = document.getElementById('sessions-loading-state');
+            const emptyState = document.getElementById('sessions-empty-state');
+            
+            loadingState.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            
+            try {
+                const userId = currentUser.id;
+                const { sessions } = await API.get(`/api/sessions/user/${userId}`);
+                
+                allSessions = sessions || [];
+                currentSessionToken = localStorage.getItem('sessionToken');
+                
+                renderSessions();
+                updateSessionStats();
+                
+            } catch (err) {
+                console.error('Failed to load sessions:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Gagal memuat data sesi. Silakan coba lagi.'
+                });
+            } finally {
+                loadingState.classList.add('hidden');
+            }
+        }
+        
+        function renderSessions() {
+            const feed = document.getElementById('sessions-feed');
+            const emptyState = document.getElementById('sessions-empty-state');
+            
+            if (allSessions.length === 0) {
+                feed.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            feed.innerHTML = allSessions.map(session => {
+                const isCurrent = session.session_token === currentSessionToken;
+                const deviceIcon = getDeviceIcon(session.device_type, session.browser);
+                const timeAgo = getTimeAgo(session.last_activity);
+                const cardClass = isCurrent ? 'session-card current' : 'session-card';
+                
+                return `
+                    <div class="${cardClass}">
+                        <div class="flex items-start gap-4">
+                            <div class="device-icon">
+                                ${deviceIcon}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="font-bold text-gray-900">${session.device_name}</span>
+                                    ${isCurrent ? '<span class="px-3 py-1 rounded-full text-xs font-bold bg-green-500 text-white">Current Session</span>' : ''}
+                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                                    <div>
+                                        <p class="text-xs text-gray-500 mb-1">Browser</p>
+                                        <p class="text-sm font-semibold text-gray-700">${session.browser}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 mb-1">OS</p>
+                                        <p class="text-sm font-semibold text-gray-700">${session.os}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 mb-1">IP Address</p>
+                                        <p class="text-sm font-semibold text-gray-700">${session.ip_address || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 mb-1">Last Activity</p>
+                                        <p class="text-sm font-semibold text-gray-700">${timeAgo}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3 text-xs text-gray-500">
+                                    <span>🕒 Login: ${formatDateTime(session.created_at)}</span>
+                                    <span>⏰ Expires: ${formatDateTime(session.expires_at)}</span>
+                                </div>
+                            </div>
+                            ${!isCurrent ? `
+                                <button onclick="logoutDevice('${session.id}')" class="px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-200 transition-all">
+                                    Logout
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function getDeviceIcon(deviceType, browser) {
+            if (deviceType === 'mobile') return '📱';
+            if (browser?.includes('Chrome')) return '💻';
+            if (browser?.includes('Firefox')) return '🦊';
+            if (browser?.includes('Safari')) return '🧭';
+            if (browser?.includes('Edge')) return '🌐';
+            return '🖥️';
+        }
+        
+        function updateSessionStats() {
+            document.getElementById('stat-active-sessions').textContent = allSessions.length;
+            
+            const desktop = allSessions.filter(s => s.device_type === 'desktop').length;
+            const mobile = allSessions.filter(s => s.device_type === 'mobile').length;
+            
+            document.getElementById('stat-desktop').textContent = desktop;
+            document.getElementById('stat-mobile').textContent = mobile;
+        }
+        
+        async function logoutDevice(sessionId) {
+            const result = await Swal.fire({
+                title: 'Logout dari Perangkat?',
+                text: 'Perangkat ini akan dikeluarkan dari sistem',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, Logout',
+                cancelButtonText: 'Batal'
+            });
+            
+            if (result.isConfirmed) {
+                try {
+                    await API.delete(`/api/sessions/${sessionId}`, {
+                        revokedBy: currentUser.id
+                    });
+                    
+                    await loadSessions();
+                    
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Perangkat berhasil di-logout',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                } catch (err) {
+                    console.error('Logout device error:', err);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Gagal logout perangkat. Silakan coba lagi.'
+                    });
+                }
+            }
+        }
+        
+        async function logoutAllDevices() {
+            const result = await Swal.fire({
+                title: 'Logout Semua Perangkat Lain?',
+                text: 'Semua perangkat kecuali yang sedang digunakan akan dikeluarkan',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, Logout Semua',
+                cancelButtonText: 'Batal'
+            });
+            
+            if (result.isConfirmed) {
+                try {
+                    await API.post('/api/sessions/revoke-others', {
+                        userId: currentUser.id,
+                        currentSessionToken: currentSessionToken,
+                        revokedBy: currentUser.id
+                    });
+                    
+                    await loadSessions();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Semua perangkat lain telah di-logout'
+                    });
+                } catch (err) {
+                    console.error('Logout all devices error:', err);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Gagal logout perangkat. Silakan coba lagi.'
+                    });
+                }
+            }
+        }
     </script>
 </body>
 </html>

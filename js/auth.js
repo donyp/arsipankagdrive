@@ -101,6 +101,17 @@ async function loginWithCredentials(email, password) {
     // Store JWT + user in localStorage
     API.setAuth(token, user);
 
+    // Create session for device tracking
+    try {
+        const { sessionToken } = await API.post('/api/sessions/create', {
+            userId: user.id
+        });
+        localStorage.setItem('sessionToken', sessionToken);
+    } catch (err) {
+        console.warn('Failed to create session:', err);
+        // Non-blocking - continue login even if session creation fails
+    }
+
     // Redirect to dashboard
     window.location.href = 'dashboard.html';
 }
@@ -128,10 +139,28 @@ async function logout() {
     if (result.isConfirmed) {
         try {
             await API.post('/api/auth/logout', { session_id: API.getSessionId() });
+            
+            // Revoke current session
+            const sessionToken = localStorage.getItem('sessionToken');
+            if (sessionToken && currentUser) {
+                try {
+                    // Find session by token to get ID
+                    const { sessions } = await API.get(`/api/sessions/user/${currentUser.id}`);
+                    const currentSession = sessions.find(s => s.session_token === sessionToken);
+                    if (currentSession) {
+                        await API.delete(`/api/sessions/${currentSession.id}`, {
+                            revokedBy: currentUser.id
+                        });
+                    }
+                } catch (err) {
+                    console.warn('Failed to revoke session:', err);
+                }
+            }
         } catch (_) {
             // Silent fail — we're logging out anyway
         }
         API.clearAuth();
+        localStorage.removeItem('sessionToken');
         currentUser = null;
         window.location.href = 'index.html';
     }
