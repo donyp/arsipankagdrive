@@ -218,6 +218,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupEventListeners();
     setupIntersectionObserver();
 
+    // Reload archives when window regains focus (e.g., coming back from file detail page)
+    let lastFocusTime = Date.now();
+    window.addEventListener('focus', () => {
+        // Only reload if it's been more than 2 seconds since last focus
+        // This prevents unnecessary reloads from quick window switches
+        const now = Date.now();
+        if (now - lastFocusTime > 2000) {
+            console.log('[Dashboard] Window focused, reloading archives to sync data');
+            loadArchives();
+        }
+        lastFocusTime = now;
+    });
+
     // Global close for dropdowns
     document.addEventListener('click', (e) => {
         const notifDropdown = document.getElementById('notif-dropdown-parent');
