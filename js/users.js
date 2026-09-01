@@ -8,6 +8,15 @@ let loginHistory = [];
 let activityLogs = [];
 let currentTab = 'users';
 
+// Make functions globally accessible for onclick handlers
+window.openUserModal = openUserModal;
+window.closeUserModal = closeUserModal;
+window.editUserById = editUserById;
+window.editUser = editUser;
+window.deleteUser = deleteUser;
+window.toggleZonaField = toggleZonaField;
+window.loadActivityLogs = loadActivityLogs;
+
 // ---- Initialize Users Page ----
 document.addEventListener('DOMContentLoaded', async () => {
     const user = await initAuth('super_admin');
@@ -173,11 +182,17 @@ function createRowHtml(u, i) {
 
 // ---- Edit User by ID (lookup from users array) ----
 function editUserById(userId) {
+    console.log('[DEBUG] editUserById called with ID:', userId);
+    console.log('[DEBUG] Current users array:', users);
+    
     const user = users.find(u => u.id === userId);
     if (!user) {
+        console.error('[DEBUG] User not found in array');
         Toast.error('User tidak ditemukan');
         return;
     }
+    
+    console.log('[DEBUG] Found user:', user);
     editUser(user);
 }
 
@@ -238,64 +253,114 @@ function renderUsers() {
 
 // ---- Open Modal for Add ----
 function openUserModal() {
+    console.log('[DEBUG] openUserModal called');
+    const modal = document.getElementById('user-modal');
+    if (!modal) {
+        console.error('[DEBUG] Modal element not found!');
+        return;
+    }
+    
     document.getElementById('modal-title').textContent = 'Tambah User Baru';
     document.getElementById('edit-user-id').value = '';
     document.getElementById('user-form').reset();
-    document.getElementById('modal-user-email').value = '';
-    document.getElementById('modal-password').required = true;
-    document.getElementById('password-hint').textContent = '';
-    document.getElementById('modal-email').readOnly = false;
+    
+    const emailInput = document.getElementById('modal-user-email');
+    if (emailInput) emailInput.value = '';
+    
+    const passwordInput = document.getElementById('modal-password');
+    if (passwordInput) {
+        passwordInput.required = true;
+        passwordInput.value = '';
+    }
+    
+    const hintSpan = document.getElementById('password-hint');
+    if (hintSpan) hintSpan.textContent = '';
+    
+    const emailField = document.getElementById('modal-email');
+    if (emailField) emailField.readOnly = false;
+    
     editingUserPermissions = [];
     toggleZonaField();
-    document.getElementById('user-modal').classList.remove('hidden');
+    
+    // Show modal with slight delay to ensure DOM is ready
+    setTimeout(() => {
+        modal.classList.remove('hidden');
+        modal.style.display = 'block';
+        console.log('[DEBUG] Modal should now be visible');
+    }, 10);
 }
 
 // ---- Open Modal for Edit ----
 function editUser(user) {
     console.log('[DEBUG] editUser called with user:', user);
-    console.log('[DEBUG] user.avatar:', user.avatar);
+    
+    const modal = document.getElementById('user-modal');
+    if (!modal) {
+        console.error('[DEBUG] Modal element not found!');
+        Toast.error('Modal tidak ditemukan');
+        return;
+    }
     
     document.getElementById('modal-title').textContent = 'Edit User';
     document.getElementById('edit-user-id').value = user.id;
-    document.getElementById('modal-name').value = user.name;
-    document.getElementById('modal-user-email').value = user.contact_email || '';
-    document.getElementById('modal-email').value = user.email;
-    document.getElementById('modal-email').readOnly = false;
-    document.getElementById('modal-password').value = '';
-    document.getElementById('modal-password').required = false;
-    document.getElementById('password-hint').textContent = '(kosongkan jika tidak diubah)';
     
-    // Set avatar preview if exists, otherwise use default
-    if (user.avatar) {
-        console.log('[DEBUG] Setting avatar from user.avatar');
-        document.getElementById('avatar-preview').src = user.avatar;
-    } else {
-        console.log('[DEBUG] No avatar, using default');
-        document.getElementById('avatar-preview').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=6366f1&color=fff`;
+    const nameInput = document.getElementById('modal-name');
+    if (nameInput) nameInput.value = user.name || '';
+    
+    const contactEmailInput = document.getElementById('modal-user-email');
+    if (contactEmailInput) contactEmailInput.value = user.contact_email || '';
+    
+    const emailInput = document.getElementById('modal-email');
+    if (emailInput) {
+        emailInput.value = user.email || '';
+        emailInput.readOnly = false;
     }
-    pendingAvatarFile = null;
+    
+    const passwordInput = document.getElementById('modal-password');
+    if (passwordInput) {
+        passwordInput.value = '';
+        passwordInput.required = false;
+    }
+    
+    const hintSpan = document.getElementById('password-hint');
+    if (hintSpan) hintSpan.textContent = '(kosongkan jika tidak diubah)';
 
-    // Preserve existing internal permissions without exposing the optional
-    // permissions form in the user interface.
+    // Preserve existing internal permissions
     const perms = user.permissions || [];
     editingUserPermissions = [...perms];
 
     // Handle Moderator Role Display in Dropdown
-    if (user.role === 'moderator' || perms.includes('IS_MODERATOR')) {
-        document.getElementById('modal-role').value = 'moderator';
-        document.getElementById('modal-zona').value = '';
-    } else {
-        document.getElementById('modal-role').value = user.role;
-        document.getElementById('modal-zona').value = user.zona_id || '';
+    const roleSelect = document.getElementById('modal-role');
+    const zonaSelect = document.getElementById('modal-zona');
+    
+    if (roleSelect) {
+        if (user.role === 'moderator' || perms.includes('IS_MODERATOR')) {
+            roleSelect.value = 'moderator';
+            if (zonaSelect) zonaSelect.value = '';
+        } else {
+            roleSelect.value = user.role || '';
+            if (zonaSelect) zonaSelect.value = user.zona_id || '';
+        }
     }
 
     toggleZonaField();
-    document.getElementById('user-modal').classList.remove('hidden');
+    
+    // Show modal with slight delay
+    setTimeout(() => {
+        modal.classList.remove('hidden');
+        modal.style.display = 'block';
+        console.log('[DEBUG] Edit modal should now be visible');
+    }, 10);
 }
 
 // ---- Close Modal ----
 function closeUserModal() {
-    document.getElementById('user-modal').classList.add('hidden');
+    console.log('[DEBUG] closeUserModal called');
+    const modal = document.getElementById('user-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
 }
 
 // ---- Toggle Zona Field Visibility ----
