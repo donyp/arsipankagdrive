@@ -369,7 +369,9 @@ const RcloneStorage = {
                 normalizedPath = normalizedPath.substring(1);
             }
             
-            const remotePath = `${PRIMARY_REMOTE}:/${normalizedPath}`;
+            // Build remote path - rclone handles spaces in paths when passed as array args
+            // Format: gdrive:"/ARSIP ANKA/..." - quoted within the remote: syntax
+            const remotePath = `${PRIMARY_REMOTE}:"/${normalizedPath}"`;
             const tmpDir = path.join(__dirname, '..', 'tmp');
             
             // Ensure tmp dir exists
@@ -382,12 +384,14 @@ const RcloneStorage = {
             const tmpFile = path.join(tmpDir, `${Date.now()}-${filename}`);
             
             // Download using rclone copyto
+            // Using quoted path syntax to handle spaces: gdrive:"/ARSIP ANKA/..."
             const configPath = process.env.RCLONE_CONFIG_PATH || rcloneConfig.configPath;
             const downloadCmd = ['copyto', remotePath, tmpFile, '--config', configPath];
             
             console.log('[getStream] Remote path:', remotePath);
             console.log('[getStream] Temp file:', tmpFile);
             console.log('[getStream] Using rclone:', rclonePath);
+            console.log('[getStream] Command:', rclonePath, downloadCmd.join(' '));
             
             return new Promise((resolve, reject) => {
                 const child = spawn(rclonePath, downloadCmd, {
