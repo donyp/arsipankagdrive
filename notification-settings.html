@@ -200,13 +200,36 @@
                 mainContent.style.marginLeft = '16rem';
             }
 
-            await loadPreferences();
-            renderNotificationTypes();
+            try {
+                await loadPreferences();
+                renderNotificationTypes();
+            } catch (err) {
+                console.error('Init error:', err);
+                // Show error and redirect
+                await Swal.fire({
+                    icon: 'info',
+                    title: 'Fitur Dalam Pengembangan',
+                    text: 'Halaman pengaturan notifikasi akan segera tersedia. Untuk saat ini, silakan gunakan fitur notifikasi yang ada di dashboard.',
+                    confirmButtonText: 'Kembali ke Dashboard'
+                });
+                window.location.href = 'dashboard.html';
+            }
         }
 
         async function loadPreferences() {
             try {
-                const { preferences } = await API.get('/api/notifications/preferences');
+                // Try to fetch from API
+                const response = await fetch(`${API_BASE_URL}/api/notifications/preferences`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('API not available');
+                }
+                
+                const { preferences } = await response.json();
                 currentPreferences = preferences;
 
                 // Update UI
@@ -217,7 +240,24 @@
 
             } catch (err) {
                 console.error('Load preferences error:', err);
-                Swal.fire('Error', 'Gagal memuat pengaturan', 'error');
+                
+                // Fallback to default preferences
+                currentPreferences = {
+                    email_enabled: false,
+                    email_frequency: 'instant',
+                    types_enabled: {
+                        update: true,
+                        file_upload: true,
+                        comment: true,
+                        quota: true,
+                        maintenance: true,
+                        approval: true,
+                        share: true,
+                        system: true
+                    }
+                };
+                
+                throw err; // Re-throw to be caught by init
             }
         }
 

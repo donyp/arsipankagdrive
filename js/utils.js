@@ -392,11 +392,34 @@ async function initUpdateHistoryNotification() {
                     <span style="font-size: 11px; color: #94a3b8; font-weight: 500; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">${date}</span>
                 </div>
             </div>
-                <div style="margin-bottom: 0; text-align: left;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.8px; padding-bottom: 0; border-bottom: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">✨ Daftar Perubahan</h3>
-                    ${itemsHtml}
-                </div>
+            <div style="max-height: 380px; overflow-y: auto; margin-bottom: 0; text-align: left; padding-right: 8px;">
+                <h3 style="margin: 0 0 10px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.8px; padding-bottom: 0; border-bottom: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">✨ Daftar Perubahan</h3>
+                ${itemsHtml}
+            </div>
+            <style>
+                .swal2-html-container::-webkit-scrollbar {
+                    width: 6px;
+                }
+                .swal2-html-container::-webkit-scrollbar-track {
+                    background: #f1f5f9;
+                    border-radius: 10px;
+                }
+                .swal2-html-container::-webkit-scrollbar-thumb {
+                    background: #cbd5e1;
+                    border-radius: 10px;
+                }
+                .swal2-html-container::-webkit-scrollbar-thumb:hover {
+                    background: #94a3b8;
+                }
+            </style>
             `;
+        
+        // Check if user has already seen this update
+        const seenUpdateKey = `seen_update_${latestUpdate.id}`;
+        if (localStorage.getItem(seenUpdateKey)) {
+            console.log('[Update Notify] User already seen this update');
+            return; // Don't show again
+        }
         
         Swal.fire({
             html: content,
@@ -425,6 +448,9 @@ async function initUpdateHistoryNotification() {
                 }
             }
         }).then((result) => {
+            // Mark as seen when user closes the modal
+            localStorage.setItem(seenUpdateKey, 'true');
+            
             if (result.isConfirmed) {
                 window.location.href = 'update-history.html';
             }

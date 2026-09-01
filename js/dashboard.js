@@ -1262,7 +1262,7 @@ function resetFilters() {
 }
 
 // ---- Quick Date Filters ----
-function applyQuickFilter(filterType) {
+function applyQuickFilter(filterType, event) {
     const today = new Date();
     const dateStart = document.getElementById('filter-date-start');
     const dateEnd = document.getElementById('filter-date-end');
@@ -1325,16 +1325,21 @@ function applyQuickFilter(filterType) {
         return `${year}-${month}-${day}`;
     };
     
-    dateStart.value = formatDate(startDate);
-    dateEnd.value = formatDate(endDate);
+    if (dateStart && dateEnd) {
+        dateStart.value = formatDate(startDate);
+        dateEnd.value = formatDate(endDate);
+    }
     
     // Highlight active button
     document.querySelectorAll('.quick-filter-btn').forEach(btn => {
         btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
         btn.classList.add('bg-gray-50', 'text-gray-600', 'border-gray-200');
     });
-    event.target.classList.remove('bg-gray-50', 'text-gray-600', 'border-gray-200');
-    event.target.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+    
+    if (event && event.target) {
+        event.target.classList.remove('bg-gray-50', 'text-gray-600', 'border-gray-200');
+        event.target.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+    }
     
     // Trigger load with new date range
     loadArchives();

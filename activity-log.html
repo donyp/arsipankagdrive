@@ -259,10 +259,22 @@
                 mainContent.style.marginLeft = '16rem';
             }
             
-            await loadLogs();
-            
-            // Auto-refresh every 30 seconds
-            setInterval(refreshLogs, 30000);
+            try {
+                await loadLogs();
+                
+                // Auto-refresh every 30 seconds
+                setInterval(refreshLogs, 30000);
+            } catch (err) {
+                console.error('Init error:', err);
+                // Show error and redirect for non-admin users
+                await Swal.fire({
+                    icon: 'info',
+                    title: 'Akses Terbatas',
+                    text: 'Halaman Activity Log hanya dapat diakses oleh Super Admin dan Moderator. Fitur ini digunakan untuk monitoring aktivitas sistem.',
+                    confirmButtonText: 'Kembali ke Dashboard'
+                });
+                window.location.href = 'dashboard.html';
+            }
         }
         
         async function loadLogs() {
@@ -276,7 +288,8 @@
                 updateStats();
             } catch (err) {
                 console.error('Failed to load logs:', err);
-                Swal.fire('Error', 'Failed to load activity logs', 'error');
+                document.getElementById('loading-state').classList.add('hidden');
+                throw err; // Re-throw to be caught by init
             } finally {
                 document.getElementById('loading-state').classList.add('hidden');
             }
