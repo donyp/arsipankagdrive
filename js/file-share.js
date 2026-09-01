@@ -50,20 +50,8 @@ async function createShareLink() {
             maxAccessCount: maxAccess ? parseInt(maxAccess) : null
         };
 
-        const response = await fetch(`${CONFIG.API_URL}/api/files/${currentFileId}/share-advanced`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to create share link');
-        }
+        // Use API helper instead of fetch to handle token refresh
+        const data = await API.post(`/api/files/${currentFileId}/share-advanced`, payload);
 
         currentShareLink = data.shareUrl;
 
@@ -128,18 +116,8 @@ async function loadFileShares() {
     try {
         if (!currentFileId) return;
 
-        const response = await fetch(`${CONFIG.API_URL}/api/files/${currentFileId}/shares`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to load shares');
-        }
-
+        // Use API helper
+        const data = await API.get(`/api/files/${currentFileId}/shares`);
         displayShares(data.shares || []);
 
     } catch (err) {
@@ -230,18 +208,8 @@ async function revokeShare(shareId) {
 
         if (!result.isConfirmed) return;
 
-        const response = await fetch(`${CONFIG.API_URL}/api/files/${currentFileId}/share/${shareId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to revoke share');
-        }
+        // Use API helper
+        await API.del(`/api/files/${currentFileId}/share/${shareId}`);
 
         Toast.success('Link sharing berhasil dicabut');
         loadFileShares();

@@ -350,8 +350,10 @@ function setCurrentDate() {
     if (greetingEl) {
         const hour = now.getHours();
         let greeting = 'Selamat Datang';
-        if (hour >= 4 && hour < 11) greeting = 'Pagi';
-        else if (hour >= 11 && hour < 18) greeting = 'Siang';
+        // Pagi: 03:00-10:59, Siang: 11:00-14:59, Sore: 15:00-17:59, Malam: 18:00-02:59
+        if (hour >= 3 && hour < 11) greeting = 'Pagi';
+        else if (hour >= 11 && hour < 15) greeting = 'Siang';
+        else if (hour >= 15 && hour < 18) greeting = 'Sore';
         else greeting = 'Malam';
         greetingEl.textContent = greeting;
     }
