@@ -88,6 +88,11 @@ app.use(express.urlencoded({ extended: true }));
 // Serve Static Frontend from root
 app.use(express.static(path.join(__dirname, '..')));
 
+// Route for shared files - serve shared.html for /shared/:token URLs
+app.get('/shared/:token', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'shared.html'));
+});
+
 // Version Header
 app.use((req, res, next) => {
     res.setHeader('X-Backend-Version', '2.0.1-fixed');
