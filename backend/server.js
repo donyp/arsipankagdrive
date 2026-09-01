@@ -2912,6 +2912,54 @@ app.put('/api/files/:id/restore', authenticateToken, authorizeRole('super_admin'
     }
 });
 
+// PUT /api/files/:id - Update file metadata (super_admin & moderator only)
+app.put('/api/files/:id', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { total_jual, tipe_ppn, tanggal_dokumen, uploaded_at } = req.body;
+
+        // Validate file exists
+        const { data: file, error: fetchError } = await supabase
+            .from('files')
+            .select('id, nama_file')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !file) {
+            return res.status(404).json({ error: 'File tidak ditemukan.' });
+        }
+
+        // Build update object
+        const updateData = {};
+        if (total_jual !== undefined) updateData.total_jual = total_jual;
+        if (tipe_ppn !== undefined) updateData.tipe_ppn = tipe_ppn;
+        if (tanggal_dokumen !== undefined) updateData.tanggal_dokumen = tanggal_dokumen;
+        if (uploaded_at !== undefined) updateData.created_at = uploaded_at; // created_at is the upload date
+
+        // Update file
+        const { error: updateError } = await supabase
+            .from('files')
+            .update(updateData)
+            .eq('id', id);
+
+        if (updateError) throw updateError;
+
+        // Audit log
+        const changes = Object.keys(updateData).map(key => `${key}: ${updateData[key]}`).join(', ');
+        await supabase.from('audit_logs').insert({
+            user_id: req.user.userId,
+            action: 'UPDATE',
+            context: `Updated file metadata: ${file.nama_file} - ${changes}`
+        });
+
+        res.json({ success: true, message: 'File metadata berhasil diperbarui.' });
+
+    } catch (err) {
+        console.error('Update file metadata error:', err);
+        res.status(500).json({ error: 'Gagal memperbarui metadata file.' });
+    }
+});
+
 // GET/POST /api/files/bulk-download - Download multiple files as ZIP
 app.all('/api/files/bulk-download', authenticateToken, async (req, res) => {
     try {
