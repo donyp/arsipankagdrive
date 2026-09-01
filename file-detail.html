@@ -653,20 +653,12 @@
             </div>
 
             <div style="margin-bottom: 20px;">
-                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">⏰ Link Expiry</label>
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">⏰ Masa Aktif Link</label>
                 <select id="expiry-select" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
-                    <option value="1">1 Hour</option>
-                    <option value="24" selected>24 Hours (1 Day)</option>
-                    <option value="168">7 Days (1 Week)</option>
-                    <option value="720">30 Days (1 Month)</option>
-                    <option value="8760">1 Year</option>
-                    <option value="custom">Custom Hours</option>
+                    <option value="0.5">30 Menit</option>
+                    <option value="1" selected>1 Jam</option>
+                    <option value="3">3 Jam</option>
                 </select>
-            </div>
-
-            <div id="custom-hours-input" style="margin-bottom: 20px; display: none;">
-                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">Custom Hours</label>
-                <input type="number" id="custom-hours" min="1" max="87600" placeholder="Enter hours" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
             </div>
 
             <div style="margin-bottom: 20px;">

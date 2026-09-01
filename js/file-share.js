@@ -20,9 +20,8 @@ function closeShareModal() {
         modal.style.display = 'none';
     }
     // Reset form
-    document.getElementById('expiry-select').value = '24';
+    document.getElementById('expiry-select').value = '1'; // Default to 1 hour
     document.getElementById('max-access').value = '';
-    document.getElementById('custom-hours-input').style.display = 'none';
 }
 
 // Close share result modal
@@ -35,18 +34,6 @@ function closeShareResultModal() {
     loadFileShares();
 }
 
-// Handle expiry select change
-function handleExpiryChange() {
-    const select = document.getElementById('expiry-select');
-    const customInput = document.getElementById('custom-hours-input');
-    
-    if (select.value === 'custom') {
-        customInput.style.display = 'block';
-    } else {
-        customInput.style.display = 'none';
-    }
-}
-
 // Create share link
 async function createShareLink() {
     try {
@@ -56,24 +43,14 @@ async function createShareLink() {
         }
 
         const expirySelect = document.getElementById('expiry-select').value;
-        const customHours = document.getElementById('custom-hours').value;
         const maxAccess = document.getElementById('max-access').value;
 
-        let expiryHours = expirySelect;
-        if (expirySelect === 'custom') {
-            if (!customHours || customHours < 1) {
-                Toast.error('Masukkan jumlah jam yang valid');
-                return;
-            }
-            expiryHours = customHours;
-        }
-
         const payload = {
-            expiryHours: parseInt(expiryHours),
+            expiryHours: parseFloat(expirySelect), // Use parseFloat to support 0.5 hours
             maxAccessCount: maxAccess ? parseInt(maxAccess) : null
         };
 
-        const response = await fetch(`${API_BASE_URL}/api/files/${currentFileId}/share-advanced`, {
+        const response = await fetch(`${CONFIG.API_URL}/api/files/${currentFileId}/share-advanced`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -151,7 +128,7 @@ async function loadFileShares() {
     try {
         if (!currentFileId) return;
 
-        const response = await fetch(`${API_BASE_URL}/api/files/${currentFileId}/shares`, {
+        const response = await fetch(`${CONFIG.API_URL}/api/files/${currentFileId}/shares`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
@@ -253,7 +230,7 @@ async function revokeShare(shareId) {
 
         if (!result.isConfirmed) return;
 
-        const response = await fetch(`${API_BASE_URL}/api/files/${currentFileId}/share/${shareId}`, {
+        const response = await fetch(`${CONFIG.API_URL}/api/files/${currentFileId}/share/${shareId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -288,12 +265,6 @@ function formatTimeAgo(timestamp) {
 
 // Initialize event listeners
 document.addEventListener('DOMContentLoaded', () => {
-    // Expiry select change handler
-    const expirySelect = document.getElementById('expiry-select');
-    if (expirySelect) {
-        expirySelect.addEventListener('change', handleExpiryChange);
-    }
-
     // Load shares if on file detail page
     if (typeof currentFileId !== 'undefined' && currentFileId) {
         setTimeout(loadFileShares, 1000);
