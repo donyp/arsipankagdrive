@@ -329,11 +329,7 @@
                 { 
                     label: 'Status Pajak', 
                     value: currentFile.tipe_ppn || '-',
-                    editable: canEdit,
-                    type: 'select',
-                    field: 'tipe_ppn',
-                    options: ['PPN', 'NON'],
-                    rawValue: currentFile.tipe_ppn
+                    editable: false // Disabled: changing status affects folder path
                 },
                 { 
                     label: 'Tanggal Dokumen', 

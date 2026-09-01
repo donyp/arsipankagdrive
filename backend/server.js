@@ -2916,7 +2916,7 @@ app.put('/api/files/:id/restore', authenticateToken, authorizeRole('super_admin'
 app.put('/api/files/:id', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { total_jual, tipe_ppn, tanggal_dokumen, uploaded_at } = req.body;
+        const { total_jual, tanggal_dokumen, uploaded_at } = req.body;
 
         // Validate file exists
         const { data: file, error: fetchError } = await supabase
@@ -2929,10 +2929,9 @@ app.put('/api/files/:id', authenticateToken, authorizeRole('super_admin', 'moder
             return res.status(404).json({ error: 'File tidak ditemukan.' });
         }
 
-        // Build update object
+        // Build update object (tipe_ppn excluded - affects folder path)
         const updateData = {};
         if (total_jual !== undefined) updateData.total_jual = total_jual;
-        if (tipe_ppn !== undefined) updateData.tipe_ppn = tipe_ppn;
         if (tanggal_dokumen !== undefined) updateData.tanggal_dokumen = tanggal_dokumen;
         if (uploaded_at !== undefined) updateData.created_at = uploaded_at; // created_at is the upload date
 
