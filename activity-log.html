@@ -197,7 +197,7 @@
                     <div class="filter-chip" data-action="DOWNLOAD" onclick="filterByAction('DOWNLOAD')">
                         <span>🔵 Download</span>
                     </div>
-                    <div class="filter-chip" data-action="LOGIN" onclick="filterByAction('LOGIN')">
+                    <div class="filter-chip" data-action="Login" onclick="filterByAction('Login')">
                         <span>🟣 Login</span>
                     </div>
                 </div>
@@ -392,7 +392,8 @@
                 'UPDATE': 'action-update',
                 'DELETE': 'action-delete',
                 'DOWNLOAD': 'action-download',
-                'LOGIN': 'action-login'
+                'LOGIN': 'action-login',
+                'Login': 'action-login'
             };
             return map[action] || 'action-default';
         }
@@ -403,7 +404,8 @@
                 'UPDATE': '📝',
                 'DELETE': '🗑️',
                 'DOWNLOAD': '⬇️',
-                'LOGIN': '🔐'
+                'LOGIN': '🔐',
+                'Login': '🔐'
             };
             return map[action] || '📌';
         }
