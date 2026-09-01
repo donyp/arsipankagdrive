@@ -274,6 +274,9 @@
             const infoGrid = document.getElementById('file-info');
             infoGrid.classList.remove('hidden');
             
+            // Check if user can edit (super_admin or moderator)
+            const canEdit = window.currentUser && (window.currentUser.role === 'super_admin' || window.currentUser.role === 'moderator');
+            
             // Format tanggal dengan nama bulan Indonesia
             const formatDateWithMonth = (dateStr) => {
                 if (!dateStr) return '-';
@@ -281,6 +284,14 @@
                 if (isNaN(d.getTime())) return '-';
                 const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
                 return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+            };
+            
+            // Format date to YYYY-MM-DD for input
+            const formatDateForInput = (dateStr) => {
+                if (!dateStr) return '';
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return '';
+                return d.toISOString().split('T')[0];
             };
             
             // Map category to display name and color
@@ -301,20 +312,98 @@
             const categoryBadge = `<span class="category-badge ${categoryInfo.class}">${categoryInfo.name}</span>`;
             
             const info = [
-                { label: 'Jenis Dokumen', value: categoryBadge, isHtml: true },
-                { label: 'Nominal', value: currentFile.total_jual ? `Rp ${formatNumber(currentFile.total_jual)}` : '-' },
-                { label: 'Status Pajak', value: currentFile.tipe_ppn || '-' },
-                { label: 'Tanggal Dokumen', value: formatDateWithMonth(currentFile.tanggal_dokumen) },
-                { label: 'Di-upload Oleh', value: currentFile.users?.name || currentFile.uploaded_by_name || '-' },
-                { label: 'Tanggal Upload', value: formatDateWithMonth(currentFile.created_at) }
+                { 
+                    label: 'Jenis Dokumen', 
+                    value: categoryBadge, 
+                    isHtml: true,
+                    editable: false
+                },
+                { 
+                    label: 'Nominal', 
+                    value: currentFile.total_jual ? `Rp ${formatNumber(currentFile.total_jual)}` : '-',
+                    editable: canEdit,
+                    type: 'number',
+                    field: 'total_jual',
+                    rawValue: currentFile.total_jual || 0
+                },
+                { 
+                    label: 'Status Pajak', 
+                    value: currentFile.tipe_ppn || '-',
+                    editable: canEdit,
+                    type: 'select',
+                    field: 'tipe_ppn',
+                    options: ['PPN', 'NON'],
+                    rawValue: currentFile.tipe_ppn
+                },
+                { 
+                    label: 'Tanggal Dokumen', 
+                    value: formatDateWithMonth(currentFile.tanggal_dokumen),
+                    editable: canEdit,
+                    type: 'date',
+                    field: 'tanggal_dokumen',
+                    rawValue: formatDateForInput(currentFile.tanggal_dokumen)
+                },
+                { 
+                    label: 'Di-upload Oleh', 
+                    value: currentFile.users?.name || currentFile.uploaded_by_name || '-',
+                    editable: false
+                },
+                { 
+                    label: 'Tanggal Upload', 
+                    value: formatDateWithMonth(currentFile.created_at),
+                    editable: canEdit,
+                    type: 'date',
+                    field: 'uploaded_at',
+                    rawValue: formatDateForInput(currentFile.created_at)
+                }
             ];
 
-            infoGrid.innerHTML = info.map(item => `
-                <div class="info-card">
-                    <div class="info-label">${item.label}</div>
-                    <div class="info-value">${item.isHtml ? item.value : item.value}</div>
-                </div>
-            `).join('');
+            infoGrid.innerHTML = info.map(item => {
+                if (!item.editable) {
+                    return `
+                        <div class="info-card">
+                            <div class="info-label">${item.label}</div>
+                            <div class="info-value">${item.isHtml ? item.value : item.value}</div>
+                        </div>
+                    `;
+                }
+                
+                // Editable fields
+                if (item.type === 'number') {
+                    return `
+                        <div class="info-card">
+                            <div class="info-label">${item.label}</div>
+                            <div class="info-value editable-field" style="cursor: pointer;" onclick="editField('${item.field}', 'number', ${item.rawValue}, this)">
+                                ${item.value} <span style="color: #667eea; font-size: 12px;">✏️</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (item.type === 'select') {
+                    return `
+                        <div class="info-card">
+                            <div class="info-label">${item.label}</div>
+                            <div class="info-value">
+                                <select onchange="autoSaveField('${item.field}', this.value)" 
+                                        style="border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px 8px; font-size: 14px; font-weight: 600; background: white; cursor: pointer;">
+                                    ${item.options.map(opt => `<option value="${opt}" ${item.rawValue === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                } else if (item.type === 'date') {
+                    return `
+                        <div class="info-card">
+                            <div class="info-label">${item.label}</div>
+                            <div class="info-value">
+                                <input type="date" value="${item.rawValue}" onchange="autoSaveField('${item.field}', this.value)"
+                                       style="border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px 8px; font-size: 14px; font-weight: 600; width: 100%; cursor: pointer;">
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                return '';
+            }).join('');
         }
 
         function renderPreview() {
@@ -628,6 +717,50 @@
         function showError(message) {
             const container = document.getElementById('alerts-container');
             container.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        // Edit field for nominal (inline editing)
+        async function editField(fieldName, type, currentValue, element) {
+            const newValue = prompt(`Masukkan ${fieldName === 'total_jual' ? 'Nominal' : fieldName} baru:`, currentValue || '');
+            
+            if (newValue === null) return; // User cancelled
+            
+            const parsedValue = type === 'number' ? parseFloat(newValue) : newValue;
+            
+            if (type === 'number' && isNaN(parsedValue)) {
+                Toast.error('Nominal harus berupa angka');
+                return;
+            }
+            
+            await autoSaveField(fieldName, parsedValue);
+        }
+
+        // Auto-save field changes
+        async function autoSaveField(fieldName, newValue) {
+            try {
+                // Show saving indicator
+                Toast.info('Menyimpan perubahan...');
+                
+                // Prepare update data
+                const updateData = {
+                    [fieldName]: newValue
+                };
+                
+                // Call API to update file
+                await API.put(`/api/files/${currentFileId}`, updateData);
+                
+                // Update local file object
+                currentFile[fieldName] = newValue;
+                
+                // Re-render to show updated data
+                renderFileInfo();
+                
+                Toast.success('Perubahan berhasil disimpan');
+                
+            } catch (err) {
+                console.error('Auto-save error:', err);
+                Toast.error('Gagal menyimpan: ' + err.message);
+            }
         }
 
         function formatNumber(num) {
