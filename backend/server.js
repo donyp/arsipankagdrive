@@ -567,6 +567,18 @@ registerFeatureEndpoints(app, supabase, authenticateToken, authorizeRole);
 console.log('[INIT] Phase 1 feature endpoints registered ✅');
 
 // ============================================================
+// SESSION MANAGEMENT & FAQ ENDPOINTS (Phase 2 Features)
+// ============================================================
+console.log('[INIT] Registering Phase 2 feature endpoints...');
+const sessionManagement = require('./session-management');
+const faqEndpoints = require('./faq-endpoints');
+app.use('/api', sessionManagement);
+app.use('/api', faqEndpoints);
+console.log('[INIT] Phase 2 feature endpoints registered ✅');
+console.log('  ✓ Session Management & Device Tracking');
+console.log('  ✓ FAQ Knowledge Base');
+
+// ============================================================
 // AUTH ENDPOINTS
 // ============================================================
 
