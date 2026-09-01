@@ -156,7 +156,7 @@
 
         async function loadSharedFile() {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/share/${shareToken}`);
+                const response = await fetch(`${CONFIG.API_URL}/api/share/${shareToken}`);
                 const data = await response.json();
 
                 if (!response.ok) {
@@ -198,7 +198,7 @@
         async function downloadFile() {
             try {
                 // Create download link
-                const downloadUrl = `${API_BASE_URL}/api/share/${shareToken}/download`;
+                const downloadUrl = `${CONFIG.API_URL}/api/share/${shareToken}/download`;
                 
                 // Create temporary link and trigger download
                 const link = document.createElement('a');
