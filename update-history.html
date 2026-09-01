@@ -318,9 +318,10 @@
     </style>
 </head>
 <body class="bg-[#F0F2F5]">
-    <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-40"></aside>
+    <!-- Sidebar hidden by default to prevent flash for admin_zona, will be shown by JS if needed -->
+    <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-40" style="display: none;"></aside>
 
-    <main id="main-content" class="p-8">
+    <main id="main-content" class="p-8" style="margin-left: 0;">
         <div class="max-w-4xl mx-auto">
             <!-- Header -->
             <div style="margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between;">
@@ -400,15 +401,25 @@
                 appState.currentUser = user;
                 console.log('[Update History] User:', { id: user.id, role: user.role });
 
-                // Hide sidebar completely for admin_zona
+                // Handle sidebar visibility based on role
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.getElementById('main-content');
+                
                 if (user.role === 'admin_zona') {
-                    console.log('[Update History] Hiding sidebar for admin_zona');
-                    const sidebar = document.getElementById('sidebar');
-                    const mainContent = document.getElementById('main-content');
+                    // Keep sidebar hidden for admin_zona (already hidden by default CSS)
+                    console.log('[Update History] Sidebar remains hidden for admin_zona');
                     if (sidebar) sidebar.style.display = 'none';
                     if (mainContent) {
                         mainContent.style.marginLeft = '0';
                         mainContent.classList.remove('ml-64');
+                    }
+                } else {
+                    // Show sidebar for other roles
+                    console.log('[Update History] Showing sidebar for role:', user.role);
+                    if (sidebar) sidebar.style.display = 'flex';
+                    if (mainContent) {
+                        mainContent.style.marginLeft = '16rem'; // 256px = w-64
+                        mainContent.classList.add('ml-64');
                     }
                 }
 
