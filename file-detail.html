@@ -749,11 +749,8 @@
                 // Call API to update file
                 await API.put(`/api/files/${currentFileId}`, updateData);
                 
-                // Update local file object
-                currentFile[fieldName] = newValue;
-                
-                // Re-render to show updated data
-                renderFileInfo();
+                // Reload file data from server to get updated values
+                await loadFileDetails();
                 
                 Toast.success('Perubahan berhasil disimpan');
                 
