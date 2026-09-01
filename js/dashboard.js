@@ -1251,6 +1251,92 @@ function resetFilters() {
             }
         }
     });
+    
+    // Remove active state from quick filter buttons
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+        btn.classList.add('bg-gray-50', 'text-gray-600', 'border-gray-200');
+    });
+    
+    loadArchives();
+}
+
+// ---- Quick Date Filters ----
+function applyQuickFilter(filterType) {
+    const today = new Date();
+    const dateStart = document.getElementById('filter-date-start');
+    const dateEnd = document.getElementById('filter-date-end');
+    
+    let startDate, endDate;
+    
+    switch(filterType) {
+        case 'today':
+            startDate = endDate = today;
+            break;
+            
+        case 'yesterday':
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            startDate = endDate = yesterday;
+            break;
+            
+        case 'thisWeek':
+            // Start of week (Monday)
+            const startOfWeek = new Date(today);
+            const day = startOfWeek.getDay();
+            const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+            startOfWeek.setDate(diff);
+            startDate = startOfWeek;
+            endDate = today;
+            break;
+            
+        case 'lastWeek':
+            // Last week Monday to Sunday
+            const lastWeekEnd = new Date(today);
+            const lastWeekDay = lastWeekEnd.getDay();
+            const lastWeekDiff = lastWeekEnd.getDate() - lastWeekDay - (lastWeekDay === 0 ? 6 : 0);
+            lastWeekEnd.setDate(lastWeekDiff);
+            
+            const lastWeekStart = new Date(lastWeekEnd);
+            lastWeekStart.setDate(lastWeekStart.getDate() - 6);
+            
+            startDate = lastWeekStart;
+            endDate = lastWeekEnd;
+            break;
+            
+        case 'thisMonth':
+            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            endDate = today;
+            break;
+            
+        case 'lastMonth':
+            const lastMonth = today.getMonth() === 0 ? 11 : today.getMonth() - 1;
+            const lastMonthYear = today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear();
+            startDate = new Date(lastMonthYear, lastMonth, 1);
+            endDate = new Date(lastMonthYear, lastMonth + 1, 0); // Last day of last month
+            break;
+    }
+    
+    // Format dates to YYYY-MM-DD
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    
+    dateStart.value = formatDate(startDate);
+    dateEnd.value = formatDate(endDate);
+    
+    // Highlight active button
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+        btn.classList.add('bg-gray-50', 'text-gray-600', 'border-gray-200');
+    });
+    event.target.classList.remove('bg-gray-50', 'text-gray-600', 'border-gray-200');
+    event.target.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+    
+    // Trigger load with new date range
     loadArchives();
 }
 
