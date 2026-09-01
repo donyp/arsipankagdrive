@@ -874,7 +874,47 @@
                 day: 'numeric'
             });
 
-            // Load items for this update
+            // Show modal immediately with loading state
+            const loadingContent = `
+                <div style="text-align: center; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0;">
+                    <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.95; filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.12));">📦</div>
+                    <h2 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #0f172a; letter-spacing: -0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">Update Sistem Anka</h2>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0;">
+                        <span style="font-size: 14px; color: #667eea; font-weight: 700; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">v${update.version}</span>
+                        <span style="width: 3px; height: 3px; background: #cbd5e1; border-radius: 50%;"></span>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: 500; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">${date}</span>
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 32px; color: #94a3b8;">
+                    <div class="spinner" style="border: 3px solid #e5e7eb; border-top: 3px solid #667eea; border-radius: 50%; width: 32px; height: 32px; animation: spin 0.8s linear infinite; margin: 0 auto 12px;"></div>
+                    <p style="margin: 0; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;">Memuat detail...</p>
+                </div>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
+
+            Swal.fire({
+                html: loadingContent,
+                confirmButtonText: 'Tutup',
+                confirmButtonColor: '#667eea',
+                width: 520,
+                padding: '28px 24px',
+                showConfirmButton: false,
+                allowOutsideClick: true,
+                didOpen: () => {
+                    const modal = Swal.getHtmlContainer().closest('.swal2-modal');
+                    if (modal) {
+                        modal.style.borderRadius = '16px';
+                        modal.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08)';
+                    }
+                }
+            });
+
+            // Load items asynchronously and update modal
             loadUpdateItems(id).then(items => {
                 console.log(`[Detail Modal] Loaded ${items?.length || 0} items for update ${id}`);
                 
@@ -890,7 +930,7 @@
                         groupedByType[item.type].push(item);
                     });
 
-                    // Generate HTML for each type group
+                    // Generate HTML for each type group with consistent purple theme
                     const typeOrder = ['UPDATE', 'BUG_FIX', 'FEATURE', 'IMPROVEMENT'];
                     let isFirst = true;
                     typeOrder.forEach(type => {
@@ -944,62 +984,59 @@
                     </div>
                 `;
 
-                Swal.fire({
+                // Update modal content with loaded data
+                Swal.update({
                     html: content,
-                    confirmButtonText: 'Tutup',
-                    confirmButtonColor: '#667eea',
-                    confirmButtonAriaLabel: 'Tutup dialog',
-                    width: 520,
-                    padding: '28px 24px',
-                    scrollbarPadding: false,
-                    allowOutsideClick: true,
-                    didOpen: () => {
-                        const modal = Swal.getHtmlContainer().closest('.swal2-modal');
-                        if (modal) {
-                            modal.style.borderRadius = '16px';
-                            modal.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08)';
-                            modal.style.maxHeight = '85vh';
-                            modal.style.overflowY = 'auto';
-                            modal.style.backdropFilter = 'blur(0px)';
-                        }
-                        const htmlContainer = Swal.getHtmlContainer();
-                        if (htmlContainer) {
-                            htmlContainer.style.maxHeight = 'calc(85vh - 120px)';
-                            htmlContainer.style.overflowY = 'auto';
-                            htmlContainer.style.paddingRight = '4px';
-                            // Custom scrollbar styling
-                            const style = document.createElement('style');
-                            style.textContent = `
-                                .swal2-html-container::-webkit-scrollbar {
-                                    width: 6px;
-                                }
-                                .swal2-html-container::-webkit-scrollbar-track {
-                                    background: transparent;
-                                }
-                                .swal2-html-container::-webkit-scrollbar-thumb {
-                                    background: #cbd5e1;
-                                    border-radius: 3px;
-                                }
-                                .swal2-html-container::-webkit-scrollbar-thumb:hover {
-                                    background: #94a3b8;
-                                }
-                            `;
-                            document.head.appendChild(style);
-                        }
-                        const btn = document.querySelector('.swal2-confirm');
-                        if (btn) {
-                            btn.style.borderRadius = '8px';
-                            btn.style.padding = '10px 32px';
-                            btn.style.fontWeight = '700';
-                            btn.style.fontSize = '13px';
-                            btn.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.28)';
-                            btn.style.letterSpacing = '0.2px';
-                            btn.style.textTransform = 'uppercase';
-                            btn.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-                            btn.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif';
-                        }
-                    }
+                    showConfirmButton: true,
+                    confirmButtonText: 'Tutup'
                 });
+
+                // Re-apply styles after content update
+                const modal = Swal.getHtmlContainer().closest('.swal2-modal');
+                if (modal) {
+                    modal.style.borderRadius = '16px';
+                    modal.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08)';
+                    modal.style.maxHeight = '85vh';
+                    modal.style.overflowY = 'auto';
+                }
+                
+                const htmlContainer = Swal.getHtmlContainer();
+                if (htmlContainer) {
+                    htmlContainer.style.maxHeight = 'calc(85vh - 120px)';
+                    htmlContainer.style.overflowY = 'auto';
+                    htmlContainer.style.paddingRight = '4px';
+                    // Custom scrollbar styling
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        .swal2-html-container::-webkit-scrollbar {
+                            width: 6px;
+                        }
+                        .swal2-html-container::-webkit-scrollbar-track {
+                            background: transparent;
+                        }
+                        .swal2-html-container::-webkit-scrollbar-thumb {
+                            background: #cbd5e1;
+                            border-radius: 3px;
+                        }
+                        .swal2-html-container::-webkit-scrollbar-thumb:hover {
+                            background: #94a3b8;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+                
+                const btn = document.querySelector('.swal2-confirm');
+                if (btn) {
+                    btn.style.borderRadius = '8px';
+                    btn.style.padding = '10px 32px';
+                    btn.style.fontWeight = '700';
+                    btn.style.fontSize = '13px';
+                    btn.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.28)';
+                    btn.style.letterSpacing = '0.2px';
+                    btn.style.textTransform = 'uppercase';
+                    btn.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                    btn.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif';
+                }
             }).catch(err => {
                 console.error('[Detail Modal Error]', err);
                 Swal.fire('Error', 'Gagal memuat detail items', 'error');
@@ -1007,11 +1044,12 @@
         }
 
         function getTypeBadge(type) {
+            // Updated to use purple theme palette for consistency
             const badges = {
-                'UPDATE': 'background: #dbeafe; color: #1e40af;',
-                'BUG_FIX': 'background: #fee2e2; color: #991b1b;',
-                'FEATURE': 'background: #dcfce7; color: #166534;',
-                'IMPROVEMENT': 'background: #fef3c7; color: #92400e;'
+                'UPDATE': 'background: #ede9fe; color: #6d28d9;',        // Purple/Violet
+                'BUG_FIX': 'background: #fef3c7; color: #92400e;',       // Amber/Orange (warning color)
+                'FEATURE': 'background: #ddd6fe; color: #5b21b6;',       // Purple (lighter shade)
+                'IMPROVEMENT': 'background: #e0e7ff; color: #4338ca;'    // Indigo (complementary)
             };
             return badges[type] || 'background: #f3f4f6; color: #4b5563;';
         }
