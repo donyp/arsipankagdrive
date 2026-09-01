@@ -400,6 +400,18 @@
                 appState.currentUser = user;
                 console.log('[Update History] User:', { id: user.id, role: user.role });
 
+                // Hide sidebar completely for admin_zona
+                if (user.role === 'admin_zona') {
+                    console.log('[Update History] Hiding sidebar for admin_zona');
+                    const sidebar = document.getElementById('sidebar');
+                    const mainContent = document.getElementById('main-content');
+                    if (sidebar) sidebar.style.display = 'none';
+                    if (mainContent) {
+                        mainContent.style.marginLeft = '0';
+                        mainContent.classList.remove('ml-64');
+                    }
+                }
+
                 // Check admin role (only moderator and super_admin can add updates, NOT admin_zona)
                 const isAdmin = user.role === 'moderator' || user.role === 'super_admin';
                 const adminSection = document.getElementById('admin-section');
