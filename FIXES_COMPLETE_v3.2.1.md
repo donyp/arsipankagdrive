@@ -2,12 +2,15 @@
 
 **Tanggal**: 1 September 2026  
 **Status**: ✅ SELESAI  
+**Commits**: 
+- `3098f2b` - Initial bug fixes (modal, filters, blank screens)
+- `170da10` - Critical fix: API not defined error
 
 ---
 
 ## 📋 Ringkasan Perbaikan
 
-Perbaikan 4 bug kritis yang dilaporkan setelah implementasi fitur v3.2:
+Perbaikan 5 bug kritis yang dilaporkan setelah implementasi fitur v3.2:
 
 ### 1. ✅ Modal Update Terlalu Panjang
 **Masalah**: 

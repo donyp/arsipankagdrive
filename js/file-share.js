@@ -51,7 +51,7 @@ function handleExpiryChange() {
 async function createShareLink() {
     try {
         if (!currentFileId) {
-            Swal.fire('Error', 'No file selected', 'error');
+            Toast.error('File tidak ditemukan');
             return;
         }
 
@@ -62,7 +62,7 @@ async function createShareLink() {
         let expiryHours = expirySelect;
         if (expirySelect === 'custom') {
             if (!customHours || customHours < 1) {
-                Swal.fire('Error', 'Please enter valid custom hours', 'error');
+                Toast.error('Masukkan jumlah jam yang valid');
                 return;
             }
             expiryHours = customHours;
@@ -96,7 +96,7 @@ async function createShareLink() {
 
     } catch (err) {
         console.error('Create share error:', err);
-        Swal.fire('Error', err.message, 'error');
+        Toast.error(err.message || 'Gagal membuat link sharing');
     }
 }
 
@@ -137,28 +137,12 @@ async function copyShareLink() {
 
     try {
         await navigator.clipboard.writeText(urlInput.value);
-        
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Link copied to clipboard!',
-            showConfirmButton: false,
-            timer: 2000
-        });
+        Toast.success('Link berhasil disalin!');
     } catch (err) {
         // Fallback for older browsers
         urlInput.select();
         document.execCommand('copy');
-        
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Link copied!',
-            showConfirmButton: false,
-            timer: 2000
-        });
+        Toast.success('Link berhasil disalin!');
     }
 }
 
@@ -247,16 +231,9 @@ async function copyExistingShareLink(token) {
     
     try {
         await navigator.clipboard.writeText(shareUrl);
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Link copied!',
-            showConfirmButton: false,
-            timer: 2000
-        });
+        Toast.success('Link berhasil disalin!');
     } catch (err) {
-        Swal.fire('Error', 'Failed to copy link', 'error');
+        Toast.error('Gagal menyalin link');
     }
 }
 
@@ -289,12 +266,12 @@ async function revokeShare(shareId) {
             throw new Error(data.error || 'Failed to revoke share');
         }
 
-        Swal.fire('Revoked!', 'Share link has been revoked', 'success');
+        Toast.success('Link sharing berhasil dicabut');
         loadFileShares();
 
     } catch (err) {
         console.error('Revoke share error:', err);
-        Swal.fire('Error', err.message, 'error');
+        Toast.error(err.message || 'Gagal mencabut sharing');
     }
 }
 
