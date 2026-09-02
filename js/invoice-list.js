@@ -427,28 +427,62 @@ function openUploadExcelModal() {
     // Validate Excel format
     async function validateExcelFormat(file) {
         try {
-            // Parse Excel to check columns
+            // Parse Excel to check columns (supports .xls, .xlsx, .csv)
             const arrayBuffer = await file.arrayBuffer();
-            const workbook = XLSX.read(arrayBuffer, { header: 1 });
+            const workbook = XLSX.read(arrayBuffer, { 
+                header: 1,  // Use header row as first array
+                raw: false  // Don't parse numbers as raw
+            });
             
             if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
                 showFormatNotice(false, 'File tidak valid atau tidak ada sheet');
                 return;
             }
 
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const headers = workbook.SheetNames[0] ? XLSX.utils.sheet_to_json(firstSheet, { header: 1 })[0] : [];
+            const firstSheetName = workbook.SheetNames[0];
+            const firstSheet = workbook.Sheets[firstSheetName];
             
-            // Required columns (KET 2 = PPN/NON PPN untuk grouping folder)
+            if (!firstSheet) {
+                showFormatNotice(false, 'Tidak dapat membaca sheet');
+                return;
+            }
+            
+            // Get all rows as arrays
+            const allRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+            
+            if (!allRows || allRows.length === 0) {
+                showFormatNotice(false, 'Sheet kosong');
+                return;
+            }
+            
+            // Get headers from first row
+            const headers = allRows[0] || [];
+            console.log('[Excel Debug] File:', file.name);
+            console.log('[Excel Debug] Sheet name:', firstSheetName);
+            console.log('[Excel Debug] Total rows:', allRows.length);
+            console.log('[Excel Debug] Headers (raw):', headers);
+            
+            // Required columns
             const requiredColumns = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL', 'KET 2'];
-            const headerString = (headers || []).map(h => (h || '').toString().toUpperCase().trim()).join('|');
-            const hasAllColumns = requiredColumns.every(col => headerString.includes(col.toUpperCase()));
-
-            if (hasAllColumns) {
-                const totalRows = workbook.Sheets[workbook.SheetNames[0]]['!ref']?.split(':')[1] ? parseInt(workbook.Sheets[workbook.SheetNames[0]]['!ref'].split(':')[1].replace(/\D/g, '')) : 0;
-                showFormatNotice(true, `Format ✅ Valid - ${totalRows - 1} baris data ditemukan`);
+            
+            // Normalize headers for comparison (trim, uppercase)
+            const normalizedHeaders = headers
+                .filter(h => h !== undefined && h !== null && h !== '')
+                .map(h => String(h).trim().toUpperCase());
+            
+            console.log('[Excel Debug] Normalized headers:', normalizedHeaders);
+            console.log('[Excel Debug] Required columns:', requiredColumns);
+            
+            // Check each required column
+            const missingCols = requiredColumns.filter(col => 
+                !normalizedHeaders.includes(col.toUpperCase())
+            );
+            
+            if (missingCols.length === 0) {
+                const totalRows = allRows.length - 1; // exclude header
+                showFormatNotice(true, `Format ✅ Valid - ${totalRows} baris data ditemukan`);
             } else {
-                const missingCols = requiredColumns.filter(col => !headerString.includes(col.toUpperCase()));
+                console.log('[Excel Debug] Missing columns:', missingCols);
                 showFormatNotice(false, `Kolom tidak lengkap: ${missingCols.join(', ')}`);
             }
         } catch (error) {
@@ -712,3 +746,234 @@ document.addEventListener('DOMContentLoaded', init);
 window.uploadPDF = uploadPDF;
 window.uploadBulkPDFs = uploadBulkPDFs;
 window.viewFile = viewFile;
+
+
+// ============================================
+// Upload Excel Modal
+// ============================================
+function openUploadExcelModal() {
+    const modal = document.getElementById('uploadExcelModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+function closeUploadExcelModal() {
+    const modal = document.getElementById('uploadExcelModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    // Reset form
+    const input = document.getElementById('excelFileInput');
+    if (input) input.value = '';
+    const notice = document.getElementById('format-notice');
+    if (notice) notice.classList.add('hidden');
+    const fileInfo = document.getElementById('fileInfo');
+    if (fileInfo) fileInfo.classList.add('hidden');
+}
+
+// Setup drag & drop
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('excelFileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    if (!dropZone || !fileInput || !uploadBtn) {
+        console.log('[Invoice List] Upload modal elements not found');
+        return;
+    }
+
+    // Drag over
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#3b82f6';
+        dropZone.style.backgroundColor = '#eff6ff';
+    });
+
+    // Drag leave
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#93c5fd';
+        dropZone.style.backgroundColor = 'transparent';
+    });
+
+    // Drop
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#93c5fd';
+        dropZone.style.backgroundColor = 'transparent';
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleExcelFileSelected(files[0]);
+        }
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleExcelFileSelected(e.target.files[0]);
+        }
+    });
+});
+
+function handleExcelFileSelected(file) {
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const fileType = document.getElementById('fileType');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    fileName.textContent = file.name;
+    fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+    fileType.textContent = file.type || 'Excel File';
+
+    fileInfo.classList.remove('hidden');
+
+    // Validate Excel format
+    validateExcelFormat(file);
+}
+
+async function uploadExcelFile() {
+    const fileInput = document.getElementById('excelFileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Pilih file terlebih dahulu');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = 'Mengunggah...';
+
+    try {
+        const formData = new FormData();
+        formData.append('excel', file);
+
+        const response = await fetch('/api/invoice/upload-excel', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${API.getToken()}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Upload gagal');
+        }
+
+        const result = await response.json();
+        alert(`✅ Upload Berhasil!\n\n${result.message}`);
+        
+        closeUploadExcelModal();
+        await loadStats();
+        await loadInvoiceList();
+
+    } catch (error) {
+        console.error('Upload error:', error);
+        alert(`❌ Error: ${error.message}`);
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = 'Upload';
+    }
+}
+
+// Validate Excel format
+async function validateExcelFormat(file) {
+    try {
+        // Parse Excel to check columns (supports .xls, .xlsx, .csv)
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { 
+            header: 1,  // Use header row as first array
+            raw: false  // Don't parse numbers as raw
+        });
+        
+        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+            showFormatNotice(false, 'File tidak valid atau tidak ada sheet');
+            return;
+        }
+
+        const firstSheetName = workbook.SheetNames[0];
+        const firstSheet = workbook.Sheets[firstSheetName];
+        
+        if (!firstSheet) {
+            showFormatNotice(false, 'Tidak dapat membaca sheet');
+            return;
+        }
+        
+        // Get all rows as arrays
+        const allRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        
+        if (!allRows || allRows.length === 0) {
+            showFormatNotice(false, 'Sheet kosong');
+            return;
+        }
+        
+        // Get headers from first row
+        const headers = allRows[0] || [];
+        console.log('[Excel Debug] File:', file.name);
+        console.log('[Excel Debug] Sheet name:', firstSheetName);
+        console.log('[Excel Debug] Total rows:', allRows.length);
+        console.log('[Excel Debug] Headers (raw):', headers);
+        
+        // Required columns
+        const requiredColumns = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL', 'KET 2'];
+        
+        // Normalize headers for comparison (trim, uppercase)
+        const normalizedHeaders = headers
+            .filter(h => h !== undefined && h !== null && h !== '')
+            .map(h => String(h).trim().toUpperCase());
+        
+        console.log('[Excel Debug] Normalized headers:', normalizedHeaders);
+        console.log('[Excel Debug] Required columns:', requiredColumns);
+        
+        // Check each required column
+        const missingCols = requiredColumns.filter(col => 
+            !normalizedHeaders.includes(col.toUpperCase())
+        );
+        
+        if (missingCols.length === 0) {
+            const totalRows = allRows.length - 1; // exclude header
+            showFormatNotice(true, `Format ✅ Valid - ${totalRows} baris data ditemukan`);
+        } else {
+            console.log('[Excel Debug] Missing columns:', missingCols);
+            showFormatNotice(false, `Kolom tidak lengkap: ${missingCols.join(', ')}`);
+        }
+    } catch (error) {
+        console.error('Format validation error:', error);
+        showFormatNotice(false, 'Gagal membaca file Excel: ' + error.message);
+    }
+}
+
+// Show format validation notice
+function showFormatNotice(isValid, message) {
+    const notice = document.getElementById('format-notice');
+    const icon = document.getElementById('format-icon');
+    const statusMsg = document.getElementById('format-message');
+    const details = document.getElementById('format-details');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    if (isValid) {
+        icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-green-100 text-green-600';
+        icon.innerHTML = '✓';
+        statusMsg.className = 'text-sm font-bold text-green-700';
+        statusMsg.textContent = '✅ Format Valid';
+        details.textContent = message;
+        notice.className = 'p-4 rounded-xl border-2 border-green-200 bg-green-50 flex items-start gap-3';
+        notice.classList.remove('hidden');
+        uploadBtn.disabled = false;
+    } else {
+        icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-red-100 text-red-600';
+        icon.innerHTML = '✕';
+        statusMsg.className = 'text-sm font-bold text-red-700';
+        statusMsg.textContent = '❌ Format Tidak Valid';
+        details.textContent = message;
+        notice.className = 'p-4 rounded-xl border-2 border-red-200 bg-red-50 flex items-start gap-3';
+        notice.classList.remove('hidden');
+        uploadBtn.disabled = true;
+    }
+}

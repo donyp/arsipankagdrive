@@ -514,6 +514,60 @@
         </div>
     </div>
 
+    <!-- Upload Excel Modal -->
+    <div id="uploadExcelModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeUploadExcelModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">Upload File Excel</h2>
+                <button onclick="closeUploadExcelModal()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+
+            <!-- Format Notice -->
+            <div id="format-notice" class="hidden p-4 rounded-xl border-2 mb-4 flex items-start gap-3">
+                <div id="format-icon" class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"></div>
+                <div class="flex-1">
+                    <div id="format-message" class="text-sm font-bold mb-1"></div>
+                    <div id="format-details" class="text-sm"></div>
+                </div>
+            </div>
+
+            <!-- Drag Drop Area -->
+            <div id="dropZone" class="border-2 border-dashed border-blue-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all mb-4">
+                <i class="fas fa-cloud-upload-alt text-4xl text-blue-400 mb-3"></i>
+                <p class="text-gray-700 font-semibold mb-2">Drag & drop file Excel di sini</p>
+                <p class="text-gray-500 text-sm mb-4">atau klik untuk memilih file</p>
+                <input type="file" id="excelFileInput" accept=".xls,.xlsx,.csv" class="hidden">
+                <button onclick="document.getElementById('excelFileInput').click()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                    Pilih File
+                </button>
+            </div>
+
+            <!-- File Info -->
+            <div id="fileInfo" class="hidden bg-gray-50 p-4 rounded-lg mb-4">
+                <p class="text-sm text-gray-600 mb-2">
+                    <strong>File:</strong> <span id="fileName">-</span>
+                </p>
+                <p class="text-sm text-gray-600 mb-2">
+                    <strong>Ukuran:</strong> <span id="fileSize">-</span>
+                </p>
+                <p class="text-sm text-gray-600">
+                    <strong>Tipe:</strong> <span id="fileType">-</span>
+                </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeUploadExcelModal()" class="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold">
+                    Batal
+                </button>
+                <button id="uploadBtn" onclick="uploadExcelFile()" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold" disabled>
+                    Upload
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/sidebar.js"></script>
