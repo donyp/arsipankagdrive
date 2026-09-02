@@ -199,9 +199,6 @@ function validateData(data) {
     const warnings = [];
     const seenFakturs = new Set();
     
-    // Required columns
-    const requiredColumns = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL', 'KET 2'];
-    
     // Check if data is empty
     if (!data || data.length === 0) {
         errors.push('Excel file is empty (no data rows)');
@@ -240,21 +237,21 @@ function validateData(data) {
             errors.push(`Row ${rowNum}: Nama toko kosong`);
         }
         
-        if (!item.total_jumlah_jual || item.total_jumlah_jual <= 0) {
-            errors.push(`Row ${rowNum}: Jumlah jual kosong atau tidak valid (${item.total_jumlah_jual})`);
+        if (item.total_jumlah_jual === null || item.total_jumlah_jual === undefined) {
+            errors.push(`Row ${rowNum}: Jumlah jual kosong`);
         } else if (typeof item.total_jumlah_jual !== 'number') {
             errors.push(`Row ${rowNum}: Jumlah jual harus angka (saat ini: ${typeof item.total_jumlah_jual})`);
         }
         
-        // Validate keterangan
+        // Validate keterangan (optional, warn if unusual)
         if (item.keterangan) {
-            const validKeterangan = ['PPN', 'NON PPN', 'NON'];
+            const validKeterangan = ['PPN', 'NON PPN', 'NON', 'GUNGGUNG'];
             if (!validKeterangan.some(k => String(item.keterangan).toUpperCase().includes(k))) {
                 warnings.push(`Row ${rowNum}: Keterangan "${item.keterangan}" tidak standar (gunakan PPN atau NON PPN)`);
             }
         }
         
-        // Validate metode bayar
+        // Validate metode bayar (optional)
         if (item.metode_bayar) {
             const validMetode = ['Piutang', 'Bank', 'Cash', 'PIUTANG', 'BANK', 'CASH'];
             if (!validMetode.includes(item.metode_bayar)) {
