@@ -123,7 +123,7 @@ function parseExcel(fileBuffer) {
                 const jenisTransaksi = row['JENIS TRANSAKSI'] || row['jenis_transaksi'] || row['jenis transaksi'];
                 const konsumen = row['KONSUMEN'] || row['konsumen'];
                 const jumlahJual = parseFloat(row['JUMLAH JUAL'] || row['jumlah_jual'] || row['jumlah jual'] || 0);
-                const keterangan = row['KET 2'] || row['ket_2'] || row['ket 2'];
+                const keterangan = row['KET 2'] || row['ket_2'] || row['ket 2'] || row['KETERANGAN'] || row['keterangan'];
                 
                 // Skip if no faktur
                 if (!faktur) {
@@ -243,11 +243,13 @@ function validateData(data) {
             errors.push(`Row ${rowNum}: Jumlah jual harus angka (saat ini: ${typeof item.total_jumlah_jual})`);
         }
         
-        // Validate keterangan (optional, warn if unusual)
-        if (item.keterangan) {
-            const validKeterangan = ['PPN', 'NON PPN', 'NON', 'GUNGGUNG'];
+        // Validate keterangan (PPN/NON PPN - REQUIRED for folder grouping)
+        if (!item.keterangan || String(item.keterangan).trim() === '') {
+            errors.push(`Row ${rowNum}: Keterangan (PPN/NON PPN) kosong`);
+        } else {
+            const validKeterangan = ['PPN', 'NON PPN', 'NON'];
             if (!validKeterangan.some(k => String(item.keterangan).toUpperCase().includes(k))) {
-                warnings.push(`Row ${rowNum}: Keterangan "${item.keterangan}" tidak standar (gunakan PPN atau NON PPN)`);
+                errors.push(`Row ${rowNum}: Keterangan "${item.keterangan}" harus PPN atau NON PPN`);
             }
         }
         

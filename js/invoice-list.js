@@ -439,8 +439,8 @@ function openUploadExcelModal() {
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             const headers = workbook.SheetNames[0] ? XLSX.utils.sheet_to_json(firstSheet, { header: 1 })[0] : [];
             
-            // Required columns (KET 2 = KETERANGAN, either name works)
-            const requiredColumns = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL'];
+            // Required columns (KET 2 = PPN/NON PPN untuk grouping folder)
+            const requiredColumns = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL', 'KET 2'];
             const headerString = (headers || []).map(h => (h || '').toString().toUpperCase().trim()).join('|');
             const hasAllColumns = requiredColumns.every(col => headerString.includes(col.toUpperCase()));
 
