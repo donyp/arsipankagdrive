@@ -192,14 +192,24 @@ window.uploadExcelFile = async function() {
         console.log('[Upload] Parsing Excel with XLSX...');
         const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
         
+        console.log('[Upload] Workbook loaded. Sheets:', workbook.SheetNames);
+        
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const rawData = XLSX.utils.sheet_to_json(worksheet, { defval: null, blankrows: false });
+        
+        // Skip title rows - data starts at row 4 (after "REKAP LABA" title)
+        const rawData = XLSX.utils.sheet_to_json(worksheet, { 
+            defval: null, 
+            blankrows: false,
+            range: 3  // Start reading from row 4 (0-indexed row 3)
+        });
         
         console.log('[Upload] Parsed', rawData.length, 'rows');
+        console.log('[Upload] First row sample:', rawData[0]);
+        console.log('[Upload] First row keys:', rawData[0] ? Object.keys(rawData[0]) : 'NO DATA');
         
         if (rawData.length === 0) {
-            alert('❌ File Excel kosong atau format tidak valid');
+            alert('❌ File Excel kosong atau format tidak valid\n\nPastikan file memiliki header row dengan kolom:\nTANGGAL, TOKO, FAKTUR, METODE BAYAR, JENIS TRANSAKSI, KONSUMEN, JUMLAH JUAL, KET 2');
             return;
         }
         
