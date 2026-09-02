@@ -194,27 +194,57 @@ window.uploadExcelFile = async function() {
         
         console.log('[Upload] Workbook loaded. Sheets:', workbook.SheetNames);
         
-        const sheetName = workbook.SheetNames[0];
+        // Try to find "REKAP LABA" sheet, otherwise use first sheet
+        let sheetName = workbook.SheetNames.find(name => name.includes('REKAP')) || workbook.SheetNames[0];
+        console.log('[Upload] Using sheet:', sheetName);
+        
         const worksheet = workbook.Sheets[sheetName];
         
         // Skip title rows - data starts at row 4 (after "REKAP LABA" title)
+        // Try without range first to see what we get
         const rawData = XLSX.utils.sheet_to_json(worksheet, { 
             defval: null, 
             blankrows: false,
-            range: 3  // Start reading from row 4 (0-indexed row 3)
+            header: 1  // Get as array first to debug
         });
         
-        console.log('[Upload] Parsed', rawData.length, 'rows');
-        console.log('[Upload] First row sample:', rawData[0]);
-        console.log('[Upload] First row keys:', rawData[0] ? Object.keys(rawData[0]) : 'NO DATA');
+        console.log('[Upload] Raw data length:', rawData.length);
+        console.log('[Upload] First 5 rows:', rawData.slice(0, 5));
         
-        if (rawData.length === 0) {
+        // Find header row (contains "TANGGAL")
+        let headerRowIndex = -1;
+        for (let i = 0; i < Math.min(10, rawData.length); i++) {
+            const row = rawData[i];
+            if (Array.isArray(row) && row.some(cell => cell && cell.toString().includes('TANGGAL'))) {
+                headerRowIndex = i;
+                console.log('[Upload] Found header at row', i, ':', row);
+                break;
+            }
+        }
+        
+        if (headerRowIndex === -1) {
+            alert('❌ File Excel kosong atau format tidak valid\n\nTidak dapat menemukan header row dengan kolom TANGGAL');
+            return;
+        }
+        
+        // Now parse with correct header row
+        const parsedData = XLSX.utils.sheet_to_json(worksheet, { 
+            defval: null, 
+            blankrows: false,
+            range: headerRowIndex  // Start from header row
+        });
+        
+        console.log('[Upload] Parsed', parsedData.length, 'rows');
+        console.log('[Upload] First row sample:', parsedData[0]);
+        console.log('[Upload] First row keys:', parsedData[0] ? Object.keys(parsedData[0]) : 'NO DATA');
+        
+        if (parsedData.length === 0) {
             alert('❌ File Excel kosong atau format tidak valid\n\nPastikan file memiliki header row dengan kolom:\nTANGGAL, TOKO, FAKTUR, METODE BAYAR, JENIS TRANSAKSI, KONSUMEN, JUMLAH JUAL, KET 2');
             return;
         }
         
         // Transform data to match backend expectation
-        const invoices = rawData.map(row => ({
+        const invoices = parsedData.map(row => ({
             tanggal: row['TANGGAL'] || row['tanggal'],
             toko: row['TOKO'] || row['toko'],
             faktur: row['FAKTUR'] || row['faktur'],
