@@ -573,12 +573,23 @@ console.log('[INIT] Registering Phase 2 feature endpoints...');
 const sessionManagement = require('./session-management');
 const faqEndpoints = require('./faq-endpoints');
 const notificationEndpoints = require('./notification-endpoints');
+const { registerInvoiceEndpoints } = require('./invoice-endpoints');
 app.use('/api', sessionManagement);
 app.use('/api', faqEndpoints);
 app.use('/api', notificationEndpoints);
 console.log('[INIT] Phase 2 feature endpoints registered ✅');
 console.log('  ✓ Session Management & Device Tracking');
 console.log('  ✓ FAQ Knowledge Base');
+
+// ============================================================
+// INVOICE SYSTEM ENDPOINTS (Phase 3 Features)
+// ============================================================
+console.log('[INIT] Registering Invoice System endpoints...');
+registerInvoiceEndpoints(app, supabase, authenticateToken, RcloneStorage);
+console.log('[INIT] Invoice System endpoints registered ✅');
+console.log('  ✓ Excel Upload & Parsing');
+console.log('  ✓ Invoice List & Statistics');
+console.log('  ✓ PDF Upload & Auto-matching');
 
 // ============================================================
 // AUTH ENDPOINTS

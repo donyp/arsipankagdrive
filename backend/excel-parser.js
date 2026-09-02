@@ -1,0 +1,224 @@
+// ============================================================
+// Excel Parser for REKAP_LABA.xls
+// Parse and aggregate invoice data by faktur number
+// ============================================================
+
+const XLSX = require('xlsx');
+
+/**
+ * Normalize toko name based on business rules:
+ * - "ANKA" or contains "ANKA" but NOT "PEMALANG" → "ANKA BEKASI"
+ * - Contains "ANKA PEMALANG" → "ANKA PEMALANG"
+ */
+function normalizeToko(tokoRaw) {
+    if (!tokoRaw) return 'UNKNOWN';
+    
+    const tokoUpper = tokoRaw.toUpperCase();
+    
+    // Check for ANKA PEMALANG first (more specific)
+    if (tokoUpper.includes('ANKA PEMALANG') || tokoUpper.includes('ANKA-PEMALANG')) {
+        return 'ANKA PEMALANG';
+    }
+    
+    // Check for just ANKA (default to BEKASI)
+    if (tokoUpper.includes('ANKA')) {
+        return 'ANKA BEKASI';
+    }
+    
+    // Return raw if not ANKA related
+    return tokoRaw.trim();
+}
+
+/**
+ * Parse Excel date to JavaScript Date
+ */
+function parseExcelDate(excelDate) {
+    if (!excelDate) return null;
+    
+    // If already a Date object
+    if (excelDate instanceof Date) {
+        return excelDate;
+    }
+    
+    // If string format DD-MM-YYYY or DD/MM/YYYY
+    if (typeof excelDate === 'string') {
+        const parts = excelDate.split(/[-\/]/);
+        if (parts.length === 3) {
+            // Assuming DD-MM-YYYY format
+            const day = parseInt(parts[0]);
+            const month = parseInt(parts[1]) - 1; // JS months are 0-indexed
+            const year = parseInt(parts[2]);
+            return new Date(year, month, day);
+        }
+    }
+    
+    // If Excel serial number
+    if (typeof excelDate === 'number') {
+        // Excel serial date starts from 1900-01-01
+        const excelEpoch = new Date(1900, 0, 1);
+        const days = excelDate - 2; // Excel has a bug, off by 2
+        return new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000);
+    }
+    
+    return null;
+}
+
+/**
+ * Format date to DD/MM/YYYY
+ */
+function formatDate(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
+/**
+ * Parse and aggregate Excel data
+ * 
+ * Returns:
+ * {
+ *   success: true,
+ *   data: [...], // Aggregated invoice data
+ *   summary: {
+ *     totalRows: number,
+ *     uniqueFakturs: number,
+ *     aggregatedCount: number
+ *   }
+ * }
+ */
+function parseExcel(fileBuffer) {
+    try {
+        // Read workbook from buffer
+        const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+        
+        // Get first sheet
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        
+        // Convert to JSON
+        const rawData = XLSX.utils.sheet_to_json(worksheet);
+        
+        if (!rawData || rawData.length === 0) {
+            return {
+                success: false,
+                error: 'Excel file is empty or invalid'
+            };
+        }
+        
+        console.log(`[Excel Parser] Total rows: ${rawData.length}`);
+        
+        // Group by FAKTUR and aggregate
+        const faktursMap = new Map();
+        
+        rawData.forEach((row, index) => {
+            try {
+                // Extract fields (column names might vary)
+                const tanggal = row['TANGGAL'] || row['tanggal'];
+                const tokoRaw = row['TOKO'] || row['toko'];
+                const faktur = row['FAKTUR'] || row['faktur'];
+                const metodeBayar = row['METODE BAYAR'] || row['metode_bayar'] || row['metode bayar'];
+                const jenisTransaksi = row['JENIS TRANSAKSI'] || row['jenis_transaksi'] || row['jenis transaksi'];
+                const konsumen = row['KONSUMEN'] || row['konsumen'];
+                const jumlahJual = parseFloat(row['JUMLAH JUAL'] || row['jumlah_jual'] || row['jumlah jual'] || 0);
+                const keterangan = row['KET 2'] || row['ket_2'] || row['ket 2'];
+                
+                // Skip if no faktur
+                if (!faktur) {
+                    console.warn(`[Excel Parser] Row ${index + 1}: Missing faktur, skipping`);
+                    return;
+                }
+                
+                // Parse tanggal
+                const parsedDate = parseExcelDate(tanggal);
+                if (!parsedDate) {
+                    console.warn(`[Excel Parser] Row ${index + 1}: Invalid date, skipping`);
+                    return;
+                }
+                
+                // Normalize toko
+                const tokoNormalized = normalizeToko(tokoRaw);
+                
+                // If faktur already exists, aggregate
+                if (faktursMap.has(faktur)) {
+                    const existing = faktursMap.get(faktur);
+                    existing.total_jumlah_jual += jumlahJual;
+                    existing.item_count += 1;
+                } else {
+                    // Create new entry
+                    faktursMap.set(faktur, {
+                        tanggal: parsedDate,
+                        tanggal_formatted: formatDate(parsedDate),
+                        toko: tokoNormalized,
+                        toko_raw: tokoRaw,
+                        faktur: String(faktur).trim(),
+                        metode_bayar: metodeBayar || 'Unknown',
+                        jenis_transaksi: jenisTransaksi || 'jual',
+                        konsumen: konsumen || 'Unknown',
+                        keterangan: keterangan || 'NON PPN',
+                        total_jumlah_jual: jumlahJual,
+                        item_count: 1
+                    });
+                }
+            } catch (err) {
+                console.error(`[Excel Parser] Error parsing row ${index + 1}:`, err.message);
+            }
+        });
+        
+        // Convert map to array
+        const aggregatedData = Array.from(faktursMap.values());
+        
+        console.log(`[Excel Parser] Aggregated ${rawData.length} rows into ${aggregatedData.length} unique fakturs`);
+        
+        return {
+            success: true,
+            data: aggregatedData,
+            summary: {
+                totalRows: rawData.length,
+                uniqueFakturs: aggregatedData.length,
+                aggregatedCount: rawData.length - aggregatedData.length
+            }
+        };
+        
+    } catch (error) {
+        console.error('[Excel Parser] Error:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+/**
+ * Validate parsed data
+ */
+function validateData(data) {
+    const errors = [];
+    
+    data.forEach((item, index) => {
+        if (!item.faktur) {
+            errors.push(`Row ${index + 1}: Missing faktur`);
+        }
+        if (!item.tanggal) {
+            errors.push(`Row ${index + 1}: Missing tanggal`);
+        }
+        if (!item.total_jumlah_jual || item.total_jumlah_jual <= 0) {
+            errors.push(`Row ${index + 1}: Invalid total (${item.total_jumlah_jual})`);
+        }
+    });
+    
+    return {
+        isValid: errors.length === 0,
+        errors
+    };
+}
+
+module.exports = {
+    parseExcel,
+    validateData,
+    normalizeToko,
+    parseExcelDate,
+    formatDate
+};

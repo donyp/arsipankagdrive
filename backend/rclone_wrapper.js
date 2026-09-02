@@ -1493,6 +1493,100 @@ const RcloneStorage = {
             console.error(`[RcloneStorage] List failed:`, err);
             throw err;
         }
+    },
+
+    /**
+     * Upload Invoice PDF to Google Drive
+     * Path format: /ARSIPINVOICE/YEAR/MONTH/DAY/PPN|NON/filename.pdf
+     * 
+     * @param {Buffer} buffer - PDF file buffer
+     * @param {string} filename - File name (e.g., "835100310.pdf")
+     * @param {string} year - Year (e.g., "2026")
+     * @param {string} month - Month (e.g., "02")
+     * @param {string} day - Day (e.g., "10")
+     * @param {string} category - "PPN" or "NON"
+     * @returns {Promise<Object>} - { success, path, message }
+     */
+    async uploadInvoicePDF(buffer, filename, year, month, day, category) {
+        const storagePath = `/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
+        
+        logOperation('uploadInvoicePDF', {
+            action: 'Uploading invoice PDF',
+            operation_type: 'upload',
+            path: storagePath,
+            size: buffer.length
+        });
+
+        try {
+            // Create local temp file
+            const tempDir = path.join(__dirname, '..', 'temp');
+            if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true });
+            }
+            
+            const tempFilePath = path.join(tempDir, `invoice_${Date.now()}_${filename}`);
+            fs.writeFileSync(tempFilePath, buffer);
+
+            try {
+                // Create directory structure on remote
+                const dirPath = `/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
+                const remoteDirPath = `${PRIMARY_REMOTE}:${dirPath}`;
+                
+                // Create directory if not exists
+                await rcloneExec(['mkdir', remoteDirPath, '--parents']);
+                
+                // Upload file
+                const remoteFilePath = `${PRIMARY_REMOTE}:${storagePath}`;
+                await rcloneExec(['copyto', tempFilePath, remoteFilePath]);
+                
+                // Verify upload
+                const verifyOutput = await rcloneExec(['lsjson', '--files-only', remoteFilePath]);
+                let remoteFiles;
+                try {
+                    remoteFiles = JSON.parse(verifyOutput || '[]');
+                } catch (err) {
+                    throw new Error('Upload completed but verification response invalid');
+                }
+                
+                const remoteFile = Array.isArray(remoteFiles) ? remoteFiles.find(f => f && f.Name) : null;
+                const localSize = buffer.length;
+                
+                if (!remoteFile || Number(remoteFile.Size) !== localSize) {
+                    throw new Error(`Upload verification failed (local ${localSize} bytes, remote ${remoteFile?.Size ?? 'not found'} bytes)`);
+                }
+                
+                logOperation('uploadInvoicePDF', {
+                    status: '✅ Upload successful',
+                    path: storagePath,
+                    size: buffer.length
+                });
+                
+                return {
+                    success: true,
+                    path: storagePath,
+                    message: 'Invoice PDF uploaded successfully'
+                };
+                
+            } finally {
+                // Clean up temp file
+                if (fs.existsSync(tempFilePath)) {
+                    fs.unlinkSync(tempFilePath);
+                }
+            }
+            
+        } catch (err) {
+            logOperation('uploadInvoicePDF', {
+                status: '❌ Upload failed',
+                error: err.message,
+                path: storagePath
+            });
+            console.error('[RcloneStorage] Invoice PDF upload failed:', err);
+            
+            return {
+                success: false,
+                error: err.message
+            };
+        }
     }
 };
 

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Upload History - ARSIP ANKA</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .batches-container {
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .batches-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .batches-header h1 {
+            font-size: 28px;
+            color: #2c3e50;
+        }
+
+        .btn-back {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-back:hover {
+            background: #7f8c8d;
+        }
+
+        .batches-table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .batches-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .batches-table thead {
+            background: #34495e;
+            color: white;
+        }
+
+        .batches-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        .batches-table tbody tr {
+            border-bottom: 1px solid #ecf0f1;
+            transition: background 0.2s;
+        }
+
+        .batches-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .batches-table td {
+            padding: 15px;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.completed {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+
+        .status-badge.processing {
+            background: #fff3cd;
+            color: #f39c12;
+        }
+
+        .status-badge.failed {
+            background: #fadbd8;
+            color: #e74c3c;
+        }
+
+        .status-badge.completed_with_errors {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+
+        .btn-delete-batch {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-delete-batch:hover {
+            background: #c0392b;
+        }
+
+        .btn-view-invoices {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-right: 8px;
+        }
+
+        .btn-view-invoices:hover {
+            background: #2980b9;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #bdc3c7;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.visible {
+            display: flex;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .loading-spinner i {
+            font-size: 48px;
+            color: #3498db;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .batch-stats {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .batch-stats span {
+            margin-right: 12px;
+        }
+
+        .batch-stats .success {
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .batch-stats .error {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .batch-stats .duplicate {
+            color: #f39c12;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar-container"></div>
+
+    <div class="main-content">
+        <div class="batches-container">
+            <div class="batches-header">
+                <h1><i class="fas fa-history"></i> Riwayat Upload Excel</h1>
+                <button class="btn-back" onclick="window.location.href='invoice-list.html'">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Daftar Invoice
+                </button>
+            </div>
+
+            <div class="batches-table-container">
+                <table class="batches-table">
+                    <thead>
+                        <tr>
+                            <th>Tanggal Upload</th>
+                            <th>Nama File</th>
+                            <th>Status</th>
+                            <th>Statistik</th>
+                            <th>Diupload Oleh</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="batchesTableBody">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <i class="fas fa-inbox"></i>
+                    <h3>Belum Ada Riwayat Upload</h3>
+                    <p>Belum ada Excel yang diupload</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-circle-notch"></i>
+            <p style="margin-top: 15px;">Memproses...</p>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/invoice-batches.js"></script>
+</body>
+</html>
