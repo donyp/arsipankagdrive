@@ -854,6 +854,13 @@ window.uploadExcelFile = async function() {
     }
 
     const file = fileInput.files[0];
+    
+    if (!uploadBtn) {
+        console.error('[Invoice] Upload button not found');
+        alert('❌ Error: Upload button not found');
+        return;
+    }
+    
     uploadBtn.disabled = true;
     const originalText = uploadBtn.textContent;
     uploadBtn.textContent = 'Mengunggah...';
@@ -862,6 +869,7 @@ window.uploadExcelFile = async function() {
         const formData = new FormData();
         formData.append('excel', file);
 
+        console.log('[Upload] Sending to /api/invoice/upload-excel');
         const response = await fetch('/api/invoice/upload-excel', {
             method: 'POST',
             headers: {
@@ -870,20 +878,36 @@ window.uploadExcelFile = async function() {
             body: formData
         });
 
+        console.log('[Upload] Response status:', response.status);
+        const contentType = response.headers.get('content-type');
+        console.log('[Upload] Content-Type:', contentType);
+
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Upload gagal');
+            const text = await response.text();
+            console.error('[Upload] Response text:', text.substring(0, 500));
+            
+            let error = 'Upload gagal';
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    const data = JSON.parse(text);
+                    error = data.error || error;
+                } catch (e) {
+                    console.error('[Upload] JSON parse error:', e);
+                }
+            }
+            throw new Error(`${response.status}: ${error}`);
         }
 
         const result = await response.json();
-        alert(`✅ Upload Berhasil!\n\n${result.message}`);
+        console.log('[Upload] Success:', result);
+        alert(`✅ Upload Berhasil!\n\n${result.message || 'File Excel berhasil diproses'}`);
         
         closeUploadExcelModal();
         await loadStats();
         await loadInvoiceList();
 
     } catch (error) {
-        console.error('Upload error:', error);
+        console.error('[Upload] Error:', error);
         alert(`❌ Error: ${error.message}`);
     } finally {
         uploadBtn.disabled = false;
