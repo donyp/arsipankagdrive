@@ -578,25 +578,11 @@
                         </h1>
                         <p class="text-sm text-gray-500 mt-1">Selamat <span id="time-greeting">datang</span>, <span data-user-name>User</span>!</p>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <button onclick="openUploadExcelModal()" class="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-all text-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Upload Excel
-                        </button>
-                        <button id="btn-refresh-invoice" onclick="loadStats(); loadInvoiceList()" class="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all text-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            Refresh
-                        </button>
-                        <div class="flex items-center gap-2 text-sm text-gray-600">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span id="banner-date">...</span>
-                        </div>
+                    <div class="flex items-center gap-2 text-sm text-gray-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span id="banner-date">...</span>
                     </div>
                 </div>
 
@@ -616,6 +602,7 @@
     </main>
 
     <!-- Scripts -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="js/config.js"></script>
     <script src="js/supabase.js"></script>
     <script src="js/auth.js"></script>
@@ -625,7 +612,7 @@
     <script src="js/invoice-list.js"></script>
     
     <script>
-        // Load invoice list content into dashboard (without header)
+        // Load invoice list content into dashboard (including header with buttons)
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 // Wait for auth
@@ -643,21 +630,13 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 
-                // Get ONLY the content container (stats, filters, table) WITHOUT header
+                // Get the invoice container with header and all content
                 const invoiceContent = doc.querySelector('.invoice-container');
                 if (invoiceContent) {
                     const container = document.getElementById('invoice-content-container');
                     
-                    // Get all children except the header
-                    const childNodes = Array.from(invoiceContent.children).filter(el => {
-                        return !el.classList.contains('invoice-header') && el.nodeType === 1;
-                    });
-                    
-                    // Clear the loading state and insert only non-header content
-                    container.innerHTML = '';
-                    childNodes.forEach(node => {
-                        container.appendChild(node.cloneNode(true));
-                    });
+                    // Load entire invoice container content (including header with buttons)
+                    container.innerHTML = invoiceContent.innerHTML;
                     
                     // Extract and apply styles from invoice-list.html
                     const styleElements = doc.querySelectorAll('style');
