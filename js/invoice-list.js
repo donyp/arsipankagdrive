@@ -868,10 +868,23 @@ window.uploadExcelFile = async function() {
     try {
         // First validate and parse file in frontend
         console.log('[Upload] Step 1: Validating & parsing Excel...');
-        const validation = await validateExcelFormat(file);
+        let validation;
+        try {
+            validation = await validateExcelFormat(file);
+            console.log('[Upload] Validation result:', validation);
+        } catch (err) {
+            console.error('[Upload] Validation threw error:', err);
+            throw err;
+        }
         
-        if (!validation || !validation.success) {
-            throw new Error('Validation failed: ' + (validation?.error || 'Unknown error'));
+        if (!validation) {
+            console.error('[Upload] Validation returned undefined/null');
+            throw new Error('Validation function returned no result');
+        }
+        
+        if (!validation.success) {
+            console.log('[Upload] Validation failed:', validation.error);
+            throw new Error('Validation failed: ' + (validation.error || 'Unknown error'));
         }
         
         if (!validation.data || validation.data.length === 0) {
