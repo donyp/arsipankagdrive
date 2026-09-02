@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // Invoice System API Endpoints
 // Handles Excel upload, invoice list, PDF upload, and matching
 // ============================================================
@@ -9,6 +9,7 @@ const path = require('path');
 const fs = require('fs');
 
 try {
+    console.log('[Invoice Endpoints] Loading dependencies...');
     multer = require('multer');
     uuid = require('uuid');
     const excelParser = require('./excel-parser');
@@ -16,7 +17,8 @@ try {
     validateData = excelParser.validateData;
     
     // Configure multer for file uploads - ONLY if multer loaded successfully
-    const storage = multer.memoryStorage();
+    const storage = multer.memoryStorage();    console.log('[Invoice Endpoints] ✅ multer, uuid, excel-parser loaded');
+
     upload = multer({
         storage: storage,
         limits: {
@@ -45,7 +47,7 @@ try {
         }
     });
 } catch (err) {
-    console.error('[Invoice Endpoints] ❌ Missing dependencies:', err.message);
+    console.error('[Invoice Endpoints] âŒ Missing dependencies:', err.message);
     console.error('[Invoice Endpoints] Required: multer, uuid, xlsx');
     console.error('[Invoice Endpoints] Run: npm install multer uuid xlsx');
     multer = null;
@@ -59,10 +61,12 @@ try {
  * Register all invoice endpoints
  */
 function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) {
+    console.log('[Invoice Endpoints] 🚀 registerInvoiceEndpoints() CALLED');
+    console.log('[Invoice Endpoints] Dependencies check: multer=' + !!multer + ', uuid=' + !!uuid + ', parseExcel=' + !!parseExcel);
     
     // Check if dependencies are loaded
     if (!multer || !uuid || !parseExcel) {
-        console.error('[Invoice Endpoints] ⚠️  Dependencies not loaded. Invoice endpoints will NOT be registered.');
+        console.error('[Invoice Endpoints] âš ï¸  Dependencies not loaded. Invoice endpoints will NOT be registered.');
         console.error('[Invoice Endpoints] Required modules: uuid, xlsx, multer');
         console.error('[Invoice Endpoints] Please run: npm install');
         return;
@@ -86,6 +90,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
         upload.single('excel'),
         async (req, res) => {
             try {
+    console.log('[Invoice Endpoints] Loading dependencies...');
                 if (!req.file) {
                     return res.status(400).json({ error: 'No file uploaded' });
                 }
@@ -149,6 +154,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
                 
                 for (const item of parseResult.data) {
                     try {
+    console.log('[Invoice Endpoints] Loading dependencies...');
                         // Check if faktur already exists
                         const { data: existing } = await supabase
                             .from('invoice_file_list')
@@ -245,6 +251,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // ============================================
     app.get('/api/invoice/list', authMiddleware(), async (req, res) => {
         try {
+    console.log('[Invoice Endpoints] Loading dependencies...');
             const { 
                 status, 
                 toko, 
@@ -318,6 +325,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // ============================================
     app.get('/api/invoice/stats', authMiddleware(), async (req, res) => {
         try {
+    console.log('[Invoice Endpoints] Loading dependencies...');
             const { data, error } = await supabase
                 .rpc('get_invoice_statistics');
             
@@ -345,6 +353,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
         authMiddleware(['super_admin', 'moderator']),
         async (req, res) => {
             try {
+    console.log('[Invoice Endpoints] Loading dependencies...');
                 const { limit = 50, offset = 0 } = req.query;
                 
                 const { data, error, count } = await supabase
@@ -386,6 +395,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
         upload.single('pdf'),
         async (req, res) => {
             try {
+    console.log('[Invoice Endpoints] Loading dependencies...');
                 if (!req.file) {
                     return res.status(400).json({ error: 'No file uploaded' });
                 }
@@ -435,6 +445,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
                 
                 // Upload to Google Drive via RcloneStorage
                 try {
+    console.log('[Invoice Endpoints] Loading dependencies...');
                     const uploadResult = await RcloneStorage.uploadInvoicePDF(
                         req.file.buffer,
                         filename,
@@ -501,6 +512,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
         authMiddleware(['super_admin']),
         async (req, res) => {
             try {
+    console.log('[Invoice Endpoints] Loading dependencies...');
                 const { faktur } = req.params;
                 
                 const { error } = await supabase
@@ -537,6 +549,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
         authMiddleware(['super_admin', 'moderator']),
         async (req, res) => {
             try {
+    console.log('[Invoice Endpoints] Loading dependencies...');
                 const { batchId } = req.params;
                 
                 // Get batch info first
@@ -609,6 +622,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
         authMiddleware(['super_admin', 'moderator']),
         async (req, res) => {
             try {
+    console.log('[Invoice Endpoints] Loading dependencies...');
                 const { faktur } = req.params;
                 const { status } = req.body;
                 
@@ -654,6 +668,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
         authMiddleware(),
         async (req, res) => {
             try {
+    console.log('[Invoice Endpoints] Loading dependencies...');
                 const { faktur } = req.params;
                 
                 if (!faktur) {
@@ -685,7 +700,14 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
         }
     );
     
-    console.log('[Invoice API] Endpoints registered successfully');
+    console.log('[Invoice Endpoints] ✅ ALL ENDPOINTS REGISTERED');
+    console.log('[Invoice Endpoints] Routes available:');
+    console.log('[Invoice Endpoints]   GET    /api/invoice/health');
+    console.log('[Invoice Endpoints]   POST   /api/invoice/upload-excel');
+    console.log('[Invoice Endpoints]   GET    /api/invoice/list');
+    console.log('[Invoice Endpoints]   GET    /api/invoice/stats');
+    console.log('[Invoice Endpoints]   POST   /api/invoice/upload-pdf');
+    console.log('[Invoice Endpoints]   and 7 more...');
 }
 
 module.exports = { registerInvoiceEndpoints };
