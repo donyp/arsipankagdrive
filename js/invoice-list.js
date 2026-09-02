@@ -310,6 +310,67 @@ window.uploadExcelFile = async function() {
     }
 };
 
+// ============================================
+// Clear Test Data Function
+// ============================================
+window.clearTestData = async function() {
+    if (!confirm('⚠️ PERINGATAN!\n\nIni akan menghapus SEMUA data test invoice.\nAksi tidak bisa diundo!\n\nLanjutkan?')) {
+        return;
+    }
+    
+    try {
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        console.log('[ClearTest] Sending DELETE request to /api/invoice/clear-test-data');
+        
+        const response = await fetch('/api/invoice/clear-test-data', {
+            method: 'DELETE',
+            headers: headers
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('✅ Success!\n\n' + result.message + '\n\nHalaman akan di-reload...');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert('❌ Error: ' + (result.error || 'Failed to clear data'));
+        }
+    } catch (error) {
+        console.error('[ClearTest] Error:', error);
+        alert('❌ Error: ' + error.message);
+    }
+};
+
+// Setup event listener for clear button
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        const clearBtn = document.getElementById('btnClearTestData');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', window.clearTestData);
+            console.log('[Invoice-Init] Clear test data button handler attached');
+        }
+    });
+} else {
+    const clearBtn = document.getElementById('btnClearTestData');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', window.clearTestData);
+        console.log('[Invoice-Init] Clear test data button handler attached');
+    }
+}
+
+setTimeout(() => {
+    const clearBtn = document.getElementById('btnClearTestData');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', window.clearTestData);
+        console.log('[Invoice-Init] Clear test data button handler attached (delayed)');
+    }
+}, 500);
+
 if (document.readyState === 'loading') {
     console.log('[Invoice-Init] Document loading, waiting for DOMContentLoaded');
     document.addEventListener('DOMContentLoaded', setupExcelUploadModal);

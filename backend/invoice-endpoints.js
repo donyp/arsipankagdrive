@@ -860,6 +860,60 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
             }
         }
     );
+
+    // ============================================
+    // DELETE /api/invoice/clear-test-data
+    // Clear all test invoice data (for development/testing only)
+    // ============================================
+    app.delete('/api/invoice/clear-test-data',
+        createAuth(['super_admin']),
+        async (req, res) => {
+            try {
+                console.log(`[Invoice API] Clearing test data by ${req.user?.name}`);
+                
+                // Delete all invoices that were uploaded via Excel
+                const { data: deleted, error: deleteError } = await supabase
+                    .from('invoice_file_list')
+                    .delete()
+                    .not('excel_batch_id', 'is', null)
+                    .select('id');
+                
+                if (deleteError) {
+                    console.error('[Invoice API] Clear test data error:', deleteError);
+                    return res.status(500).json({ error: 'Failed to clear data' });
+                }
+                
+                const deletedCount = deleted?.length || 0;
+                console.log(`[Invoice API] Deleted ${deletedCount} test invoices`);
+                
+                // Also clear batch records
+                const { error: batchDeleteError } = await supabase
+                    .from('excel_upload_batches')
+                    .delete()
+                    .neq('id', '');
+                
+                if (batchDeleteError) {
+                    console.warn('[Invoice API] Failed to clear batch records:', batchDeleteError);
+                }
+                
+                // Log activity
+                await supabase.from('activity_logs').insert({
+                    user_id: req.user.id,
+                    action: 'clear_test_data',
+                    context: `Cleared ${deletedCount} test invoice records`
+                });
+                
+                res.json({ 
+                    success: true, 
+                    message: `Cleared ${deletedCount} test invoices`
+                });
+                
+            } catch (error) {
+                console.error('[Invoice API] Clear test data error:', error);
+                res.status(500).json({ error: 'Server error' });
+            }
+        }
+    );
     
     console.log('[Invoice API] Endpoints registered successfully');
 }
