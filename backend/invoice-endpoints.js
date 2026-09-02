@@ -94,9 +94,8 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // POST /api/invoice/upload-excel
     // Upload and parse Excel file (REKAP_LABA.xls)
     // ============================================
-    // TEST ENDPOINT - just capture file without parsing
+    // TEST ENDPOINT - just capture file without parsing (NO AUTH for debugging)
     app.post('/api/invoice/test-upload', 
-        auth(['super_admin', 'moderator', 'user']),
         upload.single('excel'),
         async (req, res) => {
             try {
