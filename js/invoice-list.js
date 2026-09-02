@@ -192,16 +192,40 @@ window.uploadExcelFile = async function() {
         const formData = new FormData();
         formData.append('excel', file);
 
+        // Get token from localStorage
+        const token = localStorage.getItem('authToken');
+        console.log('[Upload] Token present:', !!token, 'length:', token?.length);
+
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+            console.log('[Upload] Adding Authorization header');
+        }
+
         console.log('[Upload] Posting to /api/invoice/upload-excel');
         const response = await fetch('/api/invoice/upload-excel', {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: headers
         });
 
-        console.log('[Upload] Response received. Status:', response.status);
+        console.log('[Upload] Response received. Status:', response.status, response.statusText);
+        console.log('[Upload] Response content-type:', response.headers.get('content-type'));
         
-        const result = await response.json();
-        console.log('[Upload] Result:', result);
+        // Get response text first
+        const responseText = await response.text();
+        console.log('[Upload] Response text (first 200 chars):', responseText.substring(0, 200));
+        
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (parseErr) {
+            console.error('[Upload] JSON parse error:', parseErr.message);
+            console.error('[Upload] Full response:', responseText);
+            return alert('❌ Error: Server returned invalid response\n\nResponse:\n' + responseText.substring(0, 500));
+        }
+
+        console.log('[Upload] Parsed result:', result);
 
         if (response.ok && result.success) {
             const msg = 'Upload successful!\nProcessed: ' + (result.summary?.processed || 0) + ' invoices';
