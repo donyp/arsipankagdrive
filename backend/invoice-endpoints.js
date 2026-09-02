@@ -92,10 +92,18 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
                 // Validate data
                 const validation = validateData(parseResult.data);
                 if (!validation.isValid) {
+                    console.error('[Invoice API] Validation errors:', validation.errors);
                     return res.status(400).json({
-                        error: 'Data validation failed',
-                        errors: validation.errors.slice(0, 10) // First 10 errors
+                        error: 'Data validation failed - ada error yang harus diperbaiki',
+                        details: 'Silakan cek format Excel Anda',
+                        errors: validation.errors.slice(0, 15), // Show first 15 errors
+                        totalErrors: validation.errors.length
                     });
+                }
+                
+                // Log warnings if any
+                if (validation.warnings && validation.warnings.length > 0) {
+                    console.warn('[Invoice API] Validation warnings:', validation.warnings);
                 }
                 
                 // Create batch record

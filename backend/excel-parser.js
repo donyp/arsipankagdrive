@@ -192,26 +192,83 @@ function parseExcel(fileBuffer) {
 }
 
 /**
- * Validate parsed data
+ * Validate parsed data with comprehensive checks
  */
 function validateData(data) {
     const errors = [];
+    const warnings = [];
+    const seenFakturs = new Set();
+    
+    // Required columns
+    const requiredColumns = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL', 'KET 2'];
+    
+    // Check if data is empty
+    if (!data || data.length === 0) {
+        errors.push('Excel file is empty (no data rows)');
+        return {
+            isValid: false,
+            errors,
+            warnings
+        };
+    }
     
     data.forEach((item, index) => {
-        if (!item.faktur) {
-            errors.push(`Row ${index + 1}: Missing faktur`);
+        const rowNum = index + 1;
+        
+        // Check required fields
+        if (!item.faktur || String(item.faktur).trim() === '') {
+            errors.push(`Row ${rowNum}: Nomor faktur kosong`);
+        } else {
+            // Check for duplicate fakturs
+            if (seenFakturs.has(String(item.faktur).trim())) {
+                errors.push(`Row ${rowNum}: Nomor faktur "${item.faktur}" sudah terdapat di data (duplikat)`);
+            } else {
+                seenFakturs.add(String(item.faktur).trim());
+            }
+            
+            // Validate faktur format (should be numeric)
+            if (!/^\d+$/.test(String(item.faktur).trim())) {
+                warnings.push(`Row ${rowNum}: Nomor faktur "${item.faktur}" bukan angka murni`);
+            }
         }
+        
         if (!item.tanggal) {
-            errors.push(`Row ${index + 1}: Missing tanggal`);
+            errors.push(`Row ${rowNum}: Tanggal kosong`);
         }
+        
+        if (!item.toko || String(item.toko).trim() === '') {
+            errors.push(`Row ${rowNum}: Nama toko kosong`);
+        }
+        
         if (!item.total_jumlah_jual || item.total_jumlah_jual <= 0) {
-            errors.push(`Row ${index + 1}: Invalid total (${item.total_jumlah_jual})`);
+            errors.push(`Row ${rowNum}: Jumlah jual kosong atau tidak valid (${item.total_jumlah_jual})`);
+        } else if (typeof item.total_jumlah_jual !== 'number') {
+            errors.push(`Row ${rowNum}: Jumlah jual harus angka (saat ini: ${typeof item.total_jumlah_jual})`);
+        }
+        
+        // Validate keterangan
+        if (item.keterangan) {
+            const validKeterangan = ['PPN', 'NON PPN', 'NON'];
+            if (!validKeterangan.some(k => String(item.keterangan).toUpperCase().includes(k))) {
+                warnings.push(`Row ${rowNum}: Keterangan "${item.keterangan}" tidak standar (gunakan PPN atau NON PPN)`);
+            }
+        }
+        
+        // Validate metode bayar
+        if (item.metode_bayar) {
+            const validMetode = ['Piutang', 'Bank', 'Cash', 'PIUTANG', 'BANK', 'CASH'];
+            if (!validMetode.includes(item.metode_bayar)) {
+                warnings.push(`Row ${rowNum}: Metode bayar "${item.metode_bayar}" mungkin tidak sesuai standar`);
+            }
         }
     });
     
     return {
         isValid: errors.length === 0,
-        errors
+        errors,
+        warnings,
+        totalRows: data.length,
+        uniqueFakturs: seenFakturs.size
     };
 }
 

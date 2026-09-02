@@ -292,8 +292,188 @@ async function uploadPDF(faktur) {
 }
 
 // ============================================
-// Bulk Upload Multiple PDFs (MASSAL)
+// Upload Excel Modal
 // ============================================
+function openUploadExcelModal() {
+    const modal = document.createElement('div');
+    modal.id = 'upload-excel-modal';
+    modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-950/40 backdrop-blur-md animate-fade-in overflow-y-auto';
+    modal.innerHTML = `
+        <div class="relative bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl animate-scale-up border border-gray-100 max-h-[90vh] overflow-y-auto">
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-black text-gray-900 leading-tight mb-1 uppercase tracking-tight">Upload Excel</h2>
+                <p class="text-xs font-bold text-green-500 uppercase tracking-widest">Invoice Data</p>
+            </div>
+
+            <!-- Instructions -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                <p class="text-xs font-bold text-yellow-800 uppercase tracking-widest mb-2">📋 Petunjuk Upload</p>
+                <ul class="text-xs text-yellow-700 space-y-1.5">
+                    <li class="flex items-start gap-2">
+                        <span class="text-green-600 font-bold mt-0.5">✓</span>
+                        <span>File harus berformat <strong>.xls atau .xlsx</strong></span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-green-600 font-bold mt-0.5">✓</span>
+                        <span>Pastikan kolom: <strong>TANGGAL, TOKO, FAKTUR, METODE BAYAR, JENIS TRANSAKSI, KONSUMEN, JUMLAH JUAL, KETERANGAN</strong></span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-green-600 font-bold mt-0.5">✓</span>
+                        <span>Nomor faktur harus unik (tidak boleh duplikat)</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-green-600 font-bold mt-0.5">✓</span>
+                        <span>Maksimal upload <strong>1 file</strong></span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- File Input -->
+            <div id="excel-drop-zone" class="border-2 border-dashed border-blue-300 rounded-xl p-8 text-center mb-6 bg-blue-50 cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-100">
+                <svg class="w-12 h-12 text-blue-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p class="text-sm font-bold text-gray-900 mb-1">Drag & Drop atau Klik</p>
+                <p class="text-xs text-gray-500">File Excel di sini</p>
+                <input type="file" id="excel-file-input" accept=".xls,.xlsx" class="hidden" />
+            </div>
+
+            <!-- File Info -->
+            <div id="file-info" class="hidden mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <p class="text-xs font-bold text-gray-600 uppercase mb-2">File Terpilih</p>
+                <p id="file-name" class="text-sm font-bold text-gray-900 break-all"></p>
+                <p id="file-size" class="text-xs text-gray-500 mt-1"></p>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex gap-3">
+                <button onclick="this.closest('.fixed').remove()" class="flex-1 py-3 bg-gray-200 text-gray-900 font-bold rounded-xl hover:bg-gray-300 transition-all uppercase tracking-widest text-xs">
+                    Batal
+                </button>
+                <button id="btn-upload-excel-confirm" class="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-all uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    Upload
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // File input handling
+    const dropZone = document.getElementById('excel-drop-zone');
+    const fileInput = document.getElementById('excel-file-input');
+    const fileInfo = document.getElementById('file-info');
+    const uploadBtn = document.getElementById('btn-upload-excel-confirm');
+    let selectedFile = null;
+
+    // Click to browse
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // File selection
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            selectedFile = e.target.files[0];
+            showFileInfo(selectedFile);
+            uploadBtn.disabled = false;
+        }
+    });
+
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-green-500', 'bg-green-100');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-green-500', 'bg-green-100');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-green-500', 'bg-green-100');
+        
+        if (e.dataTransfer.files.length > 0) {
+            selectedFile = e.dataTransfer.files[0];
+            showFileInfo(selectedFile);
+            uploadBtn.disabled = false;
+        }
+    });
+
+    // Show file info
+    function showFileInfo(file) {
+        document.getElementById('file-name').textContent = file.name;
+        document.getElementById('file-size').textContent = `Ukuran: ${formatFileSize(file.size)}`;
+        fileInfo.classList.remove('hidden');
+    }
+
+    // Upload handler
+    uploadBtn.addEventListener('click', async () => {
+        if (!selectedFile) return;
+
+        // Validate file format
+        const validFormats = ['.xls', '.xlsx'];
+        const fileName = selectedFile.name.toLowerCase();
+        const hasValidFormat = validFormats.some(fmt => fileName.endsWith(fmt));
+
+        if (!hasValidFormat) {
+            alert('❌ File harus berformat .xls atau .xlsx');
+            return;
+        }
+
+        // Validate file size (max 10MB)
+        if (selectedFile.size > 10 * 1024 * 1024) {
+            alert('❌ Ukuran file maksimal 10MB');
+            return;
+        }
+
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Uploading...';
+
+        try {
+            const formData = new FormData();
+            formData.append('excel', selectedFile);
+
+            const response = await fetch('/api/invoice/upload-excel', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${API.getToken()}`
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || result.details || 'Upload gagal');
+            }
+
+            // Success
+            alert(`✅ Upload Sukses!\n\nFile: ${selectedFile.name}\nTotal: ${result.summary.totalRows} baris\nProses: ${result.summary.processedRows} invoice dibuat`);
+            
+            // Close modal
+            modal.remove();
+
+            // Reload invoice list
+            await loadStats();
+            await loadInvoiceList();
+
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert(`❌ Upload Gagal\n\n${error.message}`);
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Upload';
+        }
+    });
+}
+
+// Make globally accessible
+window.openUploadExcelModal = openUploadExcelModal;
 async function uploadBulkPDFs() {
     // Create file input that accepts multiple files
     const input = document.createElement('input');
