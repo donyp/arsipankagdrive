@@ -90,7 +90,15 @@ function formatDate(date) {
  * }
  */
 function parseExcel(fileBuffer) {
+    console.log('[Excel Parser] parseExcel() called');
+    console.log('[Excel Parser] Buffer info:', {
+        type: typeof fileBuffer,
+        isBuffer: Buffer.isBuffer(fileBuffer),
+        length: fileBuffer ? fileBuffer.length : 0
+    });
+    
     try {
+        console.log('[Excel Parser] Starting XLSX.read()...');
         // Read workbook from buffer
         // Read workbook with options for legacy .xls format support
         const workbook = XLSX.read(fileBuffer, { 
