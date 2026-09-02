@@ -70,6 +70,19 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     
     const { v4: uuidv4 } = uuid;
     
+    // Create auth wrapper that handles role-based access
+    const auth = (allowedRoles = null) => {
+        if (!allowedRoles || allowedRoles.length === 0) {
+            return authMiddleware;
+        }
+        return [authMiddleware, (req, res, next) => {
+            if (!req.user || !allowedRoles.includes(req.user.role)) {
+                return res.status(403).json({ error: 'Access denied: insufficient permissions' });
+            }
+            next();
+        }];
+    };
+    
     // ============================================
     // GET /api/invoice/health - Test endpoint
     // ============================================
