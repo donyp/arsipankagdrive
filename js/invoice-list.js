@@ -3,7 +3,7 @@
 // Display invoice list with filters and PDF upload
 // ============================================================
 
-let currentPage = 0;
+let invoiceCurrentPage = 0;
 const pageSize = 100;
 let totalCount = 0;
 let currentFilters = {};
@@ -37,9 +37,9 @@ const btnResetFilter = document.getElementById('btnResetFilter');
 // Initialize
 // ============================================
 async function init() {
-    // Check authentication
-    if (!isAuthenticated()) {
-        window.location.href = 'login.html';
+    // Check if DOM elements exist (only init if embedded properly)
+    if (!tableBody || !btnApplyFilter) {
+        console.warn('[Invoice List] DOM elements not found, skipping init');
         return;
     }
 
@@ -72,7 +72,7 @@ async function loadStats() {
     try {
         const response = await fetch('/api/invoice/stats', {
             headers: {
-                'Authorization': `Bearer ${getToken()}`
+                'Authorization': `Bearer ${API.getToken()}`
             }
         });
 
@@ -100,13 +100,13 @@ async function loadInvoiceList() {
     try {
         const params = new URLSearchParams({
             limit: pageSize,
-            offset: currentPage * pageSize,
+            offset: invoiceCurrentPage * pageSize,
             ...currentFilters
         });
 
         const response = await fetch(`/api/invoice/list?${params}`, {
             headers: {
-                'Authorization': `Bearer ${getToken()}`
+                'Authorization': `Bearer ${API.getToken()}`
             }
         });
 
@@ -186,7 +186,7 @@ function applyFilters() {
     if (filterDateTo.value) currentFilters.date_to = filterDateTo.value;
     if (filterSearch.value.trim()) currentFilters.search = filterSearch.value.trim();
 
-    currentPage = 0;
+    invoiceCurrentPage = 0;
     loadInvoiceList();
 }
 
@@ -199,7 +199,7 @@ function resetFilters() {
     filterSearch.value = '';
 
     currentFilters = {};
-    currentPage = 0;
+    invoiceCurrentPage = 0;
     loadInvoiceList();
 }
 
@@ -207,18 +207,18 @@ function resetFilters() {
 // Pagination
 // ============================================
 function updatePagination() {
-    const start = currentPage * pageSize + 1;
-    const end = Math.min((currentPage + 1) * pageSize, totalCount);
+    const start = invoiceCurrentPage * pageSize + 1;
+    const end = Math.min((invoiceCurrentPage + 1) * pageSize, totalCount);
 
     paginationInfo.textContent = `Menampilkan ${start} - ${end} dari ${totalCount} invoice`;
 
-    btnPrevPage.disabled = currentPage === 0;
+    btnPrevPage.disabled = invoiceCurrentPage === 0;
     btnNextPage.disabled = end >= totalCount;
 }
 
 function navigatePage(direction) {
-    currentPage += direction;
-    if (currentPage < 0) currentPage = 0;
+    invoiceCurrentPage += direction;
+    if (invoiceCurrentPage < 0) invoiceCurrentPage = 0;
     
     loadInvoiceList();
 }
@@ -263,7 +263,7 @@ async function uploadPDF(faktur) {
             const response = await fetch('/api/invoice/upload-pdf', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${getToken()}`
+                    'Authorization': `Bearer ${API.getToken()}`
                 },
                 body: formData
             });
@@ -355,7 +355,7 @@ async function uploadBulkPDFs() {
                     const response = await fetch('/api/invoice/upload-pdf', {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${getToken()}`
+                            'Authorization': `Bearer ${API.getToken()}`
                         },
                         body: formData
                     });
