@@ -625,7 +625,7 @@
     <script src="js/invoice-list.js"></script>
     
     <script>
-        // Load invoice list content into dashboard
+        // Load invoice list content into dashboard (without header)
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 // Wait for auth
@@ -643,13 +643,21 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 
-                // Get the entire invoice container with all styling
+                // Get ONLY the content container (stats, filters, table) WITHOUT header
                 const invoiceContent = doc.querySelector('.invoice-container');
                 if (invoiceContent) {
                     const container = document.getElementById('invoice-content-container');
                     
-                    // Clear the loading state
-                    container.innerHTML = invoiceContent.innerHTML;
+                    // Get all children except the header
+                    const childNodes = Array.from(invoiceContent.children).filter(el => {
+                        return !el.classList.contains('invoice-header') && el.nodeType === 1;
+                    });
+                    
+                    // Clear the loading state and insert only non-header content
+                    container.innerHTML = '';
+                    childNodes.forEach(node => {
+                        container.appendChild(node.cloneNode(true));
+                    });
                     
                     // Extract and apply styles from invoice-list.html
                     const styleElements = doc.querySelectorAll('style');
