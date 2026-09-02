@@ -212,12 +212,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // NEW DASHBOARD: Hide search since we removed archive list
     document.getElementById('header-search-container')?.classList.add('hidden');
     document.getElementById('dashboard-search-container')?.classList.add('hidden');
-        document.getElementById('dashboard-search-container')?.classList.add('hidden');
-    } else {
-        // Moderator and Admin Zona get large dashboard search, hide header search
-        document.getElementById('header-search-container')?.classList.add('hidden');
-        document.getElementById('dashboard-search-container')?.classList.remove('hidden');
-    }
 
     setupEventListeners();
     setupIntersectionObserver();
@@ -243,6 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             notifMenu?.classList.add('invisible', 'opacity-0', 'translate-y-2');
         }
     });
+
     } catch (err) {
         console.error('[Dashboard] Error loading dashboard:', err);
         if (window.Toast) {
