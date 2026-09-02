@@ -746,20 +746,20 @@ document.addEventListener('DOMContentLoaded', init);
 window.uploadPDF = uploadPDF;
 window.uploadBulkPDFs = uploadBulkPDFs;
 window.viewFile = viewFile;
-
-
 // ============================================
 // Upload Excel Modal
 // ============================================
-function openUploadExcelModal() {
+window.openUploadExcelModal = function() {
     const modal = document.getElementById('uploadExcelModal');
     if (modal) {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+    } else {
+        console.error('[Invoice] Modal uploadExcelModal not found');
     }
-}
+};
 
-function closeUploadExcelModal() {
+window.closeUploadExcelModal = function() {
     const modal = document.getElementById('uploadExcelModal');
     if (modal) {
         modal.classList.add('hidden');
@@ -772,18 +772,21 @@ function closeUploadExcelModal() {
     if (notice) notice.classList.add('hidden');
     const fileInfo = document.getElementById('fileInfo');
     if (fileInfo) fileInfo.classList.add('hidden');
-}
+};
 
-// Setup drag & drop
-document.addEventListener('DOMContentLoaded', function() {
+// Setup drag & drop - delay until DOM is ready
+function setupExcelUploadModal() {
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('excelFileInput');
     const uploadBtn = document.getElementById('uploadBtn');
 
     if (!dropZone || !fileInput || !uploadBtn) {
-        console.log('[Invoice List] Upload modal elements not found');
+        console.log('[Invoice List] Upload modal elements not ready, retrying...');
+        setTimeout(setupExcelUploadModal, 100);
         return;
     }
+
+    console.log('[Invoice List] Setup Excel upload modal');
 
     // Drag over
     dropZone.addEventListener('dragover', (e) => {
@@ -817,14 +820,19 @@ document.addEventListener('DOMContentLoaded', function() {
             handleExcelFileSelected(e.target.files[0]);
         }
     });
-});
+}
 
-function handleExcelFileSelected(file) {
+window.handleExcelFileSelected = function(file) {
     const fileInfo = document.getElementById('fileInfo');
     const fileName = document.getElementById('fileName');
     const fileSize = document.getElementById('fileSize');
     const fileType = document.getElementById('fileType');
     const uploadBtn = document.getElementById('uploadBtn');
+
+    if (!fileName || !fileSize || !fileType || !fileInfo) {
+        console.error('[Invoice] File info elements not found');
+        return;
+    }
 
     fileName.textContent = file.name;
     fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
@@ -834,19 +842,20 @@ function handleExcelFileSelected(file) {
 
     // Validate Excel format
     validateExcelFormat(file);
-}
+};
 
-async function uploadExcelFile() {
+window.uploadExcelFile = async function() {
     const fileInput = document.getElementById('excelFileInput');
     const uploadBtn = document.getElementById('uploadBtn');
     
-    if (!fileInput.files || fileInput.files.length === 0) {
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
         alert('Pilih file terlebih dahulu');
         return;
     }
 
     const file = fileInput.files[0];
     uploadBtn.disabled = true;
+    const originalText = uploadBtn.textContent;
     uploadBtn.textContent = 'Mengunggah...';
 
     try {
@@ -878,9 +887,9 @@ async function uploadExcelFile() {
         alert(`❌ Error: ${error.message}`);
     } finally {
         uploadBtn.disabled = false;
-        uploadBtn.textContent = 'Upload';
+        uploadBtn.textContent = originalText;
     }
-}
+};
 
 // Validate Excel format
 async function validateExcelFormat(file) {
@@ -957,6 +966,11 @@ function showFormatNotice(isValid, message) {
     const details = document.getElementById('format-details');
     const uploadBtn = document.getElementById('uploadBtn');
 
+    if (!notice || !icon || !statusMsg || !details) {
+        console.error('[Invoice] Format notice elements not found');
+        return;
+    }
+
     if (isValid) {
         icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-green-100 text-green-600';
         icon.innerHTML = '✓';
@@ -965,7 +979,7 @@ function showFormatNotice(isValid, message) {
         details.textContent = message;
         notice.className = 'p-4 rounded-xl border-2 border-green-200 bg-green-50 flex items-start gap-3';
         notice.classList.remove('hidden');
-        uploadBtn.disabled = false;
+        if (uploadBtn) uploadBtn.disabled = false;
     } else {
         icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-red-100 text-red-600';
         icon.innerHTML = '✕';
@@ -974,6 +988,12 @@ function showFormatNotice(isValid, message) {
         details.textContent = message;
         notice.className = 'p-4 rounded-xl border-2 border-red-200 bg-red-50 flex items-start gap-3';
         notice.classList.remove('hidden');
-        uploadBtn.disabled = true;
+        if (uploadBtn) uploadBtn.disabled = true;
     }
 }
+
+// Initialize on document load and dashboard embedding
+document.addEventListener('DOMContentLoaded', setupExcelUploadModal);
+
+// Also try to setup after a delay for dashboard embedding
+setTimeout(setupExcelUploadModal, 500);
