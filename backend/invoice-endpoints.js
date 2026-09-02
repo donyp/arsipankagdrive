@@ -122,54 +122,58 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     return res.status(500).json({ error: 'Failed to create batch record' });
                 }
                 
-                // Insert invoice records
+                // BULK CHECK: Get all existing fakturs in one query
+                const fakturs = data.map(item => item.faktur).filter(Boolean);
+                console.log(`[Invoice API] Checking ${fakturs.length} fakturs for duplicates...`);
+                
+                const { data: existingInvoices } = await supabase
+                    .from('invoice_file_list')
+                    .select('faktur')
+                    .in('faktur', fakturs);
+                
+                const existingFakturs = new Set((existingInvoices || []).map(inv => inv.faktur));
+                console.log(`[Invoice API] Found ${existingFakturs.size} existing fakturs`);
+                
+                // Filter out duplicates
+                const newInvoices = data.filter(item => !existingFakturs.has(item.faktur));
+                const duplicateCount = data.length - newInvoices.length;
+                
+                console.log(`[Invoice API] Inserting ${newInvoices.length} new invoices...`);
+                
+                // BULK INSERT: Insert all new invoices at once
+                const invoicesToInsert = newInvoices.map(item => ({
+                    tanggal: item.tanggal,
+                    toko: item.toko,
+                    faktur: item.faktur,
+                    metode_bayar: item.metode_bayar,
+                    jenis_transaksi: item.jenis_transaksi,
+                    konsumen: item.konsumen,
+                    keterangan: item.keterangan,
+                    total_jumlah_jual: item.total_jumlah_jual,
+                    item_count: item.item_count || 1,
+                    status: 'PENDING',
+                    excel_batch_id: batchId,
+                    excel_uploaded_at: new Date().toISOString(),
+                    excel_uploaded_by: req.user.id
+                }));
+                
                 let processedCount = 0;
-                let duplicateCount = 0;
                 let failedCount = 0;
                 const errors = [];
                 
-                for (const item of data) {
-                    try {
-                        // Check if faktur already exists
-                        const { data: existing } = await supabase
-                            .from('invoice_file_list')
-                            .select('id')
-                            .eq('faktur', item.faktur)
-                            .single();
-                        
-                        if (existing) {
-                            duplicateCount++;
-                            continue;
-                        }
-                        
-                        // Insert invoice
-                        const { error: insertError } = await supabase
-                            .from('invoice_file_list')
-                            .insert({
-                                tanggal: item.tanggal,
-                                toko: item.toko,
-                                faktur: item.faktur,
-                                metode_bayar: item.metode_bayar,
-                                jenis_transaksi: item.jenis_transaksi,
-                                konsumen: item.konsumen,
-                                keterangan: item.keterangan,
-                                total_jumlah_jual: item.total_jumlah_jual,
-                                item_count: item.item_count,
-                                status: 'PENDING',
-                                excel_batch_id: batchId,
-                                excel_uploaded_at: new Date().toISOString(),
-                                excel_uploaded_by: req.user.id
-                            });
-                        
-                        if (insertError) {
-                            failedCount++;
-                            errors.push(`${item.faktur}: ${insertError.message}`);
-                        } else {
-                            processedCount++;
-                        }
-                    } catch (err) {
-                        failedCount++;
-                        errors.push(`${item.faktur}: ${err.message}`);
+                if (invoicesToInsert.length > 0) {
+                    const { data: inserted, error: insertError } = await supabase
+                        .from('invoice_file_list')
+                        .insert(invoicesToInsert)
+                        .select();
+                    
+                    if (insertError) {
+                        console.error('[Invoice API] Bulk insert error:', insertError);
+                        failedCount = invoicesToInsert.length;
+                        errors.push(`Bulk insert failed: ${insertError.message}`);
+                    } else {
+                        processedCount = inserted?.length || 0;
+                        console.log(`[Invoice API] Successfully inserted ${processedCount} invoices`);
                     }
                 }
                 
