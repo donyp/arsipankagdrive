@@ -122,9 +122,20 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     return res.status(500).json({ error: 'Failed to create batch record' });
                 }
                 
+                // DEBUG: Log first few rows to check data structure
+                console.log('[Invoice API] Raw data sample (first 3):');
+                data.slice(0, 3).forEach((row, idx) => {
+                    console.log(`  Row ${idx}:`, row);
+                });
+                
                 // BULK CHECK: Get all existing fakturs in one query
                 const fakturs = data.map(item => item.faktur).filter(Boolean);
                 console.log(`[Invoice API] Checking ${fakturs.length} fakturs for duplicates...`);
+                console.log(`[Invoice API] Sample fakturs:`, fakturs.slice(0, 5));
+                
+                if (fakturs.length === 0) {
+                    console.warn('[Invoice API] WARNING: No fakturs found in data!');
+                }
                 
                 const { data: existingInvoices } = await supabase
                     .from('invoice_file_list')
@@ -137,6 +148,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 // Filter out duplicates
                 const newInvoices = data.filter(item => !existingFakturs.has(item.faktur));
                 const duplicateCount = data.length - newInvoices.length;
+                
+                console.log(`[Invoice API] New invoices to insert: ${newInvoices.length}`);
                 
                 console.log(`[Invoice API] Inserting ${newInvoices.length} new invoices...`);
                 
@@ -162,6 +175,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 const errors = [];
                 
                 if (invoicesToInsert.length > 0) {
+                    console.log('[Invoice API] Sample invoice to insert:', invoicesToInsert[0]);
+                    
                     const { data: inserted, error: insertError } = await supabase
                         .from('invoice_file_list')
                         .insert(invoicesToInsert)
@@ -169,13 +184,15 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     
                     if (insertError) {
                         console.error('[Invoice API] Bulk insert error:', insertError);
+                        console.error('[Invoice API] Insert error details:', insertError.details || insertError.message);
                         failedCount = invoicesToInsert.length;
                         errors.push(`Bulk insert failed: ${insertError.message}`);
                     } else {
                         processedCount = inserted?.length || 0;
                         console.log(`[Invoice API] Successfully inserted ${processedCount} invoices`);
                     }
-                }
+                } else {
+                    console.warn('[Invoice API] WARNING: No invoices to insert!');
                 
                 // Update batch
                 await supabase
