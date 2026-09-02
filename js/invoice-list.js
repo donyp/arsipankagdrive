@@ -192,8 +192,8 @@ window.uploadExcelFile = async function() {
         const formData = new FormData();
         formData.append('excel', file);
 
-        // Get token from localStorage
-        const token = localStorage.getItem('authToken');
+        // Get token - use API.getToken() like the rest of the app does
+        const token = API.getToken() || localStorage.getItem('jwt_token');
         console.log('[Upload] Token present:', !!token, 'length:', token?.length);
 
         const headers = {};
