@@ -632,6 +632,45 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
             }
         }
     );
+
+    // ============================================
+    // GET /api/invoice/check-faktur/:faktur
+    // Check if faktur exists in daftar invoice
+    // ============================================
+    app.get('/api/invoice/check-faktur/:faktur',
+        authMiddleware(),
+        async (req, res) => {
+            try {
+                const { faktur } = req.params;
+                
+                if (!faktur) {
+                    return res.status(400).json({ error: 'Faktur is required' });
+                }
+                
+                const { data, error } = await supabase
+                    .from('invoice_file_list')
+                    .select('faktur, status, toko, tanggal')
+                    .eq('faktur', faktur)
+                    .single();
+                
+                if (error && error.code !== 'PGRST116') {
+                    console.error('[Invoice API] Check faktur error:', error);
+                    return res.status(500).json({ error: 'Server error' });
+                }
+                
+                // Return result: exists = true if found, false if not
+                res.json({
+                    exists: !!data,
+                    faktur: faktur,
+                    data: data || null
+                });
+                
+            } catch (error) {
+                console.error('[Invoice API] Check faktur error:', error);
+                res.status(500).json({ error: 'Server error' });
+            }
+        }
+    );
     
     console.log('[Invoice API] Endpoints registered successfully');
 }

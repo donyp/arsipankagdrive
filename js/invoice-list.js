@@ -351,6 +351,15 @@ function openUploadExcelModal() {
                 <p id="file-size" class="text-xs text-gray-500 mt-1"></p>
             </div>
 
+            <!-- Excel Format Verification Notice -->
+            <div id="format-notice" class="hidden mb-6 p-4 rounded-xl border-2">
+                <div id="format-status" class="flex items-center gap-2 mb-2">
+                    <div id="format-icon" class="w-5 h-5 rounded-full flex items-center justify-center"></div>
+                    <p id="format-message" class="text-sm font-bold"></p>
+                </div>
+                <p id="format-details" class="text-xs text-gray-600 mt-2"></p>
+            </div>
+
             <!-- Buttons -->
             <div class="flex gap-3">
                 <button onclick="this.closest('.fixed').remove()" class="flex-1 py-3 bg-gray-200 text-gray-900 font-bold rounded-xl hover:bg-gray-300 transition-all uppercase tracking-widest text-xs">
@@ -410,6 +419,69 @@ function openUploadExcelModal() {
         document.getElementById('file-name').textContent = file.name;
         document.getElementById('file-size').textContent = `Ukuran: ${formatFileSize(file.size)}`;
         fileInfo.classList.remove('hidden');
+        
+        // Validate Excel format
+        validateExcelFormat(file);
+    }
+
+    // Validate Excel format
+    async function validateExcelFormat(file) {
+        try {
+            // Parse Excel to check columns
+            const arrayBuffer = await file.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { header: 1 });
+            
+            if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+                showFormatNotice(false, 'File tidak valid atau tidak ada sheet');
+                return;
+            }
+
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const headers = workbook.SheetNames[0] ? XLSX.utils.sheet_to_json(firstSheet, { header: 1 })[0] : [];
+            
+            // Required columns
+            const requiredColumns = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL', 'KETERANGAN'];
+            const headerString = (headers || []).map(h => (h || '').toString().toUpperCase().trim()).join('|');
+            const hasAllColumns = requiredColumns.every(col => headerString.includes(col.toUpperCase()));
+
+            if (hasAllColumns) {
+                const totalRows = workbook.Sheets[workbook.SheetNames[0]]['!ref']?.split(':')[1] ? parseInt(workbook.Sheets[workbook.SheetNames[0]]['!ref'].split(':')[1].replace(/\D/g, '')) : 0;
+                showFormatNotice(true, `Format ✅ Valid - ${totalRows - 1} baris data ditemukan`);
+            } else {
+                const missingCols = requiredColumns.filter(col => !headerString.includes(col.toUpperCase()));
+                showFormatNotice(false, `Kolom tidak lengkap: ${missingCols.join(', ')}`);
+            }
+        } catch (error) {
+            console.error('Format validation error:', error);
+            showFormatNotice(false, 'Gagal membaca file Excel: ' + error.message);
+        }
+    }
+
+    // Show format validation notice
+    function showFormatNotice(isValid, message) {
+        const notice = document.getElementById('format-notice');
+        const icon = document.getElementById('format-icon');
+        const statusMsg = document.getElementById('format-message');
+        const details = document.getElementById('format-details');
+
+        if (isValid) {
+            icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-green-100 text-green-600';
+            icon.innerHTML = '✓';
+            statusMsg.className = 'text-sm font-bold text-green-700';
+            statusMsg.textContent = '✅ Format Valid';
+            details.textContent = message;
+            notice.className = 'p-4 rounded-xl border-2 border-green-200 bg-green-50';
+        } else {
+            icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-red-100 text-red-600';
+            icon.innerHTML = '✕';
+            statusMsg.className = 'text-sm font-bold text-red-700';
+            statusMsg.textContent = '❌ Format Tidak Valid';
+            details.textContent = message;
+            notice.className = 'p-4 rounded-xl border-2 border-red-200 bg-red-50';
+            uploadBtn.disabled = true;
+        }
+        
+        notice.classList.remove('hidden');
     }
 
     // Upload handler
