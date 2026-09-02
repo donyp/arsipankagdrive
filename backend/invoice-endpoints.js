@@ -58,7 +58,7 @@ try {
 /**
  * Register all invoice endpoints
  */
-function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) {
+function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     
     // Check if dependencies are loaded
     if (!multer || !uuid || !parseExcel) {
@@ -70,18 +70,8 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     
     const { v4: uuidv4 } = uuid;
     
-    // Create auth wrapper that handles role-based access
-    const auth = (allowedRoles = null) => {
-        if (!allowedRoles || allowedRoles.length === 0) {
-            return authMiddleware;
-        }
-        return [authMiddleware, (req, res, next) => {
-            if (!req.user || !allowedRoles.includes(req.user.role)) {
-                return res.status(403).json({ error: 'Access denied: insufficient permissions' });
-            }
-            next();
-        }];
-    };
+    // createAuth is already a factory from server.js that returns [authenticateToken, authorizeRole(...roles)]
+    // Use it directly - no need to wrap again
     
     // ============================================
     // GET /api/invoice/health - Test endpoint
@@ -95,7 +85,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // Upload pre-parsed Excel data (from frontend validation)
     // ============================================
     app.post('/api/invoice/upload-excel-data',
-        auth(['super_admin', 'moderator', 'user']),
+        ...createAuth(['super_admin', 'moderator', 'user']),
         async (req, res) => {
             try {
                 const { filename, data, summary } = req.body;
@@ -252,7 +242,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     );
 
     app.post('/api/invoice/upload-excel', 
-        ...auth(['super_admin', 'moderator', 'user']),
+        ...createAuth(['super_admin', 'moderator', 'user']),
         upload.single('excel'),
         async (req, res) => {
             console.log('[Invoice API TEST] Endpoint hit');
@@ -294,7 +284,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // GET /api/invoice/list
     // Get invoice file list with filters
     // ============================================
-    app.get('/api/invoice/list', authMiddleware(), async (req, res) => {
+    app.get('/api/invoice/list', ...createAuth(), async (req, res) => {
         try {
             const { 
                 status, 
@@ -367,7 +357,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // GET /api/invoice/stats
     // Get invoice statistics
     // ============================================
-    app.get('/api/invoice/stats', authMiddleware(), async (req, res) => {
+    app.get('/api/invoice/stats', ...createAuth(), async (req, res) => {
         try {
             const { data, error } = await supabase
                 .rpc('get_invoice_statistics');
@@ -393,7 +383,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // Get list of Excel upload batches
     // ============================================
     app.get('/api/invoice/batches', 
-        authMiddleware(['super_admin', 'moderator']),
+        ...createAuth(['super_admin', 'moderator']),
         async (req, res) => {
             try {
                 const { limit = 50, offset = 0 } = req.query;
@@ -433,7 +423,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // Upload PDF and match with faktur
     // ============================================
     app.post('/api/invoice/upload-pdf',
-        authMiddleware(),
+        ...createAuth(),
         upload.single('pdf'),
         async (req, res) => {
             try {
@@ -549,7 +539,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // Delete invoice from list
     // ============================================
     app.delete('/api/invoice/:faktur', 
-        authMiddleware(['super_admin']),
+        ...createAuth(['super_admin']),
         async (req, res) => {
             try {
                 const { faktur } = req.params;
@@ -585,7 +575,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // Delete all invoices from a batch upload
     // ============================================
     app.delete('/api/invoice/batch/:batchId',
-        authMiddleware(['super_admin', 'moderator']),
+        ...createAuth(['super_admin', 'moderator']),
         async (req, res) => {
             try {
                 const { batchId } = req.params;
@@ -657,7 +647,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // Manually update invoice status
     // ============================================
     app.patch('/api/invoice/:faktur/status',
-        authMiddleware(['super_admin', 'moderator']),
+        ...createAuth(['super_admin', 'moderator']),
         async (req, res) => {
             try {
                 const { faktur } = req.params;
@@ -702,7 +692,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // Check if faktur exists in daftar invoice
     // ============================================
     app.get('/api/invoice/check-faktur/:faktur',
-        authMiddleware(),
+        ...createAuth(),
         async (req, res) => {
             try {
                 const { faktur } = req.params;
