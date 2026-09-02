@@ -40,8 +40,8 @@ async function init() {
     // Check if DOM elements exist (only init if embedded properly)
     if (!tableBody || !btnApplyFilter) {
         console.warn('[Invoice List] DOM elements not found, skipping init');
-        return;
-    }
+        return { success: false, error: 'No data' };\n
+        }
 
     setupEventListeners();
     await loadStats();
@@ -134,8 +134,8 @@ function renderTable(invoices) {
         tableBody.innerHTML = '';
         emptyState.style.display = 'block';
         paginationContainer.style.display = 'none';
-        return;
-    }
+        return { success: false, error: 'No data' };\n
+        }
 
     emptyState.style.display = 'none';
     paginationContainer.style.display = 'flex';
@@ -239,19 +239,19 @@ async function uploadPDF(faktur) {
         // Validate file type
         if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
             alert('File harus berformat PDF');
-            return;
-        }
+            return { success: false, error: 'No data' };\n
+            }
 
         // Validate file size (max 10MB)
         if (file.size > 10 * 1024 * 1024) {
             alert('Ukuran file maksimal 10MB');
-            return;
-        }
+            return { success: false, error: 'No data' };\n
+            }
 
         // Confirm upload
         if (!confirm(`Upload PDF untuk faktur ${faktur}?\n\nFile: ${file.name}\nUkuran: ${formatFileSize(file.size)}`)) {
-            return;
-        }
+            return { success: false, error: 'No data' };\n
+            }
 
         showLoading();
 
@@ -436,24 +436,24 @@ function openUploadExcelModal() {
             
             if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
                 showFormatNotice(false, 'File tidak valid atau tidak ada sheet');
-                return;
-            }
+                return { success: false, error: 'No data' };\n
+                }
 
             const firstSheetName = workbook.SheetNames[0];
             const firstSheet = workbook.Sheets[firstSheetName];
             
             if (!firstSheet) {
                 showFormatNotice(false, 'Tidak dapat membaca sheet');
-                return;
-            }
+                return { success: false, error: 'No data' };\n
+                }
             
             // Get all rows as arrays
             const allRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
             
             if (!allRows || allRows.length === 0) {
                 showFormatNotice(false, 'Sheet kosong');
-                return;
-            }
+                return { success: false, error: 'No data' };\n
+                }
             
             // Get headers from first row
             const headers = allRows[0] || [];
@@ -529,14 +529,14 @@ function openUploadExcelModal() {
 
         if (!hasValidFormat) {
             alert('âŒ File harus berformat .xls atau .xlsx');
-            return;
-        }
+            return { success: false, error: 'No data' };\n
+            }
 
         // Validate file size (max 10MB)
         if (selectedFile.size > 10 * 1024 * 1024) {
             alert('âŒ Ukuran file maksimal 10MB');
-            return;
-        }
+            return { success: false, error: 'No data' };\n
+            }
 
         uploadBtn.disabled = true;
         uploadBtn.textContent = 'Uploading...';
@@ -609,19 +609,19 @@ async function uploadBulkPDFs() {
 
         if (invalidFiles.length > 0) {
             alert(`âŒ File tidak valid:\n${invalidFiles.join('\n')}`);
-            return;
-        }
+            return { success: false, error: 'No data' };\n
+            }
 
         if (validFiles.length === 0) {
             alert('Tidak ada file valid untuk di-upload');
-            return;
-        }
+            return { success: false, error: 'No data' };\n
+            }
 
         // Confirm bulk upload
         const confirmMsg = `Upload ${validFiles.length} file PDF?\n\nFile:\n${validFiles.map(f => f.name).join('\n')}`;
         if (!confirm(confirmMsg)) {
-            return;
-        }
+            return { success: false, error: 'No data' };\n
+            }
 
         showLoading();
         let successCount = 0;
@@ -783,8 +783,8 @@ function setupExcelUploadModal() {
     if (!dropZone || !fileInput || !uploadBtn) {
         console.log('[Invoice List] Upload modal elements not ready, retrying...');
         setTimeout(setupExcelUploadModal, 100);
-        return;
-    }
+        return { success: false, error: 'No data' };\n
+        }
 
     console.log('[Invoice List] Setup Excel upload modal');
 
@@ -831,8 +831,8 @@ window.handleExcelFileSelected = function(file) {
 
     if (!fileName || !fileSize || !fileType || !fileInfo) {
         console.error('[Invoice] File info elements not found');
-        return;
-    }
+        return { success: false, error: 'No data' };\n
+        }
 
     fileName.textContent = file.name;
     fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
@@ -850,16 +850,16 @@ window.uploadExcelFile = async function() {
     
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
         alert('Pilih file terlebih dahulu');
-        return;
-    }
+        return { success: false, error: 'No data' };\n
+        }
 
     const file = fileInput.files[0];
     
     if (!uploadBtn) {
         console.error('[Invoice] Upload button not found');
         alert('âŒ Error: Upload button not found');
-        return;
-    }
+        return { success: false, error: 'No data' };\n
+        }
     
     uploadBtn.disabled = true;
     const originalText = uploadBtn.textContent;
@@ -942,8 +942,8 @@ async function validateExcelFormat(file) {
         if (file.name.toLowerCase().endsWith('.xls')) {
             console.log('[Excel] Detected .xls format - skipping deep validation');
             showFormatNotice(true, `Format âœ… Siap Upload - File: ${file.name}`);
-            return;
-        }
+            return { success: false, error: 'No data' };\n
+            }
         
         // Parse Excel to check columns (supports .xlsx, .csv)
         const arrayBuffer = await file.arrayBuffer();
@@ -959,8 +959,8 @@ async function validateExcelFormat(file) {
         
         if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
             showFormatNotice(false, 'File tidak valid atau tidak ada sheet');
-            return;
-        }
+            return { success: false, error: 'No data' };\n
+            }
 
         // Try to find data in any sheet
         let allRows = [];
@@ -1002,8 +1002,8 @@ async function validateExcelFormat(file) {
         
         if (!allRows || allRows.length < 1) {
             showFormatNotice(false, 'Semua sheet kosong - file mungkin tidak valid');
-            return;
-        }
+            return { success: false, error: 'No data' };\n
+            }
         
         // Get headers from first row
         let headers = allRows[0] || [];
@@ -1068,8 +1068,8 @@ function showFormatNotice(isValid, message) {
 
     if (!notice || !icon || !statusMsg || !details) {
         console.error('[Invoice] Format notice elements not found');
-        return;
-    }
+        return { success: false, error: 'No data' };\n
+        }
 
     if (isValid) {
         icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-green-100 text-green-600';
