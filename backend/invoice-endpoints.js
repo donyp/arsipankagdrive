@@ -65,11 +65,18 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     const { v4: uuidv4 } = uuid;
     
     // ============================================
+    // GET /api/invoice/health - Test endpoint
+    // ============================================
+    app.get('/api/invoice/health', (req, res) => {
+        res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    });
+    
+    // ============================================
     // POST /api/invoice/upload-excel
     // Upload and parse Excel file (REKAP_LABA.xls)
     // ============================================
     app.post('/api/invoice/upload-excel', 
-        authMiddleware(['super_admin', 'moderator']),
+        authMiddleware(['super_admin', 'moderator', 'user']),  // Allow all authenticated users
         upload.single('excel'),
         async (req, res) => {
             try {
