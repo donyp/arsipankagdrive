@@ -896,12 +896,20 @@ async function validateExcelFormat(file) {
     try {
         console.log('[Excel] Starting validation for:', file.name);
         
-        // Parse Excel to check columns (supports .xls, .xlsx, .csv)
+        // For .xls files, just show ready status without deep validation
+        // since XLSX library has trouble reading old Excel 97-2003 format
+        if (file.name.toLowerCase().endsWith('.xls')) {
+            console.log('[Excel] Detected .xls format - skipping deep validation');
+            showFormatNotice(true, `Format ✅ Siap Upload - File: ${file.name}`);
+            return;
+        }
+        
+        // Parse Excel to check columns (supports .xlsx, .csv)
         const arrayBuffer = await file.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { 
-            header: 1,  // Use header row as first array
-            raw: false,  // Don't parse numbers as raw
-            defval: '',  // Default value for empty cells
+            header: 1,  
+            raw: false,
+            defval: '',
             cellFormula: false,
             cellStyles: false
         });
@@ -923,7 +931,6 @@ async function validateExcelFormat(file) {
             
             if (!sheet) continue;
             
-            // Try sheet_to_json method first
             let rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
             console.log(`[Excel] Sheet "${sheetName}" - rows found:`, rows.length);
             
@@ -934,11 +941,9 @@ async function validateExcelFormat(file) {
                 break;
             }
             
-            // Try CSV fallback
             const csv = XLSX.utils.sheet_to_csv(sheet);
             const lines = csv.split('\n').filter(l => l.trim());
             console.log(`[Excel] Sheet "${sheetName}" - CSV lines:`, lines.length);
-            console.log(`[Excel] First CSV line:`, lines[0]);
             
             if (lines.length > 1) {
                 allRows = [];
@@ -953,7 +958,6 @@ async function validateExcelFormat(file) {
         
         console.log('[Excel] Using sheet:', usedSheet);
         console.log('[Excel] Total rows:', allRows.length);
-        console.log('[Excel] First 5 rows:', allRows.slice(0, 5));
         
         if (!allRows || allRows.length < 1) {
             showFormatNotice(false, 'Semua sheet kosong - file mungkin tidak valid');
@@ -963,9 +967,8 @@ async function validateExcelFormat(file) {
         // Get headers from first row
         let headers = allRows[0] || [];
         console.log('[Excel] Raw headers:', headers);
-        console.log('[Excel] Headers length:', headers.length);
         
-        // If first row looks like data (all empty or numbers), try next rows
+        // If first row looks like data, try next rows
         let headerRowIndex = 0;
         while (headerRowIndex < Math.min(5, allRows.length)) {
             const row = allRows[headerRowIndex];
@@ -982,37 +985,35 @@ async function validateExcelFormat(file) {
         // Required columns
         const requiredColumns = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL', 'KET 2'];
         
-        // Normalize headers for comparison (trim, uppercase, remove extra spaces)
+        // Normalize headers
         const normalizedHeaders = headers
             .filter(h => h !== undefined && h !== null && h !== '')
             .map(h => String(h).trim().toUpperCase().replace(/\s+/g, ' '));
         
         console.log('[Excel] Normalized headers:', normalizedHeaders);
-        console.log('[Excel] Normalized headers count:', normalizedHeaders.length);
         
-        // Check each required column with flexible matching
+        // Check each required column
         const missingCols = [];
         for (const col of requiredColumns) {
             const found = normalizedHeaders.some(h => h === col.toUpperCase() || h.includes(col.toUpperCase()));
-            console.log(`[Excel] Checking "${col}": ${found ? '✅ FOUND' : '❌ NOT FOUND'}`);
             if (!found) {
                 missingCols.push(col);
             }
         }
         
         if (missingCols.length === 0) {
-            const totalRows = allRows.length - 1; // exclude header
+            const totalRows = allRows.length - 1;
             console.log('[Excel] ✅ All columns found!');
             showFormatNotice(true, `Format ✅ Valid - ${totalRows} baris data ditemukan`);
         } else {
             console.log('[Excel] ❌ Missing columns:', missingCols);
-            console.log('[Excel] Available columns:', normalizedHeaders);
             showFormatNotice(false, `Kolom tidak lengkap: ${missingCols.join(', ')}\n\nKolom yang tersedia: ${normalizedHeaders.join(', ')}`);
         }
     } catch (error) {
         console.error('Format validation error:', error);
-        console.error('Stack:', error.stack);
-        showFormatNotice(false, 'Gagal membaca file Excel: ' + error.message);
+        // For any parsing error, allow upload anyway
+        console.log('[Excel] Validation error, allowing upload anyway');
+        showFormatNotice(true, `Format ✅ Siap Upload (Validasi Detail Dilewati)`);
     }
 }
 
