@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // Excel Parser for REKAP_LABA.xls
 // Parse and aggregate invoice data by faktur number
 // ============================================================
@@ -7,8 +7,8 @@ const XLSX = require('xlsx');
 
 /**
  * Normalize toko name based on business rules:
- * - "ANKA" or contains "ANKA" but NOT "PEMALANG" → "ANKA BEKASI"
- * - Contains "ANKA PEMALANG" → "ANKA PEMALANG"
+ * - "ANKA" or contains "ANKA" but NOT "PEMALANG" â†’ "ANKA BEKASI"
+ * - Contains "ANKA PEMALANG" â†’ "ANKA PEMALANG"
  */
 function normalizeToko(tokoRaw) {
     if (!tokoRaw) return 'UNKNOWN';
@@ -92,14 +92,33 @@ function formatDate(date) {
 function parseExcel(fileBuffer) {
     try {
         // Read workbook from buffer
-        const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+        // Read workbook with options for legacy .xls format support
+        const workbook = XLSX.read(fileBuffer, { 
+            type: 'buffer',
+            cellDates: true,  // Parse dates as Date objects
+            cellNF: false,    // Don't include number format
+            cellText: false   // Don't include formatted text
+        });
+        
+        console.log(`[Excel Parser] Workbook loaded: ${workbook.SheetNames.length} sheets`);
+        console.log(`[Excel Parser] Sheet names: ${workbook.SheetNames.join(', ')}`);
         
         // Get first sheet
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         
-        // Convert to JSON
-        const rawData = XLSX.utils.sheet_to_json(worksheet);
+        // Convert to JSON with header detection
+        console.log(`[Excel Parser] Processing sheet: ${sheetName}`);
+        const rawData = XLSX.utils.sheet_to_json(worksheet, {
+            defval: null,     // Default value for empty cells
+            blankrows: false  // Skip blank rows
+        });
+        
+        console.log(`[Excel Parser] Parsed ${rawData.length} rows from sheet`);
+        if (rawData.length > 0) {
+            console.log(`[Excel Parser] First row keys:`, Object.keys(rawData[0]));
+            console.log(`[Excel Parser] First row sample:`, rawData[0]);
+        }
         
         if (!rawData || rawData.length === 0) {
             return {
