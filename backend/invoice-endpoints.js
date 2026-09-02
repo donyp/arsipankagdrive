@@ -252,7 +252,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     );
 
     app.post('/api/invoice/upload-excel', 
-        auth(['super_admin', 'moderator', 'user']),
+        ...auth(['super_admin', 'moderator', 'user']),
         upload.single('excel'),
         async (req, res) => {
             console.log('[Invoice API TEST] Endpoint hit');
