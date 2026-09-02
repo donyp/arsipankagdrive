@@ -213,21 +213,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('header-search-container')?.classList.add('hidden');
     document.getElementById('dashboard-search-container')?.classList.add('hidden');
 
-    setupEventListeners();
-    setupIntersectionObserver();
+    // NEW DASHBOARD: Skip old event listeners and intersection observer for archive list
+    // setupEventListeners();
+    // setupIntersectionObserver();
 
+    // NEW DASHBOARD: Skip auto-reload on window focus (no archive list to reload)
     // Reload archives when window regains focus (e.g., coming back from file detail page)
-    let lastFocusTime = Date.now();
-    window.addEventListener('focus', () => {
-        // Only reload if it's been more than 2 seconds since last focus
-        // This prevents unnecessary reloads from quick window switches
-        const now = Date.now();
-        if (now - lastFocusTime > 2000) {
-            console.log('[Dashboard] Window focused, reloading archives to sync data');
-            loadArchives();
-        }
-        lastFocusTime = now;
-    });
+    // let lastFocusTime = Date.now();
+    // window.addEventListener('focus', () => {
+    //     const now = Date.now();
+    //     if (now - lastFocusTime > 2000) {
+    //         console.log('[Dashboard] Window focused, reloading archives to sync data');
+    //         loadArchives();
+    //     }
+    //     lastFocusTime = now;
+    // });
 
     // Global close for dropdowns
     document.addEventListener('click', (e) => {

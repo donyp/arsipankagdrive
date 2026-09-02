@@ -77,6 +77,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop existing triggers if they exist
+DROP TRIGGER IF EXISTS trigger_invoice_updated_at ON invoice_file_list;
+DROP TRIGGER IF EXISTS trigger_batch_updated_at ON excel_upload_batches;
+
+-- Create new triggers
 CREATE TRIGGER trigger_invoice_updated_at
     BEFORE UPDATE ON invoice_file_list
     FOR EACH ROW
