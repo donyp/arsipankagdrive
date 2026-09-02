@@ -913,36 +913,50 @@ async function validateExcelFormat(file) {
             return;
         }
 
-        // Try first sheet, if empty try second
-        let firstSheetName = workbook.SheetNames[0];
-        let firstSheet = workbook.Sheets[firstSheetName];
+        // Try to find data in any sheet
+        let allRows = [];
+        let usedSheet = '';
         
-        console.log('[Excel] Trying sheet:', firstSheetName);
-        console.log('[Excel] Sheet object:', Object.keys(firstSheet).slice(0, 20));
-        
-        // Get all rows - use different method
-        let allRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, blankrows: false });
-        
-        console.log('[Excel] Total rows (method 1):', allRows.length);
-        console.log('[Excel] First 3 rows:', allRows.slice(0, 3));
-        
-        // If empty, try sheet_to_csv then parse
-        if (!allRows || allRows.length < 2) {
-            console.log('[Excel] Method 1 returned empty, trying alternative method...');
-            allRows = [];
-            const csv = XLSX.utils.sheet_to_csv(firstSheet);
-            console.log('[Excel] CSV output (first 500 chars):', csv.substring(0, 500));
+        for (const sheetName of workbook.SheetNames) {
+            console.log(`[Excel] Trying sheet: ${sheetName}`);
+            const sheet = workbook.Sheets[sheetName];
             
-            // Parse CSV manually
-            const lines = csv.split('\n').filter(l => l.trim());
-            for (const line of lines) {
-                allRows.push(line.split(',').map(c => c.trim()));
+            if (!sheet) continue;
+            
+            // Try sheet_to_json method first
+            let rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
+            console.log(`[Excel] Sheet "${sheetName}" - rows found:`, rows.length);
+            
+            if (rows && rows.length > 1) {
+                allRows = rows;
+                usedSheet = sheetName;
+                console.log(`[Excel] ✅ Found data in sheet: ${sheetName}`);
+                break;
             }
-            console.log('[Excel] Parsed rows from CSV:', allRows.length);
+            
+            // Try CSV fallback
+            const csv = XLSX.utils.sheet_to_csv(sheet);
+            const lines = csv.split('\n').filter(l => l.trim());
+            console.log(`[Excel] Sheet "${sheetName}" - CSV lines:`, lines.length);
+            console.log(`[Excel] First CSV line:`, lines[0]);
+            
+            if (lines.length > 1) {
+                allRows = [];
+                for (const line of lines) {
+                    allRows.push(line.split(',').map(c => c.trim()));
+                }
+                usedSheet = sheetName;
+                console.log(`[Excel] ✅ Found data in sheet (CSV): ${sheetName}`);
+                break;
+            }
         }
         
-        if (!allRows || allRows.length === 0) {
-            showFormatNotice(false, 'Sheet kosong');
+        console.log('[Excel] Using sheet:', usedSheet);
+        console.log('[Excel] Total rows:', allRows.length);
+        console.log('[Excel] First 5 rows:', allRows.slice(0, 5));
+        
+        if (!allRows || allRows.length < 1) {
+            showFormatNotice(false, 'Semua sheet kosong - file mungkin tidak valid');
             return;
         }
         
@@ -950,13 +964,19 @@ async function validateExcelFormat(file) {
         let headers = allRows[0] || [];
         console.log('[Excel] Raw headers:', headers);
         console.log('[Excel] Headers length:', headers.length);
-        console.log('[Excel] Headers type check:', headers.map(h => typeof h));
         
-        // If first row looks like data (has numbers), try second row as header
-        if (allRows.length > 1 && headers.every(h => !h || typeof h === 'number' || h === '')) {
-            console.log('[Excel] First row looks like data, trying second row as header');
-            headers = allRows[1] || [];
-            console.log('[Excel] New headers from row 2:', headers);
+        // If first row looks like data (all empty or numbers), try next rows
+        let headerRowIndex = 0;
+        while (headerRowIndex < Math.min(5, allRows.length)) {
+            const row = allRows[headerRowIndex];
+            const hasTextContent = row.some(h => h && String(h).trim().length > 0 && isNaN(h));
+            
+            if (hasTextContent) {
+                headers = row;
+                console.log(`[Excel] Found header-like row at index ${headerRowIndex}:`, headers);
+                break;
+            }
+            headerRowIndex++;
         }
         
         // Required columns
@@ -969,13 +989,12 @@ async function validateExcelFormat(file) {
         
         console.log('[Excel] Normalized headers:', normalizedHeaders);
         console.log('[Excel] Normalized headers count:', normalizedHeaders.length);
-        console.log('[Excel] Required columns:', requiredColumns);
         
         // Check each required column with flexible matching
         const missingCols = [];
         for (const col of requiredColumns) {
             const found = normalizedHeaders.some(h => h === col.toUpperCase() || h.includes(col.toUpperCase()));
-            console.log(`[Excel] Checking "${col}": ${found ? '✅ FOUND' : '❌ NOT FOUND'} (in ${normalizedHeaders.join(' | ')})`);
+            console.log(`[Excel] Checking "${col}": ${found ? '✅ FOUND' : '❌ NOT FOUND'}`);
             if (!found) {
                 missingCols.push(col);
             }
@@ -987,10 +1006,12 @@ async function validateExcelFormat(file) {
             showFormatNotice(true, `Format ✅ Valid - ${totalRows} baris data ditemukan`);
         } else {
             console.log('[Excel] ❌ Missing columns:', missingCols);
-            showFormatNotice(false, `Kolom tidak lengkap: ${missingCols.join(', ')}`);
+            console.log('[Excel] Available columns:', normalizedHeaders);
+            showFormatNotice(false, `Kolom tidak lengkap: ${missingCols.join(', ')}\n\nKolom yang tersedia: ${normalizedHeaders.join(', ')}`);
         }
     } catch (error) {
         console.error('Format validation error:', error);
+        console.error('Stack:', error.stack);
         showFormatNotice(false, 'Gagal membaca file Excel: ' + error.message);
     }
 }
