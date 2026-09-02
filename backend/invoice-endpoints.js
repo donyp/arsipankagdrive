@@ -3,11 +3,21 @@
 // Handles Excel upload, invoice list, PDF upload, and matching
 // ============================================================
 
-const multer = require('multer');
-const { v4: uuidv4 } = require('uuid');
+// Check if required modules are available
+let multer, uuid, parseExcel, validateData;
+try {
+    multer = require('multer');
+    uuid = require('uuid');
+    const excelParser = require('./excel-parser');
+    parseExcel = excelParser.parseExcel;
+    validateData = excelParser.validateData;
+} catch (err) {
+    console.error('[Invoice Endpoints] Missing dependencies:', err.message);
+    console.error('[Invoice Endpoints] Please run: npm install uuid xlsx multer');
+}
+
 const path = require('path');
 const fs = require('fs');
-const { parseExcel, validateData } = require('./excel-parser');
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -43,6 +53,16 @@ const upload = multer({
  * Register all invoice endpoints
  */
 function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) {
+    
+    // Check if dependencies are loaded
+    if (!multer || !uuid || !parseExcel) {
+        console.error('[Invoice Endpoints] ⚠️  Dependencies not loaded. Invoice endpoints will NOT be registered.');
+        console.error('[Invoice Endpoints] Required modules: uuid, xlsx, multer');
+        console.error('[Invoice Endpoints] Please run: npm install');
+        return;
+    }
+    
+    const { v4: uuidv4 } = uuid;
     
     // ============================================
     // POST /api/invoice/upload-excel
