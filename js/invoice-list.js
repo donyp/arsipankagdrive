@@ -144,9 +144,26 @@ if (uploadBtn) {
 }
 
 window.handleExcelFileSelected = function(file) {
-    console.log('[File] Selected:', file.name);
+    console.log('[File] Selected:', file.name, file.size, 'bytes');
+    
+    // IMPORTANT: Set file to input element so uploadExcelFile can find it
+    const fileInput = document.getElementById('excelFileInput');
+    if (fileInput) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+        console.log('[File] Set to excelFileInput');
+    }
+    
+    // Show file info
     const fileInfo = document.getElementById('fileInfo');
-    if (fileInfo) fileInfo.classList.remove('hidden');
+    if (fileInfo) {
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(2) + ' KB';
+        document.getElementById('fileType').textContent = file.type || 'unknown';
+        fileInfo.classList.remove('hidden');
+        console.log('[File] File info displayed');
+    }
 };
 
 window.uploadExcelFile = async function() {
