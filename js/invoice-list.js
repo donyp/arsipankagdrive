@@ -901,7 +901,9 @@ async function validateExcelFormat(file) {
         const workbook = XLSX.read(arrayBuffer, { 
             header: 1,  // Use header row as first array
             raw: false,  // Don't parse numbers as raw
-            defval: ''   // Default value for empty cells
+            defval: '',  // Default value for empty cells
+            cellFormula: false,
+            cellStyles: false
         });
         
         console.log('[Excel] Workbook sheets:', workbook.SheetNames);
@@ -911,19 +913,33 @@ async function validateExcelFormat(file) {
             return;
         }
 
-        const firstSheetName = workbook.SheetNames[0];
-        const firstSheet = workbook.Sheets[firstSheetName];
+        // Try first sheet, if empty try second
+        let firstSheetName = workbook.SheetNames[0];
+        let firstSheet = workbook.Sheets[firstSheetName];
         
-        if (!firstSheet) {
-            showFormatNotice(false, 'Tidak dapat membaca sheet');
-            return;
-        }
+        console.log('[Excel] Trying sheet:', firstSheetName);
+        console.log('[Excel] Sheet object:', Object.keys(firstSheet).slice(0, 20));
         
-        // Get all rows as arrays
-        const allRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        // Get all rows - use different method
+        let allRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, blankrows: false });
         
-        console.log('[Excel] Total rows read:', allRows.length);
+        console.log('[Excel] Total rows (method 1):', allRows.length);
         console.log('[Excel] First 3 rows:', allRows.slice(0, 3));
+        
+        // If empty, try sheet_to_csv then parse
+        if (!allRows || allRows.length < 2) {
+            console.log('[Excel] Method 1 returned empty, trying alternative method...');
+            allRows = [];
+            const csv = XLSX.utils.sheet_to_csv(firstSheet);
+            console.log('[Excel] CSV output (first 500 chars):', csv.substring(0, 500));
+            
+            // Parse CSV manually
+            const lines = csv.split('\n').filter(l => l.trim());
+            for (const line of lines) {
+                allRows.push(line.split(',').map(c => c.trim()));
+            }
+            console.log('[Excel] Parsed rows from CSV:', allRows.length);
+        }
         
         if (!allRows || allRows.length === 0) {
             showFormatNotice(false, 'Sheet kosong');
@@ -934,9 +950,10 @@ async function validateExcelFormat(file) {
         let headers = allRows[0] || [];
         console.log('[Excel] Raw headers:', headers);
         console.log('[Excel] Headers length:', headers.length);
+        console.log('[Excel] Headers type check:', headers.map(h => typeof h));
         
         // If first row looks like data (has numbers), try second row as header
-        if (allRows.length > 1 && headers.every(h => !h || typeof h === 'number')) {
+        if (allRows.length > 1 && headers.every(h => !h || typeof h === 'number' || h === '')) {
             console.log('[Excel] First row looks like data, trying second row as header');
             headers = allRows[1] || [];
             console.log('[Excel] New headers from row 2:', headers);
@@ -951,13 +968,14 @@ async function validateExcelFormat(file) {
             .map(h => String(h).trim().toUpperCase().replace(/\s+/g, ' '));
         
         console.log('[Excel] Normalized headers:', normalizedHeaders);
+        console.log('[Excel] Normalized headers count:', normalizedHeaders.length);
         console.log('[Excel] Required columns:', requiredColumns);
         
         // Check each required column with flexible matching
         const missingCols = [];
         for (const col of requiredColumns) {
             const found = normalizedHeaders.some(h => h === col.toUpperCase() || h.includes(col.toUpperCase()));
-            console.log(`[Excel] Checking "${col}": ${found ? '✅ FOUND' : '❌ NOT FOUND'}`);
+            console.log(`[Excel] Checking "${col}": ${found ? '✅ FOUND' : '❌ NOT FOUND'} (in ${normalizedHeaders.join(' | ')})`);
             if (!found) {
                 missingCols.push(col);
             }
