@@ -122,15 +122,25 @@ function setupExcelUploadModal() {
         });
         console.log('[Invoice-Setup] Bound: backdrop');
     }
-    if (uploadBtn) {
-        uploadBtn.addEventListener('click', function() {
-            console.log('[Invoice-Setup] uploadBtn clicked');
+if (uploadBtn) {
+        uploadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[Invoice-Setup] uploadBtn clicked - calling uploadExcelFile');
             window.uploadExcelFile();
         });
         console.log('[Invoice-Setup] Bound: uploadBtn');
     }
     
     console.log('[Invoice-Setup] Setup complete');
+    
+    // Fallback: Use event delegation for upload button in case element gets replaced
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'uploadBtn') {
+            console.log('[Invoice-Delegation] uploadBtn clicked via delegation');
+            window.uploadExcelFile();
+        }
+    }, true); // Use capture phase
 }
 
 window.handleExcelFileSelected = function(file) {
