@@ -193,6 +193,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     }
                 } else {
                     console.warn('[Invoice API] WARNING: No invoices to insert!');
+                }
                 
                 // Update batch
                 await supabase
