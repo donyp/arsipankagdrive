@@ -256,24 +256,35 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
         upload.single('excel'),
         async (req, res) => {
             try {
+                console.log('[Invoice API] Upload endpoint hit');
+                
                 if (!req.file) {
+                    console.error('[Invoice API] No file in request');
                     return res.status(400).json({ error: 'No file uploaded' });
                 }
                 
-                console.log(`[Invoice API] Excel upload by ${req.user.name}: ${req.file.originalname}`);
+                console.log(`[Invoice API] Excel upload by ${req.user?.name}: ${req.file.originalname}`);
+                console.log(`[Invoice API] File size: ${req.file.size} bytes`);
                 
                 // Parse Excel
+                console.log('[Invoice API] Calling parseExcel()...');
                 const parseResult = parseExcel(req.file.buffer);
+                console.log('[Invoice API] parseExcel returned:', parseResult);
                 
                 if (!parseResult.success) {
+                    console.error('[Invoice API] Parse failed:', parseResult.error);
                     return res.status(400).json({ 
                         error: 'Failed to parse Excel file',
                         details: parseResult.error
                     });
                 }
                 
+                console.log('[Invoice API] Parse successful, validating data...');
+                
                 // Validate data
                 const validation = validateData(parseResult.data);
+                console.log('[Invoice API] Validation result:', validation);
+                
                 if (!validation.isValid) {
                     console.error('[Invoice API] Validation errors:', validation.errors);
                     return res.status(400).json({
@@ -288,6 +299,8 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
                 if (validation.warnings && validation.warnings.length > 0) {
                     console.warn('[Invoice API] Validation warnings:', validation.warnings);
                 }
+                
+                console.log('[Invoice API] Creating batch record...');
                 
                 // Create batch record
                 const batchId = uuidv4();
@@ -308,8 +321,10 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
                 
                 if (batchError) {
                     console.error('[Invoice API] Error creating batch:', batchError);
-                    return res.status(500).json({ error: 'Failed to create batch record' });
+                    return res.status(500).json({ error: 'Failed to create batch record', details: batchError.message });
                 }
+                
+                console.log('[Invoice API] Batch created:', batchId);
                 
                 // Insert invoices
                 let processedCount = 0;
@@ -367,6 +382,8 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
                     }
                 }
                 
+                console.log('[Invoice API] Insert complete. Updating batch status...');
+                
                 // Update batch status
                 await supabase
                     .from('excel_upload_batches')
@@ -386,6 +403,12 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
                     context: `Uploaded ${req.file.originalname}: ${processedCount} processed, ${duplicateCount} duplicates, ${failedCount} failed`
                 });
                 
+                console.log('[Invoice API] Upload complete! Summary:', {
+                    processed: processedCount,
+                    duplicates: duplicateCount,
+                    failed: failedCount
+                });
+                
                 res.json({
                     success: true,
                     batchId,
@@ -401,9 +424,11 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
                 
             } catch (error) {
                 console.error('[Invoice API] Upload Excel error:', error);
+                console.error('[Invoice API] Error stack:', error.stack);
                 res.status(500).json({ 
                     error: 'Server error',
-                    details: error.message
+                    details: error.message,
+                    type: error.constructor.name
                 });
             }
         }
