@@ -20,17 +20,25 @@ window.closeUploadExcelModal = function() {
 };
 
 function setupExcelUploadModal() {
+    console.log('[Invoice-Setup] setupExcelUploadModal called');
+    
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('excelFileInput');
     const uploadBtn = document.getElementById('uploadBtn');
     
+    console.log('[Invoice-Setup] Elements found:', {
+        dropZone: !!dropZone,
+        fileInput: !!fileInput,
+        uploadBtn: !!uploadBtn
+    });
+    
     if (!dropZone || !fileInput || !uploadBtn) {
-        console.log('[Invoice] Waiting for modal...');
+        console.log('[Invoice-Setup] Elements not ready, retrying in 100ms');
         setTimeout(setupExcelUploadModal, 100);
         return;
     }
     
-    console.log('[Invoice] Setting up modal');
+    console.log('[Invoice-Setup] All elements found, setting up listeners');
     
     // Drag over
     dropZone.addEventListener('dragover', function(e) {
@@ -50,6 +58,7 @@ function setupExcelUploadModal() {
     dropZone.addEventListener('drop', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        console.log('[Invoice-Setup] File dropped');
         if (e.dataTransfer.files.length > 0) {
             handleExcelFileSelected(e.dataTransfer.files[0]);
         }
@@ -57,6 +66,7 @@ function setupExcelUploadModal() {
 
     // File input change
     fileInput.addEventListener('change', function(e) {
+        console.log('[Invoice-Setup] File selected via input');
         if (e.target.files.length > 0) {
             handleExcelFileSelected(e.target.files[0]);
         }
@@ -69,32 +79,58 @@ function setupExcelUploadModal() {
     const btnClose = document.getElementById('modal-close-btn');
     const backdrop = document.getElementById('modal-backdrop');
 
+    console.log('[Invoice-Setup] Button elements:', {
+        btnUploadExcel: !!btnUploadExcel,
+        btnSelectFile: !!btnSelectFile,
+        btnCancel: !!btnCancel,
+        btnClose: !!btnClose,
+        backdrop: !!backdrop
+    });
+
     if (btnUploadExcel) {
-        btnUploadExcel.addEventListener('click', window.openUploadExcelModal);
-        console.log('[Invoice] Bound: btnUploadExcel');
+        btnUploadExcel.addEventListener('click', function() {
+            console.log('[Invoice-Setup] btnUploadExcel clicked');
+            window.openUploadExcelModal();
+        });
+        console.log('[Invoice-Setup] Bound: btnUploadExcel');
     }
     if (btnSelectFile) {
         btnSelectFile.addEventListener('click', function() {
+            console.log('[Invoice-Setup] btnSelectFile clicked');
             fileInput.click();
         });
-        console.log('[Invoice] Bound: btnSelectFile');
+        console.log('[Invoice-Setup] Bound: btnSelectFile');
     }
     if (btnCancel) {
-        btnCancel.addEventListener('click', window.closeUploadExcelModal);
-        console.log('[Invoice] Bound: btnCancel');
+        btnCancel.addEventListener('click', function() {
+            console.log('[Invoice-Setup] btnCancel clicked');
+            window.closeUploadExcelModal();
+        });
+        console.log('[Invoice-Setup] Bound: btnCancel');
     }
     if (btnClose) {
-        btnClose.addEventListener('click', window.closeUploadExcelModal);
-        console.log('[Invoice] Bound: btnClose');
+        btnClose.addEventListener('click', function() {
+            console.log('[Invoice-Setup] btnClose clicked');
+            window.closeUploadExcelModal();
+        });
+        console.log('[Invoice-Setup] Bound: btnClose');
     }
     if (backdrop) {
-        backdrop.addEventListener('click', window.closeUploadExcelModal);
-        console.log('[Invoice] Bound: backdrop');
+        backdrop.addEventListener('click', function() {
+            console.log('[Invoice-Setup] backdrop clicked');
+            window.closeUploadExcelModal();
+        });
+        console.log('[Invoice-Setup] Bound: backdrop');
     }
     if (uploadBtn) {
-        uploadBtn.addEventListener('click', window.uploadExcelFile);
-        console.log('[Invoice] Bound: uploadBtn');
+        uploadBtn.addEventListener('click', function() {
+            console.log('[Invoice-Setup] uploadBtn clicked');
+            window.uploadExcelFile();
+        });
+        console.log('[Invoice-Setup] Bound: uploadBtn');
     }
+    
+    console.log('[Invoice-Setup] Setup complete');
 }
 
 window.handleExcelFileSelected = function(file) {
@@ -104,55 +140,69 @@ window.handleExcelFileSelected = function(file) {
 };
 
 window.uploadExcelFile = async function() {
-    console.log('[Upload] Starting upload');
+    console.log('[Upload] uploadExcelFile called');
     
     const fileInput = document.getElementById('excelFileInput');
     const uploadBtn = document.getElementById('uploadBtn');
     
+    console.log('[Upload] fileInput:', fileInput ? 'found' : 'NOT FOUND');
+    console.log('[Upload] uploadBtn:', uploadBtn ? 'found' : 'NOT FOUND');
+    
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        console.warn('[Upload] No file selected');
         alert('Pilih file terlebih dahulu');
         return;
     }
 
     const file = fileInput.files[0];
+    console.log('[Upload] File selected:', file.name, file.size, 'bytes');
+    
     const originalText = uploadBtn.textContent;
     uploadBtn.disabled = true;
     uploadBtn.textContent = 'Uploading...';
 
     try {
-        console.log('[Upload] File:', file.name, 'Size:', file.size);
-        
         const formData = new FormData();
         formData.append('excel', file);
 
-        console.log('[Upload] Sending to /api/invoice/upload-excel');
+        console.log('[Upload] Posting to /api/invoice/upload-excel');
         const response = await fetch('/api/invoice/upload-excel', {
             method: 'POST',
             body: formData
         });
 
+        console.log('[Upload] Response received. Status:', response.status);
+        
         const result = await response.json();
-        console.log('[Upload] Response status:', response.status);
         console.log('[Upload] Result:', result);
 
-        if (response.ok && result.message) {
-            alert('✅ Upload Berhasil!\\n\\n' + result.message);
-            closeUploadExcelModal();
+        if (response.ok && result.success) {
+            const msg = 'Upload successful!\nProcessed: ' + (result.summary?.processed || 0) + ' invoices';
+            console.log('[Upload] SUCCESS');
+            alert('✅ Upload Berhasil!\n' + msg);
+            window.closeUploadExcelModal();
         } else {
-            alert('❌ Error: ' + (result.error || 'Upload gagal'));
+            const errMsg = result.error || 'Upload failed';
+            console.log('[Upload] FAILED:', errMsg);
+            alert('❌ Error: ' + errMsg);
         }
     } catch (error) {
-        console.error('[Upload] Error:', error);
+        console.error('[Upload] Exception:', error);
         alert('❌ Error: ' + error.message);
     } finally {
         uploadBtn.disabled = false;
         uploadBtn.textContent = originalText;
+        console.log('[Upload] Done');
     }
 };
 
 if (document.readyState === 'loading') {
+    console.log('[Invoice-Init] Document loading, waiting for DOMContentLoaded');
     document.addEventListener('DOMContentLoaded', setupExcelUploadModal);
 } else {
+    console.log('[Invoice-Init] Document already loaded, calling setup now');
     setupExcelUploadModal();
 }
+
+console.log('[Invoice-Init] Also scheduling setup for 500ms');
 setTimeout(setupExcelUploadModal, 500);
