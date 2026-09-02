@@ -4,50 +4,56 @@
 // ============================================================
 
 // Check if required modules are available
-let multer, uuid, parseExcel, validateData;
+let multer, uuid, parseExcel, validateData, upload;
+const path = require('path');
+const fs = require('fs');
+
 try {
     multer = require('multer');
     uuid = require('uuid');
     const excelParser = require('./excel-parser');
     parseExcel = excelParser.parseExcel;
     validateData = excelParser.validateData;
-} catch (err) {
-    console.error('[Invoice Endpoints] Missing dependencies:', err.message);
-    console.error('[Invoice Endpoints] Please run: npm install uuid xlsx multer');
-}
-
-const path = require('path');
-const fs = require('fs');
-
-// Configure multer for file uploads
-const storage = multer.memoryStorage();
-const upload = multer({
-    storage: storage,
-    limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB max
-    },
-    fileFilter: (req, file, cb) => {
-        if (req.path.includes('upload-excel')) {
-            // Excel files only
-            const allowedExts = ['.xls', '.xlsx'];
-            const ext = path.extname(file.originalname).toLowerCase();
-            if (allowedExts.includes(ext)) {
-                cb(null, true);
+    
+    // Configure multer for file uploads - ONLY if multer loaded successfully
+    const storage = multer.memoryStorage();
+    upload = multer({
+        storage: storage,
+        limits: {
+            fileSize: 10 * 1024 * 1024 // 10MB max
+        },
+        fileFilter: (req, file, cb) => {
+            if (req.path.includes('upload-excel')) {
+                // Excel files only
+                const allowedExts = ['.xls', '.xlsx'];
+                const ext = path.extname(file.originalname).toLowerCase();
+                if (allowedExts.includes(ext)) {
+                    cb(null, true);
+                } else {
+                    cb(new Error('Only Excel files (.xls, .xlsx) are allowed'));
+                }
+            } else if (req.path.includes('upload-pdf')) {
+                // PDF files only
+                if (file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf')) {
+                    cb(null, true);
+                } else {
+                    cb(new Error('Only PDF files are allowed'));
+                }
             } else {
-                cb(new Error('Only Excel files (.xls, .xlsx) are allowed'));
-            }
-        } else if (req.path.includes('upload-pdf')) {
-            // PDF files only
-            if (file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf')) {
                 cb(null, true);
-            } else {
-                cb(new Error('Only PDF files are allowed'));
             }
-        } else {
-            cb(null, true);
         }
-    }
-});
+    });
+} catch (err) {
+    console.error('[Invoice Endpoints] ❌ Missing dependencies:', err.message);
+    console.error('[Invoice Endpoints] Required: multer, uuid, xlsx');
+    console.error('[Invoice Endpoints] Run: npm install multer uuid xlsx');
+    multer = null;
+    uuid = null;
+    parseExcel = null;
+    validateData = null;
+    upload = null;
+}
 
 /**
  * Register all invoice endpoints
