@@ -693,6 +693,33 @@ function setupExcelUploadModal() {
         if (e.target.files.length > 0) {
             handleExcelFileSelected(e.target.files[0]);
         }
+    }
+    
+    // Bind button click handlers
+    const btnUploadExcel = document.getElementById('btnUploadExcel');
+    const btnSelectFile = document.getElementById('btnSelectFile');
+    const btnCancel = document.getElementById('btnCancel');
+    const btnClose = document.getElementById('modal-close-btn');
+    const backdrop = document.getElementById('modal-backdrop');
+    
+    if (btnUploadExcel) {
+        btnUploadExcel.addEventListener('click', window.openUploadExcelModal);
+    }
+    if (btnSelectFile) {
+        btnSelectFile.addEventListener('click', () => fileInput.click());
+    }
+    if (btnCancel) {
+        btnCancel.addEventListener('click', window.closeUploadExcelModal);
+    }
+    if (btnClose) {
+        btnClose.addEventListener('click', window.closeUploadExcelModal);
+    }
+    if (backdrop) {
+        backdrop.addEventListener('click', window.closeUploadExcelModal);
+    }
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', window.uploadExcelFile);
+    }
     });
 }
 window.handleExcelFileSelected = function(file) {

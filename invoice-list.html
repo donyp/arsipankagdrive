@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -379,7 +379,7 @@
             <!-- Header -->
             <div class="invoice-header">
                 <div class="header-actions">
-                    <button id="btnUploadExcel" class="btn-upload-excel" onclick="openUploadExcelModal()" style="background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; font-size: 14px; z-index: 10;">
+                    <button id="btnUploadExcel" class="btn-upload-excel" style="background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; font-size: 14px; z-index: 10;">
                         <i class="fas fa-file-excel"></i> Upload Excel
                     </button>
                     <button class="btn-refresh" onclick="location.reload()" style="z-index: 10;">
@@ -516,11 +516,11 @@
 
     <!-- Upload Excel Modal -->
     <div id="uploadExcelModal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeUploadExcelModal()" style="z-index: 9998;"></div>
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" id="modal-backdrop" style="z-index: 9998;"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6" style="z-index: 10000;">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold text-gray-800">Upload File Excel</h2>
-                <button onclick="closeUploadExcelModal()" class="text-gray-500 hover:text-gray-700 text-2xl" style="background: none; border: none; cursor: pointer; padding: 0;">×</button>
+                <button id="modal-close-btn" class="text-gray-500 hover:text-gray-700 text-2xl" style="background: none; border: none; cursor: pointer; padding: 0;">Ã—</button>
             </div>
 
             <!-- Format Notice -->
@@ -538,7 +538,7 @@
                 <p class="text-gray-700 font-semibold mb-2">Drag & drop file Excel di sini</p>
                 <p class="text-gray-500 text-sm mb-4">atau klik untuk memilih file</p>
                 <input type="file" id="excelFileInput" accept=".xls,.xlsx,.csv" class="hidden">
-                <button onclick="document.getElementById('excelFileInput').click()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" style="border: none; cursor: pointer; font-weight: 500;">
+                <button id="btnSelectFile" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" style="border: none; cursor: pointer; font-weight: 500;">
                     Pilih File
                 </button>
             </div>
@@ -558,10 +558,10 @@
 
             <!-- Action Buttons -->
             <div class="flex gap-3 justify-end" style="margin-top: 20px;">
-                <button type="button" onclick="closeUploadExcelModal()" class="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg font-semibold" style="border: none; cursor: pointer; hover:bg-gray-400; transition: background 0.3s;">
+                <button type="button" id="btnCancel" class="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg font-semibold" style="border: none; cursor: pointer; hover:bg-gray-400; transition: background 0.3s;">
                     Batal
                 </button>
-                <button type="button" id="uploadBtn" onclick="uploadExcelFile()" class="px-6 py-2 bg-green-500 text-white rounded-lg font-semibold" style="border: none; cursor: pointer; min-width: 120px; transition: all 0.3s;">
+                <button type="button" id="uploadBtn" class="px-6 py-2 bg-green-500 text-white rounded-lg font-semibold" style="border: none; cursor: pointer; min-width: 120px; transition: all 0.3s;">
                     Upload
                 </button>
             </div>
