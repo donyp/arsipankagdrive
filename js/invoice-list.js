@@ -866,36 +866,40 @@ window.uploadExcelFile = async function() {
     uploadBtn.textContent = 'Mengunggah...';
 
     try {
-        const formData = new FormData();
-        formData.append('excel', file);
-
-        console.log('[Upload] Sending to /api/invoice/upload-excel');
-        const response = await fetch('/api/invoice/upload-excel', {
+        // First validate and parse file in frontend
+        console.log('[Upload] Step 1: Validating & parsing Excel...');
+        const validation = await validateExcelFormat(file);
+        
+        if (!validation || !validation.success) {
+            throw new Error('Validation failed: ' + (validation?.error || 'Unknown error'));
+        }
+        
+        if (!validation.data || validation.data.length === 0) {
+            throw new Error('File is empty');
+        }
+        
+        console.log('[Upload] Step 2: File valid! ' + validation.data.length + ' rows');
+        console.log('[Upload] Step 3: Sending parsed data to backend...');
+        
+        // Send pre-parsed data
+        const response = await fetch('/api/invoice/upload-excel-data', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${API.getToken()}`
+                'Authorization': `Bearer ${API.getToken()}`,
+                'Content-Type': 'application/json'
             },
-            body: formData
+            body: JSON.stringify({
+                filename: file.name,
+                data: validation.data,
+                summary: validation.summary
+            })
         });
 
         console.log('[Upload] Response status:', response.status);
-        const contentType = response.headers.get('content-type');
-        console.log('[Upload] Content-Type:', contentType);
 
         if (!response.ok) {
             const text = await response.text();
-            console.error('[Upload] Response text:', text.substring(0, 500));
-            
-            let error = 'Upload gagal';
-            if (contentType && contentType.includes('application/json')) {
-                try {
-                    const data = JSON.parse(text);
-                    error = data.error || error;
-                } catch (e) {
-                    console.error('[Upload] JSON parse error:', e);
-                }
-            }
-            throw new Error(`${response.status}: ${error}`);
+            throw new Error(`${response.status}: Upload gagal`);
         }
 
         const result = await response.json();
