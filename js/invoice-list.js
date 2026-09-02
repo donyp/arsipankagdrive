@@ -894,12 +894,17 @@ window.uploadExcelFile = async function() {
 // Validate Excel format
 async function validateExcelFormat(file) {
     try {
+        console.log('[Excel] Starting validation for:', file.name);
+        
         // Parse Excel to check columns (supports .xls, .xlsx, .csv)
         const arrayBuffer = await file.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { 
             header: 1,  // Use header row as first array
-            raw: false  // Don't parse numbers as raw
+            raw: false,  // Don't parse numbers as raw
+            defval: ''   // Default value for empty cells
         });
+        
+        console.log('[Excel] Workbook sheets:', workbook.SheetNames);
         
         if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
             showFormatNotice(false, 'File tidak valid atau tidak ada sheet');
@@ -917,39 +922,53 @@ async function validateExcelFormat(file) {
         // Get all rows as arrays
         const allRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
         
+        console.log('[Excel] Total rows read:', allRows.length);
+        console.log('[Excel] First 3 rows:', allRows.slice(0, 3));
+        
         if (!allRows || allRows.length === 0) {
             showFormatNotice(false, 'Sheet kosong');
             return;
         }
         
         // Get headers from first row
-        const headers = allRows[0] || [];
-        console.log('[Excel Debug] File:', file.name);
-        console.log('[Excel Debug] Sheet name:', firstSheetName);
-        console.log('[Excel Debug] Total rows:', allRows.length);
-        console.log('[Excel Debug] Headers (raw):', headers);
+        let headers = allRows[0] || [];
+        console.log('[Excel] Raw headers:', headers);
+        console.log('[Excel] Headers length:', headers.length);
+        
+        // If first row looks like data (has numbers), try second row as header
+        if (allRows.length > 1 && headers.every(h => !h || typeof h === 'number')) {
+            console.log('[Excel] First row looks like data, trying second row as header');
+            headers = allRows[1] || [];
+            console.log('[Excel] New headers from row 2:', headers);
+        }
         
         // Required columns
         const requiredColumns = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL', 'KET 2'];
         
-        // Normalize headers for comparison (trim, uppercase)
+        // Normalize headers for comparison (trim, uppercase, remove extra spaces)
         const normalizedHeaders = headers
             .filter(h => h !== undefined && h !== null && h !== '')
-            .map(h => String(h).trim().toUpperCase());
+            .map(h => String(h).trim().toUpperCase().replace(/\s+/g, ' '));
         
-        console.log('[Excel Debug] Normalized headers:', normalizedHeaders);
-        console.log('[Excel Debug] Required columns:', requiredColumns);
+        console.log('[Excel] Normalized headers:', normalizedHeaders);
+        console.log('[Excel] Required columns:', requiredColumns);
         
-        // Check each required column
-        const missingCols = requiredColumns.filter(col => 
-            !normalizedHeaders.includes(col.toUpperCase())
-        );
+        // Check each required column with flexible matching
+        const missingCols = [];
+        for (const col of requiredColumns) {
+            const found = normalizedHeaders.some(h => h === col.toUpperCase() || h.includes(col.toUpperCase()));
+            console.log(`[Excel] Checking "${col}": ${found ? '✅ FOUND' : '❌ NOT FOUND'}`);
+            if (!found) {
+                missingCols.push(col);
+            }
+        }
         
         if (missingCols.length === 0) {
             const totalRows = allRows.length - 1; // exclude header
+            console.log('[Excel] ✅ All columns found!');
             showFormatNotice(true, `Format ✅ Valid - ${totalRows} baris data ditemukan`);
         } else {
-            console.log('[Excel Debug] Missing columns:', missingCols);
+            console.log('[Excel] ❌ Missing columns:', missingCols);
             showFormatNotice(false, `Kolom tidak lengkap: ${missingCols.join(', ')}`);
         }
     } catch (error) {
