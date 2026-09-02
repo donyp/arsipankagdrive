@@ -30,6 +30,8 @@ function setupExcelUploadModal() {
         return;
     }
     
+    console.log('[Invoice] Setting up modal');
+    
     // Drag over
     dropZone.addEventListener('dragover', function(e) {
         e.preventDefault();
@@ -53,12 +55,46 @@ function setupExcelUploadModal() {
         }
     });
 
-    // File input
+    // File input change
     fileInput.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
             handleExcelFileSelected(e.target.files[0]);
         }
     });
+    
+    // Button listeners
+    const btnUploadExcel = document.getElementById('btnUploadExcel');
+    const btnSelectFile = document.getElementById('btnSelectFile');
+    const btnCancel = document.getElementById('btnCancel');
+    const btnClose = document.getElementById('modal-close-btn');
+    const backdrop = document.getElementById('modal-backdrop');
+
+    if (btnUploadExcel) {
+        btnUploadExcel.addEventListener('click', window.openUploadExcelModal);
+        console.log('[Invoice] Bound: btnUploadExcel');
+    }
+    if (btnSelectFile) {
+        btnSelectFile.addEventListener('click', function() {
+            fileInput.click();
+        });
+        console.log('[Invoice] Bound: btnSelectFile');
+    }
+    if (btnCancel) {
+        btnCancel.addEventListener('click', window.closeUploadExcelModal);
+        console.log('[Invoice] Bound: btnCancel');
+    }
+    if (btnClose) {
+        btnClose.addEventListener('click', window.closeUploadExcelModal);
+        console.log('[Invoice] Bound: btnClose');
+    }
+    if (backdrop) {
+        backdrop.addEventListener('click', window.closeUploadExcelModal);
+        console.log('[Invoice] Bound: backdrop');
+    }
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', window.uploadExcelFile);
+        console.log('[Invoice] Bound: uploadBtn');
+    }
 }
 
 window.handleExcelFileSelected = function(file) {
