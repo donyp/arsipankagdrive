@@ -650,10 +650,27 @@
                         }
                     });
                     
+                    // Extract and inject the upload modal
+                    const uploadModal = doc.getElementById('uploadExcelModal');
+                    if (uploadModal) {
+                        const modalClone = uploadModal.cloneNode(true);
+                        document.body.appendChild(modalClone);
+                        console.log('[Dashboard] ✅ Upload modal injected');
+                    } else {
+                        console.warn('[Dashboard] ⚠️ Upload modal not found in invoice-list.html');
+                    }
+                    
                     // Reinit invoice list functions
                     if (typeof init === 'function') {
                         init();
                     }
+                    
+                    // Setup modal after a small delay
+                    setTimeout(() => {
+                        if (typeof setupExcelUploadModal === 'function') {
+                            setupExcelUploadModal();
+                        }
+                    }, 100);
                 }
             } catch (error) {
                 console.error('Error loading invoice content:', error);
