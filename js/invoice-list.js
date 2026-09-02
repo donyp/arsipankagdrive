@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // Invoice List Handler
 // Display invoice list with filters and PDF upload
 // ============================================================
@@ -274,7 +274,7 @@ async function uploadPDF(faktur) {
             }
 
             const result = await response.json();
-            alert(`✅ Upload berhasil!\n\nFaktur: ${faktur}\nPath: ${result.storagePath}`);
+            alert(`âœ… Upload berhasil!\n\nFaktur: ${faktur}\nPath: ${result.storagePath}`);
 
             // Reload data
             await loadStats();
@@ -282,7 +282,7 @@ async function uploadPDF(faktur) {
 
         } catch (error) {
             console.error('Upload error:', error);
-            alert(`❌ Upload gagal: ${error.message}`);
+            alert(`âŒ Upload gagal: ${error.message}`);
         } finally {
             hideLoading();
         }
@@ -313,22 +313,22 @@ function openUploadExcelModal() {
 
             <!-- Instructions -->
             <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-                <p class="text-xs font-bold text-yellow-800 uppercase tracking-widest mb-2">📋 Petunjuk Upload</p>
+                <p class="text-xs font-bold text-yellow-800 uppercase tracking-widest mb-2">ðŸ“‹ Petunjuk Upload</p>
                 <ul class="text-xs text-yellow-700 space-y-1.5">
                     <li class="flex items-start gap-2">
-                        <span class="text-green-600 font-bold mt-0.5">✓</span>
+                        <span class="text-green-600 font-bold mt-0.5">âœ“</span>
                         <span>File harus berformat <strong>.xls atau .xlsx</strong></span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <span class="text-green-600 font-bold mt-0.5">✓</span>
+                        <span class="text-green-600 font-bold mt-0.5">âœ“</span>
                         <span>Pastikan kolom: <strong>TANGGAL, TOKO, FAKTUR, METODE BAYAR, JENIS TRANSAKSI, KONSUMEN, JUMLAH JUAL, KETERANGAN</strong></span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <span class="text-green-600 font-bold mt-0.5">✓</span>
+                        <span class="text-green-600 font-bold mt-0.5">âœ“</span>
                         <span>Nomor faktur harus unik (tidak boleh duplikat)</span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <span class="text-green-600 font-bold mt-0.5">✓</span>
+                        <span class="text-green-600 font-bold mt-0.5">âœ“</span>
                         <span>Maksimal upload <strong>1 file</strong></span>
                     </li>
                 </ul>
@@ -480,7 +480,7 @@ function openUploadExcelModal() {
             
             if (missingCols.length === 0) {
                 const totalRows = allRows.length - 1; // exclude header
-                showFormatNotice(true, `Format ✅ Valid - ${totalRows} baris data ditemukan`);
+                showFormatNotice(true, `Format âœ… Valid - ${totalRows} baris data ditemukan`);
             } else {
                 console.log('[Excel Debug] Missing columns:', missingCols);
                 showFormatNotice(false, `Kolom tidak lengkap: ${missingCols.join(', ')}`);
@@ -500,16 +500,16 @@ function openUploadExcelModal() {
 
         if (isValid) {
             icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-green-100 text-green-600';
-            icon.innerHTML = '✓';
+            icon.innerHTML = 'âœ“';
             statusMsg.className = 'text-sm font-bold text-green-700';
-            statusMsg.textContent = '✅ Format Valid';
+            statusMsg.textContent = 'âœ… Format Valid';
             details.textContent = message;
             notice.className = 'p-4 rounded-xl border-2 border-green-200 bg-green-50';
         } else {
             icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-red-100 text-red-600';
-            icon.innerHTML = '✕';
+            icon.innerHTML = 'âœ•';
             statusMsg.className = 'text-sm font-bold text-red-700';
-            statusMsg.textContent = '❌ Format Tidak Valid';
+            statusMsg.textContent = 'âŒ Format Tidak Valid';
             details.textContent = message;
             notice.className = 'p-4 rounded-xl border-2 border-red-200 bg-red-50';
             uploadBtn.disabled = true;
@@ -528,13 +528,13 @@ function openUploadExcelModal() {
         const hasValidFormat = validFormats.some(fmt => fileName.endsWith(fmt));
 
         if (!hasValidFormat) {
-            alert('❌ File harus berformat .xls atau .xlsx');
+            alert('âŒ File harus berformat .xls atau .xlsx');
             return;
         }
 
         // Validate file size (max 10MB)
         if (selectedFile.size > 10 * 1024 * 1024) {
-            alert('❌ Ukuran file maksimal 10MB');
+            alert('âŒ Ukuran file maksimal 10MB');
             return;
         }
 
@@ -560,7 +560,7 @@ function openUploadExcelModal() {
             }
 
             // Success
-            alert(`✅ Upload Sukses!\n\nFile: ${selectedFile.name}\nTotal: ${result.summary.totalRows} baris\nProses: ${result.summary.processedRows} invoice dibuat`);
+            alert(`âœ… Upload Sukses!\n\nFile: ${selectedFile.name}\nTotal: ${result.summary.totalRows} baris\nProses: ${result.summary.processedRows} invoice dibuat`);
             
             // Close modal
             modal.remove();
@@ -571,7 +571,7 @@ function openUploadExcelModal() {
 
         } catch (error) {
             console.error('Upload error:', error);
-            alert(`❌ Upload Gagal\n\n${error.message}`);
+            alert(`âŒ Upload Gagal\n\n${error.message}`);
             uploadBtn.disabled = false;
             uploadBtn.textContent = 'Upload';
         }
@@ -608,7 +608,7 @@ async function uploadBulkPDFs() {
         }
 
         if (invalidFiles.length > 0) {
-            alert(`❌ File tidak valid:\n${invalidFiles.join('\n')}`);
+            alert(`âŒ File tidak valid:\n${invalidFiles.join('\n')}`);
             return;
         }
 
@@ -652,7 +652,7 @@ async function uploadBulkPDFs() {
                     }
 
                     successCount++;
-                    console.log(`✅ Uploaded: ${faktur}`);
+                    console.log(`âœ… Uploaded: ${faktur}`);
 
                 } catch (error) {
                     failureCount++;
@@ -660,7 +660,7 @@ async function uploadBulkPDFs() {
                         name: file.name,
                         error: error.message
                     });
-                    console.error(`❌ Failed: ${file.name} - ${error.message}`);
+                    console.error(`âŒ Failed: ${file.name} - ${error.message}`);
                 }
 
                 // Small delay between uploads to avoid overload
@@ -668,7 +668,7 @@ async function uploadBulkPDFs() {
             }
 
             // Show summary
-            let summary = `✅ Bulk Upload Complete\n\nBerhasil: ${successCount}\nGagal: ${failureCount}`;
+            let summary = `âœ… Bulk Upload Complete\n\nBerhasil: ${successCount}\nGagal: ${failureCount}`;
             if (failedFiles.length > 0) {
                 summary += `\n\nGagal:\n${failedFiles.map(f => `- ${f.name}: ${f.error}`).join('\n')}`;
             }
@@ -680,7 +680,7 @@ async function uploadBulkPDFs() {
 
         } catch (error) {
             console.error('Bulk upload error:', error);
-            alert(`❌ Error: ${error.message}`);
+            alert(`âŒ Error: ${error.message}`);
         } finally {
             hideLoading();
         }
@@ -857,7 +857,7 @@ window.uploadExcelFile = async function() {
     
     if (!uploadBtn) {
         console.error('[Invoice] Upload button not found');
-        alert('❌ Error: Upload button not found');
+        alert('âŒ Error: Upload button not found');
         return;
     }
     
@@ -900,7 +900,7 @@ window.uploadExcelFile = async function() {
 
         const result = await response.json();
         console.log('[Upload] Success:', result);
-        alert(`✅ Upload Berhasil!\n\n${result.message || 'File Excel berhasil diproses'}`);
+        alert(`âœ… Upload Berhasil!\n\n${result.message || 'File Excel berhasil diproses'}`);
         
         closeUploadExcelModal();
         await loadStats();
@@ -908,7 +908,7 @@ window.uploadExcelFile = async function() {
 
     } catch (error) {
         console.error('[Upload] Error:', error);
-        alert(`❌ Error: ${error.message}`);
+        alert(`âŒ Error: ${error.message}`);
     } finally {
         uploadBtn.disabled = false;
         uploadBtn.textContent = originalText;
@@ -924,7 +924,7 @@ async function validateExcelFormat(file) {
         // since XLSX library has trouble reading old Excel 97-2003 format
         if (file.name.toLowerCase().endsWith('.xls')) {
             console.log('[Excel] Detected .xls format - skipping deep validation');
-            showFormatNotice(true, `Format ✅ Siap Upload - File: ${file.name}`);
+            showFormatNotice(true, `Format âœ… Siap Upload - File: ${file.name}`);
             return;
         }
         
@@ -961,7 +961,7 @@ async function validateExcelFormat(file) {
             if (rows && rows.length > 1) {
                 allRows = rows;
                 usedSheet = sheetName;
-                console.log(`[Excel] ✅ Found data in sheet: ${sheetName}`);
+                console.log(`[Excel] âœ… Found data in sheet: ${sheetName}`);
                 break;
             }
             
@@ -975,7 +975,7 @@ async function validateExcelFormat(file) {
                     allRows.push(line.split(',').map(c => c.trim()));
                 }
                 usedSheet = sheetName;
-                console.log(`[Excel] ✅ Found data in sheet (CSV): ${sheetName}`);
+                console.log(`[Excel] âœ… Found data in sheet (CSV): ${sheetName}`);
                 break;
             }
         }
@@ -1027,17 +1027,17 @@ async function validateExcelFormat(file) {
         
         if (missingCols.length === 0) {
             const totalRows = allRows.length - 1;
-            console.log('[Excel] ✅ All columns found!');
-            showFormatNotice(true, `Format ✅ Valid - ${totalRows} baris data ditemukan`);
+            console.log('[Excel] âœ… All columns found!');
+            showFormatNotice(true, `Format âœ… Valid - ${totalRows} baris data ditemukan`);
         } else {
-            console.log('[Excel] ❌ Missing columns:', missingCols);
+            console.log('[Excel] âŒ Missing columns:', missingCols);
             showFormatNotice(false, `Kolom tidak lengkap: ${missingCols.join(', ')}\n\nKolom yang tersedia: ${normalizedHeaders.join(', ')}`);
         }
     } catch (error) {
         console.error('Format validation error:', error);
         // For any parsing error, allow upload anyway
         console.log('[Excel] Validation error, allowing upload anyway');
-        showFormatNotice(true, `Format ✅ Siap Upload (Validasi Detail Dilewati)`);
+        showFormatNotice(true, `Format âœ… Siap Upload (Validasi Detail Dilewati)`);
     }
 }
 
@@ -1056,9 +1056,9 @@ function showFormatNotice(isValid, message) {
 
     if (isValid) {
         icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-green-100 text-green-600';
-        icon.innerHTML = '✓';
+        icon.innerHTML = 'âœ“';
         statusMsg.className = 'text-sm font-bold text-green-700';
-        statusMsg.textContent = '✅ Format Valid';
+        statusMsg.textContent = 'âœ… Format Valid';
         details.textContent = message;
         notice.className = 'p-4 rounded-xl border-2 border-green-200 bg-green-50 flex items-start gap-3';
         notice.classList.remove('hidden');
@@ -1069,9 +1069,9 @@ function showFormatNotice(isValid, message) {
         }
     } else {
         icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-red-100 text-red-600';
-        icon.innerHTML = '✕';
+        icon.innerHTML = 'âœ•';
         statusMsg.className = 'text-sm font-bold text-red-700';
-        statusMsg.textContent = '❌ Format Tidak Valid';
+        statusMsg.textContent = 'âŒ Format Tidak Valid';
         details.textContent = message;
         notice.className = 'p-4 rounded-xl border-2 border-red-200 bg-red-50 flex items-start gap-3';
         notice.classList.remove('hidden');

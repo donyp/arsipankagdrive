@@ -91,6 +91,128 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     });
     
     // ============================================
+    // POST /api/invoice/upload-excel-data
+    // Upload pre-parsed Excel data (from frontend validation)
+    // ============================================
+    app.post('/api/invoice/upload-excel-data',
+        auth(['super_admin', 'moderator', 'user']),
+        async (req, res) => {
+            try {
+                const { filename, data, summary } = req.body;
+                
+                console.log(`[Invoice API] Excel data upload by ${req.user?.name}: ${filename}`);
+                console.log(`[Invoice API] Received ${data?.length || 0} pre-parsed rows`);
+                
+                if (!data || !Array.isArray(data) || data.length === 0) {
+                    return res.status(400).json({ 
+                        error: 'No data provided',
+                        details: 'Data array is empty or invalid'
+                    });
+                }
+                
+                // Data is already validated by frontend, just store it
+                const batchId = uuidv4();
+                const { data: batch, error: batchError } = await supabase
+                    .from('excel_upload_batches')
+                    .insert({
+                        id: batchId,
+                        filename: filename,
+                        total_rows: data.length,
+                        processed_rows: 0,
+                        failed_rows: 0,
+                        duplicate_rows: 0,
+                        uploaded_by: req.user.id,
+                        status: 'processing'
+                    })
+                    .select()
+                    .single();
+                
+                if (batchError) {
+                    console.error('[Invoice API] Error creating batch:', batchError);
+                    return res.status(500).json({ error: 'Failed to create batch record' });
+                }
+                
+                // Insert invoice records
+                let processedCount = 0;
+                let duplicateCount = 0;
+                let failedCount = 0;
+                const errors = [];
+                
+                for (const item of data) {
+                    try {
+                        // Check if faktur already exists
+                        const { data: existing } = await supabase
+                            .from('invoice_file_list')
+                            .select('id')
+                            .eq('faktur', item.faktur)
+                            .single();
+                        
+                        if (existing) {
+                            duplicateCount++;
+                            continue;
+                        }
+                        
+                        // Insert invoice
+                        const { error: insertError } = await supabase
+                            .from('invoice_file_list')
+                            .insert({
+                                tanggal: item.tanggal,
+                                toko: item.toko,
+                                faktur: item.faktur,
+                                metode_bayar: item.metode_bayar,
+                                jenis_transaksi: item.jenis_transaksi,
+                                konsumen: item.konsumen,
+                                keterangan: item.keterangan,
+                                total_jumlah_jual: item.total_jumlah_jual,
+                                item_count: item.item_count,
+                                status: 'PENDING',
+                                excel_batch_id: batchId,
+                                excel_uploaded_at: new Date().toISOString(),
+                                excel_uploaded_by: req.user.id
+                            });
+                        
+                        if (insertError) {
+                            failedCount++;
+                            errors.push(`${item.faktur}: ${insertError.message}`);
+                        } else {
+                            processedCount++;
+                        }
+                    } catch (err) {
+                        failedCount++;
+                        errors.push(`${item.faktur}: ${err.message}`);
+                    }
+                }
+                
+                // Update batch
+                await supabase
+                    .from('excel_upload_batches')
+                    .update({
+                        processed_rows: processedCount,
+                        failed_rows: failedCount,
+                        duplicate_rows: duplicateCount,
+                        status: failedCount > 0 ? 'completed_with_errors' : 'completed'
+                    })
+                    .eq('id', batchId);
+                
+                res.json({
+                    success: true,
+                    batchId,
+                    summary: {
+                        totalReceived: data.length,
+                        processed: processedCount,
+                        duplicates: duplicateCount,
+                        failed: failedCount
+                    }
+                });
+                
+            } catch (error) {
+                console.error('[Invoice API] Upload data error:', error);
+                res.status(500).json({ error: 'Server error', details: error.message });
+            }
+        }
+    );
+
+    // ============================================
     // POST /api/invoice/upload-excel
     // Upload and parse Excel file (REKAP_LABA.xls)
     // ============================================
