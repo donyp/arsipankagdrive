@@ -174,10 +174,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Dashboard] Starting dashboard initialization...');
     setCurrentDate();
     await loadZonas();
-    populateFilters();
-    console.log('[Dashboard] About to load archives...');
-    await loadArchives();
-    console.log('[Dashboard] Archives loaded, loading notifications...');
+    
+    // NEW DASHBOARD: Skip populateFilters and loadArchives - only load stats
+    console.log('[Dashboard] Loading stats only...');
+    // populateFilters(); // DISABLED
+    // await loadArchives(); // DISABLED
+    
+    console.log('[Dashboard] Loading notifications...');
     loadNotifications();
     // await loadBroadcast(); // Removed: now handled globally by sidebar.js
 
@@ -187,27 +190,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (hasPermission('view_dashboard_stats')) {
         document.getElementById('admin-controls')?.classList.remove('hidden');
     }
-    // Admin controls only for super admin / moderator
+    // Admin controls: Show stats grid for all users
+    if (user.role) {
+        document.getElementById('stats-grid')?.classList.remove('hidden');
+    }
+    
+    // Maintenance/Broadcast buttons only for admins
     if (hasPermission('manage_system') || user.role === 'moderator' || user.role === 'super_admin') {
         document.getElementById('maintenance-btn')?.classList.replace('hidden', 'md:flex');
         document.getElementById('btn-manage-broadcast')?.classList.remove('hidden');
-        document.getElementById('stats-grid')?.classList.remove('hidden');
-
         loadMaintenanceStatus();
     } else {
-        // Explicitly remove restricted elements for Admin Zona
+        // Explicitly remove restricted elements for other roles
         document.getElementById('maintenance-btn')?.remove();
         document.getElementById('btn-manage-broadcast')?.remove();
-        document.getElementById('stats-grid')?.remove();
     }
 
     // Check for Post-Maintenance Update Notice (Run for ALL users)
     await initUpdateHistoryNotification();
 
-    // Search Visibility Logic
-    if (user.role === 'super_admin') {
-        // Super admins keep header search, hide dashboard search
-        document.getElementById('header-search-container')?.classList.remove('hidden');
+    // NEW DASHBOARD: Hide search since we removed archive list
+    document.getElementById('header-search-container')?.classList.add('hidden');
+    document.getElementById('dashboard-search-container')?.classList.add('hidden');
         document.getElementById('dashboard-search-container')?.classList.add('hidden');
     } else {
         // Moderator and Admin Zona get large dashboard search, hide header search
