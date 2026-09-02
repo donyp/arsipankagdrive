@@ -172,11 +172,7 @@ window.uploadExcelFile = async function() {
     const fileInput = document.getElementById('excelFileInput');
     const uploadBtn = document.getElementById('uploadBtn');
     
-    console.log('[Upload] fileInput:', fileInput ? 'found' : 'NOT FOUND');
-    console.log('[Upload] uploadBtn:', uploadBtn ? 'found' : 'NOT FOUND');
-    
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        console.warn('[Upload] No file selected');
         alert('Pilih file terlebih dahulu');
         return;
     }
@@ -186,52 +182,80 @@ window.uploadExcelFile = async function() {
     
     const originalText = uploadBtn.textContent;
     uploadBtn.disabled = true;
-    uploadBtn.textContent = 'Uploading...';
+    uploadBtn.textContent = 'Parsing...';
 
     try {
-        const formData = new FormData();
-        formData.append('excel', file);
-
-        // Get token - use API.getToken() like the rest of the app does
+        // Parse Excel in browser first
+        console.log('[Upload] Reading file...');
+        const arrayBuffer = await file.arrayBuffer();
+        
+        console.log('[Upload] Parsing Excel with XLSX...');
+        const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+        
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const rawData = XLSX.utils.sheet_to_json(worksheet, { defval: null, blankrows: false });
+        
+        console.log('[Upload] Parsed', rawData.length, 'rows');
+        
+        if (rawData.length === 0) {
+            alert('❌ File Excel kosong atau format tidak valid');
+            return;
+        }
+        
+        // Transform data to match backend expectation
+        const invoices = rawData.map(row => ({
+            tanggal: row['TANGGAL'] || row['tanggal'],
+            toko: row['TOKO'] || row['toko'],
+            faktur: row['FAKTUR'] || row['faktur'],
+            metode_bayar: row['METODE BAYAR'] || row['metode_bayar'],
+            jenis_transaksi: row['JENIS TRANSAKSI'] || row['jenis_transaksi'],
+            konsumen: row['KONSUMEN'] || row['konsumen'],
+            total_jumlah_jual: parseFloat(row['JUMLAH JUAL'] || row['jumlah_jual'] || 0),
+            keterangan: row['KET 2'] || row['ket_2'] || 'NON PPN'
+        })).filter(inv => inv.faktur); // Remove rows without faktur
+        
+        console.log('[Upload] Processed', invoices.length, 'valid invoices');
+        
+        uploadBtn.textContent = 'Uploading...';
+        
+        // Get token
         const token = API.getToken() || localStorage.getItem('jwt_token');
-        console.log('[Upload] Token present:', !!token, 'length:', token?.length);
-
-        const headers = {};
+        
+        const headers = { 'Content-Type': 'application/json' };
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
-            console.log('[Upload] Adding Authorization header');
         }
 
-        console.log('[Upload] Posting to /api/invoice/upload-excel');
-        const response = await fetch('/api/invoice/upload-excel', {
+        console.log('[Upload] Posting JSON to /api/invoice/upload-excel-data');
+        const response = await fetch('/api/invoice/upload-excel-data', {
             method: 'POST',
-            body: formData,
-            headers: headers
+            headers: headers,
+            body: JSON.stringify({
+                filename: file.name,
+                data: invoices
+            })
         });
 
-        console.log('[Upload] Response received. Status:', response.status, response.statusText);
-        console.log('[Upload] Response content-type:', response.headers.get('content-type'));
+        console.log('[Upload] Response:', response.status);
         
-        // Get response text first
         const responseText = await response.text();
-        console.log('[Upload] Response text (first 200 chars):', responseText.substring(0, 200));
-        
         let result;
         try {
             result = JSON.parse(responseText);
         } catch (parseErr) {
             console.error('[Upload] JSON parse error:', parseErr.message);
-            console.error('[Upload] Full response:', responseText);
-            return alert('❌ Error: Server returned invalid response\n\nResponse:\n' + responseText.substring(0, 500));
+            return alert('❌ Error: Server returned invalid response');
         }
 
-        console.log('[Upload] Parsed result:', result);
-
         if (response.ok && result.success) {
-            const msg = 'Upload successful!\nProcessed: ' + (result.summary?.processed || 0) + ' invoices';
+            const msg = 'Processed: ' + (result.summary?.processed || 0) + ' invoices\n' +
+                        'Duplicates: ' + (result.summary?.duplicates || 0);
             console.log('[Upload] SUCCESS');
             alert('✅ Upload Berhasil!\n' + msg);
             window.closeUploadExcelModal();
+            // Reload page to show new data
+            location.reload();
         } else {
             const errMsg = result.error || 'Upload failed';
             console.log('[Upload] FAILED:', errMsg);
@@ -243,7 +267,6 @@ window.uploadExcelFile = async function() {
     } finally {
         uploadBtn.disabled = false;
         uploadBtn.textContent = originalText;
-        console.log('[Upload] Done');
     }
 };
 
