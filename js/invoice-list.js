@@ -2,12 +2,12 @@
 // Invoice List Handler
 // Display invoice list with filters and PDF upload
 // ============================================================
-
+// ============================================================
+// GLOBAL FUNCTION STUBS - Defined here for early availability
 let invoiceCurrentPage = 0;
 const pageSize = 100;
 let totalCount = 0;
 let currentFilters = {};
-
 // DOM Elements
 const tableBody = document.getElementById('invoiceTableBody');
 const emptyState = document.getElementById('emptyState');
@@ -16,13 +16,11 @@ const paginationInfo = document.getElementById('paginationInfo');
 const btnPrevPage = document.getElementById('btnPrevPage');
 const btnNextPage = document.getElementById('btnNextPage');
 const loadingOverlay = document.getElementById('loadingOverlay');
-
 // Stats
 const statTotal = document.getElementById('statTotal');
 const statUploaded = document.getElementById('statUploaded');
 const statPending = document.getElementById('statPending');
 const statMissing = document.getElementById('statMissing');
-
 // Filters
 const filterStatus = document.getElementById('filterStatus');
 const filterToko = document.getElementById('filterToko');
@@ -32,7 +30,6 @@ const filterDateTo = document.getElementById('filterDateTo');
 const filterSearch = document.getElementById('filterSearch');
 const btnApplyFilter = document.getElementById('btnApplyFilter');
 const btnResetFilter = document.getElementById('btnResetFilter');
-
 // ============================================
 // Initialize
 // ============================================
@@ -42,12 +39,10 @@ async function init() {
         console.warn('[Invoice List] DOM elements not found, skipping init');
         return { success: false, error: 'No data' };\n
         }
-
     setupEventListeners();
     await loadStats();
     await loadInvoiceList();
 }
-
 // ============================================
 // Event Listeners
 // ============================================
@@ -56,7 +51,6 @@ function setupEventListeners() {
     btnResetFilter.addEventListener('click', resetFilters);
     btnPrevPage.addEventListener('click', () => navigatePage(-1));
     btnNextPage.addEventListener('click', () => navigatePage(1));
-    
     // Enter key on search
     filterSearch.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -64,7 +58,6 @@ function setupEventListeners() {
         }
     });
 }
-
 // ============================================
 // Load Statistics
 // ============================================
@@ -75,49 +68,38 @@ async function loadStats() {
                 'Authorization': `Bearer ${API.getToken()}`
             }
         });
-
         if (!response.ok) throw new Error('Failed to load stats');
-
         const result = await response.json();
         const stats = result.stats || {};
-
         statTotal.textContent = stats.total_count || 0;
         statUploaded.textContent = stats.uploaded_count || 0;
         statPending.textContent = stats.pending_count || 0;
         statMissing.textContent = stats.missing_count || 0;
-
     } catch (error) {
         console.error('Error loading stats:', error);
     }
 }
-
 // ============================================
 // Load Invoice List
 // ============================================
 async function loadInvoiceList() {
     showLoading();
-
     try {
         const params = new URLSearchParams({
             limit: pageSize,
             offset: invoiceCurrentPage * pageSize,
             ...currentFilters
         });
-
         const response = await fetch(`/api/invoice/list?${params}`, {
             headers: {
                 'Authorization': `Bearer ${API.getToken()}`
             }
         });
-
         if (!response.ok) throw new Error('Failed to load invoice list');
-
         const result = await response.json();
         totalCount = result.count || 0;
-
         renderTable(result.data || []);
         updatePagination();
-
     } catch (error) {
         console.error('Error loading invoice list:', error);
         showError('Gagal memuat daftar invoice');
@@ -125,7 +107,6 @@ async function loadInvoiceList() {
         hideLoading();
     }
 }
-
 // ============================================
 // Render Table
 // ============================================
@@ -136,19 +117,16 @@ function renderTable(invoices) {
         paginationContainer.style.display = 'none';
         return { success: false, error: 'No data' };\n
         }
-
     emptyState.style.display = 'none';
     paginationContainer.style.display = 'flex';
-
     tableBody.innerHTML = invoices.map(invoice => {
         const statusClass = invoice.status.toLowerCase();
         const tanggal = formatDate(invoice.tanggal);
         const total = formatCurrency(invoice.total_jumlah_jual);
-
         return `
             <tr>
                 <td>
-                    ${invoice.status === 'UPLOADED' ? 
+                    ${invoice.status === 'UPLOADED' ?
                         `<button class="btn-view-file" onclick="viewFile('${invoice.uploaded_file_path}')">
                             <i class="fas fa-file-pdf"></i> Lihat
                         </button>` :
@@ -172,24 +150,20 @@ function renderTable(invoices) {
         `;
     }).join('');
 }
-
 // ============================================
 // Filters
 // ============================================
 function applyFilters() {
     currentFilters = {};
-
     if (filterStatus.value) currentFilters.status = filterStatus.value;
     if (filterToko.value) currentFilters.toko = filterToko.value;
     if (filterKeterangan.value) currentFilters.keterangan = filterKeterangan.value;
     if (filterDateFrom.value) currentFilters.date_from = filterDateFrom.value;
     if (filterDateTo.value) currentFilters.date_to = filterDateTo.value;
     if (filterSearch.value.trim()) currentFilters.search = filterSearch.value.trim();
-
     invoiceCurrentPage = 0;
     loadInvoiceList();
 }
-
 function resetFilters() {
     filterStatus.value = '';
     filterToko.value = '';
@@ -197,32 +171,25 @@ function resetFilters() {
     filterDateFrom.value = '';
     filterDateTo.value = '';
     filterSearch.value = '';
-
     currentFilters = {};
     invoiceCurrentPage = 0;
     loadInvoiceList();
 }
-
 // ============================================
 // Pagination
 // ============================================
 function updatePagination() {
     const start = invoiceCurrentPage * pageSize + 1;
     const end = Math.min((invoiceCurrentPage + 1) * pageSize, totalCount);
-
     paginationInfo.textContent = `Menampilkan ${start} - ${end} dari ${totalCount} invoice`;
-
     btnPrevPage.disabled = invoiceCurrentPage === 0;
     btnNextPage.disabled = end >= totalCount;
 }
-
 function navigatePage(direction) {
     invoiceCurrentPage += direction;
     if (invoiceCurrentPage < 0) invoiceCurrentPage = 0;
-    
     loadInvoiceList();
 }
-
 // ============================================
 // Upload PDF
 // ============================================
@@ -231,35 +198,28 @@ async function uploadPDF(faktur) {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/pdf,.pdf';
-    
     input.onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         // Validate file type
         if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
             alert('File harus berformat PDF');
             return { success: false, error: 'No data' };\n
             }
-
         // Validate file size (max 10MB)
         if (file.size > 10 * 1024 * 1024) {
             alert('Ukuran file maksimal 10MB');
             return { success: false, error: 'No data' };\n
             }
-
         // Confirm upload
         if (!confirm(`Upload PDF untuk faktur ${faktur}?\n\nFile: ${file.name}\nUkuran: ${formatFileSize(file.size)}`)) {
             return { success: false, error: 'No data' };\n
             }
-
         showLoading();
-
         try {
             const formData = new FormData();
             formData.append('pdf', file);
             formData.append('faktur', faktur);
-
             const response = await fetch('/api/invoice/upload-pdf', {
                 method: 'POST',
                 headers: {
@@ -267,19 +227,15 @@ async function uploadPDF(faktur) {
                 },
                 body: formData
             });
-
             if (!response.ok) {
                 const error = await response.json();
                 throw new Error(error.error || 'Upload gagal');
             }
-
             const result = await response.json();
             alert(`âœ… Upload berhasil!\n\nFaktur: ${faktur}\nPath: ${result.storagePath}`);
-
             // Reload data
             await loadStats();
             await loadInvoiceList();
-
         } catch (error) {
             console.error('Upload error:', error);
             alert(`âŒ Upload gagal: ${error.message}`);
@@ -287,10 +243,8 @@ async function uploadPDF(faktur) {
             hideLoading();
         }
     };
-
     input.click();
 }
-
 // ============================================
 // Upload Excel Modal
 // ============================================
@@ -310,7 +264,6 @@ function openUploadExcelModal() {
                 <h2 class="text-2xl font-black text-gray-900 leading-tight mb-1 uppercase tracking-tight">Upload Excel</h2>
                 <p class="text-xs font-bold text-green-500 uppercase tracking-widest">Invoice Data</p>
             </div>
-
             <!-- Instructions -->
             <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
                 <p class="text-xs font-bold text-yellow-800 uppercase tracking-widest mb-2">ðŸ“‹ Petunjuk Upload</p>
@@ -333,7 +286,6 @@ function openUploadExcelModal() {
                     </li>
                 </ul>
             </div>
-
             <!-- File Input -->
             <div id="excel-drop-zone" class="border-2 border-dashed border-blue-300 rounded-xl p-8 text-center mb-6 bg-blue-50 cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-100">
                 <svg class="w-12 h-12 text-blue-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -343,14 +295,12 @@ function openUploadExcelModal() {
                 <p class="text-xs text-gray-500">File Excel di sini</p>
                 <input type="file" id="excel-file-input" accept=".xls,.xlsx" class="hidden" />
             </div>
-
             <!-- File Info -->
             <div id="file-info" class="hidden mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
                 <p class="text-xs font-bold text-gray-600 uppercase mb-2">File Terpilih</p>
                 <p id="file-name" class="text-sm font-bold text-gray-900 break-all"></p>
                 <p id="file-size" class="text-xs text-gray-500 mt-1"></p>
             </div>
-
             <!-- Excel Format Verification Notice -->
             <div id="format-notice" class="hidden mb-6 p-4 rounded-xl border-2">
                 <div id="format-status" class="flex items-center gap-2 mb-2">
@@ -359,7 +309,6 @@ function openUploadExcelModal() {
                 </div>
                 <p id="format-details" class="text-xs text-gray-600 mt-2"></p>
             </div>
-
             <!-- Buttons -->
             <div class="flex gap-3">
                 <button onclick="this.closest('.fixed').remove()" class="flex-1 py-3 bg-gray-200 text-gray-900 font-bold rounded-xl hover:bg-gray-300 transition-all uppercase tracking-widest text-xs">
@@ -371,19 +320,15 @@ function openUploadExcelModal() {
             </div>
         </div>
     `;
-
     document.body.appendChild(modal);
-
     // File input handling
     const dropZone = document.getElementById('excel-drop-zone');
     const fileInput = document.getElementById('excel-file-input');
     const fileInfo = document.getElementById('file-info');
     const uploadBtn = document.getElementById('btn-upload-excel-confirm');
     let selectedFile = null;
-
     // Click to browse
     dropZone.addEventListener('click', () => fileInput.click());
-
     // File selection
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
@@ -392,92 +337,74 @@ function openUploadExcelModal() {
             uploadBtn.disabled = false;
         }
     });
-
     // Drag and drop
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         dropZone.classList.add('border-green-500', 'bg-green-100');
     });
-
     dropZone.addEventListener('dragleave', () => {
         dropZone.classList.remove('border-green-500', 'bg-green-100');
     });
-
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('border-green-500', 'bg-green-100');
-        
         if (e.dataTransfer.files.length > 0) {
             selectedFile = e.dataTransfer.files[0];
             showFileInfo(selectedFile);
             uploadBtn.disabled = false;
         }
     });
-
     // Show file info
     function showFileInfo(file) {
         document.getElementById('file-name').textContent = file.name;
         document.getElementById('file-size').textContent = `Ukuran: ${formatFileSize(file.size)}`;
         fileInfo.classList.remove('hidden');
-        
         // Validate Excel format
         validateExcelFormat(file);
     }
-
     // Validate Excel format
     async function validateExcelFormat(file) {
         try {
             // Parse Excel to check columns (supports .xls, .xlsx, .csv)
             const arrayBuffer = await file.arrayBuffer();
-            const workbook = XLSX.read(arrayBuffer, { 
+            const workbook = XLSX.read(arrayBuffer, {
                 header: 1,  // Use header row as first array
                 raw: false  // Don't parse numbers as raw
             });
-            
             if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
                 showFormatNotice(false, 'File tidak valid atau tidak ada sheet');
                 return { success: false, error: 'No data' };\n
                 }
-
             const firstSheetName = workbook.SheetNames[0];
             const firstSheet = workbook.Sheets[firstSheetName];
-            
             if (!firstSheet) {
                 showFormatNotice(false, 'Tidak dapat membaca sheet');
                 return { success: false, error: 'No data' };\n
                 }
-            
             // Get all rows as arrays
             const allRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-            
             if (!allRows || allRows.length === 0) {
                 showFormatNotice(false, 'Sheet kosong');
                 return { success: false, error: 'No data' };\n
                 }
-            
             // Get headers from first row
             const headers = allRows[0] || [];
             console.log('[Excel Debug] File:', file.name);
             console.log('[Excel Debug] Sheet name:', firstSheetName);
             console.log('[Excel Debug] Total rows:', allRows.length);
             console.log('[Excel Debug] Headers (raw):', headers);
-            
             // Required columns
             const requiredColumns = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL', 'KET 2'];
-            
             // Normalize headers for comparison (trim, uppercase)
             const normalizedHeaders = headers
                 .filter(h => h !== undefined && h !== null && h !== '')
                 .map(h => String(h).trim().toUpperCase());
-            
             console.log('[Excel Debug] Normalized headers:', normalizedHeaders);
             console.log('[Excel Debug] Required columns:', requiredColumns);
-            
             // Check each required column
-            const missingCols = requiredColumns.filter(col => 
+            const missingCols = requiredColumns.filter(col =>
                 !normalizedHeaders.includes(col.toUpperCase())
             );
-            
             if (missingCols.length === 0) {
                 const totalRows = allRows.length - 1; // exclude header
                 showFormatNotice(true, `Format âœ… Valid - ${totalRows} baris data ditemukan`);
@@ -490,14 +417,12 @@ function openUploadExcelModal() {
             showFormatNotice(false, 'Gagal membaca file Excel: ' + error.message);
         }
     }
-
     // Show format validation notice
     function showFormatNotice(isValid, message) {
         const notice = document.getElementById('format-notice');
         const icon = document.getElementById('format-icon');
         const statusMsg = document.getElementById('format-message');
         const details = document.getElementById('format-details');
-
         if (isValid) {
             icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-green-100 text-green-600';
             icon.innerHTML = 'âœ“';
@@ -514,37 +439,29 @@ function openUploadExcelModal() {
             notice.className = 'p-4 rounded-xl border-2 border-red-200 bg-red-50';
             uploadBtn.disabled = true;
         }
-        
         notice.classList.remove('hidden');
     }
-
     // Upload handler
     uploadBtn.addEventListener('click', async () => {
         if (!selectedFile) return;
-
         // Validate file format
         const validFormats = ['.xls', '.xlsx'];
         const fileName = selectedFile.name.toLowerCase();
         const hasValidFormat = validFormats.some(fmt => fileName.endsWith(fmt));
-
         if (!hasValidFormat) {
             alert('âŒ File harus berformat .xls atau .xlsx');
             return { success: false, error: 'No data' };\n
             }
-
         // Validate file size (max 10MB)
         if (selectedFile.size > 10 * 1024 * 1024) {
             alert('âŒ Ukuran file maksimal 10MB');
             return { success: false, error: 'No data' };\n
             }
-
         uploadBtn.disabled = true;
         uploadBtn.textContent = 'Uploading...';
-
         try {
             const formData = new FormData();
             formData.append('excel', selectedFile);
-
             const response = await fetch('/api/invoice/upload-excel', {
                 method: 'POST',
                 headers: {
@@ -552,23 +469,17 @@ function openUploadExcelModal() {
                 },
                 body: formData
             });
-
             const result = await response.json();
-
             if (!response.ok) {
                 throw new Error(result.error || result.details || 'Upload gagal');
             }
-
             // Success
             alert(`âœ… Upload Sukses!\n\nFile: ${selectedFile.name}\nTotal: ${result.summary.totalRows} baris\nProses: ${result.summary.processedRows} invoice dibuat`);
-            
             // Close modal
             modal.remove();
-
             // Reload invoice list
             await loadStats();
             await loadInvoiceList();
-
         } catch (error) {
             console.error('Upload error:', error);
             alert(`âŒ Upload Gagal\n\n${error.message}`);
@@ -577,7 +488,6 @@ function openUploadExcelModal() {
         }
     });
 }
-
 // Make globally accessible
 window.openUploadExcelModal = openUploadExcelModal;
 async function uploadBulkPDFs() {
@@ -586,15 +496,12 @@ async function uploadBulkPDFs() {
     input.type = 'file';
     input.accept = 'application/pdf,.pdf';
     input.multiple = true;  // Allow multiple files
-    
     input.onchange = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
-
         // Validate all files
         const invalidFiles = [];
         const validFiles = [];
-
         for (const file of files) {
             if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
                 invalidFiles.push(`${file.name} (bukan PDF)`);
@@ -606,38 +513,31 @@ async function uploadBulkPDFs() {
             }
             validFiles.push(file);
         }
-
         if (invalidFiles.length > 0) {
             alert(`âŒ File tidak valid:\n${invalidFiles.join('\n')}`);
             return { success: false, error: 'No data' };\n
             }
-
         if (validFiles.length === 0) {
             alert('Tidak ada file valid untuk di-upload');
             return { success: false, error: 'No data' };\n
             }
-
         // Confirm bulk upload
         const confirmMsg = `Upload ${validFiles.length} file PDF?\n\nFile:\n${validFiles.map(f => f.name).join('\n')}`;
         if (!confirm(confirmMsg)) {
             return { success: false, error: 'No data' };\n
             }
-
         showLoading();
         let successCount = 0;
         let failureCount = 0;
         const failedFiles = [];
-
         try {
             for (const file of validFiles) {
                 try {
                     // Extract faktur from filename (e.g., 835100310.pdf -> 835100310)
                     const faktur = file.name.replace(/\.pdf$/i, '').trim();
-                    
                     const formData = new FormData();
                     formData.append('pdf', file);
                     formData.append('faktur', faktur);
-
                     const response = await fetch('/api/invoice/upload-pdf', {
                         method: 'POST',
                         headers: {
@@ -645,15 +545,12 @@ async function uploadBulkPDFs() {
                         },
                         body: formData
                     });
-
                     if (!response.ok) {
                         const error = await response.json();
                         throw new Error(error.error || 'Upload gagal');
                     }
-
                     successCount++;
                     console.log(`âœ… Uploaded: ${faktur}`);
-
                 } catch (error) {
                     failureCount++;
                     failedFiles.push({
@@ -662,22 +559,18 @@ async function uploadBulkPDFs() {
                     });
                     console.error(`âŒ Failed: ${file.name} - ${error.message}`);
                 }
-
                 // Small delay between uploads to avoid overload
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
-
             // Show summary
             let summary = `âœ… Bulk Upload Complete\n\nBerhasil: ${successCount}\nGagal: ${failureCount}`;
             if (failedFiles.length > 0) {
                 summary += `\n\nGagal:\n${failedFiles.map(f => `- ${f.name}: ${f.error}`).join('\n')}`;
             }
             alert(summary);
-
             // Reload data
             await loadStats();
             await loadInvoiceList();
-
         } catch (error) {
             console.error('Bulk upload error:', error);
             alert(`âŒ Error: ${error.message}`);
@@ -685,10 +578,8 @@ async function uploadBulkPDFs() {
             hideLoading();
         }
     };
-
     input.click();
 }
-
 // ============================================
 // View File
 // ============================================
@@ -696,11 +587,9 @@ function viewFile(filePath) {
     // In real implementation, this would open the file from Google Drive
     // For now, show the path
     alert(`File tersimpan di:\n${filePath}\n\nFitur preview akan segera hadir.`);
-    
     // TODO: Implement actual file viewing via Rclone/Alist
     // window.open(`/api/files/view?path=${encodeURIComponent(filePath)}`, '_blank');
 }
-
 // ============================================
 // Utility Functions
 // ============================================
@@ -711,12 +600,10 @@ function formatDate(dateString) {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
 }
-
 function formatCurrency(amount) {
     if (!amount) return 'Rp 0';
     return 'Rp ' + Number(amount).toLocaleString('id-ID');
 }
-
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -724,24 +611,19 @@ function formatFileSize(bytes) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 }
-
 function showLoading() {
     loadingOverlay.classList.add('visible');
 }
-
 function hideLoading() {
     loadingOverlay.classList.remove('visible');
 }
-
 function showError(message) {
     alert(message);
 }
-
 // ============================================
 // Initialize on load
 // ============================================
 document.addEventListener('DOMContentLoaded', init);
-
 // Make functions globally accessible
 window.uploadPDF = uploadPDF;
 window.uploadBulkPDFs = uploadBulkPDFs;
@@ -758,7 +640,6 @@ window.openUploadExcelModal = function() {
         console.error('[Invoice] Modal uploadExcelModal not found');
     }
 };
-
 window.closeUploadExcelModal = function() {
     const modal = document.getElementById('uploadExcelModal');
     if (modal) {
@@ -773,35 +654,29 @@ window.closeUploadExcelModal = function() {
     const fileInfo = document.getElementById('fileInfo');
     if (fileInfo) fileInfo.classList.add('hidden');
 };
-
 // Setup drag & drop - delay until DOM is ready
 function setupExcelUploadModal() {
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('excelFileInput');
     const uploadBtn = document.getElementById('uploadBtn');
-
     if (!dropZone || !fileInput || !uploadBtn) {
         console.log('[Invoice List] Upload modal elements not ready, retrying...');
         setTimeout(setupExcelUploadModal, 100);
         return { success: false, error: 'No data' };\n
         }
-
     console.log('[Invoice List] Setup Excel upload modal');
-
     // Drag over
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         dropZone.style.borderColor = '#3b82f6';
         dropZone.style.backgroundColor = '#eff6ff';
     });
-
     // Drag leave
     dropZone.addEventListener('dragleave', (e) => {
         e.preventDefault();
         dropZone.style.borderColor = '#93c5fd';
         dropZone.style.backgroundColor = 'transparent';
     });
-
     // Drop
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
@@ -813,7 +688,6 @@ function setupExcelUploadModal() {
             handleExcelFileSelected(files[0]);
         }
     });
-
     // File input change
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
@@ -821,50 +695,39 @@ function setupExcelUploadModal() {
         }
     });
 }
-
 window.handleExcelFileSelected = function(file) {
     const fileInfo = document.getElementById('fileInfo');
     const fileName = document.getElementById('fileName');
     const fileSize = document.getElementById('fileSize');
     const fileType = document.getElementById('fileType');
     const uploadBtn = document.getElementById('uploadBtn');
-
     if (!fileName || !fileSize || !fileType || !fileInfo) {
         console.error('[Invoice] File info elements not found');
         return { success: false, error: 'No data' };\n
         }
-
     fileName.textContent = file.name;
     fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
     fileType.textContent = file.type || 'Excel File';
-
     fileInfo.classList.remove('hidden');
-
     // Validate Excel format
     validateExcelFormat(file);
 };
-
 window.uploadExcelFile = async function() {
     const fileInput = document.getElementById('excelFileInput');
     const uploadBtn = document.getElementById('uploadBtn');
-    
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
         alert('Pilih file terlebih dahulu');
         return { success: false, error: 'No data' };\n
         }
-
     const file = fileInput.files[0];
-    
     if (!uploadBtn) {
         console.error('[Invoice] Upload button not found');
         alert('âŒ Error: Upload button not found');
         return { success: false, error: 'No data' };\n
         }
-    
     uploadBtn.disabled = true;
     const originalText = uploadBtn.textContent;
     uploadBtn.textContent = 'Mengunggah...';
-
     try {
         // First validate and parse file in frontend
         console.log('[Upload] Step 1: Validating & parsing Excel...');
@@ -876,24 +739,19 @@ window.uploadExcelFile = async function() {
             console.error('[Upload] Validation threw error:', err);
             throw err;
         }
-        
         if (!validation) {
             console.error('[Upload] Validation returned undefined/null');
             throw new Error('Validation function returned no result');
         }
-        
         if (!validation.success) {
             console.log('[Upload] Validation failed:', validation.error);
             throw new Error('Validation failed: ' + (validation.error || 'Unknown error'));
         }
-        
         if (!validation.data || validation.data.length === 0) {
             throw new Error('File is empty');
         }
-        
         console.log('[Upload] Step 2: File valid! ' + validation.data.length + ' rows');
         console.log('[Upload] Step 3: Sending parsed data to backend...');
-        
         // Send pre-parsed data
         const response = await fetch('/api/invoice/upload-excel-data', {
             method: 'POST',
@@ -907,22 +765,17 @@ window.uploadExcelFile = async function() {
                 summary: validation.summary
             })
         });
-
         console.log('[Upload] Response status:', response.status);
-
         if (!response.ok) {
             const text = await response.text();
             throw new Error(`${response.status}: Upload gagal`);
         }
-
         const result = await response.json();
         console.log('[Upload] Success:', result);
         alert(`âœ… Upload Berhasil!\n\n${result.message || 'File Excel berhasil diproses'}`);
-        
         closeUploadExcelModal();
         await loadStats();
         await loadInvoiceList();
-
     } catch (error) {
         console.error('[Upload] Error:', error);
         alert(`âŒ Error: ${error.message}`);
@@ -931,35 +784,27 @@ window.uploadExcelFile = async function() {
         uploadBtn.textContent = originalText;
     }
 };
-
 // Validate Excel format - REWRITTEN for simplicity
 async function validateExcelFormat(file) {
     console.log('[Excel] Starting validation for:', file.name);
-    
     try {
         // Parse the file buffer
         const buffer = await file.arrayBuffer();
         const workbook = XLSX.read(buffer, { header: 1 });
-        
         if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
             console.error('[Excel] No sheets found');
             return { success: false, error: 'No sheets in file' };
         }
-        
         console.log('[Excel] Found sheets:', workbook.SheetNames);
-        
         // Try each sheet to find data
         let dataRows = [];
         let headerRow = null;
         let usedSheet = '';
-        
         for (const sheetName of workbook.SheetNames) {
             const sheet = workbook.Sheets[sheetName];
             if (!sheet) continue;
-            
             const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
             console.log(`[Excel] Sheet "${sheetName}" has ${rows.length} rows`);
-            
             // If we found rows, assume first is header
             if (rows && rows.length > 1) {
                 headerRow = rows[0];
@@ -969,29 +814,23 @@ async function validateExcelFormat(file) {
                 break;
             }
         }
-        
         if (!headerRow || dataRows.length === 0) {
             console.error('[Excel] No data found in any sheet');
             return { success: false, error: 'No data found' };
         }
-        
         // Normalize headers (uppercase, trim)
         const headers = headerRow.map(h => String(h || '').trim().toUpperCase());
         console.log('[Excel] Headers:', headers);
-        
         // Check for required columns
         const required = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL', 'KET 2'];
         const missing = required.filter(col => !headers.includes(col));
-        
         if (missing.length > 0) {
             console.error('[Excel] Missing columns:', missing);
             showFormatNotice(false, `Missing: ${missing.join(', ')}`);
             return { success: false, error: 'Missing columns: ' + missing.join(', ') };
         }
-        
         console.log('[Excel] ✅ All required columns found!');
         showFormatNotice(true, `Valid - ${dataRows.length} rows found`);
-        
         // Extract data with proper column mapping
         const extractedData = dataRows
             .filter(row => row && row.length > 0)
@@ -1007,30 +846,23 @@ async function validateExcelFormat(file) {
                 item_count: 1
             }))
             .filter(item => item.faktur); // Only include rows with faktur
-        
         console.log('[Excel] Extracted', extractedData.length, 'valid data rows');
-        
         return {
             success: true,
             data: extractedData,
             summary: { totalRows: extractedData.length }
         };
-        
     } catch (error) {
         console.error('[Excel] Validation error:', error.message);
         console.error('[Excel] Stack:', error.stack);
-        
         // Show error notice
         showFormatNotice(false, `Error: ${error.message}`);
-        
-        return { 
-            success: false, 
-            error: error.message 
+        return {
+            success: false,
+            error: error.message
         };
     }
 }
-
-
 // Show format validation notice
 function showFormatNotice(isValid, message) {
     const notice = document.getElementById('format-notice');
@@ -1038,12 +870,10 @@ function showFormatNotice(isValid, message) {
     const statusMsg = document.getElementById('format-message');
     const details = document.getElementById('format-details');
     const uploadBtn = document.getElementById('uploadBtn');
-
     if (!notice || !icon || !statusMsg || !details) {
         console.error('[Invoice] Format notice elements not found');
         return { success: false, error: 'No data' };\n
         }
-
     if (isValid) {
         icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-green-100 text-green-600';
         icon.innerHTML = 'âœ“';
@@ -1072,9 +902,7 @@ function showFormatNotice(isValid, message) {
         }
     }
 }
-
 // Initialize on document load and dashboard embedding
 document.addEventListener('DOMContentLoaded', setupExcelUploadModal);
-
 // Also try to setup after a delay for dashboard embedding
 setTimeout(setupExcelUploadModal, 500);
