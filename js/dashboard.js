@@ -1829,23 +1829,30 @@ async function loadStorageStats() {
             if (invoiceStats && invoiceStats.stats) {
                 const { total_count, uploaded_count, pending_count } = invoiceStats.stats;
                 
-                // Update stat-invoice-new (if element exists)
+                // Update stat cards in stats-grid
                 const invoiceNewEl = document.getElementById('stat-invoice-new');
                 if (invoiceNewEl) {
                     invoiceNewEl.textContent = (total_count || 0).toLocaleString('id-ID');
                 }
                 
-                // Update stat-invoice-uploaded (if element exists)
                 const uploadedEl = document.getElementById('stat-invoice-uploaded');
                 if (uploadedEl) {
                     uploadedEl.textContent = (uploaded_count || 0).toLocaleString('id-ID');
                 }
                 
-                // Update stat-invoice-pending (if element exists)
                 const pendingEl = document.getElementById('stat-invoice-pending');
                 if (pendingEl) {
                     pendingEl.textContent = (pending_count || 0).toLocaleString('id-ID');
                 }
+
+                // Update quick stats in main dashboard card
+                const quickTotal = document.getElementById('quick-stat-total');
+                const quickUploaded = document.getElementById('quick-stat-uploaded');
+                const quickPending = document.getElementById('quick-stat-pending');
+                
+                if (quickTotal) quickTotal.textContent = (total_count || 0).toLocaleString('id-ID');
+                if (quickUploaded) quickUploaded.textContent = (uploaded_count || 0).toLocaleString('id-ID');
+                if (quickPending) quickPending.textContent = (pending_count || 0).toLocaleString('id-ID');
             }
         } catch (err) {
             console.warn('Failed to load new invoice stats:', err);
