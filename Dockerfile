@@ -1,4 +1,4 @@
-# Use Node.js 22 slim as base image (Node 18 deprecated for Supabase WebSocket support)
+﻿# Use Node.js 22 slim as base image (Node 18 deprecated for Supabase WebSocket support)
 FROM node:22-slim
 
 # Set working directory early
@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Copy backend dependencies first (better layer caching)
+# Last updated: 2026-09-02 14:55:27 - Added uuid and xlsx dependencies
 COPY backend/package*.json ./backend/
 RUN cd backend && npm install --production && npm cache clean --force
 
