@@ -1038,7 +1038,11 @@ function showFormatNotice(isValid, message) {
         details.textContent = message;
         notice.className = 'p-4 rounded-xl border-2 border-green-200 bg-green-50 flex items-start gap-3';
         notice.classList.remove('hidden');
-        if (uploadBtn) uploadBtn.disabled = false;
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.style.opacity = '1';
+            uploadBtn.style.cursor = 'pointer';
+        }
     } else {
         icon.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-red-100 text-red-600';
         icon.innerHTML = '✕';
@@ -1047,7 +1051,11 @@ function showFormatNotice(isValid, message) {
         details.textContent = message;
         notice.className = 'p-4 rounded-xl border-2 border-red-200 bg-red-50 flex items-start gap-3';
         notice.classList.remove('hidden');
-        if (uploadBtn) uploadBtn.disabled = true;
+        if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.style.opacity = '0.5';
+            uploadBtn.style.cursor = 'not-allowed';
+        }
     }
 }
 
