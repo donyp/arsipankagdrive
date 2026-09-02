@@ -103,9 +103,51 @@ window.handleExcelFileSelected = function(file) {
     if (fileInfo) fileInfo.classList.remove('hidden');
 };
 
-window.uploadExcelFile = function() {
-    console.log('[Upload] Starting');
-    alert('Upload started!');
+window.uploadExcelFile = async function() {
+    console.log('[Upload] Starting upload');
+    
+    const fileInput = document.getElementById('excelFileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        alert('Pilih file terlebih dahulu');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const originalText = uploadBtn.textContent;
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = 'Uploading...';
+
+    try {
+        console.log('[Upload] File:', file.name, 'Size:', file.size);
+        
+        const formData = new FormData();
+        formData.append('excel', file);
+
+        console.log('[Upload] Sending to /api/invoice/upload-excel');
+        const response = await fetch('/api/invoice/upload-excel', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        console.log('[Upload] Response status:', response.status);
+        console.log('[Upload] Result:', result);
+
+        if (response.ok && result.message) {
+            alert('✅ Upload Berhasil!\\n\\n' + result.message);
+            closeUploadExcelModal();
+        } else {
+            alert('❌ Error: ' + (result.error || 'Upload gagal'));
+        }
+    } catch (error) {
+        console.error('[Upload] Error:', error);
+        alert('❌ Error: ' + error.message);
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = originalText;
+    }
 };
 
 if (document.readyState === 'loading') {
