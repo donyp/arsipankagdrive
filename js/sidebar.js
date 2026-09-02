@@ -30,7 +30,7 @@
             icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
             children: [
                 { href: 'invoice-list.html', label: 'Daftar Invoice', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', guard: '' },
-                { href: 'upload-excel.html', label: 'Upload Excel', icon: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12', guard: 'data-role="super_admin,moderator"' },
+                { onclick: 'openUploadExcelModal()', label: 'Upload Excel', icon: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12', guard: 'data-role="super_admin,moderator"', isButton: true },
                 { href: 'invoice-batches.html', label: 'Riwayat Upload', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', guard: 'data-role="super_admin,moderator"' },
             ]
         },
@@ -107,15 +107,28 @@
                     ? 'active text-blue-600 bg-blue-50 font-bold'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50';
 
-                childrenHTML += `
-                    <a href="${child.href}" ${child.guard || ''}
-                        class="sidebar-link flex items-center gap-3 px-5 py-2.5 mt-0.5 mx-2 rounded-xl text-xs transition-all group ${activeClass}">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            ${renderIcon(child.icon, child.iconPaths)}
-                        </svg>
-                        ${child.label}
-                    </a>
-                 `;
+                // Handle both link and button items
+                if (child.isButton) {
+                    childrenHTML += `
+                        <button onclick="${child.onclick}" ${child.guard || ''}
+                            class="sidebar-link flex items-center gap-3 px-5 py-2.5 mt-0.5 mx-2 rounded-xl text-xs transition-all group text-gray-500 hover:text-gray-900 hover:bg-gray-50 border-none bg-transparent cursor-pointer w-full text-left">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                ${renderIcon(child.icon, child.iconPaths)}
+                            </svg>
+                            ${child.label}
+                        </button>
+                     `;
+                } else {
+                    childrenHTML += `
+                        <a href="${child.href}" ${child.guard || ''}
+                            class="sidebar-link flex items-center gap-3 px-5 py-2.5 mt-0.5 mx-2 rounded-xl text-xs transition-all group ${activeClass}">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                ${renderIcon(child.icon, child.iconPaths)}
+                            </svg>
+                            ${child.label}
+                        </a>
+                     `;
+                }
             }
 
             navHTML += `
