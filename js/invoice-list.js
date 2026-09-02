@@ -932,131 +932,104 @@ window.uploadExcelFile = async function() {
     }
 };
 
-// Validate Excel format
+// Validate Excel format - REWRITTEN for simplicity
 async function validateExcelFormat(file) {
+    console.log('[Excel] Starting validation for:', file.name);
+    
     try {
-        console.log('[Excel] Starting validation for:', file.name);
-        
-        // For .xls files, just show ready status without deep validation
-        // since XLSX library has trouble reading old Excel 97-2003 format
-        if (file.name.toLowerCase().endsWith('.xls')) {
-            console.log('[Excel] Detected .xls format - skipping deep validation');
-            showFormatNotice(true, `Format âœ… Siap Upload - File: ${file.name}`);
-            return { success: false, error: 'No data' };\n
-            }
-        
-        // Parse Excel to check columns (supports .xlsx, .csv)
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { 
-            header: 1,  
-            raw: false,
-            defval: '',
-            cellFormula: false,
-            cellStyles: false
-        });
-        
-        console.log('[Excel] Workbook sheets:', workbook.SheetNames);
+        // Parse the file buffer
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { header: 1 });
         
         if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-            showFormatNotice(false, 'File tidak valid atau tidak ada sheet');
-            return { success: false, error: 'No data' };\n
-            }
-
-        // Try to find data in any sheet
-        let allRows = [];
+            console.error('[Excel] No sheets found');
+            return { success: false, error: 'No sheets in file' };
+        }
+        
+        console.log('[Excel] Found sheets:', workbook.SheetNames);
+        
+        // Try each sheet to find data
+        let dataRows = [];
+        let headerRow = null;
         let usedSheet = '';
         
         for (const sheetName of workbook.SheetNames) {
-            console.log(`[Excel] Trying sheet: ${sheetName}`);
             const sheet = workbook.Sheets[sheetName];
-            
             if (!sheet) continue;
             
-            let rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
-            console.log(`[Excel] Sheet "${sheetName}" - rows found:`, rows.length);
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
+            console.log(`[Excel] Sheet "${sheetName}" has ${rows.length} rows`);
             
+            // If we found rows, assume first is header
             if (rows && rows.length > 1) {
-                allRows = rows;
+                headerRow = rows[0];
+                dataRows = rows.slice(1);
                 usedSheet = sheetName;
-                console.log(`[Excel] âœ… Found data in sheet: ${sheetName}`);
-                break;
-            }
-            
-            const csv = XLSX.utils.sheet_to_csv(sheet);
-            const lines = csv.split('\n').filter(l => l.trim());
-            console.log(`[Excel] Sheet "${sheetName}" - CSV lines:`, lines.length);
-            
-            if (lines.length > 1) {
-                allRows = [];
-                for (const line of lines) {
-                    allRows.push(line.split(',').map(c => c.trim()));
-                }
-                usedSheet = sheetName;
-                console.log(`[Excel] âœ… Found data in sheet (CSV): ${sheetName}`);
+                console.log('[Excel] Found valid sheet with data');
                 break;
             }
         }
         
-        console.log('[Excel] Using sheet:', usedSheet);
-        console.log('[Excel] Total rows:', allRows.length);
-        
-        if (!allRows || allRows.length < 1) {
-            showFormatNotice(false, 'Semua sheet kosong - file mungkin tidak valid');
-            return { success: false, error: 'No data' };\n
-            }
-        
-        // Get headers from first row
-        let headers = allRows[0] || [];
-        console.log('[Excel] Raw headers:', headers);
-        
-        // If first row looks like data, try next rows
-        let headerRowIndex = 0;
-        while (headerRowIndex < Math.min(5, allRows.length)) {
-            const row = allRows[headerRowIndex];
-            const hasTextContent = row.some(h => h && String(h).trim().length > 0 && isNaN(h));
-            
-            if (hasTextContent) {
-                headers = row;
-                console.log(`[Excel] Found header-like row at index ${headerRowIndex}:`, headers);
-                break;
-            }
-            headerRowIndex++;
+        if (!headerRow || dataRows.length === 0) {
+            console.error('[Excel] No data found in any sheet');
+            return { success: false, error: 'No data found' };
         }
         
-        // Required columns
-        const requiredColumns = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL', 'KET 2'];
+        // Normalize headers (uppercase, trim)
+        const headers = headerRow.map(h => String(h || '').trim().toUpperCase());
+        console.log('[Excel] Headers:', headers);
         
-        // Normalize headers
-        const normalizedHeaders = headers
-            .filter(h => h !== undefined && h !== null && h !== '')
-            .map(h => String(h).trim().toUpperCase().replace(/\s+/g, ' '));
+        // Check for required columns
+        const required = ['TANGGAL', 'TOKO', 'FAKTUR', 'METODE BAYAR', 'JENIS TRANSAKSI', 'KONSUMEN', 'JUMLAH JUAL', 'KET 2'];
+        const missing = required.filter(col => !headers.includes(col));
         
-        console.log('[Excel] Normalized headers:', normalizedHeaders);
-        
-        // Check each required column
-        const missingCols = [];
-        for (const col of requiredColumns) {
-            const found = normalizedHeaders.some(h => h === col.toUpperCase() || h.includes(col.toUpperCase()));
-            if (!found) {
-                missingCols.push(col);
-            }
+        if (missing.length > 0) {
+            console.error('[Excel] Missing columns:', missing);
+            showFormatNotice(false, `Missing: ${missing.join(', ')}`);
+            return { success: false, error: 'Missing columns: ' + missing.join(', ') };
         }
         
-        if (missingCols.length === 0) {
-            const totalRows = allRows.length - 1;
-            console.log('[Excel] âœ… All columns found!');
-            showFormatNotice(true, `Format âœ… Valid - ${totalRows} baris data ditemukan`);
-        } else {
-            console.log('[Excel] âŒ Missing columns:', missingCols);
-            showFormatNotice(false, `Kolom tidak lengkap: ${missingCols.join(', ')}\n\nKolom yang tersedia: ${normalizedHeaders.join(', ')}`);
-        }
+        console.log('[Excel] ✅ All required columns found!');
+        showFormatNotice(true, `Valid - ${dataRows.length} rows found`);
+        
+        // Extract data with proper column mapping
+        const extractedData = dataRows
+            .filter(row => row && row.length > 0)
+            .map(row => ({
+                tanggal: row[headers.indexOf('TANGGAL')] || '',
+                toko: row[headers.indexOf('TOKO')] || '',
+                faktur: String(row[headers.indexOf('FAKTUR')] || '').trim(),
+                metode_bayar: row[headers.indexOf('METODE BAYAR')] || '',
+                jenis_transaksi: row[headers.indexOf('JENIS TRANSAKSI')] || '',
+                konsumen: row[headers.indexOf('KONSUMEN')] || '',
+                keterangan: row[headers.indexOf('KET 2')] || '',
+                total_jumlah_jual: parseFloat(row[headers.indexOf('JUMLAH JUAL')]) || 0,
+                item_count: 1
+            }))
+            .filter(item => item.faktur); // Only include rows with faktur
+        
+        console.log('[Excel] Extracted', extractedData.length, 'valid data rows');
+        
+        return {
+            success: true,
+            data: extractedData,
+            summary: { totalRows: extractedData.length }
+        };
+        
     } catch (error) {
-        console.error('Format validation error:', error);
-        // For any parsing error, allow upload anyway
-        console.log('[Excel] Validation error, allowing upload anyway');
-        showFormatNotice(true, `Format âœ… Siap Upload (Validasi Detail Dilewati)`);
+        console.error('[Excel] Validation error:', error.message);
+        console.error('[Excel] Stack:', error.stack);
+        
+        // Show error notice
+        showFormatNotice(false, `Error: ${error.message}`);
+        
+        return { 
+            success: false, 
+            error: error.message 
+        };
     }
 }
+
 
 // Show format validation notice
 function showFormatNotice(isValid, message) {
