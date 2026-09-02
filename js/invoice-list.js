@@ -292,6 +292,118 @@ async function uploadPDF(faktur) {
 }
 
 // ============================================
+// Bulk Upload Multiple PDFs (MASSAL)
+// ============================================
+async function uploadBulkPDFs() {
+    // Create file input that accepts multiple files
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/pdf,.pdf';
+    input.multiple = true;  // Allow multiple files
+    
+    input.onchange = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        // Validate all files
+        const invalidFiles = [];
+        const validFiles = [];
+
+        for (const file of files) {
+            if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
+                invalidFiles.push(`${file.name} (bukan PDF)`);
+                continue;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                invalidFiles.push(`${file.name} (> 10MB)`);
+                continue;
+            }
+            validFiles.push(file);
+        }
+
+        if (invalidFiles.length > 0) {
+            alert(`❌ File tidak valid:\n${invalidFiles.join('\n')}`);
+            return;
+        }
+
+        if (validFiles.length === 0) {
+            alert('Tidak ada file valid untuk di-upload');
+            return;
+        }
+
+        // Confirm bulk upload
+        const confirmMsg = `Upload ${validFiles.length} file PDF?\n\nFile:\n${validFiles.map(f => f.name).join('\n')}`;
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+
+        showLoading();
+        let successCount = 0;
+        let failureCount = 0;
+        const failedFiles = [];
+
+        try {
+            for (const file of validFiles) {
+                try {
+                    // Extract faktur from filename (e.g., 835100310.pdf -> 835100310)
+                    const faktur = file.name.replace(/\.pdf$/i, '').trim();
+                    
+                    const formData = new FormData();
+                    formData.append('pdf', file);
+                    formData.append('faktur', faktur);
+
+                    const response = await fetch('/api/invoice/upload-pdf', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${getToken()}`
+                        },
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Upload gagal');
+                    }
+
+                    successCount++;
+                    console.log(`✅ Uploaded: ${faktur}`);
+
+                } catch (error) {
+                    failureCount++;
+                    failedFiles.push({
+                        name: file.name,
+                        error: error.message
+                    });
+                    console.error(`❌ Failed: ${file.name} - ${error.message}`);
+                }
+
+                // Small delay between uploads to avoid overload
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            // Show summary
+            let summary = `✅ Bulk Upload Complete\n\nBerhasil: ${successCount}\nGagal: ${failureCount}`;
+            if (failedFiles.length > 0) {
+                summary += `\n\nGagal:\n${failedFiles.map(f => `- ${f.name}: ${f.error}`).join('\n')}`;
+            }
+            alert(summary);
+
+            // Reload data
+            await loadStats();
+            await loadInvoiceList();
+
+        } catch (error) {
+            console.error('Bulk upload error:', error);
+            alert(`❌ Error: ${error.message}`);
+        } finally {
+            hideLoading();
+        }
+    };
+
+    input.click();
+}
+
+// ============================================
 // View File
 // ============================================
 function viewFile(filePath) {
@@ -346,4 +458,5 @@ document.addEventListener('DOMContentLoaded', init);
 
 // Make functions globally accessible
 window.uploadPDF = uploadPDF;
+window.uploadBulkPDFs = uploadBulkPDFs;
 window.viewFile = viewFile;
