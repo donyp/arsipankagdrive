@@ -81,6 +81,42 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     // POST /api/invoice/upload-excel
     // Upload and parse Excel file (REKAP_LABA.xls)
     // ============================================
+    // TEST ENDPOINT - just capture file without parsing
+    app.post('/api/invoice/test-upload', 
+        auth(['super_admin', 'moderator', 'user']),
+        upload.single('excel'),
+        async (req, res) => {
+            try {
+                console.log('[TEST] File received:');
+                console.log('[TEST] Name:', req.file?.originalname);
+                console.log('[TEST] Size:', req.file?.size);
+                console.log('[TEST] Mime:', req.file?.mimetype);
+                console.log('[TEST] Buffer length:', req.file?.buffer?.length);
+                console.log('[TEST] Buffer type:', typeof req.file?.buffer);
+                console.log('[TEST] Is Buffer:', Buffer.isBuffer(req.file?.buffer));
+                
+                // Try to log first 100 bytes as hex
+                if (req.file?.buffer && req.file.buffer.length > 0) {
+                    const hex = req.file.buffer.slice(0, 100).toString('hex');
+                    console.log('[TEST] First 100 bytes (hex):', hex);
+                }
+                
+                res.json({
+                    received: true,
+                    file: {
+                        name: req.file?.originalname,
+                        size: req.file?.size,
+                        bufferLength: req.file?.buffer?.length,
+                        isBuffer: Buffer.isBuffer(req.file?.buffer)
+                    }
+                });
+            } catch (err) {
+                console.error('[TEST] Error:', err);
+                res.status(500).json({ error: err.message });
+            }
+        }
+    );
+
     app.post('/api/invoice/upload-excel', 
         authMiddleware(['super_admin', 'moderator', 'user']),  // Allow all authenticated users
         upload.single('excel'),
