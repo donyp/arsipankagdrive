@@ -1779,7 +1779,7 @@ async function deleteBroadcast(id) {
 // ---- Storage Stats ----
 async function loadStorageStats() {
     try {
-        // UPDATED: Google Drive storage only (no more Alist)
+        // UPDATED: Google Drive storage + New Invoice System
         const stats = await API.get('/api/stats/storage');
 
         // 1. Storage usage (from database/Google Drive)
@@ -1810,27 +1810,48 @@ async function loadStorageStats() {
             }
         }
 
-        // 3. Total Arsip — dari Google Drive / Database (UPDATED: Tidak pakai Alist lagi)
+        // 3. Total Arsip Invoice Merah — dari Database (files table)
         const invoiceEl = document.getElementById('stat-invoice');
-        
-        // Get from database instead of Alist
         try {
             const response = await API.get('/api/files');
-            // Response is { files: [], total, page, limit, totalPages }
-            const invoiceCount = response.total || 0;  // Use total from response which already filters INVOICE for admin_zona
+            const invoiceCount = response.total || 0;
             if (invoiceEl) {
                 invoiceEl.textContent = invoiceCount.toLocaleString('id-ID');
                 _alistInvoiceLoaded = true;
             }
         } catch (err) {
             console.warn('Failed to load invoice count from database:', err);
-            // Fallback: use Alist if available
-            if (invoiceEl && alistStats.status === 'fulfilled') {
-                const count = alistStats.value.total_files ?? 0;
-                invoiceEl.textContent = count.toLocaleString('id-ID');
-                _alistInvoiceLoaded = true;
-            }
         }
+
+        // 4. NEW: Invoice System Statistics (from invoice_file_list table)
+        try {
+            const invoiceStats = await API.get('/api/invoice/stats');
+            if (invoiceStats && invoiceStats.stats) {
+                const { total_count, uploaded_count, pending_count } = invoiceStats.stats;
+                
+                // Update stat-invoice-new (if element exists)
+                const invoiceNewEl = document.getElementById('stat-invoice-new');
+                if (invoiceNewEl) {
+                    invoiceNewEl.textContent = (total_count || 0).toLocaleString('id-ID');
+                }
+                
+                // Update stat-invoice-uploaded (if element exists)
+                const uploadedEl = document.getElementById('stat-invoice-uploaded');
+                if (uploadedEl) {
+                    uploadedEl.textContent = (uploaded_count || 0).toLocaleString('id-ID');
+                }
+                
+                // Update stat-invoice-pending (if element exists)
+                const pendingEl = document.getElementById('stat-invoice-pending');
+                if (pendingEl) {
+                    pendingEl.textContent = (pending_count || 0).toLocaleString('id-ID');
+                }
+            }
+        } catch (err) {
+            console.warn('Failed to load new invoice stats:', err);
+            // Invoice system might not be available yet (dependencies not installed)
+        }
+
     } catch (err) {
         console.warn('Failed to load storage stats:', err);
     }
