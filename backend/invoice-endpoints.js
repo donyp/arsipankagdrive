@@ -252,183 +252,39 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     );
 
     app.post('/api/invoice/upload-excel', 
-        auth(['super_admin', 'moderator', 'user']),  // Allow all authenticated users
+        auth(['super_admin', 'moderator', 'user']),
         upload.single('excel'),
         async (req, res) => {
+            console.log('[Invoice API TEST] Endpoint hit');
+            console.log('[Invoice API TEST] req.user:', req.user ? 'present' : 'MISSING');
+            console.log('[Invoice API TEST] req.file:', req.file ? 'present' : 'MISSING');
+            console.log('[Invoice API TEST] req.file.originalname:', req.file?.originalname);
+            console.log('[Invoice API TEST] req.file.size:', req.file?.size);
+            
             try {
-                console.log('[Invoice API] Upload endpoint hit');
-                
                 if (!req.file) {
-                    console.error('[Invoice API] No file in request');
+                    console.error('[Invoice API TEST] No file');
                     return res.status(400).json({ error: 'No file uploaded' });
                 }
                 
-                console.log(`[Invoice API] Excel upload by ${req.user?.name}: ${req.file.originalname}`);
-                console.log(`[Invoice API] File size: ${req.file.size} bytes`);
+                console.log('[Invoice API TEST] File received successfully');
                 
-                // Parse Excel
-                console.log('[Invoice API] Calling parseExcel()...');
-                const parseResult = parseExcel(req.file.buffer);
-                console.log('[Invoice API] parseExcel returned:', parseResult);
-                
-                if (!parseResult.success) {
-                    console.error('[Invoice API] Parse failed:', parseResult.error);
-                    return res.status(400).json({ 
-                        error: 'Failed to parse Excel file',
-                        details: parseResult.error
-                    });
-                }
-                
-                console.log('[Invoice API] Parse successful, validating data...');
-                
-                // Validate data
-                const validation = validateData(parseResult.data);
-                console.log('[Invoice API] Validation result:', validation);
-                
-                if (!validation.isValid) {
-                    console.error('[Invoice API] Validation errors:', validation.errors);
-                    return res.status(400).json({
-                        error: 'Data validation failed - ada error yang harus diperbaiki',
-                        details: 'Silakan cek format Excel Anda',
-                        errors: validation.errors.slice(0, 15), // Show first 15 errors
-                        totalErrors: validation.errors.length
-                    });
-                }
-                
-                // Log warnings if any
-                if (validation.warnings && validation.warnings.length > 0) {
-                    console.warn('[Invoice API] Validation warnings:', validation.warnings);
-                }
-                
-                console.log('[Invoice API] Creating batch record...');
-                
-                // Create batch record
-                const batchId = uuidv4();
-                const { data: batch, error: batchError } = await supabase
-                    .from('excel_upload_batches')
-                    .insert({
-                        id: batchId,
-                        filename: req.file.originalname,
-                        total_rows: parseResult.summary.totalRows,
-                        processed_rows: 0,
-                        failed_rows: 0,
-                        duplicate_rows: 0,
-                        uploaded_by: req.user.id,
-                        status: 'processing'
-                    })
-                    .select()
-                    .single();
-                
-                if (batchError) {
-                    console.error('[Invoice API] Error creating batch:', batchError);
-                    return res.status(500).json({ error: 'Failed to create batch record', details: batchError.message });
-                }
-                
-                console.log('[Invoice API] Batch created:', batchId);
-                
-                // Insert invoices
-                let processedCount = 0;
-                let duplicateCount = 0;
-                let failedCount = 0;
-                const errors = [];
-                
-                for (const item of parseResult.data) {
-                    try {
-                        // Check if faktur already exists
-                        const { data: existing } = await supabase
-                            .from('invoice_file_list')
-                            .select('id, faktur')
-                            .eq('faktur', item.faktur)
-                            .single();
-                        
-                        if (existing) {
-                            duplicateCount++;
-                            console.log(`[Invoice API] Duplicate faktur: ${item.faktur}`);
-                            continue;
-                        }
-                        
-                        // Insert new invoice
-                        const { error: insertError } = await supabase
-                            .from('invoice_file_list')
-                            .insert({
-                                tanggal: item.tanggal,
-                                toko: item.toko,
-                                toko_raw: item.toko_raw,
-                                faktur: item.faktur,
-                                metode_bayar: item.metode_bayar,
-                                jenis_transaksi: item.jenis_transaksi,
-                                konsumen: item.konsumen,
-                                keterangan: item.keterangan,
-                                total_jumlah_jual: item.total_jumlah_jual,
-                                item_count: item.item_count,
-                                status: 'PENDING',
-                                excel_batch_id: batchId,
-                                excel_uploaded_at: new Date().toISOString(),
-                                excel_uploaded_by: req.user.id
-                            });
-                        
-                        if (insertError) {
-                            failedCount++;
-                            errors.push(`${item.faktur}: ${insertError.message}`);
-                            console.error(`[Invoice API] Error inserting ${item.faktur}:`, insertError);
-                        } else {
-                            processedCount++;
-                        }
-                        
-                    } catch (err) {
-                        failedCount++;
-                        errors.push(`${item.faktur}: ${err.message}`);
-                        console.error(`[Invoice API] Error processing ${item.faktur}:`, err);
-                    }
-                }
-                
-                console.log('[Invoice API] Insert complete. Updating batch status...');
-                
-                // Update batch status
-                await supabase
-                    .from('excel_upload_batches')
-                    .update({
-                        processed_rows: processedCount,
-                        failed_rows: failedCount,
-                        duplicate_rows: duplicateCount,
-                        status: failedCount > 0 ? 'completed_with_errors' : 'completed',
-                        error_log: errors.length > 0 ? errors.join('\n') : null
-                    })
-                    .eq('id', batchId);
-                
-                // Log to audit
-                await supabase.from('audit_logs').insert({
-                    user_id: req.user.id,
-                    action: 'upload_excel',
-                    context: `Uploaded ${req.file.originalname}: ${processedCount} processed, ${duplicateCount} duplicates, ${failedCount} failed`
-                });
-                
-                console.log('[Invoice API] Upload complete! Summary:', {
-                    processed: processedCount,
-                    duplicates: duplicateCount,
-                    failed: failedCount
-                });
-                
-                res.json({
+                // Return success immediately without parsing
+                return res.json({
                     success: true,
-                    batchId,
-                    summary: {
-                        totalRows: parseResult.summary.totalRows,
-                        uniqueFakturs: parseResult.summary.uniqueFakturs,
-                        processed: processedCount,
-                        duplicates: duplicateCount,
-                        failed: failedCount,
-                        errors: errors.slice(0, 10)
+                    message: 'File received (not parsed yet)',
+                    file: {
+                        name: req.file.originalname,
+                        size: req.file.size
                     }
                 });
                 
             } catch (error) {
-                console.error('[Invoice API] Upload Excel error:', error);
-                console.error('[Invoice API] Error stack:', error.stack);
-                res.status(500).json({ 
-                    error: 'Server error',
-                    details: error.message,
-                    type: error.constructor.name
+                console.error('[Invoice API TEST] ERROR:', error.message);
+                console.error('[Invoice API TEST] Stack:', error.stack);
+                return res.status(500).json({ 
+                    error: error.message,
+                    stack: error.stack
                 });
             }
         }
