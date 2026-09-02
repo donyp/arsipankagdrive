@@ -252,7 +252,7 @@ function registerInvoiceEndpoints(app, supabase, authMiddleware, RcloneStorage) 
     );
 
     app.post('/api/invoice/upload-excel', 
-        authMiddleware(['super_admin', 'moderator', 'user']),  // Allow all authenticated users
+        auth(['super_admin', 'moderator', 'user']),  // Allow all authenticated users
         upload.single('excel'),
         async (req, res) => {
             try {
