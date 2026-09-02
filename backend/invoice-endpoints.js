@@ -284,7 +284,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // GET /api/invoice/list
     // Get invoice file list with filters
     // ============================================
-    app.get('/api/invoice/list', ...createAuth(), async (req, res) => {
+    app.get('/api/invoice/list', createAuth(), async (req, res) => {
         try {
             const { 
                 status, 
@@ -357,7 +357,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // GET /api/invoice/stats
     // Get invoice statistics
     // ============================================
-    app.get('/api/invoice/stats', ...createAuth(), async (req, res) => {
+    app.get('/api/invoice/stats', createAuth(), async (req, res) => {
         try {
             const { data, error } = await supabase
                 .rpc('get_invoice_statistics');
@@ -423,7 +423,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // Upload PDF and match with faktur
     // ============================================
     app.post('/api/invoice/upload-pdf',
-        ...createAuth(),
+        createAuth(),
         upload.single('pdf'),
         async (req, res) => {
             try {
@@ -692,7 +692,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // Check if faktur exists in daftar invoice
     // ============================================
     app.get('/api/invoice/check-faktur/:faktur',
-        ...createAuth(),
+        createAuth(),
         async (req, res) => {
             try {
                 const { faktur } = req.params;
