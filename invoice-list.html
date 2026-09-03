@@ -221,10 +221,11 @@
 
         .invoice-table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: collapse !important;
             font-size: 7px;
             table-layout: fixed;
             animation: fadeIn 0.3s ease-in;
+            border: none !important;
         }
 
         @keyframes fadeIn {
@@ -251,6 +252,7 @@
             position: sticky;
             top: 0;
             z-index: 10;
+            border: none !important;
         }
 
         .invoice-table th {
@@ -262,16 +264,20 @@
             white-space: nowrap;
             height: 38px;
             vertical-align: middle;
+            border: none !important;
         }
 
         .invoice-table th:last-child {
-            border-right: none;
+            border-right: none !important;
         }
 
         .invoice-table tbody tr {
             transition: background 0.2s;
             height: 35px;
             border-bottom: 1px solid #555 !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-top: none !important;
         }
 
         .invoice-table tbody tr:hover {
@@ -282,7 +288,10 @@
             padding: 4px 6px;
             font-size: 7px;
             color: #2c3e50;
-            border-right: none;
+            border-right: none !important;
+            border-left: none !important;
+            border-top: none !important;
+            border-bottom: none !important;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -291,7 +300,8 @@
         }
 
         .invoice-table td:last-child {
-            border-right: none;
+            border-right: none !important;
+            border: none !important;
         }
         
         /* Specific column widths - No Faktur diperlebar, Nama Toko dikurangi */
