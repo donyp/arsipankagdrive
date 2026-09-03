@@ -84,13 +84,25 @@ if (process.env.GDRIVE_CONFIG_JSON) {
     }
 }
 
-// Write to file
-const configPath = path.join(__dirname, 'rclone.conf');
+// Write to file - Railway default location
+// Ensure directory exists
+const configDir = path.join(process.env.HOME || '/root', '.config', 'rclone');
+if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+}
+
+const configPath = path.join(configDir, 'rclone.conf');
 fs.writeFileSync(configPath, rcloneConfig, 'utf8');
 
 console.log('[RcloneConfig] Generated rclone.conf from environment variables');
+console.log(`[RcloneConfig] Config written to: ${configPath}`);
+console.log(`[RcloneConfig] HOME: ${process.env.HOME || '/root'}`);
+if (process.env.GDRIVE_CONFIG_JSON) {
+    console.log('[RcloneConfig] ✅ GDRIVE_CONFIG_JSON found and processed');
+} else {
+    console.log('[RcloneConfig] ⚠️  GDRIVE_CONFIG_JSON not set - Google Drive upload will fail');
+}
 console.log(`[RcloneConfig] Terabox (Alist) URL: ${config.terabox_url}`);
 console.log(`[RcloneConfig] Terabox Direct URL: ${config.terabox_direct_url}`);
 console.log(`[RcloneConfig] Terabox Direct User: ${config.terabox_direct_user}`);
 console.log(`[RcloneConfig] Storj Endpoint: ${config.storj_endpoint}`);
-console.log(`[RcloneConfig] Config written to: ${configPath}`);
