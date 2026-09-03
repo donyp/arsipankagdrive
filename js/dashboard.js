@@ -2683,7 +2683,7 @@ function renderInvoiceTable(invoices) {
     
     tbody.innerHTML = invoices.map(inv => {
         const statusClass = inv.status === 'UPLOADED' ? 'uploaded' : inv.status === 'MISSING' ? 'missing' : 'pending';
-        const statusText = inv.status || 'PENDING';
+        const statusText = inv.status === 'UPLOADED' ? 'Lunas' : inv.status === 'MISSING' ? 'MISSING' : 'Belum Lunas';
         const statusStyle = statusClass === 'uploaded' ? 'background: #d5f4e6; color: #27ae60;' : 
                            statusClass === 'pending' ? 'background: #fff3cd; color: #f39c12;' : 
                            'background: #fadbd8; color: #e74c3c;';

@@ -186,7 +186,7 @@ function showPreview() {
     const tbody = document.getElementById('previewTable');
     tbody.innerHTML = preview.map(inv => `
         <tr>
-            <td><span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">PENDING</span></td>
+            <td><span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">Belum Lunas</span></td>
             <td>${inv.tanggal || '-'}</td>
             <td><strong>${inv.faktur || '-'}</strong></td>
             <td>${inv.metode_bayar || '-'}</td>

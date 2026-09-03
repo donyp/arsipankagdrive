@@ -400,7 +400,7 @@ function renderInvoiceTable(invoices = null) {
     
     tbody.innerHTML = pageData.map(inv => {
         const statusClass = inv.status === 'UPLOADED' ? 'uploaded' : inv.status === 'MISSING' ? 'missing' : 'pending';
-        const statusText = inv.status || 'PENDING';
+        const statusText = inv.status === 'UPLOADED' ? 'Lunas' : inv.status === 'MISSING' ? 'MISSING' : 'Belum Lunas';
         
         // Format tanggal: 2026-09-02 -> 02/09/2026
         const formattedDate = formatDate(inv.tanggal);
