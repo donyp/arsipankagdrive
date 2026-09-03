@@ -83,9 +83,10 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // ============================================
     // POST /api/invoice/upload-excel-data
     // Upload pre-parsed Excel data (from frontend validation)
+    // RESTRICTED: super_admin & moderator only
     // ============================================
     app.post('/api/invoice/upload-excel-data',
-        ...createAuth(['super_admin', 'moderator', 'user']),
+        ...createAuth(['super_admin', 'moderator']),
         async (req, res) => {
             try {
                 const { filename, data, summary } = req.body;
@@ -270,7 +271,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     );
 
     app.post('/api/invoice/upload-excel', 
-        ...createAuth(['super_admin', 'moderator', 'user']),
+        ...createAuth(['super_admin', 'moderator']),
         upload.single('excel'),
         async (req, res) => {
             console.log('[Invoice API] Upload endpoint hit');
