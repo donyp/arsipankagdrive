@@ -1,8 +1,19 @@
--- Clear old zona and toko data
+-- Clear old zona and toko data safely
+-- First, we need to handle users that reference old zonas
+
+-- Step 1: Clear toko first (no foreign key dependencies from users)
 DELETE FROM toko;
+
+-- Step 2: For users that reference old zonas, set zona_id to NULL
+-- This allows us to delete old zonas
+UPDATE users 
+SET zona_id = NULL 
+WHERE zona_id IS NOT NULL;
+
+-- Step 3: Now safely delete old zonas
 DELETE FROM zonas;
 
--- Recreate zonas table with all 17 zones
+-- Step 4: Recreate zonas table with all 17 zones
 INSERT INTO zonas (kode, nama) VALUES
 ('Zona 01', 'Zona 01'),
 ('Zona 02', 'Zona 02'),
@@ -24,7 +35,7 @@ INSERT INTO zonas (kode, nama) VALUES
 ('Zona 16', 'Zona 16'),
 ('Zona 17', 'Zona 17');
 
--- Insert all toko data with their kode and zona
+-- Step 5: Insert all toko data with their kode and zona
 INSERT INTO toko (kode, nama, zona_id) VALUES
 -- Zona 01
 ('8474003', 'Mega Baja Balaraja', (SELECT id FROM zonas WHERE kode='Zona 01')),
@@ -187,3 +198,8 @@ INSERT INTO toko (kode, nama, zona_id) VALUES
 ('8474128', 'Mega Baja Cikarang', (SELECT id FROM zonas WHERE kode='Zona 17')),
 ('8474129', 'Mega Baja Sukadami', (SELECT id FROM zonas WHERE kode='Zona 17')),
 ('8474130', 'Mega Baja Cibarusah', (SELECT id FROM zonas WHERE kode='Zona 17'));
+
+-- Log completion
+SELECT 'Zona-Toko mapping update complete!' as status;
+SELECT COUNT(*) as total_zonas FROM zonas;
+SELECT COUNT(*) as total_tokos FROM toko;
