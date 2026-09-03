@@ -2878,25 +2878,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function applyInvoiceFilters() {
     try {
-        const status = document.getElementById('filterStatus')?.value || '';
         const toko = document.getElementById('filterToko')?.value || '';
         const keterangan = document.getElementById('filterKeterangan')?.value || '';
-        const dateFrom = document.getElementById('filterDateFrom')?.value || '';
-        const dateTo = document.getElementById('filterDateTo')?.value || '';
+        const month = document.getElementById('filterMonth')?.value || '';
         const search = document.getElementById('filterSearch')?.value || '';
         
-        console.log('[Filter] Applying filters:', { status, toko, keterangan, dateFrom, dateTo, search });
+        console.log('[Filter] Applying filters:', { toko, keterangan, month, search });
         
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
         
         // Build query string
         const params = new URLSearchParams();
-        if (status) params.append('status', status);
         if (toko) params.append('toko', toko);
         if (keterangan) params.append('keterangan', keterangan);
-        if (dateFrom) params.append('date_from', dateFrom);
-        if (dateTo) params.append('date_to', dateTo);
+        if (month) {
+            // Convert month format (YYYY-MM) to date range
+            const [year, monthNum] = month.split('-');
+            const dateFrom = `${year}-${monthNum}-01`;
+            const dateToObj = new Date(year, parseInt(monthNum), 0);
+            const dateTo = `${year}-${monthNum}-${dateToObj.getDate()}`;
+            params.append('date_from', dateFrom);
+            params.append('date_to', dateTo);
+        }
         if (search) params.append('search', search);
         params.append('limit', INVOICE_PAGE_SIZE);
         params.append('offset', 0);
@@ -2923,6 +2927,7 @@ async function applyInvoiceFilters() {
             invoiceTotalCount = result.count;
             console.log('[Filter] Set invoiceTotalCount to', invoiceTotalCount);
             updatePaginationInfo();
+            updateInvoiceStatsFromData(result.data || [], result.count);
         }
         
     } catch (error) {
@@ -2933,11 +2938,9 @@ async function applyInvoiceFilters() {
 
 function resetInvoiceFilters() {
     console.log('[Filter] Resetting filters');
-    document.getElementById('filterStatus').value = '';
     document.getElementById('filterToko').value = '';
     document.getElementById('filterKeterangan').value = '';
-    document.getElementById('filterDateFrom').value = '';
-    document.getElementById('filterDateTo').value = '';
+    document.getElementById('filterMonth').value = '';
     document.getElementById('filterSearch').value = '';
     
     loadInvoicesInDashboard(1);
