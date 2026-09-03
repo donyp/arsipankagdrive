@@ -2635,7 +2635,24 @@ async function loadInvoicesInDashboard(page = 1) {
         console.log('[LoadInvoices] Result:', result);
         
         renderInvoiceTable(result.data || []);
-        updateInvoiceStats(result);
+        
+        // Load stats from dedicated endpoint
+        try {
+            const statsResponse = await fetch('/api/invoice/stats', {
+                method: 'GET',
+                headers: headers
+            });
+            if (statsResponse.ok) {
+                const statsResult = await statsResponse.json();
+                console.log('[LoadInvoices] Stats from API:', statsResult);
+                updateInvoiceStats(statsResult);
+            }
+        } catch (statsErr) {
+            console.error('[LoadInvoices] Could not load stats:', statsErr);
+            // Fallback to using result data if stats endpoint fails
+            updateInvoiceStats(result);
+        }
+        
         invoiceCurrentPage = page;
         
         // Track total count for pagination
@@ -2703,38 +2720,38 @@ function formatCurrency(value) {
 function updateInvoiceStats(result) {
     console.log('[UpdateStats] Updating stats with result:', result);
     
-    // Update stats if data provided
-    if (result.count !== undefined) {
-        console.log('[UpdateStats] Setting total to', result.count);
-        const statElements = document.querySelectorAll('[data-stat="total"]');
-        console.log('[UpdateStats] Found', statElements.length, 'total stat elements');
-        statElements.forEach(el => {
-            el.textContent = result.count;
-        });
-    }
+    // Handle stats endpoint format: { success, stats: { total_count, uploaded_count, pending_count, missing_count } }
+    let stats = result.stats || result;
     
-    // Count by status from result data
-    if (result.data && Array.isArray(result.data)) {
-        const uploaded = result.data.filter(r => r.status === 'UPLOADED').length;
-        const pending = result.data.filter(r => r.status === 'PENDING').length;
-        const missing = result.data.filter(r => r.status === 'MISSING').length;
-        
-        console.log('[UpdateStats] Counts - Total:', result.count, 'Uploaded:', uploaded, 'Pending:', pending, 'Missing:', missing);
-        
-        const uploadedEls = document.querySelectorAll('[data-stat="uploaded"]');
-        const pendingEls = document.querySelectorAll('[data-stat="pending"]');
-        const missingEls = document.querySelectorAll('[data-stat="missing"]');
-        
-        uploadedEls.forEach(el => el.textContent = uploaded);
-        pendingEls.forEach(el => el.textContent = pending);
-        missingEls.forEach(el => el.textContent = missing);
-        
-        console.log('[UpdateStats] Updated', uploadedEls.length, 'uploaded elements');
-        console.log('[UpdateStats] Updated', pendingEls.length, 'pending elements');
-        console.log('[UpdateStats] Updated', missingEls.length, 'missing elements');
-    } else {
-        console.warn('[UpdateStats] No data array in result or result.count missing');
-    }
+    // Get counts
+    let totalCount = stats.total_count || stats.count || 0;
+    let uploadedCount = stats.uploaded_count || 0;
+    let pendingCount = stats.pending_count || 0;
+    let missingCount = stats.missing_count || 0;
+    
+    console.log('[UpdateStats] Stats - Total:', totalCount, 'Uploaded:', uploadedCount, 'Pending:', pendingCount, 'Missing:', missingCount);
+    
+    // Update total
+    const statElements = document.querySelectorAll('[data-stat="total"]');
+    console.log('[UpdateStats] Found', statElements.length, 'total stat elements');
+    statElements.forEach(el => {
+        el.textContent = totalCount;
+    });
+    
+    // Update uploaded
+    const uploadedEls = document.querySelectorAll('[data-stat="uploaded"]');
+    uploadedEls.forEach(el => el.textContent = uploadedCount);
+    console.log('[UpdateStats] Updated', uploadedEls.length, 'uploaded elements');
+    
+    // Update pending
+    const pendingEls = document.querySelectorAll('[data-stat="pending"]');
+    pendingEls.forEach(el => el.textContent = pendingCount);
+    console.log('[UpdateStats] Updated', pendingEls.length, 'pending elements');
+    
+    // Update missing
+    const missingEls = document.querySelectorAll('[data-stat="missing"]');
+    missingEls.forEach(el => el.textContent = missingCount);
+    console.log('[UpdateStats] Updated', missingEls.length, 'missing elements');
 }
 
 // Load unique filter values from database
@@ -2753,15 +2770,23 @@ async function loadFilterOptions() {
         const result = await response.json();
         const invoices = result.data || [];
         
+        // Track total count
+        invoiceTotalCount = result.count || 0;
+        console.log('[Filter] Total invoice count:', invoiceTotalCount);
+        
         // Get unique values
         const tokos = [...new Set(invoices.map(inv => inv.toko).filter(Boolean))];
         const keterangans = [...new Set(invoices.map(inv => inv.keterangan).filter(Boolean))];
         
         console.log('[Filter] Loaded options - Tokos:', tokos, 'Keterangans:', keterangans);
         
-        // Populate toko select
+        // Populate toko select - clear existing first to avoid duplicates
         const tokoSelect = document.getElementById('filterToko');
         if (tokoSelect) {
+            // Keep only the first option (Semua Toko)
+            while (tokoSelect.options.length > 1) {
+                tokoSelect.remove(1);
+            }
             tokos.forEach(toko => {
                 const option = document.createElement('option');
                 option.value = toko;
@@ -2770,9 +2795,13 @@ async function loadFilterOptions() {
             });
         }
         
-        // Populate keterangan select
+        // Populate keterangan select - clear existing first to avoid duplicates
         const keteranganSelect = document.getElementById('filterKeterangan');
         if (keteranganSelect) {
+            // Keep only the first option (Semua)
+            while (keteranganSelect.options.length > 1) {
+                keteranganSelect.remove(1);
+            }
             keterangans.forEach(ket => {
                 const option = document.createElement('option');
                 option.value = ket;
@@ -2848,7 +2877,22 @@ async function applyInvoiceFilters() {
         
         const result = await response.json();
         renderInvoiceTable(result.data || []);
-        updateInvoiceStats(result);
+        
+        // Load stats from dedicated endpoint
+        try {
+            const statsResponse = await fetch('/api/invoice/stats', {
+                method: 'GET',
+                headers: headers
+            });
+            if (statsResponse.ok) {
+                const statsResult = await statsResponse.json();
+                console.log('[Filter] Stats from API:', statsResult);
+                updateInvoiceStats(statsResult);
+            }
+        } catch (statsErr) {
+            console.error('[Filter] Could not load stats:', statsErr);
+        }
+        
         invoiceCurrentPage = 1;
         
         // Track total count for pagination
