@@ -277,16 +277,21 @@ window.uploadExcelFile = async function() {
             })
         });
 
-        console.log('[Upload] Response:', response.status);
+        console.log('[Upload] Response:', response.status, response.statusText);
         
         const responseText = await response.text();
+        console.log('[Upload] Response text:', responseText);
+        
         let result;
         try {
             result = JSON.parse(responseText);
         } catch (parseErr) {
             console.error('[Upload] JSON parse error:', parseErr.message);
-            return alert('❌ Error: Server returned invalid response');
+            console.error('[Upload] Raw response was:', responseText.substring(0, 500));
+            return alert('❌ Error: Server returned invalid response\n\n' + responseText.substring(0, 200));
         }
+
+        console.log('[Upload] Parsed result:', result);
 
         if (response.ok && result.success) {
             const msg = 'Processed: ' + (result.summary?.processed || 0) + ' invoices\n' +
@@ -294,8 +299,11 @@ window.uploadExcelFile = async function() {
             console.log('[Upload] SUCCESS');
             alert('✅ Upload Berhasil!\n' + msg);
             window.closeUploadExcelModal();
-            // Reload page to show new data
-            location.reload();
+            // Reload page after delay to show new data
+            setTimeout(() => {
+                console.log('[Upload] Reloading page...');
+                location.reload();
+            }, 1000);
         } else {
             const errMsg = result.error || 'Upload failed';
             console.log('[Upload] FAILED:', errMsg);
