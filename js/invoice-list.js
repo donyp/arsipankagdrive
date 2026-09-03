@@ -1041,3 +1041,66 @@ window.goToPrevPage = async function() {
 setTimeout(() => {
     updateFilterTotal();
 }, 500);
+
+
+// ============================================
+// Auto-scroll table to show full text on truncation
+// ============================================
+window.autoScrollTableForTruncation = function() {
+    const tableContainer = document.querySelector('.table-container');
+    const rows = document.querySelectorAll('#invoiceTableBody tr');
+    
+    if (!tableContainer || rows.length === 0) return;
+    
+    // Find cells with truncated text
+    let needsScroll = false;
+    let scrollPosition = 0;
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        cells.forEach((cell, index) => {
+            // Check if text is truncated (offsetWidth < scrollWidth)
+            if (cell.offsetWidth < cell.scrollWidth) {
+                needsScroll = true;
+                // Calculate scroll position to show this cell
+                const cellLeft = cell.offsetLeft;
+                const cellWidth = cell.offsetWidth;
+                const containerWidth = tableContainer.offsetWidth;
+                
+                // Position cell in middle of visible area
+                scrollPosition = Math.max(scrollPosition, cellLeft - containerWidth / 3);
+            }
+        });
+    });
+    
+    // Auto-scroll if truncation detected
+    if (needsScroll && scrollPosition > 0) {
+        setTimeout(() => {
+            tableContainer.scrollLeft = scrollPosition;
+        }, 100);
+    }
+};
+
+// Call on table render
+document.addEventListener('DOMContentLoaded', () => {
+    // Observe table changes and auto-scroll
+    const observer = new MutationObserver(() => {
+        setTimeout(autoScrollTableForTruncation, 200);
+    });
+    
+    const tableBody = document.getElementById('invoiceTableBody');
+    if (tableBody) {
+        observer.observe(tableBody, {
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
+    }
+});
+
+// Also call after render functions
+const originalRenderInvoiceTable = window.renderInvoiceTable;
+window.renderInvoiceTable = function(...args) {
+    originalRenderInvoiceTable.apply(this, args);
+    setTimeout(autoScrollTableForTruncation, 300);
+};
