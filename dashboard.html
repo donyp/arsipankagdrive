@@ -244,16 +244,17 @@
 
         /* Status Badge */
         .status-badge {
-            display: inline;
+            display: inline-block;
             font-size: 15px !important;
             font-weight: 900 !important;
-            padding: 0;
+            padding: 4px 8px;
             margin: 0;
+            line-height: 1.2;
         }
 
         .status-badge::before {
             content: "●";
-            margin-right: 4px;
+            margin-right: 6px;
         }
 
         .status-badge.uploaded {
