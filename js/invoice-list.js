@@ -378,19 +378,27 @@ async function loadInvoices(page = 1) {
     }
 }
 
-function renderInvoiceTable(invoices) {
+function renderInvoiceTable(invoices = null) {
+    // Use allInvoices if no parameter provided (for pagination/filter)
+    const data = invoices || allInvoices || [];
+    
     const tbody = document.getElementById('invoiceTableBody');
     if (!tbody) {
         console.warn('[RenderTable] invoiceTableBody not found');
         return;
     }
     
-    if (invoices.length === 0) {
+    if (data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: #7f8c8d;">Belum ada data invoice</td></tr>';
         return;
     }
     
-    tbody.innerHTML = invoices.map(inv => {
+    // Calculate page slice
+    const start = invoiceCurrentPage * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    const pageData = data.slice(start, end);
+    
+    tbody.innerHTML = pageData.map(inv => {
         const statusClass = inv.status === 'UPLOADED' ? 'uploaded' : inv.status === 'MISSING' ? 'missing' : 'pending';
         const statusText = inv.status || 'PENDING';
         
