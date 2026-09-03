@@ -128,7 +128,7 @@
 
         .filters-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(5, 1fr);
             gap: 15px;
             margin-bottom: 15px;
         }
@@ -467,17 +467,13 @@
                         <label>Sampai Tanggal</label>
                         <input type="date" id="filterDateTo">
                     </div>
-                    <div class="filter-group">
-                        <label>Cari (Faktur/Konsumen)</label>
-                        <input type="text" id="filterSearch" placeholder="Cari...">
-                    </div>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-reset" id="btnResetFilter">
-                        <i class="fas fa-redo"></i> Reset
-                    </button>
                     <button class="btn-filter" id="btnApplyFilter">
                         <i class="fas fa-filter"></i> Terapkan Filter
+                    </button>
+                    <button class="btn-reset" id="btnResetFilter">
+                        <i class="fas fa-redo"></i> Reset
                     </button>
                 </div>
             </div>
