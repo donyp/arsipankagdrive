@@ -480,6 +480,12 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 .from('invoice_file_list')
                 .select('*', { count: 'exact' });
             
+            // Auto-filter by zona for admin_zona
+            if (req.user && req.user.role === 'admin_zona' && req.user.zona_id) {
+                console.log(`[Invoice API] Filtering for admin_zona with zona_id: ${req.user.zona_id}`);
+                query = query.eq('zona_id', req.user.zona_id);
+            }
+            
             // Apply filters
             if (status) {
                 query = query.eq('status', status);
