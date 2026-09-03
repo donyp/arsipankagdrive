@@ -2895,7 +2895,7 @@ async function applyInvoiceFilters() {
         if (toko) params.append('toko', toko);
         if (keterangan) params.append('keterangan', keterangan);
         if (month) {
-            // Convert month format (YYYY-MM) to date range
+            // Month is in format YYYY-MM, convert to date range
             const [year, monthNum] = month.split('-');
             const dateFrom = `${year}-${monthNum}-01`;
             const dateToObj = new Date(year, parseInt(monthNum), 0);
@@ -2963,6 +2963,14 @@ function resetInvoiceFilters() {
 function setupAdminZonaFilters() {
     console.log('[AdminZonaFilters] Setting up admin zona specific filters');
     
+    // Hide Total Invoice stat card
+    const statCards = document.querySelectorAll('.stat-card');
+    if (statCards && statCards.length > 0) {
+        // First stat card is usually Total
+        statCards[0].style.display = 'none';
+        console.log('[AdminZonaFilters] ✅ Total Invoice stat card hidden');
+    }
+    
     // Hide Status filter
     const filterStatus = document.getElementById('filterStatus');
     if (filterStatus) {
@@ -3002,25 +3010,99 @@ function setupAdminZonaFilters() {
         }
     }
     
-    // Ensure Month filter exists, if not create it
+    // Replace or create Month filter as dropdown
     let filterMonth = document.getElementById('filterMonth');
-    if (!filterMonth) {
-        console.log('[AdminZonaFilters] Creating month filter for admin zona');
+    if (filterMonth && filterMonth.type === 'month') {
+        // Convert month input to dropdown
+        const monthSelect = document.createElement('select');
+        monthSelect.id = 'filterMonth';
+        monthSelect.innerHTML = '<option value="">Semua Bulan</option>';
+        filterMonth.replaceWith(monthSelect);
+        filterMonth = monthSelect;
+        console.log('[AdminZonaFilters] ✅ Month input converted to dropdown');
+    } else if (!filterMonth) {
+        console.log('[AdminZonaFilters] Creating month dropdown for admin zona');
         const filterToko = document.getElementById('filterToko');
         if (filterToko) {
             const monthGroup = document.createElement('div');
             monthGroup.className = 'filter-group';
             monthGroup.innerHTML = `
                 <label>Bulan</label>
-                <input type="month" id="filterMonth">
+                <select id="filterMonth">
+                    <option value="">Semua Bulan</option>
+                </select>
             `;
             filterToko.parentElement.parentElement.appendChild(monthGroup);
             filterMonth = document.getElementById('filterMonth');
-            console.log('[AdminZonaFilters] ✅ Month filter created');
+            console.log('[AdminZonaFilters] ✅ Month dropdown created');
         }
     }
     
+    // Populate month dropdown from data
+    populateMonthDropdown();
+    
     console.log('[AdminZonaFilters] ✅ Admin Zona filters setup complete');
+}
+
+// Populate month dropdown with unique months from invoice data
+function populateMonthDropdown() {
+    console.log('[PopulateMonth] Starting to populate month dropdown');
+    
+    const filterMonth = document.getElementById('filterMonth');
+    if (!filterMonth) {
+        console.warn('[PopulateMonth] ⚠️ filterMonth not found');
+        return;
+    }
+    
+    // Get all invoice data to extract months
+    fetch('/api/invoice/list?limit=10000&offset=0', {
+        method: 'GET',
+        headers: API.getToken() ? { 'Authorization': `Bearer ${API.getToken()}` } : {}
+    })
+    .then(res => res.json())
+    .then(result => {
+        const invoices = result.data || [];
+        const months = new Set();
+        
+        // Extract unique month-year from invoice dates
+        invoices.forEach(inv => {
+            if (inv.tanggal) {
+                // Format: YYYY-MM-DD or DD-MM-YYYY
+                let monthYear = '';
+                if (inv.tanggal.includes('-')) {
+                    const parts = inv.tanggal.split('-');
+                    if (parts[0].length === 4) {
+                        // Format YYYY-MM-DD
+                        monthYear = `${parts[0]}-${parts[1]}`;
+                    } else if (parts[2].length === 4) {
+                        // Format DD-MM-YYYY
+                        monthYear = `${parts[2]}-${parts[1]}`;
+                    }
+                }
+                if (monthYear) months.add(monthYear);
+            }
+        });
+        
+        // Sort months in reverse order (newest first)
+        const sortedMonths = Array.from(months).sort().reverse();
+        
+        console.log('[PopulateMonth] Found months:', sortedMonths);
+        
+        // Add months to dropdown
+        sortedMonths.forEach(month => {
+            const option = document.createElement('option');
+            option.value = month;
+            const [year, monthNum] = month.split('-');
+            const monthName = new Date(year, parseInt(monthNum) - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+            option.textContent = monthName;
+            filterMonth.appendChild(option);
+        });
+        
+        console.log('[PopulateMonth] ✅ Month dropdown populated with', sortedMonths.length, 'months');
+    })
+    .catch(err => {
+        console.error('[PopulateMonth] ❌ Error fetching invoice data:', err);
+    });
 }
 
 // Initialize invoice system after content is loaded
