@@ -221,7 +221,7 @@
         .invoice-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 3px;
+            font-size: 8px;
             table-layout: fixed;
             animation: fadeIn 0.3s ease-in;
         }
@@ -253,14 +253,14 @@
         }
 
         .invoice-table th {
-            padding: 10px 8px;
+            padding: 8px 4px;
             text-align: left;
             font-weight: 600;
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             white-space: nowrap;
             border-right: 1px solid #2c3e50;
-            height: 45px;
+            height: 38px;
             vertical-align: middle;
         }
 
@@ -279,16 +279,15 @@
         }
 
         .invoice-table td {
-            padding: 6px 8px;
-            font-size: 3px;
+            padding: 4px 6px;
+            font-size: 8px;
             color: #2c3e50;
             border-right: 1px solid #ecf0f1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            line-height: 1.4;
-            height: 35px;
-            min-width: 150px;
+            line-height: 1.3;
+            height: 28px;
         }
 
         .invoice-table td:last-child {
@@ -296,16 +295,16 @@
         }
         
         /* Specific column widths - optimized for fit */
-        .invoice-table td:nth-child(1) { min-width: 75px; }   /* Status */
-        .invoice-table td:nth-child(2) { min-width: 80px; }   /* Tanggal */
-        .invoice-table td:nth-child(3) { min-width: 115px; }  /* No Faktur */
-        .invoice-table td:nth-child(4) { min-width: 75px; }   /* Status Bayar */
-        .invoice-table td:nth-child(5) { min-width: 55px; }   /* Tipe */
-        .invoice-table td:nth-child(6) { min-width: 150px; }  /* Nama Konsumen */
-        .invoice-table td:nth-child(7) { min-width: 120px; }  /* Nama Toko */
-        .invoice-table td:nth-child(8) { min-width: 95px; }   /* Total */
-        .invoice-table td:nth-child(9) { min-width: 75px; }   /* Keterangan */
-        .invoice-table td:nth-child(10) { min-width: 70px; }  /* Aksi */
+        .invoice-table td:nth-child(1) { width: 65px; }   /* Status */
+        .invoice-table td:nth-child(2) { width: 75px; }   /* Tanggal */
+        .invoice-table td:nth-child(3) { width: 105px; }  /* No Faktur */
+        .invoice-table td:nth-child(4) { width: 70px; }   /* Status Bayar */
+        .invoice-table td:nth-child(5) { width: 40px; }   /* Tipe */
+        .invoice-table td:nth-child(6) { width: 140px; }  /* Nama Konsumen */
+        .invoice-table td:nth-child(7) { width: 110px; }  /* Nama Toko */
+        .invoice-table td:nth-child(8) { width: 85px; }   /* Total */
+        .invoice-table td:nth-child(9) { width: 65px; }   /* Keterangan */
+        .invoice-table td:nth-child(10) { width: 65px; }  /* Aksi */
 
         /* Status Badge */
         .status-badge {
@@ -483,12 +482,15 @@
         /* Responsive */
         @media (max-width: 1200px) {
             .invoice-table {
-                font-size: 3px;
+                font-size: 8px;
             }
             
-            .invoice-table th,
+            .invoice-table th {
+                padding: 8px 4px;
+            }
+            
             .invoice-table td {
-                padding: 10px 8px;
+                padding: 4px 6px;
             }
         }
     </style>
