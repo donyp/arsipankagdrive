@@ -172,10 +172,11 @@ function showPreview() {
     const tbody = document.getElementById('previewTable');
     tbody.innerHTML = preview.map(inv => `
         <tr>
+            <td><span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">PENDING</span></td>
             <td>${inv.tanggal || '-'}</td>
             <td><strong>${inv.faktur || '-'}</strong></td>
-            <td>${inv.jenis_transaksi || 'jual'}</td>
             <td>${inv.metode_bayar || '-'}</td>
+            <td>${inv.jenis_transaksi || 'Jual'}</td>
             <td>${inv.konsumen || '-'}</td>
             <td>${inv.toko || '-'}</td>
             <td>Rp ${parseInt(inv.total_jumlah_jual).toLocaleString('id-ID')}</td>
