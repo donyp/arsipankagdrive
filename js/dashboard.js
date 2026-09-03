@@ -3017,10 +3017,67 @@ function setupAdminZonaFilters() {
         }
     }
     
-    // Populate month dropdown from data
+    // Show Year and Month filters (ensure they're visible for admin zona)
+    const filterYear = document.getElementById('filterYear');
+    const filterMonth = document.getElementById('filterMonth');
+    
+    if (filterYear) {
+        const yearGroup = filterYear.closest('.filter-group');
+        if (yearGroup) {
+            yearGroup.style.display = 'block';
+            console.log('[AdminZonaFilters] ✅ Year filter shown');
+        }
+    }
+    
+    if (filterMonth) {
+        const monthGroup = filterMonth.closest('.filter-group');
+        if (monthGroup) {
+            monthGroup.style.display = 'block';
+            console.log('[AdminZonaFilters] ✅ Month filter shown');
+        }
+    }
+    
+    // Populate month and year dropdowns from data
     populateMonthDropdown();
     
     console.log('[AdminZonaFilters] ✅ Admin Zona filters setup complete');
+}
+
+// Setup non-admin-zona filters (hide year/month, show status/dates)
+function setupRegularFilters() {
+    console.log('[RegularFilters] Setting up regular user filters');
+    
+    // Hide Year and Month filters for non-admin-zona
+    const filterYear = document.getElementById('filterYear');
+    const filterMonth = document.getElementById('filterMonth');
+    
+    if (filterYear) {
+        const yearGroup = filterYear.closest('.filter-group');
+        if (yearGroup) {
+            yearGroup.style.display = 'none';
+            console.log('[RegularFilters] ✅ Year filter hidden');
+        }
+    }
+    
+    if (filterMonth) {
+        const monthGroup = filterMonth.closest('.filter-group');
+        if (monthGroup) {
+            monthGroup.style.display = 'none';
+            console.log('[RegularFilters] ✅ Month filter hidden');
+        }
+    }
+    
+    // Show Status filter for regular users
+    const filterStatus = document.getElementById('filterStatus');
+    if (filterStatus) {
+        const statusGroup = filterStatus.closest('.filter-group');
+        if (statusGroup) {
+            statusGroup.style.display = 'block';
+            console.log('[RegularFilters] ✅ Status filter shown');
+        }
+    }
+    
+    console.log('[RegularFilters] ✅ Regular user filters setup complete');
 }
 
 // Populate month and year dropdowns with unique months/years from invoice data
@@ -3105,10 +3162,13 @@ function populateMonthDropdown() {
 function initInvoiceSystem() {
     console.log('[InvoiceInit] ===== INITIALIZING INVOICE SYSTEM =====');
     
-    // Setup admin zona specific filters
+    // Setup admin zona specific filters or regular filters based on role
     if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin_zona') {
         console.log('[InvoiceInit] Admin Zona detected - setting up admin zona filters');
         setupAdminZonaFilters();
+    } else {
+        console.log('[InvoiceInit] Regular user detected - setting up regular filters');
+        setupRegularFilters();
     }
     
     // Setup pagination buttons
