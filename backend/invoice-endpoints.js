@@ -480,10 +480,12 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 .from('invoice_file_list')
                 .select('*', { count: 'exact' });
             
-            // Auto-filter by zona for admin_zona
+            // Auto-filter by zona for admin_zona users
             if (req.user && req.user.role === 'admin_zona' && req.user.zona_id) {
-                console.log(`[Invoice API] Filtering for admin_zona with zona_id: ${req.user.zona_id}`);
+                console.log(`[Invoice List] Filtering for admin_zona with zona_id: ${req.user.zona_id}`);
                 query = query.eq('zona_id', req.user.zona_id);
+            } else if (req.user) {
+                console.log(`[Invoice List] User role: ${req.user.role}, zona_id: ${req.user.zona_id}`);
             }
             
             // Apply filters
@@ -492,7 +494,12 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
             }
             
             if (toko) {
-                query = query.eq('toko', toko);
+                // For admin_zona, ensure toko belongs to their zone
+                if (req.user && req.user.role === 'admin_zona') {
+                    query = query.eq('toko', toko).eq('zona_id', req.user.zona_id);
+                } else {
+                    query = query.eq('toko', toko);
+                }
             }
             
             if (keterangan) {
@@ -523,6 +530,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 console.error('[Invoice API] Error fetching list:', error);
                 return res.status(500).json({ error: 'Failed to fetch invoice list' });
             }
+            
+            console.log(`[Invoice List] Returned ${data?.length || 0} invoices (total: ${count})`);
             
             res.json({
                 success: true,
