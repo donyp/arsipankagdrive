@@ -2882,10 +2882,11 @@ async function applyInvoiceFilters() {
     try {
         const toko = document.getElementById('filterToko')?.value || '';
         const keterangan = document.getElementById('filterKeterangan')?.value || '';
+        const year = document.getElementById('filterYear')?.value || '';
         const month = document.getElementById('filterMonth')?.value || '';
         const search = document.getElementById('filterSearch')?.value || '';
         
-        console.log('[Filter] Applying filters:', { toko, keterangan, month, search });
+        console.log('[Filter] Applying filters:', { toko, keterangan, year, month, search });
         
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -2894,12 +2895,17 @@ async function applyInvoiceFilters() {
         const params = new URLSearchParams();
         if (toko) params.append('toko', toko);
         if (keterangan) params.append('keterangan', keterangan);
-        if (month) {
-            // Month is in format YYYY-MM, convert to date range
-            const [year, monthNum] = month.split('-');
-            const dateFrom = `${year}-${monthNum}-01`;
-            const dateToObj = new Date(year, parseInt(monthNum), 0);
-            const dateTo = `${year}-${monthNum}-${dateToObj.getDate()}`;
+        if (year && month) {
+            // Both year and month selected
+            const dateFrom = `${year}-${month}-01`;
+            const dateToObj = new Date(year, parseInt(month), 0);
+            const dateTo = `${year}-${month}-${dateToObj.getDate()}`;
+            params.append('date_from', dateFrom);
+            params.append('date_to', dateTo);
+        } else if (year) {
+            // Only year selected
+            const dateFrom = `${year}-01-01`;
+            const dateTo = `${year}-12-31`;
             params.append('date_from', dateFrom);
             params.append('date_to', dateTo);
         }
@@ -2943,6 +2949,7 @@ function resetInvoiceFilters() {
     const filterStatus = document.getElementById('filterStatus');
     const filterToko = document.getElementById('filterToko');
     const filterKeterangan = document.getElementById('filterKeterangan');
+    const filterYear = document.getElementById('filterYear');
     const filterMonth = document.getElementById('filterMonth');
     const filterDateFrom = document.getElementById('filterDateFrom');
     const filterDateTo = document.getElementById('filterDateTo');
@@ -2951,6 +2958,7 @@ function resetInvoiceFilters() {
     if (filterStatus) filterStatus.value = '';
     if (filterToko) filterToko.value = '';
     if (filterKeterangan) filterKeterangan.value = '';
+    if (filterYear) filterYear.value = '';
     if (filterMonth) filterMonth.value = '';
     if (filterDateFrom) filterDateFrom.value = '';
     if (filterDateTo) filterDateTo.value = '';
@@ -3015,17 +3023,19 @@ function setupAdminZonaFilters() {
     console.log('[AdminZonaFilters] ✅ Admin Zona filters setup complete');
 }
 
-// Populate month dropdown with unique months from invoice data
+// Populate month and year dropdowns with unique months/years from invoice data
 function populateMonthDropdown() {
-    console.log('[PopulateMonth] Starting to populate month dropdown');
+    console.log('[PopulateMonth] Starting to populate month and year dropdowns');
     
     const filterMonth = document.getElementById('filterMonth');
+    const filterYear = document.getElementById('filterYear');
+    
     if (!filterMonth) {
         console.warn('[PopulateMonth] ⚠️ filterMonth not found');
         return;
     }
     
-    // Get all invoice data to extract months
+    // Get all invoice data to extract months and years
     fetch('/api/invoice/list?limit=10000&offset=0', {
         method: 'GET',
         headers: API.getToken() ? { 'Authorization': `Bearer ${API.getToken()}` } : {}
@@ -3034,42 +3044,57 @@ function populateMonthDropdown() {
     .then(result => {
         const invoices = result.data || [];
         const months = new Set();
+        const years = new Set();
         
-        // Extract unique month-year from invoice dates
+        // Extract unique month-year and years from invoice dates
         invoices.forEach(inv => {
             if (inv.tanggal) {
                 // Format: YYYY-MM-DD or DD-MM-YYYY
                 let monthYear = '';
+                let year = '';
                 if (inv.tanggal.includes('-')) {
                     const parts = inv.tanggal.split('-');
                     if (parts[0].length === 4) {
                         // Format YYYY-MM-DD
                         monthYear = `${parts[0]}-${parts[1]}`;
+                        year = parts[0];
                     } else if (parts[2].length === 4) {
                         // Format DD-MM-YYYY
                         monthYear = `${parts[2]}-${parts[1]}`;
+                        year = parts[2];
                     }
                 }
                 if (monthYear) months.add(monthYear);
+                if (year) years.add(year);
             }
+        });
+        
+        // Sort and populate years dropdown
+        const sortedYears = Array.from(years).sort().reverse();
+        console.log('[PopulateMonth] Found years:', sortedYears);
+        
+        sortedYears.forEach(yr => {
+            const option = document.createElement('option');
+            option.value = yr;
+            option.textContent = yr;
+            filterYear.appendChild(option);
         });
         
         // Sort months in reverse order (newest first)
         const sortedMonths = Array.from(months).sort().reverse();
-        
         console.log('[PopulateMonth] Found months:', sortedMonths);
         
-        // Add months to dropdown
+        // Add months to dropdown - display only month name
         sortedMonths.forEach(month => {
             const option = document.createElement('option');
-            option.value = month;
+            option.value = month; // Store YYYY-MM
             const [year, monthNum] = month.split('-');
-            const monthName = new Date(year, parseInt(monthNum) - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
-            option.textContent = monthName;
+            const monthName = new Date(year, parseInt(monthNum) - 1).toLocaleString('id-ID', { month: 'long' });
+            option.textContent = monthName; // Display only month name
             filterMonth.appendChild(option);
         });
         
-        console.log('[PopulateMonth] ✅ Month dropdown populated with', sortedMonths.length, 'months');
+        console.log('[PopulateMonth] ✅ Year and month dropdowns populated - Years:', sortedYears.length, 'Months:', sortedMonths.length);
     })
     .catch(err => {
         console.error('[PopulateMonth] ❌ Error fetching invoice data:', err);
