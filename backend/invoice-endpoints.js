@@ -179,7 +179,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 });
                 
                 let processedCount = 0;
-                let duplicateCount = 0;
+                let duplicateCount = 0;  // RESET THIS!
                 let failedCount = 0;
                 const errors = [];
                 
@@ -205,7 +205,9 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                             console.error('[Invoice API] Insert error:', insertError.message);
                         }
                     } else {
-                        processedCount = inserted?.length || invoicesToInsert.length;
+                        // SUCCESS: All inserted (or no error = all succeeded)
+                        processedCount = invoicesToInsert.length;
+                        duplicateCount = 0;
                         console.log(`[Invoice API] ✅ Inserted ${processedCount} invoices`);
                     }
                 } else {
