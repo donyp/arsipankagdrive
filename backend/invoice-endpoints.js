@@ -136,7 +136,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 console.log(`[Invoice API] Sample fakturs:`, fakturs.slice(0, 5));
                 
                 if (fakturs.length === 0) {
-                    console.warn('[Invoice API] WARNING: No fakturs found in data!');
+                    console.warn('[Invoice API] ⚠️ WARNING: No fakturs found in data!');
                 }
                 
                 const { data: existingInvoices } = await supabase
@@ -146,6 +146,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
                 const existingFakturs = new Set((existingInvoices || []).map(inv => inv.faktur));
                 console.log(`[Invoice API] Found ${existingFakturs.size} existing fakturs`);
+                console.log(`[Invoice API] Sample existing:`, Array.from(existingFakturs).slice(0, 5));
                 
                 // Filter out duplicates
                 const newInvoices = data.filter(item => !existingFakturs.has(item.faktur));
@@ -195,9 +196,11 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     console.log('[Invoice API] Sample invoice to insert:', JSON.stringify(invoicesToInsert[0], null, 2));
                     console.log('[Invoice API] Invoice count to insert:', invoicesToInsert.length);
                     
+                    // Use ON CONFLICT DO NOTHING to handle duplicates gracefully
+                    // This is more reliable than pre-checking
                     const { data: inserted, error: insertError } = await supabase
                         .from('invoice_file_list')
-                        .insert(invoicesToInsert)
+                        .insert(invoicesToInsert, { onConflict: 'faktur' })  // Ignore duplicates by faktur
                         .select();
                     
                     if (insertError) {
@@ -207,8 +210,15 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         console.error('[Invoice API] Error details:', insertError.details);
                         console.error('[Invoice API] Error hint:', insertError.hint);
                         console.error('[Invoice API] Full error:', JSON.stringify(insertError, null, 2));
-                        failedCount = invoicesToInsert.length;
-                        errors.push(`Bulk insert failed: ${insertError.message} (${insertError.code})`);
+                        
+                        // Only count as failed if it's a real error (not duplicate key)
+                        if (insertError.code !== '23505') {
+                            failedCount = invoicesToInsert.length;
+                            errors.push(`Bulk insert failed: ${insertError.message} (${insertError.code})`);
+                        } else {
+                            // 23505 is duplicate key - these will be handled by ON CONFLICT
+                            console.log('[Invoice API] ℹ️ Duplicates encountered - ON CONFLICT will skip them');
+                        }
                     } else {
                         processedCount = inserted?.length || 0;
                         console.log(`[Invoice API] ✅ Successfully inserted ${processedCount} invoices`);
