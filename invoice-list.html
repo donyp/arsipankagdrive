@@ -128,7 +128,7 @@
 
         .filters-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 15px;
             margin-bottom: 15px;
         }
@@ -466,6 +466,10 @@
                     <div class="filter-group">
                         <label>Sampai Tanggal</label>
                         <input type="date" id="filterDateTo">
+                    </div>
+                    <div class="filter-group">
+                        <label>Cari (Faktur/Konsumen)</label>
+                        <input type="text" id="filterSearch" placeholder="No Faktur atau Konsumen...">
                     </div>
                 </div>
                 <div class="filter-actions">

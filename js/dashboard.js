@@ -2865,8 +2865,9 @@ async function applyInvoiceFilters() {
         const keterangan = document.getElementById('filterKeterangan')?.value || '';
         const dateFrom = document.getElementById('filterDateFrom')?.value || '';
         const dateTo = document.getElementById('filterDateTo')?.value || '';
+        const search = document.getElementById('filterSearch')?.value || '';
         
-        console.log('[Filter] Applying filters:', { status, toko, keterangan, dateFrom, dateTo });
+        console.log('[Filter] Applying filters:', { status, toko, keterangan, dateFrom, dateTo, search });
         
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -2878,6 +2879,7 @@ async function applyInvoiceFilters() {
         if (keterangan) params.append('keterangan', keterangan);
         if (dateFrom) params.append('date_from', dateFrom);
         if (dateTo) params.append('date_to', dateTo);
+        if (search) params.append('search', search);
         params.append('limit', INVOICE_PAGE_SIZE);
         params.append('offset', 0);
         
@@ -2918,6 +2920,7 @@ function resetInvoiceFilters() {
     document.getElementById('filterKeterangan').value = '';
     document.getElementById('filterDateFrom').value = '';
     document.getElementById('filterDateTo').value = '';
+    document.getElementById('filterSearch').value = '';
     
     loadInvoicesInDashboard(1);
 }
