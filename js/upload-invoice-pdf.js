@@ -305,18 +305,19 @@ async function uploadValidFiles() {
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-        // Upload each file
+        // OPTIMIZATION: Upload files in parallel (up to 3 concurrent uploads)
+        // Instead of sequential upload, use Promise.all with concurrency limit
+        const CONCURRENT_LIMIT = 3;
         let successCount = 0;
         let failCount = 0;
 
-        for (const fileResult of validFiles) {
+        // Create upload tasks
+        const uploadTasks = validFiles.map((fileResult, index) => async () => {
             try {
                 const formData = new FormData();
-                // File dikirim dengan key 'pdf'
                 formData.append('pdf', fileResult.file);
-                // Faktur diekstrak dari filename (sudah ada di validationResults)
                 
-                console.log(`[PDF Bulk] Uploading: ${fileResult.file.name} (faktur: ${fileResult.faktur})`);
+                console.log(`[PDF Bulk] Uploading (${index + 1}/${validFiles.length}): ${fileResult.file.name}`);
 
                 const response = await fetch('/api/invoice/upload-pdf', {
                     method: 'POST',
@@ -329,18 +330,27 @@ async function uploadValidFiles() {
                 if (response.ok && result.success) {
                     successCount++;
                     console.log('[PDF Bulk] ✓ Uploaded:', fileResult.faktur);
+                    showNotification(`✓ ${fileResult.faktur}`, 'success', 2000);
                 } else {
                     failCount++;
                     console.error('[PDF Bulk] ✗ Upload failed:', fileResult.faktur, result.error);
+                    showNotification(`✗ ${fileResult.faktur}: ${result.error}`, 'error', 2000);
                 }
             } catch (error) {
                 failCount++;
                 console.error('[PDF Bulk] Upload error:', fileResult.faktur, error);
+                showNotification(`✗ ${fileResult.faktur}: ${error.message}`, 'error', 2000);
             }
+        });
+
+        // Execute with concurrency limit
+        for (let i = 0; i < uploadTasks.length; i += CONCURRENT_LIMIT) {
+            const batch = uploadTasks.slice(i, i + CONCURRENT_LIMIT);
+            await Promise.all(batch.map(task => task()));
         }
 
-        // Show result message
-        const message = `✅ ${successCount} file berhasil diupload${failCount > 0 ? `, ${failCount} file gagal` : ''}`;
+        // Show final result message
+        const message = `✅ ${successCount}/${validFiles.length} file berhasil diupload${failCount > 0 ? ` (${failCount} gagal)` : ''}`;
         showNotification(message, successCount > 0 ? 'success' : 'error', 5000);
 
         // Reset if all successful

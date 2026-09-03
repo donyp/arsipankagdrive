@@ -1546,6 +1546,7 @@ const RcloneStorage = {
      */
     async uploadInvoicePDF(buffer, filename, year, month, day, category) {
         const storagePath = `/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
+        const dirPath = `/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
         
         logOperation('uploadInvoicePDF', {
             action: 'Uploading invoice PDF',
@@ -1565,48 +1566,38 @@ const RcloneStorage = {
             fs.writeFileSync(tempFilePath, buffer);
 
             try {
-                // Create directory structure on remote
-                const dirPath = `/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
+                // OPTIMIZATION 1: Try single mkdir with -p flag first (faster)
                 const remoteDirPath = `${PRIMARY_REMOTE}:${dirPath}`;
                 
-                console.log('[uploadInvoicePDF] Creating directory:', remoteDirPath);
-                // Create directory - Railway rclone doesn't support --parents, create recursively
-                // Split path and create each level
-                const pathParts = dirPath.split('/').filter(p => p);
-                let currentPath = '';
-                for (const part of pathParts) {
-                    currentPath += '/' + part;
-                    try {
-                        await rcloneExec(['mkdir', `${PRIMARY_REMOTE}:${currentPath}`]);
-                    } catch (err) {
-                        // Directory might already exist, continue
-                        console.log(`[uploadInvoicePDF] Dir exists or created: ${currentPath}`);
+                console.log('[uploadInvoicePDF] Creating directory (optimized single-step):', remoteDirPath);
+                try {
+                    // Try with --parents flag (faster if supported)
+                    await rcloneExec(['mkdir', '--parents', remoteDirPath]);
+                } catch (err) {
+                    // If --parents fails, fallback to recursive creation
+                    console.log('[uploadInvoicePDF] Single-step mkdir failed, using recursive creation');
+                    const pathParts = dirPath.split('/').filter(p => p);
+                    let currentPath = '';
+                    for (const part of pathParts) {
+                        currentPath += '/' + part;
+                        try {
+                            await rcloneExec(['mkdir', `${PRIMARY_REMOTE}:${currentPath}`]);
+                        } catch (mkErr) {
+                            // Directory might already exist, continue
+                            console.log(`[uploadInvoicePDF] Dir exists or created: ${currentPath}`);
+                        }
                     }
                 }
                 
                 // Upload file
                 const remoteFilePath = `${PRIMARY_REMOTE}:${storagePath}`;
-                console.log('[uploadInvoicePDF] Uploading file to:', remoteFilePath);
-                console.log('[uploadInvoicePDF] From local:', tempFilePath);
+                console.log('[uploadInvoicePDF] Uploading file:', filename);
                 await rcloneExec(['copyto', tempFilePath, remoteFilePath]);
                 
-                // Verify upload
-                console.log('[uploadInvoicePDF] Verifying upload...');
-                const verifyOutput = await rcloneExec(['lsjson', '--files-only', remoteFilePath]);
-                let remoteFiles;
-                try {
-                    remoteFiles = JSON.parse(verifyOutput || '[]');
-                } catch (err) {
-                    throw new Error('Upload completed but verification response invalid');
-                }
-                
-                const remoteFile = Array.isArray(remoteFiles) ? remoteFiles.find(f => f && f.Name) : null;
-                const localSize = buffer.length;
-                
-                // Only mark UPLOADED if upload actually succeeded AND file was verified
-                if (!remoteFile) {
-                    throw new Error(`Upload verification failed: file not found on Google Drive`);
-                }
+                // OPTIMIZATION 2: Skip expensive lsjson verification
+                // Trust rclone copyto exit code (0 = success, non-zero = fail)
+                // If copyto threw, we would have caught it above
+                console.log('[uploadInvoicePDF] Upload complete (verification skipped - trusting rclone)');
                 
                 logOperation('uploadInvoicePDF', {
                     status: '✅ Upload successful',
