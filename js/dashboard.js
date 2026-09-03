@@ -2684,9 +2684,9 @@ function renderInvoiceTable(invoices) {
     tbody.innerHTML = invoices.map(inv => {
         const statusClass = inv.status === 'UPLOADED' ? 'uploaded' : inv.status === 'MISSING' ? 'missing' : 'pending';
         const statusText = inv.status === 'UPLOADED' ? 'Lunas' : inv.status === 'MISSING' ? 'MISSING' : 'Belum Lunas';
-        const statusStyle = statusClass === 'uploaded' ? 'background: #d5f4e6; color: #27ae60;' : 
-                           statusClass === 'pending' ? 'background: #fff3cd; color: #f39c12;' : 
-                           'background: #fadbd8; color: #e74c3c;';
+        const statusStyle = statusClass === 'uploaded' ? 'background: #d4edda; color: #000000;' : 
+                           statusClass === 'pending' ? 'background: #fff3cd; color: #000000;' : 
+                           'background: #f8d7da; color: #000000;';
         
         // Format date dd/mm/yy
         let formattedDate = inv.tanggal || '-';
@@ -2709,7 +2709,7 @@ function renderInvoiceTable(invoices) {
         return `
         <tr style="transition: background 0.2s;">
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; border-right: 1px solid #ecf0f1;">
-                <span style="display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
+                <span style="display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
                     ${statusText}
                 </span>
             </td>
