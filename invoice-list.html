@@ -163,7 +163,19 @@
         .filter-actions {
             display: flex;
             gap: 10px;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-total {
+            font-size: 16px;
+            font-weight: 700;
+            color: #27ae60;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
         }
 
         .btn-filter {
@@ -358,10 +370,11 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             z-index: 9999;
             align-items: center;
             justify-content: center;
+            backdrop-filter: blur(4px);
         }
 
         .loading-overlay.visible {
@@ -370,15 +383,43 @@
 
         .loading-spinner {
             background: white;
-            padding: 30px;
-            border-radius: 12px;
+            padding: 40px;
+            border-radius: 16px;
             text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            animation: slideUp 0.4s ease-out;
         }
 
         .loading-spinner i {
-            font-size: 48px;
-            color: #3498db;
-            animation: spin 1s linear infinite;
+            font-size: 64px;
+            color: #e74c3c;
+            animation: spin 2s linear infinite;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .loading-spinner p {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .loading-spinner .spinner-text {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         @keyframes spin {
@@ -502,12 +543,17 @@
                     </div>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-filter" id="btnApplyFilter">
-                        <i class="fas fa-filter"></i> Terapkan Filter
-                    </button>
-                    <button class="btn-reset" id="btnResetFilter">
-                        <i class="fas fa-redo"></i> Reset
-                    </button>
+                    <div class="filter-total">
+                        Total: <span id="filterTotal">Rp 0</span>
+                    </div>
+                    <div class="filter-buttons">
+                        <button class="btn-filter" id="btnApplyFilter">
+                            <i class="fas fa-filter"></i> Terapkan Filter
+                        </button>
+                        <button class="btn-reset" id="btnResetFilter">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -561,8 +607,9 @@
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
-            <i class="fas fa-circle-notch"></i>
-            <p style="margin-top: 15px;">Memuat data...</p>
+            <i class="fas fa-file-pdf"></i>
+            <p>Sedang Upload PDF</p>
+            <div class="spinner-text">Mohon tunggu...</div>
         </div>
     </div>
 

@@ -301,6 +301,11 @@ async function uploadValidFiles() {
     btnUpload.disabled = true;
     btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
 
+    // Show loading overlay
+    if (window.showLoadingOverlay) {
+        window.showLoadingOverlay(`Uploading ${validFiles.length} file...`);
+    }
+
     try {
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -318,6 +323,11 @@ async function uploadValidFiles() {
                 formData.append('pdf', fileResult.file);
                 
                 console.log(`[PDF Bulk] Uploading (${index + 1}/${validFiles.length}): ${fileResult.file.name}`);
+                
+                // Update loading text
+                if (window.showLoadingOverlay) {
+                    window.showLoadingOverlay(`Uploading ${index + 1} of ${validFiles.length}...`);
+                }
 
                 const response = await fetch('/api/invoice/upload-pdf', {
                     method: 'POST',
@@ -349,6 +359,11 @@ async function uploadValidFiles() {
             await Promise.all(batch.map(task => task()));
         }
 
+        // Hide loading overlay
+        if (window.hideLoadingOverlay) {
+            window.hideLoadingOverlay();
+        }
+
         // Show final result message
         const message = `✅ ${successCount}/${validFiles.length} file berhasil diupload${failCount > 0 ? ` (${failCount} gagal)` : ''}`;
         showNotification(message, successCount > 0 ? 'success' : 'error', 5000);
@@ -361,6 +376,9 @@ async function uploadValidFiles() {
     } catch (error) {
         console.error('[PDF Bulk] Exception:', error);
         showNotification('Error: ' + error.message, 'error', 5000);
+        if (window.hideLoadingOverlay) {
+            window.hideLoadingOverlay();
+        }
     } finally {
         btnUpload.disabled = false;
         btnUpload.innerHTML = originalText;

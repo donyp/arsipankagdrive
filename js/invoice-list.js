@@ -776,3 +776,171 @@ setTimeout(() => {
         console.log('[Invoice-Init] Clear test data button handler attached (delayed)');
     }
 }, 200);
+
+
+// ============================================
+// Loading Overlay Functions
+// ============================================
+window.showLoadingOverlay = function(message = 'Sedang Upload PDF') {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.querySelector('p').textContent = message;
+        overlay.classList.add('visible');
+    }
+};
+
+window.hideLoadingOverlay = function() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.remove('visible');
+    }
+};
+
+// ============================================
+// Format Rupiah Currency
+// ============================================
+function formatRupiah(amount) {
+    if (!amount || isNaN(amount)) return 'Rp 0';
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+
+// ============================================
+// Update Filter Total
+// ============================================
+async function updateFilterTotal() {
+    try {
+        // Get all visible rows
+        const rows = document.querySelectorAll('#invoiceTableBody tr');
+        let total = 0;
+        
+        rows.forEach(row => {
+            const totalCell = row.querySelector('td:nth-child(8)'); // Total column
+            if (totalCell) {
+                const text = totalCell.textContent.trim();
+                // Extract numbers from "Rp 21,658.2" format
+                const numStr = text.replace(/[^\d]/g, '');
+                const num = parseInt(numStr) || 0;
+                total += num;
+            }
+        });
+        
+        const totalElement = document.getElementById('filterTotal');
+        if (totalElement) {
+            totalElement.textContent = formatRupiah(total);
+        }
+    } catch (error) {
+        console.error('[FilterTotal] Error:', error);
+    }
+}
+
+// ============================================
+// Setup Filter Event Listeners
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('[Invoice-Filter] Setting up filter handlers');
+    
+    const btnApplyFilter = document.getElementById('btnApplyFilter');
+    const btnResetFilter = document.getElementById('btnResetFilter');
+    
+    if (btnApplyFilter) {
+        btnApplyFilter.addEventListener('click', async () => {
+            console.log('[Invoice-Filter] Apply filter clicked');
+            
+            // Get filter values
+            const status = document.getElementById('filterStatus')?.value || '';
+            const toko = document.getElementById('filterToko')?.value || '';
+            const keterangan = document.getElementById('filterKeterangan')?.value || '';
+            const dateFrom = document.getElementById('filterDateFrom')?.value || '';
+            const dateTo = document.getElementById('filterDateTo')?.value || '';
+            const search = document.getElementById('filterSearch')?.value || '';
+            
+            // Build query
+            let query = supabase.from('invoice_file_list').select('*');
+            
+            if (status) query = query.eq('status', status);
+            if (toko) query = query.eq('toko', toko);
+            if (keterangan) query = query.eq('keterangan', keterangan);
+            if (search) {
+                query = query.or(`faktur.ilike.%${search}%,konsumen.ilike.%${search}%`);
+            }
+            if (dateFrom) {
+                query = query.gte('tanggal', dateFrom);
+            }
+            if (dateTo) {
+                query = query.lte('tanggal', dateTo);
+            }
+            
+            query = query.order('tanggal', { ascending: false }).limit(500);
+            
+            const { data, error } = await query;
+            
+            if (error) {
+                console.error('[Invoice-Filter] Error:', error);
+                alert('Error applying filter');
+                return;
+            }
+            
+            // Render filtered data
+            invoiceCurrentPage = 0;
+            allInvoices = data || [];
+            
+            // Smooth transition
+            const tableBody = document.getElementById('invoiceTableBody');
+            if (tableBody) {
+                tableBody.style.opacity = '0.6';
+                tableBody.style.transition = 'opacity 0.3s ease';
+            }
+            
+            setTimeout(() => {
+                renderInvoiceTable();
+                updateFilterTotal();
+                
+                if (tableBody) {
+                    tableBody.style.opacity = '1';
+                }
+            }, 200);
+        });
+    }
+    
+    if (btnResetFilter) {
+        btnResetFilter.addEventListener('click', async () => {
+            console.log('[Invoice-Filter] Reset filter clicked');
+            
+            // Clear all filters
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterToko').value = '';
+            document.getElementById('filterKeterangan').value = '';
+            document.getElementById('filterDateFrom').value = '';
+            document.getElementById('filterDateTo').value = '';
+            document.getElementById('filterSearch').value = '';
+            
+            // Reload all data
+            invoiceCurrentPage = 0;
+            
+            const tableBody = document.getElementById('invoiceTableBody');
+            if (tableBody) {
+                tableBody.style.opacity = '0.6';
+                tableBody.style.transition = 'opacity 0.3s ease';
+            }
+            
+            setTimeout(() => {
+                renderInvoiceTable();
+                updateFilterTotal();
+                
+                if (tableBody) {
+                    tableBody.style.opacity = '1';
+                }
+            }, 200);
+        });
+    }
+});
+
+// Update total on table render
+setTimeout(() => {
+    updateFilterTotal();
+}, 500);
