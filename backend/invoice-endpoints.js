@@ -887,27 +887,38 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
                 // Determine path based on keterangan (PPN/NON PPN)
                 const year = invoice.tanggal.split('-')[0];
-                const month = String(invoice.tanggal.split('-')[1]).padStart(2, '0');
+                const monthNum = String(invoice.tanggal.split('-')[1]).padStart(2, '0');
                 const day = String(invoice.tanggal.split('-')[2]).padStart(2, '0');
                 
-                const category = invoice.keterangan === 'PPN' ? 'PPN' : 'NON';
-                const remotePath = `/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
+                // Convert month number to Indonesian month name
+                const monthNames = [
+                    'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
+                    'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'
+                ];
+                const monthName = monthNames[parseInt(monthNum) - 1] || monthNum;
                 
-                console.log(`[Invoice PDF] Remote path: ${remotePath}`);
+                const category = invoice.keterangan === 'PPN' ? 'PPN' : 'NON';
+                
+                console.log(`[Invoice PDF] Path components - Year: ${year}, Month: ${monthName}, Day: ${day}, Category: ${category}`);
                 
                 // Upload to Google Drive via RcloneStorage
                 try {
-                    console.log(`[Invoice PDF] Uploading file buffer (${fileBuffer.length} bytes) to ${remotePath}`);
+                    console.log(`[Invoice PDF] Uploading file buffer (${fileBuffer.length} bytes)`);
                     
-                    await RcloneStorage.uploadFile(fileBuffer, remotePath);
+                    const uploadResult = await RcloneStorage.uploadInvoicePDF(fileBuffer, filename, year, monthName, day, category);
                     
-                    console.log(`[Invoice PDF] ✅ File uploaded to Google Drive`);
+                    if (!uploadResult.success) {
+                        throw new Error(uploadResult.error || 'Upload failed');
+                    }
+                    
+                    console.log(`[Invoice PDF] ✅ File uploaded to Google Drive: ${uploadResult.path}`);
                 } catch (uploadErr) {
                     console.error(`[Invoice PDF] Upload error:`, uploadErr.message);
                     // Continue anyway - update DB even if upload fails, user can retry
                 }
                 
                 // Update invoice status in database
+                const remotePath = uploadResult.path; // Get path from uploadResult
                 const { error: updateError } = await supabase
                     .from('invoice_file_list')
                     .update({
