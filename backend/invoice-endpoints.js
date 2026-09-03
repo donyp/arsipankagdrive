@@ -767,7 +767,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
                 const { data, error } = await supabase
                     .from('invoice_file_list')
-                    .select('faktur, status, toko, tanggal, konsumen')
+                    .select('faktur, status, toko, tanggal, konsumen, total_jumlah_jual')
                     .eq('faktur', faktur)
                     .single();
                 

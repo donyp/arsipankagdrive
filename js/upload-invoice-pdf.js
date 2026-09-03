@@ -5,6 +5,17 @@
 let selectedFiles = [];
 let validationResults = [];
 
+// Helper function to format currency as Rupiah
+function formatRupiah(amount) {
+    if (!amount) return 'Rp 0';
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
@@ -157,6 +168,13 @@ function renderValidationResults() {
         const statusText = result.valid ? 'Faktur ditemukan' : (result.error || 'Faktur tidak ditemukan');
         const fakturText = result.faktur && result.faktur.trim() ? result.faktur : '(tidak terdeteksi)';
         
+        let konsumenText = '';
+        let nominalText = '';
+        if (result.valid && result.invoice) {
+            konsumenText = result.invoice.konsumen || '-';
+            nominalText = formatRupiah(result.invoice.total_jumlah_jual);
+        }
+        
         let deleteBtn = '';
         if (!result.valid) {
             deleteBtn = `<button onclick="removeInvalidFile(${index})" class="delete-btn" title="Hapus file">
@@ -170,7 +188,7 @@ function renderValidationResults() {
                 <div style="flex: 1;">
                     <div class="file-item-name">${result.file.name}</div>
                     <div class="file-item-faktur">
-                        Faktur: ${fakturText} ${result.valid ? `| ${result.invoice.konsumen}` : `| ${statusText}`}
+                        Faktur: ${fakturText} ${result.valid ? `| ${konsumenText} | ${nominalText}` : `| ${statusText}`}
                     </div>
                 </div>
                 <div class="file-item-status">${status}</div>
