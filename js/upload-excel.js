@@ -121,16 +121,30 @@ async function checkData() {
         }
 
         // Transform and aggregate
-        let invoices = parsed.map(row => ({
-            tanggal: row['TANGGAL'] || row['tanggal'],
-            toko: row['TOKO'] || row['toko'],
-            faktur: row['FAKTUR'] || row['faktur'],
-            metode_bayar: row['METODE BAYAR'] || row['metode_bayar'],
-            jenis_transaksi: row['JENIS TRANSAKSI'] || row['jenis_transaksi'],
-            konsumen: row['KONSUMEN'] || row['konsumen'],
-            total_jumlah_jual: parseFloat(row['JUMLAH JUAL'] || row['jumlah_jual'] || 0),
-            keterangan: row['KET 2'] || row['ket_2'] || 'NON PPN'
-        })).filter(inv => inv.faktur);
+        let invoices = parsed.map(row => {
+            // Normalize toko values
+            let tokoValue = (row['TOKO'] || row['toko'] || '').trim();
+            
+            // If toko is just "ANKA", expand to "ANKA BEKASI"
+            if (tokoValue.toUpperCase() === 'ANKA') {
+                tokoValue = 'ANKA BEKASI';
+            }
+            // If contains "PEMALANG", ensure it's "ANKA PEMALANG"
+            else if (tokoValue.toUpperCase().includes('PEMALANG')) {
+                tokoValue = 'ANKA PEMALANG';
+            }
+            
+            return {
+                tanggal: row['TANGGAL'] || row['tanggal'],
+                toko: tokoValue,
+                faktur: row['FAKTUR'] || row['faktur'],
+                metode_bayar: row['METODE BAYAR'] || row['metode_bayar'],
+                jenis_transaksi: row['JENIS TRANSAKSI'] || row['jenis_transaksi'],
+                konsumen: row['KONSUMEN'] || row['konsumen'],
+                total_jumlah_jual: parseFloat(row['JUMLAH JUAL'] || row['jumlah_jual'] || 0),
+                keterangan: row['KET 2'] || row['ket_2'] || 'NON PPN'
+            };
+        }).filter(inv => inv.faktur);
 
         // Aggregate by faktur
         const aggregated = {};
