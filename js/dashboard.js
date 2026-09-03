@@ -2808,36 +2808,35 @@ function updateInvoiceStatsFromData(invoices, totalCount) {
     
     console.log('[StatsFromData] Counts - Total:', totalCount, 'Uploaded:', uploaded, 'Pending:', pending, 'Missing:', missing);
     
-    // Update stat elements
-    const statElements = document.querySelectorAll('[data-stat="total"]');
-    console.log('[StatsFromData] Found', statElements.length, 'total stat elements');
-    statElements.forEach((el, i) => {
-        console.log('[StatsFromData] Setting total[' + i + '] from', el.textContent, 'to', totalCount);
-        el.textContent = totalCount;
-    });
+    // Try to update stat elements, with retry logic
+    let retries = 0;
+    const updateStatElements = () => {
+        const statElements = document.querySelectorAll('[data-stat="total"]');
+        const uploadedEls = document.querySelectorAll('[data-stat="uploaded"]');
+        const pendingEls = document.querySelectorAll('[data-stat="pending"]');
+        const missingEls = document.querySelectorAll('[data-stat="missing"]');
+        
+        console.log('[StatsFromData] Found', statElements.length, 'total,', uploadedEls.length, 'uploaded,', pendingEls.length, 'pending,', missingEls.length, 'missing stat elements');
+        
+        // If no elements found and we haven't retried enough, try again later
+        if (statElements.length === 0 && retries < 10) {
+            console.log('[StatsFromData] Elements not found yet, retrying in 100ms (attempt', (retries + 1), '/10)');
+            retries++;
+            setTimeout(updateStatElements, 100);
+            return;
+        }
+        
+        // Update all elements we found
+        statElements.forEach((el, i) => el.textContent = totalCount);
+        uploadedEls.forEach((el, i) => el.textContent = uploaded);
+        pendingEls.forEach((el, i) => el.textContent = pending);
+        missingEls.forEach((el, i) => el.textContent = missing);
+        
+        console.log('[StatsFromData] ✅ Stats updated successfully');
+        console.log('[StatsFromData] ===== STATS UPDATE COMPLETE =====');
+    };
     
-    const uploadedEls = document.querySelectorAll('[data-stat="uploaded"]');
-    console.log('[StatsFromData] Found', uploadedEls.length, 'uploaded stat elements');
-    uploadedEls.forEach((el, i) => {
-        console.log('[StatsFromData] Setting uploaded[' + i + '] to', uploaded);
-        el.textContent = uploaded;
-    });
-    
-    const pendingEls = document.querySelectorAll('[data-stat="pending"]');
-    console.log('[StatsFromData] Found', pendingEls.length, 'pending stat elements');
-    pendingEls.forEach((el, i) => {
-        console.log('[StatsFromData] Setting pending[' + i + '] to', pending);
-        el.textContent = pending;
-    });
-    
-    const missingEls = document.querySelectorAll('[data-stat="missing"]');
-    console.log('[StatsFromData] Found', missingEls.length, 'missing stat elements');
-    missingEls.forEach((el, i) => {
-        console.log('[StatsFromData] Setting missing[' + i + '] to', missing);
-        el.textContent = missing;
-    });
-    
-    console.log('[StatsFromData] ===== STATS UPDATE COMPLETE =====');
+    updateStatElements();
 }
 
 // Load invoices when dashboard loads
