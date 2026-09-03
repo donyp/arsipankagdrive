@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Invoice - ARSIP ANKA</title>
-    <link rel="stylesheet" href="css/style.css?v=1022">
+    <link rel="stylesheet" href="css/style.css?v=1023">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="js/zoom-reset.js"></script>
     <style>
@@ -134,7 +134,7 @@
 
         .filters-grid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 15px;
             margin-bottom: 15px;
         }
@@ -579,18 +579,9 @@
             <div class="filters-container">
                 <div class="filters-grid">
                     <div class="filter-group">
-                        <label>Status</label>
-                        <select id="filterStatus">
-                            <option value="">Semua Status</option>
-                            <option value="PENDING">Pending</option>
-                            <option value="UPLOADED">Uploaded</option>
-                            <option value="MISSING">Missing</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Toko</label>
+                        <label>Supplier</label>
                         <select id="filterToko">
-                            <option value="">Semua Toko</option>
+                            <option value="">Semua Supplier</option>
                             <option value="ANKA BEKASI">ANKA BEKASI</option>
                             <option value="ANKA PEMALANG">ANKA PEMALANG</option>
                         </select>
@@ -604,16 +595,8 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label>Dari Tanggal</label>
-                        <input type="date" id="filterDateFrom">
-                    </div>
-                    <div class="filter-group">
-                        <label>Sampai Tanggal</label>
-                        <input type="date" id="filterDateTo">
-                    </div>
-                    <div class="filter-group">
-                        <label>Cari (Faktur/Konsumen)</label>
-                        <input type="text" id="filterSearch" placeholder="No Faktur atau Konsumen...">
+                        <label>Bulan</label>
+                        <input type="month" id="filterMonth">
                     </div>
                 </div>
                 <div class="filter-actions">
