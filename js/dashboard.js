@@ -2645,9 +2645,15 @@ async function loadInvoicesInDashboard(page = 1) {
 function renderInvoiceTable(invoices) {
     const tbody = document.getElementById('invoiceTableBody');
     if (!tbody) {
-        console.warn('[RenderTable] invoiceTableBody not found');
+        console.warn('[RenderTable] invoiceTableBody not found - available elements:');
+        console.warn('[RenderTable] All tbody elements:', document.querySelectorAll('tbody').length);
+        document.querySelectorAll('tbody').forEach((el, i) => {
+            console.warn(`  tbody[${i}] id=${el.id}, class=${el.className}`);
+        });
         return;
     }
+    
+    console.log('[RenderTable] Rendering', invoices.length, 'invoices');
     
     if (invoices.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #7f8c8d;">Belum ada data invoice</td></tr>';
@@ -2678,6 +2684,8 @@ function renderInvoiceTable(invoices) {
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.keterangan || '-'}</td>
         </tr>
     `}).join('');
+    
+    console.log('[RenderTable] ✅ Rendered successfully');
 }
 
 function formatCurrency(value) {
@@ -2710,7 +2718,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     await new Promise(resolve => setTimeout(resolve, 100));
     
     console.log('[Dashboard] Loading invoices...');
-    loadInvoicesInDashboard(1);
+    
+    // Wait for DOM to be fully ready (invoice table injected)
+    let retries = 0;
+    while (!document.getElementById('invoiceTableBody') && retries < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        retries++;
+    }
+    
+    if (document.getElementById('invoiceTableBody')) {
+        console.log('[Dashboard] Invoice table found, loading data...');
+        loadInvoicesInDashboard(1);
+    } else {
+        console.warn('[Dashboard] Invoice table not found after 5 seconds');
+    }
 });
 
 
