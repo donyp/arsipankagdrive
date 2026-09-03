@@ -2688,6 +2688,18 @@ function renderInvoiceTable(invoices) {
                            statusClass === 'pending' ? 'background: #fff3cd; color: #f39c12;' : 
                            'background: #fadbd8; color: #e74c3c;';
         
+        // Format date dd/mm/yy
+        let formattedDate = inv.tanggal || '-';
+        if (inv.tanggal && inv.tanggal.includes('-')) {
+            const parts = inv.tanggal.split('-');
+            if (parts.length === 3) {
+                formattedDate = `${parts[2]}/${parts[1]}/${parts[0].slice(-2)}`;
+            }
+        }
+        
+        // Capitalize first letter of tipe
+        const tipe = inv.jenis_transaksi ? inv.jenis_transaksi.charAt(0).toUpperCase() + inv.jenis_transaksi.slice(1).toLowerCase() : '-';
+        
         return `
         <tr style="border-bottom: 1px solid #ecf0f1; transition: background 0.2s;">
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">
@@ -2695,10 +2707,10 @@ function renderInvoiceTable(invoices) {
                     ${statusText}
                 </span>
             </td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.tanggal || '-'}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${formattedDate}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;"><strong>${inv.faktur || '-'}</strong></td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.metode_bayar || '-'}</td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.jenis_transaksi || '-'}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${tipe}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.konsumen || '-'}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.toko || '-'}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${formatCurrency(inv.total_jumlah_jual)}</td>
