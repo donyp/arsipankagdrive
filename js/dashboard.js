@@ -2808,35 +2808,90 @@ function updateInvoiceStatsFromData(invoices, totalCount) {
     
     console.log('[StatsFromData] Counts - Total:', totalCount, 'Uploaded:', uploaded, 'Pending:', pending, 'Missing:', missing);
     
-    // Try to update stat elements, with retry logic
-    let retries = 0;
-    const updateStatElements = () => {
+    // Method 1: Try to find and update [data-stat] elements
+    let method1Success = false;
+    const tryMethod1 = () => {
         const statElements = document.querySelectorAll('[data-stat="total"]');
         const uploadedEls = document.querySelectorAll('[data-stat="uploaded"]');
         const pendingEls = document.querySelectorAll('[data-stat="pending"]');
         const missingEls = document.querySelectorAll('[data-stat="missing"]');
         
-        console.log('[StatsFromData] Found', statElements.length, 'total,', uploadedEls.length, 'uploaded,', pendingEls.length, 'pending,', missingEls.length, 'missing stat elements');
+        console.log('[StatsFromData] Method 1 - Found', statElements.length, 'total,', uploadedEls.length, 'uploaded,', pendingEls.length, 'pending,', missingEls.length, 'missing');
         
-        // If no elements found and we haven't retried enough, try again later
-        if (statElements.length === 0 && retries < 10) {
-            console.log('[StatsFromData] Elements not found yet, retrying in 100ms (attempt', (retries + 1), '/10)');
-            retries++;
-            setTimeout(updateStatElements, 100);
-            return;
+        if (statElements.length > 0 || uploadedEls.length > 0) {
+            statElements.forEach(el => el.textContent = totalCount);
+            uploadedEls.forEach(el => el.textContent = uploaded);
+            pendingEls.forEach(el => el.textContent = pending);
+            missingEls.forEach(el => el.textContent = missing);
+            method1Success = true;
+            console.log('[StatsFromData] ✅ Method 1 success');
+            return true;
         }
-        
-        // Update all elements we found
-        statElements.forEach((el, i) => el.textContent = totalCount);
-        uploadedEls.forEach((el, i) => el.textContent = uploaded);
-        pendingEls.forEach((el, i) => el.textContent = pending);
-        missingEls.forEach((el, i) => el.textContent = missing);
-        
-        console.log('[StatsFromData] ✅ Stats updated successfully');
-        console.log('[StatsFromData] ===== STATS UPDATE COMPLETE =====');
+        return false;
     };
     
-    updateStatElements();
+    // Try method 1 immediately
+    if (!tryMethod1()) {
+        // Try again a few times if elements not found
+        let retries = 0;
+        const retryMethod1 = () => {
+            if (retries < 20 && !method1Success) {
+                retries++;
+                if (tryMethod1()) {
+                    return;
+                }
+                setTimeout(retryMethod1, 100);
+            } else if (!method1Success) {
+                console.warn('[StatsFromData] ⚠️ Could not find [data-stat] elements after 20 retries');
+                console.log('[StatsFromData] Attempting Method 2 - direct DOM manipulation');
+                tryMethod2();
+            }
+        };
+        setTimeout(retryMethod1, 100);
+    }
+    
+    // Method 2: Find stat cards by looking for common patterns
+    function tryMethod2() {
+        // Look for divs with specific text content
+        const allDivs = document.querySelectorAll('div');
+        let foundAny = false;
+        
+        allDivs.forEach(div => {
+            const text = div.textContent.trim();
+            if (text === '0' && div.style.fontSize && (div.style.color === '#3498db' || div.style.color === '#27ae60' || div.style.color === '#f39c12' || div.style.color === '#e74c3c')) {
+                // This might be a stat value
+                const nextElement = div.parentElement?.querySelector(':scope > div:nth-child(2)');
+                if (nextElement) {
+                    const label = nextElement.textContent.toUpperCase();
+                    if (label.includes('TOTAL')) {
+                        div.textContent = totalCount;
+                        foundAny = true;
+                        console.log('[StatsFromData] ✅ Method 2 updated TOTAL');
+                    } else if (label.includes('UPLOADED')) {
+                        div.textContent = uploaded;
+                        foundAny = true;
+                        console.log('[StatsFromData] ✅ Method 2 updated UPLOADED');
+                    } else if (label.includes('PENDING')) {
+                        div.textContent = pending;
+                        foundAny = true;
+                        console.log('[StatsFromData] ✅ Method 2 updated PENDING');
+                    } else if (label.includes('MISSING')) {
+                        div.textContent = missing;
+                        foundAny = true;
+                        console.log('[StatsFromData] ✅ Method 2 updated MISSING');
+                    }
+                }
+            }
+        });
+        
+        if (foundAny) {
+            console.log('[StatsFromData] ✅ Method 2 success');
+        } else {
+            console.warn('[StatsFromData] ⚠️ Could not find stat cards with Method 2 either');
+        }
+    }
+    
+    console.log('[StatsFromData] ===== STATS UPDATE ATTEMPT COMPLETE =====');
 }
 
 // Load invoices when dashboard loads
