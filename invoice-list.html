@@ -222,7 +222,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 8px;
-            table-layout: fixed;
+            table-layout: auto;
             animation: fadeIn 0.3s ease-in;
         }
 
@@ -284,8 +284,6 @@
             color: #2c3e50;
             border-right: 1px solid #ecf0f1;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
             line-height: 1.3;
             height: 28px;
         }
@@ -294,17 +292,17 @@
             border-right: none;
         }
         
-        /* Specific column widths - optimized for fit */
-        .invoice-table td:nth-child(1) { width: 65px; }   /* Status */
-        .invoice-table td:nth-child(2) { width: 75px; }   /* Tanggal */
-        .invoice-table td:nth-child(3) { width: 105px; }  /* No Faktur */
-        .invoice-table td:nth-child(4) { width: 70px; }   /* Status Bayar */
-        .invoice-table td:nth-child(5) { width: 40px; }   /* Tipe */
-        .invoice-table td:nth-child(6) { width: 140px; }  /* Nama Konsumen */
-        .invoice-table td:nth-child(7) { width: 110px; }  /* Nama Toko */
-        .invoice-table td:nth-child(8) { width: 85px; }   /* Total */
-        .invoice-table td:nth-child(9) { width: 65px; }   /* Keterangan */
-        .invoice-table td:nth-child(10) { width: 65px; }  /* Aksi */
+        /* Specific column widths - min width untuk balance */
+        .invoice-table td:nth-child(1) { min-width: 65px; }   /* Status */
+        .invoice-table td:nth-child(2) { min-width: 75px; }   /* Tanggal */
+        .invoice-table td:nth-child(3) { min-width: 105px; }  /* No Faktur */
+        .invoice-table td:nth-child(4) { min-width: 70px; }   /* Status Bayar */
+        .invoice-table td:nth-child(5) { min-width: 40px; }   /* Tipe */
+        .invoice-table td:nth-child(6) { min-width: 120px; }  /* Nama Konsumen */
+        .invoice-table td:nth-child(7) { min-width: 100px; }  /* Nama Toko */
+        .invoice-table td:nth-child(8) { min-width: 85px; }   /* Total */
+        .invoice-table td:nth-child(9) { min-width: 65px; }   /* Keterangan */
+        .invoice-table td:nth-child(10) { min-width: 65px; }  /* Aksi */
 
         /* Status Badge */
         .status-badge {
