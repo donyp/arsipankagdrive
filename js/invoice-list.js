@@ -536,13 +536,17 @@ async function uploadPdfFile() {
 
 // Load invoices on page load
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
         console.log('[Invoice-Init] Loading initial invoice list');
+        await initAuth();
         loadInvoices(1);
     });
 } else {
     console.log('[Invoice-Init] Document ready, loading invoices now');
-    loadInvoices(1);
+    (async () => {
+        await initAuth();
+        loadInvoices(1);
+    })();
 }
 
 // ============================================
