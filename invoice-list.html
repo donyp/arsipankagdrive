@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Invoice - ARSIP ANKA</title>
-    <link rel="stylesheet" href="css/style.css?v=999">
+    <link rel="stylesheet" href="css/style.css?v=1000">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="js/zoom-reset.js"></script>
     <style>
@@ -272,6 +272,7 @@
         .invoice-table tbody tr {
             transition: background 0.2s;
             height: 35px;
+            border: none !important;
             border-bottom: none !important;
         }
 
@@ -283,7 +284,7 @@
             padding: 4px 6px;
             font-size: 7px;
             color: #2c3e50;
-            border-right: 1px solid #d1d5db !important;
+            border-right: 1px solid #555 !important;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -292,6 +293,14 @@
         }
 
         .invoice-table td:last-child {
+            border-right: none !important;
+        }
+        
+        .invoice-table th {
+            border-right: 1px solid #333 !important;
+        }
+        
+        .invoice-table th:last-child {
             border-right: none !important;
         }
         
