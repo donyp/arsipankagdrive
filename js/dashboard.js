@@ -3010,34 +3010,6 @@ function setupAdminZonaFilters() {
         }
     }
     
-    // Replace or create Month filter as dropdown
-    let filterMonth = document.getElementById('filterMonth');
-    if (filterMonth && filterMonth.type === 'month') {
-        // Convert month input to dropdown
-        const monthSelect = document.createElement('select');
-        monthSelect.id = 'filterMonth';
-        monthSelect.innerHTML = '<option value="">Semua Bulan</option>';
-        filterMonth.replaceWith(monthSelect);
-        filterMonth = monthSelect;
-        console.log('[AdminZonaFilters] ✅ Month input converted to dropdown');
-    } else if (!filterMonth) {
-        console.log('[AdminZonaFilters] Creating month dropdown for admin zona');
-        const filterToko = document.getElementById('filterToko');
-        if (filterToko) {
-            const monthGroup = document.createElement('div');
-            monthGroup.className = 'filter-group';
-            monthGroup.innerHTML = `
-                <label>Bulan</label>
-                <select id="filterMonth">
-                    <option value="">Semua Bulan</option>
-                </select>
-            `;
-            filterToko.parentElement.parentElement.appendChild(monthGroup);
-            filterMonth = document.getElementById('filterMonth');
-            console.log('[AdminZonaFilters] ✅ Month dropdown created');
-        }
-    }
-    
     // Populate month dropdown from data
     populateMonthDropdown();
     
