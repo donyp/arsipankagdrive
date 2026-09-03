@@ -1,15 +1,13 @@
 -- Clear old zona and toko data safely
--- Handle ALL foreign key dependencies with NOT NULL constraints
+-- Delete ALL files first (they reference zonas)
 
--- Step 1: Delete files that don't have a valid zona_id (orphaned records)
--- This is safe because we're just removing archive files
-DELETE FROM files 
-WHERE zona_id IS NULL;
+-- Step 1: Delete ALL files (archive files - will be re-uploaded if needed)
+DELETE FROM files;
 
 -- Step 2: Clear invoice_file_list (references toko and zonas)
 DELETE FROM invoice_file_list;
 
--- Step 3: Clear toko (dependent of files which we've cleaned)
+-- Step 3: Clear toko
 DELETE FROM toko;
 
 -- Step 4: Clear users that reference old zonas
@@ -210,4 +208,4 @@ INSERT INTO toko (kode, nama, zona_id) VALUES
 SELECT 'Zona-Toko mapping update complete!' as status;
 SELECT COUNT(*) as total_zonas FROM zonas;
 SELECT COUNT(*) as total_tokos FROM toko;
-SELECT COUNT(*) as remaining_files FROM files WHERE zona_id IS NULL;
+SELECT COUNT(*) as remaining_files FROM files;
