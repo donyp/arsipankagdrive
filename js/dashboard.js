@@ -2708,18 +2708,18 @@ function renderInvoiceTable(invoices) {
         
         return `
         <tr style="transition: background 0.2s;">
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; border-right: 1px solid #ecf0f1;">
                 <span style="display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
                     ${statusText}
                 </span>
             </td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${formattedDate}</td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;"><strong>${inv.faktur || '-'}</strong></td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.metode_bayar || '-'}</td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${tipe}</td>
-            <td style="padding: 15px 12px; font-size: ${konsumenFontSize}; color: #2c3e50;">${konsumenText}</td>
-            <td style="padding: 15px 12px; font-size: ${tokoFontSize}; color: #2c3e50;">${tokoText}</td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${formatCurrency(inv.total_jumlah_jual)}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; border-right: 1px solid #ecf0f1;">${formattedDate}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; border-right: 1px solid #ecf0f1;"><strong>${inv.faktur || '-'}</strong></td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; border-right: 1px solid #ecf0f1;">${inv.metode_bayar || '-'}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; border-right: 1px solid #ecf0f1;">${tipe}</td>
+            <td style="padding: 15px 12px; font-size: ${konsumenFontSize}; color: #2c3e50; border-right: 1px solid #ecf0f1;">${konsumenText}</td>
+            <td style="padding: 15px 12px; font-size: ${tokoFontSize}; color: #2c3e50; border-right: 1px solid #ecf0f1;">${tokoText}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; border-right: 1px solid #ecf0f1;">${formatCurrency(inv.total_jumlah_jual)}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.keterangan || '-'}</td>
         </tr>
     `}).join('');
