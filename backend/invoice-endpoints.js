@@ -102,6 +102,26 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     });
                 }
                 
+                // Create batch record
+                const batchId = uuidv4();
+                const { error: batchError } = await supabase
+                    .from('excel_upload_batches')
+                    .insert({
+                        id: batchId,
+                        filename: filename,
+                        total_rows: data.length,
+                        processed_rows: 0,
+                        failed_rows: 0,
+                        duplicate_rows: 0,
+                        uploaded_by: req.user.id,
+                        status: 'processing'
+                    });
+                
+                if (batchError) {
+                    console.error('[Invoice API] Error creating batch:', batchError);
+                    // Continue anyway, batch is optional
+                }
+                
                 // DEBUG: Log first few rows to check data structure
                 console.log('[Invoice API] Raw data sample (first 3):');
                 data.slice(0, 3).forEach((row, idx) => {
