@@ -294,13 +294,22 @@ window.uploadExcelFile = async function() {
         console.log('[Upload] Parsed result:', result);
 
         if (response.ok && result.success) {
-            const msg = 'Processed: ' + (result.summary?.processed || 0) + ' invoices\n' +
-                        'Duplicates: ' + (result.summary?.duplicates || 0);
+            const processed = result.summary?.processed || 0;
+            const duplicates = result.summary?.duplicates || 0;
             console.log('[Upload] SUCCESS');
-            alert('✅ Upload Berhasil!\n' + msg + '\n\nSilakan refresh halaman untuk melihat data terbaru');
+            
+            // Show success popup
+            showSuccessPopup(processed, duplicates);
+            
+            // Close modal
             window.closeUploadExcelModal();
-            // Don't reload - let user refresh manually
-            // Page reload sometimes timeout, better to let user do it
+            
+            // Reload invoice table after 1 second
+            setTimeout(() => {
+                console.log('[Upload] Reloading invoice table...');
+                currentPage = 1;
+                loadInvoices();
+            }, 1000);
         } else {
             const errMsg = result.error || 'Upload failed';
             console.log('[Upload] FAILED:', errMsg);
@@ -314,6 +323,266 @@ window.uploadExcelFile = async function() {
         uploadBtn.textContent = originalText;
     }
 };
+
+// ============================================
+// Load Invoices Function
+// ============================================
+let currentPage = 1;
+const PAGE_SIZE = 20;
+
+async function loadInvoices(page = 1) {
+    try {
+        console.log('[LoadInvoices] Loading page', page);
+        
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const offset = (page - 1) * PAGE_SIZE;
+        const response = await fetch(`/api/invoice/list?limit=${PAGE_SIZE}&offset=${offset}`, {
+            method: 'GET',
+            headers: headers
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load invoices: ' + response.statusText);
+        }
+        
+        const result = await response.json();
+        console.log('[LoadInvoices] Result:', result);
+        
+        renderInvoiceTable(result.data || []);
+        updateInvoiceStats(result);
+        currentPage = page;
+        
+    } catch (error) {
+        console.error('[LoadInvoices] Error:', error);
+    }
+}
+
+function renderInvoiceTable(invoices) {
+    const tbody = document.getElementById('invoiceTableBody');
+    if (!tbody) {
+        console.warn('[RenderTable] invoiceTableBody not found');
+        return;
+    }
+    
+    if (invoices.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px; color: #7f8c8d;">Belum ada data invoice</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = invoices.map(inv => `
+        <tr>
+            <td>-</td>
+            <td>${inv.tanggal || '-'}</td>
+            <td>${inv.faktur || '-'}</td>
+            <td>${inv.metode_bayar || '-'}</td>
+            <td>${inv.jenis_transaksi || '-'}</td>
+            <td>${inv.konsumen || '-'}</td>
+            <td>${inv.toko || '-'}</td>
+            <td>${formatCurrency(inv.total_jumlah_jual)}</td>
+            <td>${inv.keterangan || '-'}</td>
+            <td><button class="btn-view-file" style="cursor: pointer;" onclick="viewInvoiceDetail('${inv.id}')">View</button></td>
+        </tr>
+    `).join('');
+}
+
+function formatCurrency(value) {
+    if (!value) return 'Rp 0';
+    return 'Rp ' + parseInt(value).toLocaleString('id-ID');
+}
+
+function updateInvoiceStats(result) {
+    // Update stats if data provided
+    if (result.count !== undefined) {
+        const statTotal = document.getElementById('statTotal');
+        if (statTotal) statTotal.textContent = result.count;
+    }
+}
+
+function viewInvoiceDetail(invoiceId) {
+    console.log('[ViewInvoice] ID:', invoiceId);
+    alert('Detail invoice akan ditampilkan di modal (soon)');
+}
+
+// Load invoices on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('[Invoice-Init] Loading initial invoice list');
+        loadInvoices(1);
+    });
+} else {
+    console.log('[Invoice-Init] Document ready, loading invoices now');
+    loadInvoices(1);
+}
+
+// ============================================
+// Success Popup Function
+// ============================================
+function showSuccessPopup(processed, duplicates) {
+    // Create popup overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 10001;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease-out;
+    `;
+    
+    // Create popup box
+    const popup = document.createElement('div');
+    popup.style.cssText = `
+        background: white;
+        padding: 40px;
+        border-radius: 16px;
+        text-align: center;
+        max-width: 500px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.3s ease-out;
+    `;
+    
+    // Add success icon
+    const icon = document.createElement('div');
+    icon.innerHTML = '✅';
+    icon.style.cssText = `
+        font-size: 64px;
+        margin-bottom: 20px;
+        animation: bounce 0.6s ease-out;
+    `;
+    
+    // Add title
+    const title = document.createElement('h2');
+    title.textContent = 'Upload Berhasil!';
+    title.style.cssText = `
+        font-size: 28px;
+        font-weight: 700;
+        color: #27ae60;
+        margin-bottom: 15px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    `;
+    
+    // Add stats
+    const stats = document.createElement('div');
+    stats.style.cssText = `
+        background: #f0f8f4;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border-left: 4px solid #27ae60;
+    `;
+    
+    stats.innerHTML = `
+        <div style="margin-bottom: 10px; font-size: 16px; color: #2c3e50;">
+            <strong>Processed:</strong> <span style="color: #27ae60; font-size: 20px; font-weight: 700;">${processed}</span> invoices
+        </div>
+        <div style="font-size: 16px; color: #2c3e50;">
+            <strong>Duplicates:</strong> <span style="color: #f39c12; font-size: 20px; font-weight: 700;">${duplicates}</span>
+        </div>
+    `;
+    
+    // Add message
+    const message = document.createElement('p');
+    message.textContent = 'Data sedang dimuat ke tabel...';
+    message.style.cssText = `
+        font-size: 14px;
+        color: #7f8c8d;
+        margin-bottom: 25px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    `;
+    
+    // Add button
+    const button = document.createElement('button');
+    button.textContent = 'Tutup';
+    button.style.cssText = `
+        background: #27ae60;
+        color: white;
+        border: none;
+        padding: 12px 32px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    `;
+    
+    button.addEventListener('mouseover', () => {
+        button.style.background = '#229954';
+        button.style.transform = 'translateY(-2px)';
+    });
+    
+    button.addEventListener('mouseout', () => {
+        button.style.background = '#27ae60';
+        button.style.transform = 'translateY(0)';
+    });
+    
+    button.addEventListener('click', () => {
+        overlay.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => overlay.remove(), 300);
+    });
+    
+    // Assemble popup
+    popup.appendChild(icon);
+    popup.appendChild(title);
+    popup.appendChild(stats);
+    popup.appendChild(message);
+    popup.appendChild(button);
+    
+    // Assemble overlay
+    overlay.appendChild(popup);
+    
+    // Add animations to document if not already there
+    if (!document.getElementById('popup-animations')) {
+        const style = document.createElement('style');
+        style.id = 'popup-animations';
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+            @keyframes slideUp {
+                from {
+                    transform: translateY(30px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes bounce {
+                0%, 100% { transform: scale(0.8); opacity: 0; }
+                50% { transform: scale(1); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Add to page
+    document.body.appendChild(overlay);
+    
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+        if (overlay.parentElement) {
+            overlay.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => overlay.remove(), 300);
+        }
+    }, 5000);
+}
 
 // ============================================
 // Clear Test Data Function
