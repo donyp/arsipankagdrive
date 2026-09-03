@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Invoice - ARSIP ANKA</title>
-    <link rel="stylesheet" href="css/style.css?v=1012">
+    <link rel="stylesheet" href="css/style.css?v=1013">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="js/zoom-reset.js"></script>
     <style>
@@ -339,13 +339,17 @@
 
         /* Status Badge - Dot symbol style */
         .status-badge {
-            display: inline-block;
+            display: inline !important;
             font-size: 15px !important;
             font-weight: 900 !important;
-            padding: 4px 8px;
-            margin: 0;
-            height: auto;
-            line-height: 1.2;
+            padding: 0 !important;
+            margin: 0 !important;
+            height: auto !important;
+            line-height: 1.2 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            text-transform: none !important;
+            letter-spacing: normal !important;
         }
 
         .status-badge::before {
