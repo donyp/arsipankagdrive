@@ -2742,8 +2742,10 @@ async function loadFilterOptions() {
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
         
         console.log('[Filter] Auth token present:', !!token);
+        console.log('[Filter] Current user role:', currentUser?.role, 'zona_id:', currentUser?.zona_id);
         
         // Get all invoices with high limit to count everything
+        // Note: API automatically filters by zona_id for admin_zona users
         const url = '/api/invoice/list?limit=10000&offset=0';
         console.log('[Filter] Fetching from:', url);
         
@@ -2766,16 +2768,22 @@ async function loadFilterOptions() {
         invoiceTotalCount = result.count || invoices.length || 0;
         
         console.log('[Filter] Total invoice count set to:', invoiceTotalCount, 'Invoices received:', invoices.length);
+        console.log('[Filter] For admin_zona users, this is already filtered by their zone');
         
         if (invoices.length === 0) {
             console.warn('[Filter] ⚠️ WARNING: No invoices returned from API!');
         }
         
-        // Get unique values
+        // Get unique values from filtered invoices
+        // For admin_zona: only includes stores from their zone (auto-filtered by API)
+        // For regular users: includes all stores
         const tokos = [...new Set(invoices.map(inv => inv.toko).filter(Boolean))];
         const keterangans = [...new Set(invoices.map(inv => inv.keterangan).filter(Boolean))];
         
         console.log('[Filter] Loaded options - Tokos:', tokos.length, 'Keterangans:', keterangans.length);
+        if (currentUser?.role === 'admin_zona') {
+            console.log('[Filter] ✅ Admin Zona: Supplier list is zone-filtered');
+        }
         
         // Populate toko select - clear existing first to avoid duplicates
         const tokoSelect = document.getElementById('filterToko');
