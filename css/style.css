@@ -538,9 +538,8 @@ select.input-field option {
     border-color: #d1d5db;
 }
 
-/* Override strong and b tags in table - for status text */
-td > strong,
-td > b {
+/* Override span in table cells - for status text */
+td > span {
     font-size: 15px !important;
     font-weight: 900 !important;
     background: transparent !important;
@@ -548,6 +547,8 @@ td > b {
     padding: 0 !important;
     margin: 0 !important;
     display: inline !important;
+    border: none !important;
+    border-radius: 0 !important;
 }
 
 /* ---- Responsive ---- */

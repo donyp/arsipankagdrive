@@ -415,10 +415,10 @@ function renderInvoiceTable(invoices = null) {
         
         return `
         <tr>
-            <td>
-                <strong style="font-size: 15px !important; font-weight: 900 !important; color: ${statusClass === 'uploaded' ? '#27ae60' : statusClass === 'missing' ? '#e74c3c' : '#f39c12'} !important; line-height: 1.2 !important;">
+            <td style="font-size: 15px !important; font-weight: 900 !important;">
+                <span style="color: ${statusClass === 'uploaded' ? '#27ae60' : statusClass === 'missing' ? '#e74c3c' : '#f39c12'} !important;">
                     ${statusText}
-                </strong>
+                </span>
             </td>
             <td>${formattedDate}</td>
             <td><strong>${inv.faktur || '-'}</strong></td>
