@@ -2940,17 +2940,98 @@ async function applyInvoiceFilters() {
 
 function resetInvoiceFilters() {
     console.log('[Filter] Resetting filters');
-    document.getElementById('filterToko').value = '';
-    document.getElementById('filterKeterangan').value = '';
-    document.getElementById('filterMonth').value = '';
-    document.getElementById('filterSearch').value = '';
+    const filterStatus = document.getElementById('filterStatus');
+    const filterToko = document.getElementById('filterToko');
+    const filterKeterangan = document.getElementById('filterKeterangan');
+    const filterMonth = document.getElementById('filterMonth');
+    const filterDateFrom = document.getElementById('filterDateFrom');
+    const filterDateTo = document.getElementById('filterDateTo');
+    const filterSearch = document.getElementById('filterSearch');
+    
+    if (filterStatus) filterStatus.value = '';
+    if (filterToko) filterToko.value = '';
+    if (filterKeterangan) filterKeterangan.value = '';
+    if (filterMonth) filterMonth.value = '';
+    if (filterDateFrom) filterDateFrom.value = '';
+    if (filterDateTo) filterDateTo.value = '';
+    if (filterSearch) filterSearch.value = '';
     
     loadInvoicesInDashboard(1);
+}
+
+// Setup admin zona specific filters
+function setupAdminZonaFilters() {
+    console.log('[AdminZonaFilters] Setting up admin zona specific filters');
+    
+    // Hide Status filter
+    const filterStatus = document.getElementById('filterStatus');
+    if (filterStatus) {
+        const statusGroup = filterStatus.closest('.filter-group');
+        if (statusGroup) {
+            statusGroup.style.display = 'none';
+            console.log('[AdminZonaFilters] ✅ Status filter hidden');
+        }
+    }
+    
+    // Hide Date filters if they exist
+    const filterDateFrom = document.getElementById('filterDateFrom');
+    const filterDateTo = document.getElementById('filterDateTo');
+    const filterSearch = document.getElementById('filterSearch');
+    
+    if (filterDateFrom) {
+        const dateFromGroup = filterDateFrom.closest('.filter-group');
+        if (dateFromGroup) {
+            dateFromGroup.style.display = 'none';
+            console.log('[AdminZonaFilters] ✅ Date From filter hidden');
+        }
+    }
+    
+    if (filterDateTo) {
+        const dateToGroup = filterDateTo.closest('.filter-group');
+        if (dateToGroup) {
+            dateToGroup.style.display = 'none';
+            console.log('[AdminZonaFilters] ✅ Date To filter hidden');
+        }
+    }
+    
+    if (filterSearch) {
+        const searchGroup = filterSearch.closest('.filter-group');
+        if (searchGroup) {
+            searchGroup.style.display = 'none';
+            console.log('[AdminZonaFilters] ✅ Search filter hidden');
+        }
+    }
+    
+    // Ensure Month filter exists, if not create it
+    let filterMonth = document.getElementById('filterMonth');
+    if (!filterMonth) {
+        console.log('[AdminZonaFilters] Creating month filter for admin zona');
+        const filterToko = document.getElementById('filterToko');
+        if (filterToko) {
+            const monthGroup = document.createElement('div');
+            monthGroup.className = 'filter-group';
+            monthGroup.innerHTML = `
+                <label>Bulan</label>
+                <input type="month" id="filterMonth">
+            `;
+            filterToko.parentElement.parentElement.appendChild(monthGroup);
+            filterMonth = document.getElementById('filterMonth');
+            console.log('[AdminZonaFilters] ✅ Month filter created');
+        }
+    }
+    
+    console.log('[AdminZonaFilters] ✅ Admin Zona filters setup complete');
 }
 
 // Initialize invoice system after content is loaded
 function initInvoiceSystem() {
     console.log('[InvoiceInit] ===== INITIALIZING INVOICE SYSTEM =====');
+    
+    // Setup admin zona specific filters
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin_zona') {
+        console.log('[InvoiceInit] Admin Zona detected - setting up admin zona filters');
+        setupAdminZonaFilters();
+    }
     
     // Setup pagination buttons
     const btnNext = document.getElementById('btnNextPage');
