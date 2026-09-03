@@ -2700,6 +2700,12 @@ function renderInvoiceTable(invoices) {
         // Capitalize first letter of tipe
         const tipe = inv.jenis_transaksi ? inv.jenis_transaksi.charAt(0).toUpperCase() + inv.jenis_transaksi.slice(1).toLowerCase() : '-';
         
+        // Auto-adjust font size for long text
+        const konsumenText = inv.konsumen || '-';
+        const tokoText = inv.toko || '-';
+        const konsumenFontSize = konsumenText.length > 25 ? '11px' : '14px';
+        const tokoFontSize = tokoText.length > 20 ? '11px' : '14px';
+        
         return `
         <tr style="border-bottom: 1px solid #ecf0f1; transition: background 0.2s;">
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">
@@ -2711,8 +2717,8 @@ function renderInvoiceTable(invoices) {
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;"><strong>${inv.faktur || '-'}</strong></td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.metode_bayar || '-'}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${tipe}</td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.konsumen || '-'}</td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.toko || '-'}</td>
+            <td style="padding: 15px 12px; font-size: ${konsumenFontSize}; color: #2c3e50;">${konsumenText}</td>
+            <td style="padding: 15px 12px; font-size: ${tokoFontSize}; color: #2c3e50;">${tokoText}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${formatCurrency(inv.total_jumlah_jual)}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.keterangan || '-'}</td>
         </tr>
