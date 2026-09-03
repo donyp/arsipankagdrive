@@ -2707,7 +2707,7 @@ function renderInvoiceTable(invoices) {
         const tokoFontSize = tokoText.length > 20 ? '11px' : '14px';
         
         return `
-        <tr style="border-bottom: 1px solid #ecf0f1; transition: background 0.2s;">
+        <tr style="transition: background 0.2s;">
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">
                 <span style="display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
                     ${statusText}
