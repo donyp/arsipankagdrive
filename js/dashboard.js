@@ -2694,21 +2694,39 @@ function formatCurrency(value) {
 }
 
 function updateInvoiceStats(result) {
-    // Update stats cards
+    console.log('[UpdateStats] Updating stats with result:', result);
+    
+    // Update stats if data provided
     if (result.count !== undefined) {
+        console.log('[UpdateStats] Setting total to', result.count);
         const statElements = document.querySelectorAll('[data-stat="total"]');
-        statElements.forEach(el => el.textContent = result.count);
+        console.log('[UpdateStats] Found', statElements.length, 'total stat elements');
+        statElements.forEach(el => {
+            el.textContent = result.count;
+        });
     }
     
-    // Count by status
-    if (result.data) {
+    // Count by status from result data
+    if (result.data && Array.isArray(result.data)) {
         const uploaded = result.data.filter(r => r.status === 'UPLOADED').length;
         const pending = result.data.filter(r => r.status === 'PENDING').length;
         const missing = result.data.filter(r => r.status === 'MISSING').length;
         
-        document.querySelectorAll('[data-stat="uploaded"]').forEach(el => el.textContent = uploaded);
-        document.querySelectorAll('[data-stat="pending"]').forEach(el => el.textContent = pending);
-        document.querySelectorAll('[data-stat="missing"]').forEach(el => el.textContent = missing);
+        console.log('[UpdateStats] Counts - Total:', result.count, 'Uploaded:', uploaded, 'Pending:', pending, 'Missing:', missing);
+        
+        const uploadedEls = document.querySelectorAll('[data-stat="uploaded"]');
+        const pendingEls = document.querySelectorAll('[data-stat="pending"]');
+        const missingEls = document.querySelectorAll('[data-stat="missing"]');
+        
+        uploadedEls.forEach(el => el.textContent = uploaded);
+        pendingEls.forEach(el => el.textContent = pending);
+        missingEls.forEach(el => el.textContent = missing);
+        
+        console.log('[UpdateStats] Updated', uploadedEls.length, 'uploaded elements');
+        console.log('[UpdateStats] Updated', pendingEls.length, 'pending elements');
+        console.log('[UpdateStats] Updated', missingEls.length, 'missing elements');
+    } else {
+        console.warn('[UpdateStats] No data array in result or result.count missing');
     }
 }
 

@@ -895,8 +895,19 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
                 console.log(`[Invoice PDF] Remote path: ${remotePath}`);
                 
-                // Upload to Google Drive via RcloneStorage (if available)
-                // For now, just update status in database
+                // Upload to Google Drive via RcloneStorage
+                try {
+                    console.log(`[Invoice PDF] Uploading file buffer (${fileBuffer.length} bytes) to ${remotePath}`);
+                    
+                    await RcloneStorage.uploadFile(fileBuffer, remotePath);
+                    
+                    console.log(`[Invoice PDF] ✅ File uploaded to Google Drive`);
+                } catch (uploadErr) {
+                    console.error(`[Invoice PDF] Upload error:`, uploadErr.message);
+                    // Continue anyway - update DB even if upload fails, user can retry
+                }
+                
+                // Update invoice status in database
                 const { error: updateError } = await supabase
                     .from('invoice_file_list')
                     .update({
@@ -913,9 +924,6 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 }
                 
                 console.log(`[Invoice PDF] ✅ Invoice marked as UPLOADED: ${faktur}`);
-                
-                // TODO: Implement actual file upload to Google Drive using RcloneStorage
-                // await RcloneStorage.uploadFile(fileBuffer, remotePath);
                 
                 res.json({
                     success: true,
