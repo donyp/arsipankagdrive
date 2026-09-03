@@ -90,8 +90,9 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
             try {
                 const { filename, data, summary } = req.body;
                 
-                console.log(`[Invoice API] Excel data upload by ${req.user?.name}: ${filename}`);
+                console.log(`[Invoice API] Excel data upload by ${req.user?.name} (ID: ${req.user?.id})`);
                 console.log(`[Invoice API] Received ${data?.length || 0} pre-parsed rows`);
+                console.log(`[Invoice API] User authenticated:`, !!req.user);
                 
                 if (!data || !Array.isArray(data) || data.length === 0) {
                     return res.status(400).json({ 
@@ -175,7 +176,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 const errors = [];
                 
                 if (invoicesToInsert.length > 0) {
-                    console.log('[Invoice API] Sample invoice to insert:', invoicesToInsert[0]);
+                    console.log('[Invoice API] Sample invoice to insert:', JSON.stringify(invoicesToInsert[0], null, 2));
+                    console.log('[Invoice API] Invoice count to insert:', invoicesToInsert.length);
                     
                     const { data: inserted, error: insertError } = await supabase
                         .from('invoice_file_list')
@@ -183,16 +185,20 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         .select();
                     
                     if (insertError) {
-                        console.error('[Invoice API] Bulk insert error:', insertError);
-                        console.error('[Invoice API] Insert error details:', insertError.details || insertError.message);
+                        console.error('[Invoice API] ❌ BULK INSERT ERROR!');
+                        console.error('[Invoice API] Error code:', insertError.code);
+                        console.error('[Invoice API] Error message:', insertError.message);
+                        console.error('[Invoice API] Error details:', insertError.details);
+                        console.error('[Invoice API] Error hint:', insertError.hint);
+                        console.error('[Invoice API] Full error:', JSON.stringify(insertError, null, 2));
                         failedCount = invoicesToInsert.length;
-                        errors.push(`Bulk insert failed: ${insertError.message}`);
+                        errors.push(`Bulk insert failed: ${insertError.message} (${insertError.code})`);
                     } else {
                         processedCount = inserted?.length || 0;
-                        console.log(`[Invoice API] Successfully inserted ${processedCount} invoices`);
+                        console.log(`[Invoice API] ✅ Successfully inserted ${processedCount} invoices`);
                     }
                 } else {
-                    console.warn('[Invoice API] WARNING: No invoices to insert!');
+                    console.warn('[Invoice API] ⚠️ WARNING: No invoices to insert!');
                 }
                 
                 // Update batch
