@@ -692,8 +692,22 @@
                                     </tr>
                                 </tbody>
                             </table>
+                            
+                            <!-- Pagination -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-top: 1px solid #ecf0f1;">
+                                <div style="color: #7f8c8d; font-size: 13px;">
+                                    <span id="paginationInfo">Menampilkan 0 - 0 dari 0 invoice</span>
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="prevPageBtn" onclick="previousInvoicePage()" style="background: #95a5a6; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;" disabled>
+                                        <i class="fas fa-chevron-left"></i> Sebelumnya
+                                    </button>
+                                    <button id="nextPageBtn" onclick="nextInvoicePage()" style="background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;">
+                                        Selanjutnya <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
                 </div>
 
             </div>

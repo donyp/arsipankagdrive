@@ -2609,6 +2609,7 @@ function openFileDetail(fileId) {
 
 const INVOICE_PAGE_SIZE = 20;
 let invoiceCurrentPage = 1;
+let invoiceTotalCount = 0;
 
 async function loadInvoicesInDashboard(page = 1) {
     try {
@@ -2636,6 +2637,12 @@ async function loadInvoicesInDashboard(page = 1) {
         renderInvoiceTable(result.data || []);
         updateInvoiceStats(result);
         invoiceCurrentPage = page;
+        
+        // Track total count for pagination
+        if (result.count !== undefined) {
+            invoiceTotalCount = result.count;
+            updatePaginationInfo();
+        }
         
     } catch (error) {
         console.error('[LoadInvoices] Error:', error);
@@ -2844,6 +2851,12 @@ async function applyInvoiceFilters() {
         updateInvoiceStats(result);
         invoiceCurrentPage = 1;
         
+        // Track total count for pagination
+        if (result.count !== undefined) {
+            invoiceTotalCount = result.count;
+            updatePaginationInfo();
+        }
+        
     } catch (error) {
         console.error('[Filter] Error:', error);
         alert('Error applying filters: ' + error.message);
@@ -2859,4 +2872,47 @@ function resetInvoiceFilters() {
     document.getElementById('filterDateTo').value = '';
     
     loadInvoicesInDashboard(1);
+}
+
+function updatePaginationInfo() {
+    const paginationInfo = document.getElementById('paginationInfo');
+    if (!paginationInfo) return;
+    
+    const start = (invoiceCurrentPage - 1) * INVOICE_PAGE_SIZE + 1;
+    const end = Math.min(invoiceCurrentPage * INVOICE_PAGE_SIZE, invoiceTotalCount);
+    const total = invoiceTotalCount;
+    
+    if (total === 0) {
+        paginationInfo.textContent = 'Menampilkan 0 - 0 dari 0 invoice';
+    } else {
+        paginationInfo.textContent = `Menampilkan ${start} - ${end} dari ${total} invoice`;
+    }
+    
+    // Update button states
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    
+    if (prevBtn) {
+        prevBtn.disabled = invoiceCurrentPage === 1;
+    }
+    
+    if (nextBtn) {
+        const totalPages = Math.ceil(invoiceTotalCount / INVOICE_PAGE_SIZE);
+        nextBtn.disabled = invoiceCurrentPage >= totalPages;
+    }
+    
+    console.log('[Pagination] Updated - Page', invoiceCurrentPage, 'Total:', total, 'Showing', start, '-', end);
+}
+
+function nextInvoicePage() {
+    const totalPages = Math.ceil(invoiceTotalCount / INVOICE_PAGE_SIZE);
+    if (invoiceCurrentPage < totalPages) {
+        loadInvoicesInDashboard(invoiceCurrentPage + 1);
+    }
+}
+
+function previousInvoicePage() {
+    if (invoiceCurrentPage > 1) {
+        loadInvoicesInDashboard(invoiceCurrentPage - 1);
+    }
 }
