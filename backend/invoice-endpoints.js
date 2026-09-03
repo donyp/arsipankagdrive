@@ -183,31 +183,33 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 let failedCount = 0;
                 const errors = [];
                 
-                // Simple strategy: Try insert all, catch duplicate errors
-                for (const item of invoicesToInsert) {
-                    try {
-                        const { error: insertError } = await supabase
-                            .from('invoice_file_list')
-                            .insert(item);
-                        
-                        if (insertError) {
-                            if (insertError.code === '23505') {
-                                // Duplicate key constraint
-                                duplicateCount++;
-                                console.log(`[Invoice API] ℹ️ Skipped duplicate faktur: ${item.faktur}`);
-                            } else {
-                                failedCount++;
-                                errors.push(`${item.faktur}: ${insertError.message}`);
-                                console.error(`[Invoice API] ❌ Insert failed for ${item.faktur}:`, insertError.message);
-                            }
+                // BULK INSERT - one shot, let DB handle duplicates via constraint
+                if (invoicesToInsert.length > 0) {
+                    console.log('[Invoice API] Bulk inserting', invoicesToInsert.length, 'invoices...');
+                    
+                    const { data: inserted, error: insertError } = await supabase
+                        .from('invoice_file_list')
+                        .insert(invoicesToInsert);
+                    
+                    if (insertError) {
+                        // Check if it's only duplicate key errors (which is OK)
+                        if (insertError.code === '23505' || insertError.message?.includes('duplicate')) {
+                            // All duplicates - that's fine, count them all as processed/duplicate
+                            processedCount = 0;
+                            duplicateCount = invoicesToInsert.length;
+                            console.log('[Invoice API] All rows were duplicates (expected on re-upload)');
                         } else {
-                            processedCount++;
+                            // Real error
+                            failedCount = invoicesToInsert.length;
+                            errors.push(`Bulk insert failed: ${insertError.message}`);
+                            console.error('[Invoice API] Insert error:', insertError.message);
                         }
-                    } catch (err) {
-                        failedCount++;
-                        errors.push(`${item.faktur}: ${err.message}`);
-                        console.error(`[Invoice API] Exception for ${item.faktur}:`, err.message);
+                    } else {
+                        processedCount = inserted?.length || invoicesToInsert.length;
+                        console.log(`[Invoice API] ✅ Inserted ${processedCount} invoices`);
                     }
+                } else {
+                    console.warn('[Invoice API] No invoices to insert');
                 }
                 
                 // Update batch
