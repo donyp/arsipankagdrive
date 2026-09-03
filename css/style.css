@@ -540,15 +540,15 @@ select.input-field option {
 
 /* ---- Status Badge ---- */
 .status-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.25rem 0.625rem;
-    font-size: 0.625rem;
-    font-weight: 700;
-    border-radius: 9999px;
-    border: 1px solid transparent;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    display: inline !important;
+    align-items: unset !important;
+    padding: 0 !important;
+    font-size: 15px !important;
+    font-weight: 900 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
     transition: all 0.2s ease;
 }
 
