@@ -193,6 +193,12 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     
                     if (insertError) {
                         // There IS an error
+                        console.error('[Invoice API] ❌ INSERT ERROR DETAILS:');
+                        console.error('  Code:', insertError.code);
+                        console.error('  Message:', insertError.message);
+                        console.error('  Details:', insertError.details);
+                        console.error('  Full:', JSON.stringify(insertError, null, 2));
+                        
                         if (insertError.code === '23505') {
                             // Duplicate key constraint - expected on re-upload
                             processedCount = 0;
@@ -202,7 +208,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                             // Real error - something went wrong
                             failedCount = invoicesToInsert.length;
                             errors.push(`Bulk insert failed: ${insertError.message}`);
-                            console.error('[Invoice API] Insert error:', insertError.message);
+                            console.error('[Invoice API] Real error - not duplicate key');
                         }
                     } else {
                         // NO ERROR = SUCCESS!

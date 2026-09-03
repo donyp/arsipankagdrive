@@ -297,13 +297,10 @@ window.uploadExcelFile = async function() {
             const msg = 'Processed: ' + (result.summary?.processed || 0) + ' invoices\n' +
                         'Duplicates: ' + (result.summary?.duplicates || 0);
             console.log('[Upload] SUCCESS');
-            alert('✅ Upload Berhasil!\n' + msg);
+            alert('✅ Upload Berhasil!\n' + msg + '\n\nSilakan refresh halaman untuk melihat data terbaru');
             window.closeUploadExcelModal();
-            // Reload page after delay to show new data
-            setTimeout(() => {
-                console.log('[Upload] Reloading page...');
-                location.reload();
-            }, 1000);
+            // Don't reload - let user refresh manually
+            // Page reload sometimes timeout, better to let user do it
         } else {
             const errMsg = result.error || 'Upload failed';
             console.log('[Upload] FAILED:', errMsg);
