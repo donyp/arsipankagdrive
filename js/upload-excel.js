@@ -259,8 +259,8 @@ function resetUpload() {
 }
 
 function goToDashboard() {
-    // Redirect to invoice list (dashboard will sync automatically)
-    window.location.href = '/invoice-list.html';
+    // Redirect to main dashboard
+    window.location.href = '/dashboard.html';
 }
 
 function updateStep(activeStep) {

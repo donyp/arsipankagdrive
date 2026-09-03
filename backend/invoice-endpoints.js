@@ -599,34 +599,6 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     
 
     // ============================================
-    // GET /api/invoice/list
-    // Get all invoices or filter by status
-    // ============================================
-    app.get('/api/invoice/list',
-        ...createAuth(['super_admin', 'moderator', 'user']),
-        async (req, res) => {
-            try {
-                const { status } = req.query;
-                let query = supabase.from('invoice_file_list').select('*');
-                
-                if (status) {
-                    query = query.eq('status', status);
-                }
-                
-                const { data, error } = await query.order('tanggal', { ascending: false });
-                
-                if (error) {
-                    return res.status(500).json({ error: 'Failed to fetch invoices' });
-                }
-                
-                res.json({ data, count: data.length });
-            } catch (error) {
-                console.error('[Invoice API] List error:', error);
-                res.status(500).json({ error: 'Server error' });
-            }
-        }
-    );
-    // ============================================
     // DELETE /api/invoice/:faktur
     // Delete invoice from list
     // ============================================
