@@ -2712,3 +2712,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Dashboard] Loading invoices...');
     loadInvoicesInDashboard(1);
 });
+
+
+// ============================================
+// INVOICE FILTER FUNCTIONS
+// ============================================
+
+async function applyInvoiceFilters() {
+    try {
+        const status = document.getElementById('filterStatus')?.value || '';
+        const toko = document.getElementById('filterToko')?.value || '';
+        const keterangan = document.getElementById('filterKeterangan')?.value || '';
+        const dateFrom = document.getElementById('filterDateFrom')?.value || '';
+        const dateTo = document.getElementById('filterDateTo')?.value || '';
+        
+        console.log('[Filter] Applying filters:', { status, toko, keterangan, dateFrom, dateTo });
+        
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        
+        // Build query string
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+        if (toko) params.append('toko', toko);
+        if (keterangan) params.append('keterangan', keterangan);
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+        params.append('limit', INVOICE_PAGE_SIZE);
+        params.append('offset', 0);
+        
+        const response = await fetch(`/api/invoice/list?${params.toString()}`, {
+            method: 'GET',
+            headers: headers
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to filter invoices');
+        }
+        
+        const result = await response.json();
+        renderInvoiceTable(result.data || []);
+        updateInvoiceStats(result);
+        invoiceCurrentPage = 1;
+        
+    } catch (error) {
+        console.error('[Filter] Error:', error);
+        alert('Error applying filters: ' + error.message);
+    }
+}
+
+function resetInvoiceFilters() {
+    console.log('[Filter] Resetting filters');
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterToko').value = '';
+    document.getElementById('filterKeterangan').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    
+    loadInvoicesInDashboard(1);
+}

@@ -627,7 +627,54 @@
 
                         <!-- Invoice Table -->
                         <div style="padding: 20px; overflow-x: auto;">
-                            <table style="width: 100%; border-collapse: collapse;">
+                            <!-- Filters -->
+                            <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                                    <div>
+                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Status</label>
+                                        <select id="filterStatus" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                            <option value="">Semua Status</option>
+                                            <option value="PENDING">Pending</option>
+                                            <option value="UPLOADED">Uploaded</option>
+                                            <option value="MISSING">Missing</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Toko</label>
+                                        <select id="filterToko" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                            <option value="">Semua Toko</option>
+                                            <option value="ANKA BEKASI">ANKA BEKASI</option>
+                                            <option value="ANKA PEMALANG">ANKA PEMALANG</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Keterangan</label>
+                                        <select id="filterKeterangan" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                            <option value="">Semua</option>
+                                            <option value="PPN">PPN</option>
+                                            <option value="NON PPN">NON PPN</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Dari Tanggal</label>
+                                        <input type="date" id="filterDateFrom" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Sampai Tanggal</label>
+                                        <input type="date" id="filterDateTo" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 10px; margin-top: 12px;">
+                                    <button onclick="applyInvoiceFilters()" style="background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;">
+                                        <i class="fas fa-filter"></i> Terapkan Filter
+                                    </button>
+                                    <button onclick="resetInvoiceFilters()" style="background: #95a5a6; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;">
+                                        <i class="fas fa-redo"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Table -->
                                 <thead>
                                     <tr style="background: #34495e;">
                                         <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; color: white;">STATUS</th>
