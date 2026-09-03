@@ -2613,26 +2613,36 @@ let invoiceTotalCount = 0;
 
 async function loadInvoicesInDashboard(page = 1) {
     try {
-        console.log('[LoadInvoices] Loading page', page);
+        console.log('[LoadInvoices] ===== LOADING PAGE', page, '=====');
         
         const token = API.getToken() || localStorage.getItem('jwt_token');
+        console.log('[LoadInvoices] Auth token present:', !!token);
+        
         const headers = {};
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
         
         const offset = (page - 1) * INVOICE_PAGE_SIZE;
-        const response = await fetch(`/api/invoice/list?limit=${INVOICE_PAGE_SIZE}&offset=${offset}`, {
+        const url = `/api/invoice/list?limit=${INVOICE_PAGE_SIZE}&offset=${offset}`;
+        console.log('[LoadInvoices] Fetching from:', url);
+        
+        const response = await fetch(url, {
             method: 'GET',
             headers: headers
         });
         
+        console.log('[LoadInvoices] Response status:', response.status);
+        
         if (!response.ok) {
-            throw new Error('Failed to load invoices: ' + response.statusText);
+            const errText = await response.text();
+            throw new Error('Failed to load invoices: ' + response.statusText + ' - ' + errText);
         }
         
         const result = await response.json();
-        console.log('[LoadInvoices] Result:', result);
+        console.log('[LoadInvoices] API Response:', JSON.stringify(result, null, 2));
+        console.log('[LoadInvoices] Data length:', (result.data || []).length);
+        console.log('[LoadInvoices] Count:', result.count);
         
         renderInvoiceTable(result.data || []);
         invoiceCurrentPage = page;
@@ -2640,12 +2650,16 @@ async function loadInvoicesInDashboard(page = 1) {
         // Track total count for pagination
         if (result.count !== undefined) {
             invoiceTotalCount = result.count;
-            console.log('[LoadInvoices] Set invoiceTotalCount to', invoiceTotalCount);
+            console.log('[LoadInvoices] ✅ Set invoiceTotalCount to', invoiceTotalCount);
+            updatePaginationInfo();
+        } else {
+            console.warn('[LoadInvoices] ⚠️ result.count is undefined! Using data.length instead');
+            invoiceTotalCount = (result.data || []).length;
             updatePaginationInfo();
         }
         
     } catch (error) {
-        console.error('[LoadInvoices] Error:', error);
+        console.error('[LoadInvoices] ❌ Error:', error);
     }
 }
 
@@ -2703,29 +2717,45 @@ function formatCurrency(value) {
 // Load unique filter values from database
 async function loadFilterOptions() {
     try {
+        console.log('[Filter] Starting loadFilterOptions');
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
         
+        console.log('[Filter] Auth token present:', !!token);
+        
         // Get all invoices with high limit to count everything
-        const response = await fetch('/api/invoice/list?limit=10000&offset=0', {
+        const url = '/api/invoice/list?limit=10000&offset=0';
+        console.log('[Filter] Fetching from:', url);
+        
+        const response = await fetch(url, {
             method: 'GET',
             headers: headers
         });
         
-        if (!response.ok) throw new Error('Failed to load filter options');
+        console.log('[Filter] Response status:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Failed to load filter options (${response.status}): ${errText}`);
+        }
         
         const result = await response.json();
-        const invoices = result.data || [];
+        console.log('[Filter] Full API response:', JSON.stringify(result, null, 2));
         
-        // Track total count
-        invoiceTotalCount = result.count || 0;
-        console.log('[Filter] Total invoice count:', invoiceTotalCount, 'Result:', result);
+        const invoices = result.data || [];
+        invoiceTotalCount = result.count || invoices.length || 0;
+        
+        console.log('[Filter] Total invoice count set to:', invoiceTotalCount, 'Invoices received:', invoices.length);
+        
+        if (invoices.length === 0) {
+            console.warn('[Filter] ⚠️ WARNING: No invoices returned from API!');
+        }
         
         // Get unique values
         const tokos = [...new Set(invoices.map(inv => inv.toko).filter(Boolean))];
         const keterangans = [...new Set(invoices.map(inv => inv.keterangan).filter(Boolean))];
         
-        console.log('[Filter] Loaded options - Tokos:', tokos, 'Keterangans:', keterangans);
+        console.log('[Filter] Loaded options - Tokos:', tokos.length, 'Keterangans:', keterangans.length);
         
         // Populate toko select - clear existing first to avoid duplicates
         const tokoSelect = document.getElementById('filterToko');
@@ -2740,6 +2770,7 @@ async function loadFilterOptions() {
                 option.textContent = toko;
                 tokoSelect.appendChild(option);
             });
+            console.log('[Filter] Toko select populated with', tokoSelect.options.length - 1, 'options');
         }
         
         // Populate keterangan select - clear existing first to avoid duplicates
@@ -2755,6 +2786,7 @@ async function loadFilterOptions() {
                 option.textContent = ket;
                 keteranganSelect.appendChild(option);
             });
+            console.log('[Filter] Keterangan select populated with', keteranganSelect.options.length - 1, 'options');
         }
         
         // Update pagination and stats based on loaded data
