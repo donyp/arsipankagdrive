@@ -125,18 +125,16 @@
 
         /* Filters */
         .filters-container {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         .filters-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
         .filter-group {
@@ -145,57 +143,36 @@
         }
 
         .filter-group label {
+            display: block;
             font-size: 12px;
             color: #7f8c8d;
-            margin-bottom: 8px;
-            font-weight: 900;
-            text-transform: uppercase;
-            text-align: left;
+            margin-bottom: 5px;
+            font-weight: 600;
         }
 
         .filter-group select,
         .filter-group input {
-            padding: 10px 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 6px;
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
             font-size: 14px;
-            font-weight: 500;
-            transition: border-color 0.3s, box-shadow 0.3s;
-            background: white;
-            color: #2c3e50;
-        }
-
-        .filter-group select:hover,
-        .filter-group input:hover {
-            border-color: #d1d5db;
         }
 
         .filter-group select:focus,
         .filter-group input:focus {
             outline: none;
             border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
 
         .filter-actions {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 15px;
-            border-top: 1px solid #e5e7eb;
-            flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
+            margin-top: 12px;
         }
 
         .filter-total {
-            font-size: 13px;
-            color: #7f8c8d;
-            font-weight: 600;
-        }
-
-        .filter-total span {
-            color: #27ae60;
-            font-weight: 900;
+            display: none;
         }
 
         .filter-buttons {
@@ -207,10 +184,11 @@
             background: #3498db;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
+            padding: 8px 16px;
+            border-radius: 4px;
             cursor: pointer;
             font-weight: 600;
+            font-size: 12px;
             transition: background 0.3s;
         }
 
@@ -222,9 +200,11 @@
             background: #95a5a6;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
+            padding: 8px 16px;
+            border-radius: 4px;
             cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
             transition: background 0.3s;
         }
 
