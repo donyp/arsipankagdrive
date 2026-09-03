@@ -2882,11 +2882,11 @@ async function applyInvoiceFilters() {
     try {
         const toko = document.getElementById('filterToko')?.value || '';
         const keterangan = document.getElementById('filterKeterangan')?.value || '';
-        const year = document.getElementById('filterYear')?.value || '';
-        const month = document.getElementById('filterMonth')?.value || '';
+        const yearValue = document.getElementById('filterYear')?.value || '';
+        const monthValue = document.getElementById('filterMonth')?.value || '';
         const search = document.getElementById('filterSearch')?.value || '';
         
-        console.log('[Filter] Applying filters:', { toko, keterangan, year, month, search });
+        console.log('[Filter] Applying filters:', { toko, keterangan, year: yearValue, month: monthValue, search });
         
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -2895,20 +2895,26 @@ async function applyInvoiceFilters() {
         const params = new URLSearchParams();
         if (toko) params.append('toko', toko);
         if (keterangan) params.append('keterangan', keterangan);
-        if (year && month) {
-            // Both year and month selected
+        
+        // Handle Year/Month filtering
+        if (monthValue) {
+            // monthValue is in format YYYY-MM
+            const [year, month] = monthValue.split('-');
             const dateFrom = `${year}-${month}-01`;
             const dateToObj = new Date(year, parseInt(month), 0);
             const dateTo = `${year}-${month}-${dateToObj.getDate()}`;
             params.append('date_from', dateFrom);
             params.append('date_to', dateTo);
-        } else if (year) {
+            console.log('[Filter] Filtering by month:', { dateFrom, dateTo });
+        } else if (yearValue) {
             // Only year selected
-            const dateFrom = `${year}-01-01`;
-            const dateTo = `${year}-12-31`;
+            const dateFrom = `${yearValue}-01-01`;
+            const dateTo = `${yearValue}-12-31`;
             params.append('date_from', dateFrom);
             params.append('date_to', dateTo);
+            console.log('[Filter] Filtering by year:', { dateFrom, dateTo });
         }
+        
         if (search) params.append('search', search);
         params.append('limit', INVOICE_PAGE_SIZE);
         params.append('offset', 0);
