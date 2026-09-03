@@ -262,14 +262,36 @@ const configPath = process.env.RCLONE_CONFIG || path.resolve(__dirname, '..', 'r
 
 /**
  * Execute an rclone command and return a promise.
+ * In Railway, don't pass --config if not needed (use system rclone config)
  */
 function rcloneExec(args, timeoutMs = 30000) {
     return new Promise((resolve, reject) => {
-        const finalArgs = ['--config', configPath, ...args];
+        // In Railway: use default rclone config location (~/.config/rclone/rclone.conf)
+        // In local dev: use ./rclone.conf if it has token, otherwise use system config
+        let finalArgs = args;
+        
+        if (process.env.NODE_ENV === 'production' && process.env.RAILWAY_ENVIRONMENT) {
+            // Railway: use default rclone config (already authenticated)
+            console.log('[Rclone Exec] Railway environment - using system rclone config');
+            finalArgs = args;
+        } else {
+            // Local dev: try to use ./rclone.conf if it has token
+            try {
+                const configContent = require('fs').readFileSync(configPath, 'utf8');
+                if (configContent.includes('token')) {
+                    finalArgs = ['--config', configPath, ...args];
+                } else {
+                    finalArgs = args;
+                    console.log('[Rclone Exec] Local: rclone.conf has no token, using system config');
+                }
+            } catch (err) {
+                finalArgs = args;
+                console.log('[Rclone Exec] Local: config file not readable, using system config');
+            }
+        }
         
         console.log(`[Rclone Exec] Executing: ${rclonePath} ${finalArgs.join(' ')}`);
-        console.log(`[Rclone Exec] Config file exists:`, require('fs').existsSync(configPath));
-        console.log(`[Rclone Exec] Rclone binary exists:`, require('fs').existsSync(rclonePath));
+        console.log(`[Rclone Exec] Environment: ${process.env.NODE_ENV}, Railway: ${process.env.RAILWAY_ENVIRONMENT ? 'yes' : 'no'}`);
 
         let timedOut = false;
         const timer = setTimeout(() => {
@@ -298,7 +320,22 @@ function rcloneExec(args, timeoutMs = 30000) {
 }
 
 function rcloneSpawn(args) {
-    const finalArgs = ['--config', configPath, ...args];
+    // In Railway: use default config, in local: try to use ./rclone.conf if it has token
+    let finalArgs = args;
+    
+    if (process.env.NODE_ENV === 'production' && process.env.RAILWAY_ENVIRONMENT) {
+        finalArgs = args;
+    } else {
+        try {
+            const configContent = require('fs').readFileSync(configPath, 'utf8');
+            if (configContent.includes('token')) {
+                finalArgs = ['--config', configPath, ...args];
+            }
+        } catch (err) {
+            // use default config
+        }
+    }
+    
     const logMsg = `[Rclone Spawn] ${rclonePath} ${finalArgs.join(' ')}\n`;
     const logPath = path.join(__dirname, 'debug_rclone_spawn.log');
     try { fs.appendFileSync(logPath, logMsg); } catch (_) { }
@@ -1532,14 +1569,18 @@ const RcloneStorage = {
                 const dirPath = `/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
                 const remoteDirPath = `${PRIMARY_REMOTE}:${dirPath}`;
                 
+                console.log('[uploadInvoicePDF] Creating directory:', remoteDirPath);
                 // Create directory if not exists
                 await rcloneExec(['mkdir', remoteDirPath, '--parents']);
                 
                 // Upload file
                 const remoteFilePath = `${PRIMARY_REMOTE}:${storagePath}`;
+                console.log('[uploadInvoicePDF] Uploading file to:', remoteFilePath);
+                console.log('[uploadInvoicePDF] From local:', tempFilePath);
                 await rcloneExec(['copyto', tempFilePath, remoteFilePath]);
                 
                 // Verify upload
+                console.log('[uploadInvoicePDF] Verifying upload...');
                 const verifyOutput = await rcloneExec(['lsjson', '--files-only', remoteFilePath]);
                 let remoteFiles;
                 try {

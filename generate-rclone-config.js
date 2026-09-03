@@ -2,7 +2,9 @@
 
 /**
  * Generate rclone.conf from environment variables
- * This allows us to deploy to Hugging Face without committing sensitive credentials
+ * This allows us to deploy without committing sensitive credentials
+ * 
+ * For Google Drive: Set GDRIVE_CONFIG_JSON environment variable with the gdrive section
  */
 
 const fs = require('fs');
@@ -31,8 +33,8 @@ const config = {
     storj_endpoint: process.env.STORJ_ENDPOINT || 'https://gateway.storjshare.io'
 };
 
-// Generate rclone.conf content
-const rcloneConfig = `[terabox]
+// Generate rclone.conf content - start with existing remotes
+let rcloneConfig = `[terabox]
 type = webdav
 url = ${config.terabox_url}
 vendor = other
@@ -67,6 +69,20 @@ access_key_id = ${config.storj_access_key}
 secret_access_key = ${config.storj_secret_key}
 endpoint = ${config.storj_endpoint}
 `;
+
+// Add Google Drive configuration if GDRIVE_CONFIG_JSON is provided
+if (process.env.GDRIVE_CONFIG_JSON) {
+    try {
+        const gdriveConfig = JSON.parse(process.env.GDRIVE_CONFIG_JSON);
+        rcloneConfig += '\n[gdrive]\n';
+        Object.entries(gdriveConfig).forEach(([key, value]) => {
+            rcloneConfig += `${key} = ${value}\n`;
+        });
+        console.log('[RcloneConfig] ✅ Google Drive configuration added from GDRIVE_CONFIG_JSON');
+    } catch (err) {
+        console.warn('[RcloneConfig] ⚠️  Failed to parse GDRIVE_CONFIG_JSON:', err.message);
+    }
+}
 
 // Write to file
 const configPath = path.join(__dirname, 'rclone.conf');

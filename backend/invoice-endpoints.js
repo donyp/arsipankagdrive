@@ -917,6 +917,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     console.log(`[Invoice PDF] ✅ File uploaded to Google Drive: ${remotePath}`);
                 } catch (uploadErr) {
                     console.error(`[Invoice PDF] Upload error:`, uploadErr.message);
+                    console.error(`[Invoice PDF] Upload error full:`, uploadErr);
+                    console.error(`[Invoice PDF] Upload error stack:`, uploadErr.stack);
                     // Continue anyway - update DB even if upload fails, user can retry
                     remotePath = null;
                 }
