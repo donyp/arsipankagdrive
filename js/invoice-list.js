@@ -885,25 +885,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
-            // Render filtered data
+            // Fade out animation
+            const table = document.querySelector('.invoice-table');
+            if (table) {
+                table.style.animation = 'fadeOut 0.2s ease-out';
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            
+            // Update data
             invoiceCurrentPage = 0;
             allInvoices = data || [];
             
-            // Smooth transition
-            const tableBody = document.getElementById('invoiceTableBody');
-            if (tableBody) {
-                tableBody.style.opacity = '0.6';
-                tableBody.style.transition = 'opacity 0.3s ease';
+            // Render with fade in
+            if (table) {
+                table.style.animation = 'fadeIn 0.3s ease-in';
             }
-            
-            setTimeout(() => {
-                renderInvoiceTable();
-                updateFilterTotal();
-                
-                if (tableBody) {
-                    tableBody.style.opacity = '1';
-                }
-            }, 200);
+            renderInvoiceTable();
+            updateFilterTotal();
         });
     }
     
@@ -919,26 +917,79 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('filterDateTo').value = '';
             document.getElementById('filterSearch').value = '';
             
+            // Fade out animation
+            const table = document.querySelector('.invoice-table');
+            if (table) {
+                table.style.animation = 'fadeOut 0.2s ease-out';
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            
             // Reload all data
             invoiceCurrentPage = 0;
             
-            const tableBody = document.getElementById('invoiceTableBody');
-            if (tableBody) {
-                tableBody.style.opacity = '0.6';
-                tableBody.style.transition = 'opacity 0.3s ease';
+            // Render with fade in
+            if (table) {
+                table.style.animation = 'fadeIn 0.3s ease-in';
             }
-            
-            setTimeout(() => {
-                renderInvoiceTable();
-                updateFilterTotal();
-                
-                if (tableBody) {
-                    tableBody.style.opacity = '1';
-                }
-            }, 200);
+            renderInvoiceTable();
+            updateFilterTotal();
         });
     }
 });
+
+// ============================================
+// Pagination with Fade Animation
+// ============================================
+window.goToNextPage = async function() {
+    console.log('[Invoice-Pagination] Next page clicked');
+    
+    const maxPage = Math.ceil(allInvoices.length / ITEMS_PER_PAGE) - 1;
+    if (invoiceCurrentPage < maxPage) {
+        // Fade out
+        const table = document.querySelector('.invoice-table');
+        if (table) {
+            table.style.animation = 'fadeOut 0.2s ease-out';
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        invoiceCurrentPage++;
+        
+        // Fade in
+        if (table) {
+            table.style.animation = 'fadeIn 0.3s ease-in';
+        }
+        renderInvoiceTable();
+        updateFilterTotal();
+        
+        // Scroll to top of table
+        document.querySelector('.table-container')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+};
+
+window.goToPrevPage = async function() {
+    console.log('[Invoice-Pagination] Previous page clicked');
+    
+    if (invoiceCurrentPage > 0) {
+        // Fade out
+        const table = document.querySelector('.invoice-table');
+        if (table) {
+            table.style.animation = 'fadeOut 0.2s ease-out';
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        invoiceCurrentPage--;
+        
+        // Fade in
+        if (table) {
+            table.style.animation = 'fadeIn 0.3s ease-in';
+        }
+        renderInvoiceTable();
+        updateFilterTotal();
+        
+        // Scroll to top of table
+        document.querySelector('.table-container')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+};
 
 // Update total on table render
 setTimeout(() => {
