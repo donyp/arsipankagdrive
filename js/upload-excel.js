@@ -174,6 +174,8 @@ function showPreview() {
         <tr>
             <td>${inv.tanggal || '-'}</td>
             <td><strong>${inv.faktur || '-'}</strong></td>
+            <td>${inv.jenis_transaksi || 'jual'}</td>
+            <td>${inv.metode_bayar || '-'}</td>
             <td>${inv.konsumen || '-'}</td>
             <td>${inv.toko || '-'}</td>
             <td>Rp ${parseInt(inv.total_jumlah_jual).toLocaleString('id-ID')}</td>

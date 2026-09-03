@@ -997,3 +997,17 @@ select option {
         opacity: .7;
     }
 }
+
+/* ---- Main Content Layout ---- */
+.main-content {
+    margin-left: 280px;
+    transition: margin-left 0.3s ease;
+    min-height: 100vh;
+    background: var(--surface);
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+    }
+}
