@@ -1,19 +1,26 @@
 -- Clear old zona and toko data safely
--- First, we need to handle users that reference old zonas
+-- Handle ALL foreign key dependencies: users, files, invoice_file_list, toko
 
--- Step 1: Clear toko first (no foreign key dependencies from users)
+-- Step 1: Clear invoice_file_list first (references toko and zonas)
+DELETE FROM invoice_file_list;
+
+-- Step 2: Clear files that reference zonas (from archive system)
+UPDATE files 
+SET zona_id = NULL 
+WHERE zona_id IS NOT NULL;
+
+-- Step 3: Clear toko (no other FK dependencies except files which we cleared)
 DELETE FROM toko;
 
--- Step 2: For users that reference old zonas, set zona_id to NULL
--- This allows us to delete old zonas
+-- Step 4: Clear users that reference old zonas
 UPDATE users 
 SET zona_id = NULL 
 WHERE zona_id IS NOT NULL;
 
--- Step 3: Now safely delete old zonas
+-- Step 5: Now safely delete old zonas (all FK references are cleared)
 DELETE FROM zonas;
 
--- Step 4: Recreate zonas table with all 17 zones
+-- Step 6: Recreate zonas table with all 17 zones
 INSERT INTO zonas (kode, nama) VALUES
 ('Zona 01', 'Zona 01'),
 ('Zona 02', 'Zona 02'),
@@ -35,7 +42,7 @@ INSERT INTO zonas (kode, nama) VALUES
 ('Zona 16', 'Zona 16'),
 ('Zona 17', 'Zona 17');
 
--- Step 5: Insert all toko data with their kode and zona
+-- Step 7: Insert all toko data with their kode and zona
 INSERT INTO toko (kode, nama, zona_id) VALUES
 -- Zona 01
 ('8474003', 'Mega Baja Balaraja', (SELECT id FROM zonas WHERE kode='Zona 01')),
@@ -199,7 +206,7 @@ INSERT INTO toko (kode, nama, zona_id) VALUES
 ('8474129', 'Mega Baja Sukadami', (SELECT id FROM zonas WHERE kode='Zona 17')),
 ('8474130', 'Mega Baja Cibarusah', (SELECT id FROM zonas WHERE kode='Zona 17'));
 
--- Log completion
+-- Step 8: Log completion
 SELECT 'Zona-Toko mapping update complete!' as status;
 SELECT COUNT(*) as total_zonas FROM zonas;
 SELECT COUNT(*) as total_tokos FROM toko;
