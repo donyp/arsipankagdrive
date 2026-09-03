@@ -1,15 +1,15 @@
 -- Clear old zona and toko data safely
--- Handle ALL foreign key dependencies: users, files, invoice_file_list, toko
+-- Handle ALL foreign key dependencies with NOT NULL constraints
 
--- Step 1: Clear invoice_file_list first (references toko and zonas)
+-- Step 1: Delete files that don't have a valid zona_id (orphaned records)
+-- This is safe because we're just removing archive files
+DELETE FROM files 
+WHERE zona_id IS NULL;
+
+-- Step 2: Clear invoice_file_list (references toko and zonas)
 DELETE FROM invoice_file_list;
 
--- Step 2: Clear files that reference zonas (from archive system)
-UPDATE files 
-SET zona_id = NULL 
-WHERE zona_id IS NOT NULL;
-
--- Step 3: Clear toko (no other FK dependencies except files which we cleared)
+-- Step 3: Clear toko (dependent of files which we've cleaned)
 DELETE FROM toko;
 
 -- Step 4: Clear users that reference old zonas
@@ -17,7 +17,7 @@ UPDATE users
 SET zona_id = NULL 
 WHERE zona_id IS NOT NULL;
 
--- Step 5: Now safely delete old zonas (all FK references are cleared)
+-- Step 5: Now safely delete old zonas (all FK references cleared)
 DELETE FROM zonas;
 
 -- Step 6: Recreate zonas table with all 17 zones
@@ -206,7 +206,8 @@ INSERT INTO toko (kode, nama, zona_id) VALUES
 ('8474129', 'Mega Baja Sukadami', (SELECT id FROM zonas WHERE kode='Zona 17')),
 ('8474130', 'Mega Baja Cibarusah', (SELECT id FROM zonas WHERE kode='Zona 17'));
 
--- Step 8: Log completion
+-- Step 8: Log completion and verify
 SELECT 'Zona-Toko mapping update complete!' as status;
 SELECT COUNT(*) as total_zonas FROM zonas;
 SELECT COUNT(*) as total_tokos FROM toko;
+SELECT COUNT(*) as remaining_files FROM files WHERE zona_id IS NULL;
