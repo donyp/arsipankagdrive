@@ -402,9 +402,6 @@
             <!-- Header -->
             <div class="invoice-header">
                 <div class="header-actions">
-                    <button id="btnUploadExcel" class="btn-upload-excel">
-                        <i class="fas fa-file-excel"></i> Upload Excel
-                    </button>
                     <button id="btnClearTestData" class="btn-clear-test">
                         <i class="fas fa-trash-alt"></i> Clear Test Data
                     </button>
@@ -541,58 +538,7 @@
     </div>
 
     <!-- Upload Excel Modal -->
-    <div id="uploadExcelModal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" id="modal-backdrop" style="z-index: 9998;"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6" style="z-index: 10000;">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-gray-800">Upload File Excel</h2>
-                <button id="modal-close-btn" class="text-gray-500 hover:text-gray-700 text-2xl" style="background: none; border: none; cursor: pointer; padding: 0;">Ã—</button>
-            </div>
-
-            <!-- Format Notice -->
-            <div id="format-notice" class="hidden p-4 rounded-xl border-2 mb-4 flex items-start gap-3">
-                <div id="format-icon" class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"></div>
-                <div class="flex-1">
-                    <div id="format-message" class="text-sm font-bold mb-1"></div>
-                    <div id="format-details" class="text-sm"></div>
-                </div>
-            </div>
-
-            <!-- Drag Drop Area -->
-            <div id="dropZone" class="border-2 border-dashed border-blue-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all mb-4" style="position: relative;">
-                <i class="fas fa-cloud-upload-alt text-4xl text-blue-400 mb-3" style="display: block; margin-bottom: 12px;"></i>
-                <p class="text-gray-700 font-semibold mb-2">Drag & drop file Excel di sini</p>
-                <p class="text-gray-500 text-sm mb-4">atau klik untuk memilih file</p>
-                <input type="file" id="excelFileInput" accept=".xls,.xlsx,.csv" class="hidden">
-                <button id="btnSelectFile" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" style="border: none; cursor: pointer; font-weight: 500;">
-                    Pilih File
-                </button>
-            </div>
-
-            <!-- File Info -->
-            <div id="fileInfo" class="hidden bg-gray-50 p-4 rounded-lg mb-4">
-                <p class="text-sm text-gray-600 mb-2">
-                    <strong>File:</strong> <span id="fileName">-</span>
-                </p>
-                <p class="text-sm text-gray-600 mb-2">
-                    <strong>Ukuran:</strong> <span id="fileSize">-</span>
-                </p>
-                <p class="text-sm text-gray-600">
-                    <strong>Tipe:</strong> <span id="fileType">-</span>
-                </p>
-            </div>
-
-            <!-- Action Buttons -->
-            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
-                <button type="button" id="btnCancel" style="padding: 10px 24px; background: #ccc; color: #333; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                    Batal
-                </button>
-                <button type="button" id="uploadBtn" onclick="window.uploadExcelFile()" style="padding: 10px 24px; background: #22c55e; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; min-width: 120px;">
-                    Upload
-                </button>
-            </div>
-        </div>
-    </div>
+    <div id="uploadExcelModal" style="display: none;"></div>
 
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="js/auth.js"></script>

@@ -1,291 +1,276 @@
-// ============================================================
-// Upload Excel Handler - REKAP_LABA.xls
-// Handles Excel file upload and processing
-// ============================================================
-
-let selectedFile = null;
-
-// DOM Elements
-const uploadZone = document.getElementById('uploadZone');
-const fileInput = document.getElementById('fileInput');
-const selectedFileDiv = document.getElementById('selectedFile');
-const fileName = document.getElementById('fileName');
-const fileSize = document.getElementById('fileSize');
-const btnRemove = document.getElementById('btnRemove');
-const btnUpload = document.getElementById('btnUpload');
-const btnCancel = document.getElementById('btnCancel');
-const progressContainer = document.getElementById('progressContainer');
-const progressFill = document.getElementById('progressFill');
-const progressText = document.getElementById('progressText');
-const resultContainer = document.getElementById('resultContainer');
-
 // ============================================
-// Initialize
+// Upload Excel Flow
 // ============================================
-function init() {
-    // Check authentication
-    if (!isAuthenticated()) {
-        window.location.href = 'login.html';
-        return;
-    }
 
-    // Check role (super_admin or moderator only)
-    const user = getUserData();
-    if (!user || (user.role !== 'super_admin' && user.role !== 'moderator')) {
-        alert('Akses ditolak. Hanya Super Admin dan Moderator yang dapat upload Excel.');
-        window.location.href = 'index.html';
-        return;
-    }
+let currentFile = null;
+let parsedData = null;
 
-    setupEventListeners();
-}
+// Step 1: File Selection
+document.addEventListener('DOMContentLoaded', () => {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const btnCheck = document.getElementById('btnCheck');
+    const btnBack1 = document.getElementById('btnBack1');
+    const btnPreview = document.getElementById('btnPreview');
+    const btnBack2 = document.getElementById('btnBack2');
+    const btnUpload = document.getElementById('btnUpload');
 
-// ============================================
-// Event Listeners
-// ============================================
-function setupEventListeners() {
-    // Upload zone click
-    uploadZone.addEventListener('click', () => {
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        if (e.dataTransfer.files.length > 0) {
+            handleFileSelected(e.dataTransfer.files[0]);
+        }
+    });
+
+    // Click to select
+    dropZone.addEventListener('click', () => {
         fileInput.click();
     });
 
-    // File input change
     fileInput.addEventListener('change', (e) => {
-        handleFileSelect(e.target.files[0]);
+        if (e.target.files.length > 0) {
+            handleFileSelected(e.target.files[0]);
+        }
     });
 
-    // Drag and drop
-    uploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadZone.classList.add('dragover');
-    });
+    // Button handlers
+    btnCheck.addEventListener('click', () => checkData());
+    btnBack1.addEventListener('click', () => resetUpload());
+    btnPreview.addEventListener('click', () => showPreview());
+    btnBack2.addEventListener('click', () => goToValidation());
+    btnUpload.addEventListener('click', () => uploadData());
+});
 
-    uploadZone.addEventListener('dragleave', () => {
-        uploadZone.classList.remove('dragover');
-    });
-
-    uploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadZone.classList.remove('dragover');
-        handleFileSelect(e.dataTransfer.files[0]);
-    });
-
-    // Remove file
-    btnRemove.addEventListener('click', () => {
-        clearSelection();
-    });
-
-    // Upload button
-    btnUpload.addEventListener('click', () => {
-        uploadExcel();
-    });
-
-    // Cancel button
-    btnCancel.addEventListener('click', () => {
-        window.location.href = 'invoice-list.html';
-    });
-}
-
-// ============================================
-// File Selection
-// ============================================
-function handleFileSelect(file) {
-    if (!file) return;
-
-    // Validate file type
-    const validTypes = [
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    ];
-    const validExtensions = ['.xls', '.xlsx'];
-    const ext = '.' + file.name.split('.').pop().toLowerCase();
-
-    if (!validTypes.includes(file.type) && !validExtensions.includes(ext)) {
-        alert('File harus berformat .xls atau .xlsx');
+function handleFileSelected(file) {
+    console.log('[Upload] File selected:', file.name);
+    
+    if (!file.name.toLowerCase().endsWith('.xls') && !file.name.toLowerCase().endsWith('.xlsx')) {
+        alert('❌ Hanya file Excel (.xls, .xlsx) yang diizinkan');
         return;
     }
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-        alert('Ukuran file maksimal 10MB');
-        return;
-    }
+    currentFile = file;
 
-    selectedFile = file;
+    // Show file info
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+    document.getElementById('fileInfo').classList.add('show');
 
-    // Display file info
-    fileName.textContent = file.name;
-    fileSize.textContent = formatFileSize(file.size);
-    selectedFileDiv.classList.add('visible');
-    btnUpload.disabled = false;
-
-    // Hide upload zone
-    uploadZone.style.display = 'none';
+    // Enable check button
+    document.getElementById('btnCheck').disabled = false;
 }
 
-function clearSelection() {
-    selectedFile = null;
-    fileInput.value = '';
-    selectedFileDiv.classList.remove('visible');
-    uploadZone.style.display = 'block';
-    btnUpload.disabled = true;
-    resultContainer.style.display = 'none';
-}
+async function checkData() {
+    if (!currentFile) return;
 
-// ============================================
-// Upload Excel
-// ============================================
-async function uploadExcel() {
-    if (!selectedFile) return;
-
-    btnUpload.disabled = true;
-    btnRemove.disabled = true;
-    progressContainer.style.display = 'block';
-    resultContainer.style.display = 'none';
+    console.log('[Upload] Checking data...');
+    document.getElementById('card1').style.display = 'none';
+    document.getElementById('card2').style.display = 'block';
+    document.getElementById('loadingValidation').classList.add('show');
+    updateStep(2);
 
     try {
-        const formData = new FormData();
-        formData.append('excel', selectedFile);
-
-        progressFill.style.width = '30%';
-        progressFill.textContent = '30%';
-        progressText.textContent = 'Mengupload file...';
-
-        const response = await fetch('/api/invoice/upload-excel', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: formData
+        const arrayBuffer = await currentFile.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+        
+        // Find REKAP LABA sheet
+        let sheetName = workbook.SheetNames.find(name => name.includes('REKAP')) || workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        
+        // Get raw data to find header
+        const rawData = XLSX.utils.sheet_to_json(worksheet, { 
+            defval: null, 
+            blankrows: false,
+            header: 1
         });
 
-        progressFill.style.width = '60%';
-        progressFill.textContent = '60%';
-        progressText.textContent = 'Memproses data...';
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Upload gagal');
+        // Find header row
+        let headerRowIndex = -1;
+        for (let i = 0; i < Math.min(10, rawData.length); i++) {
+            const row = rawData[i];
+            if (Array.isArray(row) && row.some(cell => cell && cell.toString().includes('TANGGAL'))) {
+                headerRowIndex = i;
+                break;
+            }
         }
 
-        const result = await response.json();
+        if (headerRowIndex === -1) {
+            throw new Error('Header row tidak ditemukan');
+        }
 
-        progressFill.style.width = '100%';
-        progressFill.textContent = '100%';
-        progressText.textContent = 'Selesai!';
+        // Parse with correct header
+        const parsed = XLSX.utils.sheet_to_json(worksheet, { 
+            defval: null, 
+            blankrows: false,
+            range: headerRowIndex
+        });
 
-        // Show result
-        setTimeout(() => {
-            progressContainer.style.display = 'none';
-            showResult(result);
-        }, 500);
+        if (parsed.length === 0) {
+            throw new Error('File Excel kosong atau tidak memiliki data');
+        }
+
+        // Transform and aggregate
+        let invoices = parsed.map(row => ({
+            tanggal: row['TANGGAL'] || row['tanggal'],
+            toko: row['TOKO'] || row['toko'],
+            faktur: row['FAKTUR'] || row['faktur'],
+            metode_bayar: row['METODE BAYAR'] || row['metode_bayar'],
+            jenis_transaksi: row['JENIS TRANSAKSI'] || row['jenis_transaksi'],
+            konsumen: row['KONSUMEN'] || row['konsumen'],
+            total_jumlah_jual: parseFloat(row['JUMLAH JUAL'] || row['jumlah_jual'] || 0),
+            keterangan: row['KET 2'] || row['ket_2'] || 'NON PPN'
+        })).filter(inv => inv.faktur);
+
+        // Aggregate by faktur
+        const aggregated = {};
+        invoices.forEach(inv => {
+            if (aggregated[inv.faktur]) {
+                aggregated[inv.faktur].total_jumlah_jual += inv.total_jumlah_jual;
+                aggregated[inv.faktur].item_count = (aggregated[inv.faktur].item_count || 1) + 1;
+            } else {
+                aggregated[inv.faktur] = { ...inv, item_count: 1 };
+            }
+        });
+
+        parsedData = Object.values(aggregated);
+        console.log('[Upload] Parsed:', parsedData.length, 'unique fakturs from', parsed.length, 'total rows');
+
+        // Show validation results
+        document.getElementById('totalRows').textContent = parsed.length;
+        document.getElementById('uniqueFakturs').textContent = parsedData.length;
+        document.getElementById('loadingValidation').classList.remove('show');
+        document.getElementById('validationResult').classList.add('show');
 
     } catch (error) {
-        console.error('Upload error:', error);
-        progressContainer.style.display = 'none';
-        showError(error.message);
-        btnUpload.disabled = false;
-        btnRemove.disabled = false;
+        console.error('[Upload] Error:', error);
+        alert('❌ Error: ' + error.message);
+        resetUpload();
     }
 }
 
-// ============================================
-// Show Result
-// ============================================
-function showResult(result) {
-    resultContainer.style.display = 'block';
+function showPreview() {
+    if (!parsedData) return;
 
-    const summary = result.summary || {};
-    const hasErrors = summary.failed > 0;
+    console.log('[Upload] Showing preview...');
+    document.getElementById('card2').style.display = 'none';
+    document.getElementById('card3').style.display = 'block';
+    updateStep(3);
 
-    let html = `
-        <div class="result-success">
-            <h3>
-                <i class="fas fa-check-circle"></i>
-                Upload Berhasil
-            </h3>
-            <div class="result-stats">
-                <div class="stat-item">
-                    <div class="stat-value">${summary.totalRows || 0}</div>
-                    <div class="stat-label">Total Baris</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${summary.uniqueFakturs || 0}</div>
-                    <div class="stat-label">Faktur Unik</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" style="color: #27ae60;">${summary.processed || 0}</div>
-                    <div class="stat-label">Berhasil</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" style="color: #f39c12;">${summary.duplicates || 0}</div>
-                    <div class="stat-label">Duplikat</div>
-                </div>
-                ${summary.failed > 0 ? `
-                <div class="stat-item">
-                    <div class="stat-value" style="color: #e74c3c;">${summary.failed}</div>
-                    <div class="stat-label">Gagal</div>
-                </div>
-                ` : ''}
-            </div>
-            <button class="btn-view-list" onclick="window.location.href='invoice-list.html'">
-                <i class="fas fa-list"></i> Lihat Daftar Invoice
-            </button>
-        </div>
-    `;
+    // Show first 5 items
+    const preview = parsedData.slice(0, 5);
+    const tbody = document.getElementById('previewTable');
+    tbody.innerHTML = preview.map(inv => `
+        <tr>
+            <td>${inv.tanggal || '-'}</td>
+            <td><strong>${inv.faktur || '-'}</strong></td>
+            <td>${inv.konsumen || '-'}</td>
+            <td>${inv.toko || '-'}</td>
+            <td>Rp ${parseInt(inv.total_jumlah_jual).toLocaleString('id-ID')}</td>
+            <td>${inv.keterangan || '-'}</td>
+        </tr>
+    `).join('');
+}
 
-    // Show errors if any
-    if (hasErrors && summary.errors && summary.errors.length > 0) {
-        html += `
-            <div class="result-error">
-                <h3>
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Beberapa Data Gagal Diproses
-                </h3>
-                <div class="error-list">
-                    ${summary.errors.map(err => `
-                        <div class="error-item">${err}</div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    }
+function goToValidation() {
+    document.getElementById('card3').style.display = 'none';
+    document.getElementById('card2').style.display = 'block';
+    updateStep(2);
+}
 
-    resultContainer.innerHTML = html;
+async function uploadData() {
+    if (!parsedData || parsedData.length === 0) return;
 
-    // Reset for next upload
-    setTimeout(() => {
-        clearSelection();
+    const btnUpload = document.getElementById('btnUpload');
+    const originalText = btnUpload.textContent;
+    btnUpload.disabled = true;
+    btnUpload.textContent = '⏳ Uploading...';
+
+    try {
+        console.log('[Upload] Uploading', parsedData.length, 'invoices...');
+
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch('/api/invoice/upload-excel-data', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                filename: currentFile.name,
+                data: parsedData
+            })
+        });
+
+        const result = await response.json();
+        console.log('[Upload] Response:', result);
+
+        if (response.ok && result.success) {
+            const processed = result.summary?.processed || 0;
+            document.getElementById('uploadedCount').textContent = processed;
+            
+            document.getElementById('card3').style.display = 'none';
+            document.getElementById('card4').style.display = 'block';
+            updateStep(4);
+
+            console.log('[Upload] ✅ Success!');
+        } else {
+            alert('❌ Error: ' + (result.error || 'Upload failed'));
+            btnUpload.disabled = false;
+            btnUpload.textContent = originalText;
+        }
+    } catch (error) {
+        console.error('[Upload] Exception:', error);
+        alert('❌ Error: ' + error.message);
         btnUpload.disabled = false;
-        btnRemove.disabled = false;
-    }, 1000);
+        btnUpload.textContent = originalText;
+    }
 }
 
-function showError(message) {
-    resultContainer.style.display = 'block';
-    resultContainer.innerHTML = `
-        <div class="result-error">
-            <h3>
-                <i class="fas fa-times-circle"></i>
-                Upload Gagal
-            </h3>
-            <p style="margin-top: 10px; color: #e74c3c;">${message}</p>
-        </div>
-    `;
+function resetUpload() {
+    currentFile = null;
+    parsedData = null;
+
+    document.getElementById('fileInput').value = '';
+    document.getElementById('fileInfo').classList.remove('show');
+    document.getElementById('btnCheck').disabled = true;
+
+    document.getElementById('card1').style.display = 'block';
+    document.getElementById('card2').style.display = 'none';
+    document.getElementById('card3').style.display = 'none';
+    document.getElementById('card4').style.display = 'none';
+
+    updateStep(1);
 }
 
-// ============================================
-// Utility Functions
-// ============================================
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+function goToDashboard() {
+    // Redirect to invoice list (dashboard will sync automatically)
+    window.location.href = '/invoice-list.html';
 }
 
-// ============================================
-// Initialize on load
-// ============================================
-document.addEventListener('DOMContentLoaded', init);
+function updateStep(activeStep) {
+    for (let i = 1; i <= 4; i++) {
+        const step = document.getElementById(`step${i}`);
+        if (i < activeStep) {
+            step.classList.add('completed');
+            step.classList.remove('active');
+        } else if (i === activeStep) {
+            step.classList.add('active');
+            step.classList.remove('completed');
+        } else {
+            step.classList.remove('active', 'completed');
+        }
+    }
+}
