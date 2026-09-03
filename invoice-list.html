@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Invoice - ARSIP ANKA</title>
-    <link rel="stylesheet" href="css/style.css?v=4">
+    <link rel="stylesheet" href="css/style.css?v=5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="js/zoom-reset.js"></script>
     <style>
@@ -317,28 +317,29 @@
         .invoice-table th:nth-child(9) { width: 8%; min-width: 65px; }
         .invoice-table th:nth-child(10) { width: 5%; min-width: 65px; }
 
-        /* Status Badge */
+        /* Status Badge - Simple text style */
         .status-badge {
             display: inline-block;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 8px;
-            font-weight: 600;
+            padding: 0;
+            border-radius: 0;
+            font-size: 7px;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
         .status-badge.uploaded {
-            background: #d5f4e6;
+            background: transparent;
             color: #27ae60;
         }
 
         .status-badge.pending {
-            background: #fff3cd;
+            background: transparent;
             color: #f39c12;
         }
 
         .status-badge.missing {
-            background: #fadbd8;
+            background: transparent;
             color: #e74c3c;
         }
 
