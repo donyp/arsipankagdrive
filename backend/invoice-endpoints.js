@@ -102,28 +102,6 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     });
                 }
                 
-                // Data is already validated by frontend, just store it
-                const batchId = uuidv4();
-                const { data: batch, error: batchError } = await supabase
-                    .from('excel_upload_batches')
-                    .insert({
-                        id: batchId,
-                        filename: filename,
-                        total_rows: data.length,
-                        processed_rows: 0,
-                        failed_rows: 0,
-                        duplicate_rows: 0,
-                        uploaded_by: req.user.id,
-                        status: 'processing'
-                    })
-                    .select()
-                    .single();
-                
-                if (batchError) {
-                    console.error('[Invoice API] Error creating batch:', batchError);
-                    return res.status(500).json({ error: 'Failed to create batch record' });
-                }
-                
                 // DEBUG: Log first few rows to check data structure
                 console.log('[Invoice API] Raw data sample (first 3):');
                 data.slice(0, 3).forEach((row, idx) => {
@@ -148,16 +126,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 console.log(`[Invoice API] Found ${existingFakturs.size} existing fakturs`);
                 console.log(`[Invoice API] Sample existing:`, Array.from(existingFakturs).slice(0, 5));
                 
-                // Filter out duplicates
-                const newInvoices = data.filter(item => !existingFakturs.has(item.faktur));
-                const duplicateCount = data.length - newInvoices.length;
-                
-                console.log(`[Invoice API] New invoices to insert: ${newInvoices.length}`);
-                
-                console.log(`[Invoice API] Inserting ${newInvoices.length} new invoices...`);
-                
-                // BULK INSERT: Insert all new invoices at once
-                const invoicesToInsert = newInvoices.map(item => {
+                // BULK INSERT: Insert all invoices one-by-one to handle duplicates
+                const invoicesToInsert = data.map(item => {
                     // Parse date string (DD-MM-YYYY format from Excel) to ISO date
                     let tanggalDate = null;
                     if (item.tanggal) {
@@ -189,42 +159,35 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 });
                 
                 let processedCount = 0;
+                let duplicateCount = 0;
                 let failedCount = 0;
                 const errors = [];
                 
-                if (invoicesToInsert.length > 0) {
-                    console.log('[Invoice API] Sample invoice to insert:', JSON.stringify(invoicesToInsert[0], null, 2));
-                    console.log('[Invoice API] Invoice count to insert:', invoicesToInsert.length);
-                    
-                    // Use ON CONFLICT DO NOTHING to handle duplicates gracefully
-                    // This is more reliable than pre-checking
-                    const { data: inserted, error: insertError } = await supabase
-                        .from('invoice_file_list')
-                        .insert(invoicesToInsert, { onConflict: 'faktur' })  // Ignore duplicates by faktur
-                        .select();
-                    
-                    if (insertError) {
-                        console.error('[Invoice API] ❌ BULK INSERT ERROR!');
-                        console.error('[Invoice API] Error code:', insertError.code);
-                        console.error('[Invoice API] Error message:', insertError.message);
-                        console.error('[Invoice API] Error details:', insertError.details);
-                        console.error('[Invoice API] Error hint:', insertError.hint);
-                        console.error('[Invoice API] Full error:', JSON.stringify(insertError, null, 2));
+                // Simple strategy: Try insert all, catch duplicate errors
+                for (const item of invoicesToInsert) {
+                    try {
+                        const { error: insertError } = await supabase
+                            .from('invoice_file_list')
+                            .insert(item);
                         
-                        // Only count as failed if it's a real error (not duplicate key)
-                        if (insertError.code !== '23505') {
-                            failedCount = invoicesToInsert.length;
-                            errors.push(`Bulk insert failed: ${insertError.message} (${insertError.code})`);
+                        if (insertError) {
+                            if (insertError.code === '23505') {
+                                // Duplicate key constraint
+                                duplicateCount++;
+                                console.log(`[Invoice API] ℹ️ Skipped duplicate faktur: ${item.faktur}`);
+                            } else {
+                                failedCount++;
+                                errors.push(`${item.faktur}: ${insertError.message}`);
+                                console.error(`[Invoice API] ❌ Insert failed for ${item.faktur}:`, insertError.message);
+                            }
                         } else {
-                            // 23505 is duplicate key - these will be handled by ON CONFLICT
-                            console.log('[Invoice API] ℹ️ Duplicates encountered - ON CONFLICT will skip them');
+                            processedCount++;
                         }
-                    } else {
-                        processedCount = inserted?.length || 0;
-                        console.log(`[Invoice API] ✅ Successfully inserted ${processedCount} invoices`);
+                    } catch (err) {
+                        failedCount++;
+                        errors.push(`${item.faktur}: ${err.message}`);
+                        console.error(`[Invoice API] Exception for ${item.faktur}:`, err.message);
                     }
-                } else {
-                    console.warn('[Invoice API] ⚠️ WARNING: No invoices to insert!');
                 }
                 
                 // Update batch
