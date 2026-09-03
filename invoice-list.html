@@ -220,7 +220,8 @@
         }
 
         .invoice-table {
-            width: max-content;
+            width: 100%;
+            min-width: max-content;
             border-collapse: collapse;
             font-size: 8px;
             table-layout: auto;
@@ -294,16 +295,27 @@
         }
         
         /* Specific column widths - min width untuk balance */
-        .invoice-table td:nth-child(1) { min-width: 65px; }   /* Status */
-        .invoice-table td:nth-child(2) { min-width: 75px; }   /* Tanggal */
-        .invoice-table td:nth-child(3) { min-width: 105px; }  /* No Faktur */
-        .invoice-table td:nth-child(4) { min-width: 70px; }   /* Status Bayar */
-        .invoice-table td:nth-child(5) { min-width: 40px; }   /* Tipe */
-        .invoice-table td:nth-child(6) { min-width: 120px; }  /* Nama Konsumen */
-        .invoice-table td:nth-child(7) { min-width: 100px; }  /* Nama Toko */
-        .invoice-table td:nth-child(8) { min-width: 85px; }   /* Total */
-        .invoice-table td:nth-child(9) { min-width: 65px; }   /* Keterangan */
-        .invoice-table td:nth-child(10) { min-width: 65px; }  /* Aksi */
+        .invoice-table td:nth-child(1) { width: 5%; min-width: 65px; }   /* Status */
+        .invoice-table td:nth-child(2) { width: 8%; min-width: 75px; }   /* Tanggal */
+        .invoice-table td:nth-child(3) { width: 12%; min-width: 105px; }  /* No Faktur */
+        .invoice-table td:nth-child(4) { width: 8%; min-width: 70px; }   /* Status Bayar */
+        .invoice-table td:nth-child(5) { width: 5%; min-width: 40px; }   /* Tipe */
+        .invoice-table td:nth-child(6) { width: 22%; min-width: 120px; }  /* Nama Konsumen - expand */
+        .invoice-table td:nth-child(7) { width: 18%; min-width: 100px; }  /* Nama Toko - expand */
+        .invoice-table td:nth-child(8) { width: 10%; min-width: 85px; }   /* Total */
+        .invoice-table td:nth-child(9) { width: 7%; min-width: 65px; }   /* Keterangan */
+        .invoice-table td:nth-child(10) { width: 5%; min-width: 65px; }  /* Aksi */
+        
+        .invoice-table th:nth-child(1) { width: 5%; min-width: 65px; }
+        .invoice-table th:nth-child(2) { width: 8%; min-width: 75px; }
+        .invoice-table th:nth-child(3) { width: 12%; min-width: 105px; }
+        .invoice-table th:nth-child(4) { width: 8%; min-width: 70px; }
+        .invoice-table th:nth-child(5) { width: 5%; min-width: 40px; }
+        .invoice-table th:nth-child(6) { width: 22%; min-width: 120px; }
+        .invoice-table th:nth-child(7) { width: 18%; min-width: 100px; }
+        .invoice-table th:nth-child(8) { width: 10%; min-width: 85px; }
+        .invoice-table th:nth-child(9) { width: 7%; min-width: 65px; }
+        .invoice-table th:nth-child(10) { width: 5%; min-width: 65px; }
 
         /* Status Badge */
         .status-badge {
