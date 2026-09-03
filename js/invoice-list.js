@@ -394,6 +394,14 @@ function renderInvoiceTable(invoices) {
         const statusClass = inv.status === 'UPLOADED' ? 'uploaded' : inv.status === 'MISSING' ? 'missing' : 'pending';
         const statusText = inv.status || 'PENDING';
         
+        // Format tanggal: 2026-09-02 -> 02/09/2026
+        const formattedDate = formatDate(inv.tanggal);
+        
+        // Capitalize jenis_transaksi: jual -> Jual
+        const capitalizedTipe = inv.jenis_transaksi 
+            ? inv.jenis_transaksi.charAt(0).toUpperCase() + inv.jenis_transaksi.slice(1).toLowerCase()
+            : '-';
+        
         return `
         <tr>
             <td>
@@ -401,10 +409,10 @@ function renderInvoiceTable(invoices) {
                     ${statusText}
                 </span>
             </td>
-            <td>${inv.tanggal || '-'}</td>
+            <td>${formattedDate}</td>
             <td><strong>${inv.faktur || '-'}</strong></td>
             <td>${inv.metode_bayar || '-'}</td>
-            <td>${inv.jenis_transaksi || '-'}</td>
+            <td>${capitalizedTipe}</td>
             <td>${inv.konsumen || '-'}</td>
             <td>${inv.toko || '-'}</td>
             <td>${formatCurrency(inv.total_jumlah_jual)}</td>
@@ -417,6 +425,36 @@ function renderInvoiceTable(invoices) {
             </td>
         </tr>
     `}).join('');
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    
+    // Handle format: 2026-09-02 or 02-09-2026
+    let date;
+    
+    if (dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        
+        // Check if format is yyyy-mm-dd
+        if (parts[0].length === 4) {
+            date = new Date(dateStr); // 2026-09-02
+        } else {
+            // Format is dd-mm-yyyy or mm-dd-yyyy, assume dd-mm-yyyy
+            date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        }
+    } else {
+        return dateStr;
+    }
+    
+    if (isNaN(date)) return dateStr;
+    
+    // Format as dd/mm/yyyy
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
 }
 
 function formatCurrency(value) {
