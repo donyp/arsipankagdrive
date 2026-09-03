@@ -597,122 +597,35 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
         }
     );
     
+
     // ============================================
-    // POST /api/invoice/upload-pdf
-    // Upload PDF and match with faktur
+    // GET /api/invoice/list
+    // Get all invoices or filter by status
     // ============================================
-    app.post('/api/invoice/upload-pdf',
-        createAuth(),
-        upload.single('pdf'),
+    app.get('/api/invoice/list',
+        ...createAuth(['super_admin', 'moderator', 'user']),
         async (req, res) => {
             try {
-                if (!req.file) {
-                    return res.status(400).json({ error: 'No file uploaded' });
+                const { status } = req.query;
+                let query = supabase.from('invoice_file_list').select('*');
+                
+                if (status) {
+                    query = query.eq('status', status);
                 }
                 
-                const { faktur } = req.body;
+                const { data, error } = await query.order('tanggal', { ascending: false });
                 
-                if (!faktur) {
-                    return res.status(400).json({ error: 'Faktur number is required' });
+                if (error) {
+                    return res.status(500).json({ error: 'Failed to fetch invoices' });
                 }
                 
-                console.log(`[Invoice API] PDF upload for faktur: ${faktur}`);
-                
-                // Find invoice in database
-                const { data: invoice, error: findError } = await supabase
-                    .from('invoice_file_list')
-                    .select('*')
-                    .eq('faktur', faktur)
-                    .single();
-                
-                if (findError || !invoice) {
-                    return res.status(404).json({ 
-                        error: 'Faktur not found in invoice list',
-                        details: 'Please upload Excel file first or check faktur number'
-                    });
-                }
-                
-                // Check if already uploaded
-                if (invoice.status === 'UPLOADED') {
-                    return res.status(400).json({
-                        error: 'Invoice already uploaded',
-                        uploaded_at: invoice.uploaded_at,
-                        uploaded_file_path: invoice.uploaded_file_path
-                    });
-                }
-                
-                // Build Google Drive path
-                // Format: /ARSIPINVOICE/YEAR/MONTH/DAY/PPN|NON/faktur.pdf
-                const date = new Date(invoice.tanggal);
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const category = invoice.keterangan.toUpperCase().includes('PPN') ? 'PPN' : 'NON';
-                const filename = `${faktur}.pdf`;
-                const storagePath = `/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
-                
-                console.log(`[Invoice API] Uploading to: ${storagePath}`);
-                
-                // Upload to Google Drive via RcloneStorage
-                try {
-                    const uploadResult = await RcloneStorage.uploadInvoicePDF(
-                        req.file.buffer,
-                        filename,
-                        year,
-                        month,
-                        day,
-                        category
-                    );
-                    
-                    if (!uploadResult.success) {
-                        throw new Error(uploadResult.error || 'Upload failed');
-                    }
-                    
-                    // Update database
-                    const { error: updateError } = await supabase
-                        .from('invoice_file_list')
-                        .update({
-                            status: 'UPLOADED',
-                            uploaded_file_path: storagePath,
-                            uploaded_at: new Date().toISOString(),
-                            uploaded_by: req.user.id
-                        })
-                        .eq('faktur', faktur);
-                    
-                    if (updateError) {
-                        console.error('[Invoice API] Error updating status:', updateError);
-                        return res.status(500).json({ error: 'Failed to update invoice status' });
-                    }
-                    
-                    // Log to audit
-                    await supabase.from('audit_logs').insert({
-                        user_id: req.user.id,
-                        action: 'upload_invoice_pdf',
-                        context: `Uploaded PDF for faktur ${faktur} to ${storagePath}`
-                    });
-                    
-                    res.json({
-                        success: true,
-                        faktur,
-                        storagePath,
-                        message: 'Invoice PDF uploaded successfully'
-                    });
-                    
-                } catch (uploadError) {
-                    console.error('[Invoice API] Upload to GDrive failed:', uploadError);
-                    return res.status(500).json({
-                        error: 'Failed to upload to Google Drive',
-                        details: uploadError.message
-                    });
-                }
-                
+                res.json({ data, count: data.length });
             } catch (error) {
-                console.error('[Invoice API] Upload PDF error:', error);
+                console.error('[Invoice API] List error:', error);
                 res.status(500).json({ error: 'Server error' });
             }
         }
     );
-    
     // ============================================
     // DELETE /api/invoice/:faktur
     // Delete invoice from list
@@ -965,7 +878,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // Filename format: 835100310.pdf or similar
     // ============================================
     app.post('/api/invoice/upload-pdf',
-        ...createAuth(['super_admin', 'moderator']),
+        ...createAuth(['super_admin', 'moderator', 'user']),
         upload.single('pdf'),
         async (req, res) => {
             try {

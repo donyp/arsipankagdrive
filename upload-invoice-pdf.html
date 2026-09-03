@@ -9,7 +9,7 @@
     <style>
         .upload-container {
             padding: 40px;
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
@@ -43,97 +43,11 @@
             font-size: 18px;
         }
 
-        /* Faktur Selection */
-        .faktur-section {
-            margin-bottom: 30px;
-        }
-
-        .faktur-section label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .faktur-input-group {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-        }
-
-        .faktur-input-group input {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #ecf0f1;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        .faktur-input-group input:focus {
-            outline: none;
-            border-color: #3498db;
-        }
-
-        .btn-search {
-            padding: 12px 24px;
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-search:hover {
-            background: #2980b9;
-            transform: translateY(-2px);
-        }
-
-        /* Invoice Info */
-        .invoice-info {
-            display: none;
-            background: #ecf8ff;
-            border-left: 4px solid #3498db;
-            padding: 20px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
-
-        .invoice-info.show {
-            display: block;
-        }
-
-        .invoice-info p {
-            margin: 8px 0;
-            color: #2c3e50;
-        }
-
-        .invoice-info strong {
-            color: #2980b9;
-        }
-
-        /* Error Message */
-        .error-message {
-            display: none;
-            background: #fadbd8;
-            border-left: 4px solid #e74c3c;
-            padding: 20px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            color: #e74c3c;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
         /* Drop Zone */
         .drop-zone {
             border: 2px dashed #e74c3c;
             border-radius: 12px;
-            padding: 40px;
+            padding: 60px 40px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
@@ -147,7 +61,7 @@
         }
 
         .drop-zone i {
-            font-size: 48px;
+            font-size: 64px;
             color: #e74c3c;
             margin-bottom: 15px;
             display: block;
@@ -157,6 +71,7 @@
             margin: 0 0 15px 0;
             color: #2c3e50;
             font-weight: 600;
+            font-size: 18px;
         }
 
         .drop-zone span {
@@ -164,24 +79,122 @@
             color: #7f8c8d;
         }
 
-        /* File Info */
-        .file-info {
+        /* Files List */
+        .files-list {
             display: none;
-            background: #d5f4e6;
-            border-left: 4px solid #27ae60;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
+            margin-top: 30px;
         }
 
-        .file-info.show {
+        .files-list.show {
             display: block;
         }
 
-        .file-info p {
-            margin: 5px 0;
+        .files-list h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid #95a5a6;
+        }
+
+        .file-item.valid {
+            border-left-color: #27ae60;
+            background: #f0fdf4;
+        }
+
+        .file-item.invalid {
+            border-left-color: #e74c3c;
+            background: #fef2f2;
+        }
+
+        .file-item-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 50%;
+            margin-right: 12px;
+            font-weight: 700;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .file-item.valid .file-item-icon {
+            background: #27ae60;
+            color: white;
+        }
+
+        .file-item.invalid .file-item-icon {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .file-item-name {
+            flex: 1;
+            color: #2c3e50;
+            font-weight: 500;
             font-size: 14px;
+        }
+
+        .file-item-faktur {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+
+        .file-item-status {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .file-item.valid .file-item-status {
+            background: #d5f4e6;
             color: #27ae60;
+        }
+
+        .file-item.invalid .file-item-status {
+            background: #fadbd8;
+            color: #e74c3c;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-top: 5px;
         }
 
         /* Buttons */
@@ -237,37 +250,7 @@
             transform: none !important;
         }
 
-        /* Success Message */
-        .success-message {
-            display: none;
-            background: #d5f4e6;
-            border-left: 4px solid #27ae60;
-            padding: 20px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
-
-        .success-message.show {
-            display: block;
-        }
-
-        .success-message i {
-            color: #27ae60;
-            margin-right: 10px;
-            font-size: 20px;
-        }
-
-        .success-message p {
-            margin: 0;
-            color: #27ae60;
-            font-weight: 600;
-        }
-
-        /* Hidden input */
-        input[type="file"] {
-            display: none;
-        }
-
+        /* Info Box */
         .info-box {
             background: #fff3cd;
             border-left: 4px solid #f39c12;
@@ -282,6 +265,35 @@
             color: #f39c12;
             margin-right: 10px;
         }
+
+        /* Hidden input */
+        input[type="file"] {
+            display: none;
+        }
+
+        .validating {
+            text-align: center;
+            padding: 20px;
+            color: #3498db;
+        }
+
+        .validating i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .upload-container {
+                padding: 20px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -291,92 +303,63 @@
         <div class="upload-container">
             <!-- Header -->
             <div class="upload-header">
-                <h1>📄 Upload PDF Invoice</h1>
-                <p>Upload file PDF invoice. Nama file harus sesuai dengan nomor faktur (contoh: 835100310.pdf)</p>
+                <h1>📄 Upload PDF Invoice Massal</h1>
+                <p>Upload multiple PDF files sekaligus. Sistem akan validasi faktur otomatis dan tampil status setiap file.</p>
             </div>
 
-            <!-- Step 1: Search Faktur -->
-            <div class="card" id="card1">
-                <h3>Step 1: Cari Nomor Faktur</h3>
+            <!-- Card -->
+            <div class="card">
+                <h3>Drag & Drop File PDF Invoice</h3>
                 
                 <div class="info-box">
                     <i class="fas fa-info-circle"></i>
-                    Masukkan nomor faktur yang ingin diupload filenya
+                    Nama file harus sesuai nomor faktur (contoh: 835100310.pdf). Drag drop multiple files sekaligus!
                 </div>
 
-                <div class="faktur-section">
-                    <label>Nomor Faktur:</label>
-                    <div class="faktur-input-group">
-                        <input type="text" id="fakturInput" placeholder="Contoh: 835100310 atau 835100310.pdf">
-                        <button class="btn-search" onclick="searchFaktur()">
-                            <i class="fas fa-search"></i> Cari
-                        </button>
-                    </div>
-                </div>
-
-                <div id="errorMessage" class="error-message"></div>
-
-                <div id="invoiceInfo" class="invoice-info">
-                    <p><strong>Nomor Faktur:</strong> <span id="infofaktur">-</span></p>
-                    <p><strong>Konsumen:</strong> <span id="infokonsumen">-</span></p>
-                    <p><strong>Toko:</strong> <span id="infotoko">-</span></p>
-                    <p><strong>Total:</strong> <span id="infototal">-</span></p>
-                    <p><strong>Keterangan:</strong> <span id="infoketerangan">-</span></p>
-                </div>
-            </div>
-
-            <!-- Step 2: Upload File -->
-            <div class="card" id="card2" style="display: none;">
-                <h3>Step 2: Upload File PDF</h3>
-
+                <!-- Drop Zone -->
                 <div class="drop-zone" id="dropZone">
-                    <i class="fas fa-file-pdf"></i>
-                    <p>Drag & drop file PDF di sini</p>
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag & drop multiple PDF di sini</p>
                     <span>atau klik untuk memilih file</span>
                 </div>
 
-                <input type="file" id="fileInput" accept=".pdf">
+                <input type="file" id="fileInput" accept=".pdf" multiple>
 
-                <div id="fileInfo" class="file-info">
-                    <p><strong>📁 File:</strong> <span id="fileName">-</span></p>
-                    <p><strong>📦 Ukuran:</strong> <span id="fileSize">-</span></p>
+                <!-- Validating -->
+                <div class="validating" id="validating" style="display: none;">
+                    <i class="fas fa-spinner"></i>
+                    <p>Scanning dan validasi file...</p>
                 </div>
 
+                <!-- Stats -->
+                <div class="stats" id="stats" style="display: none;">
+                    <div class="stat-box">
+                        <div class="stat-value" id="totalFiles">0</div>
+                        <div class="stat-label">Total File</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" style="color: #27ae60;" id="validFiles">0</div>
+                        <div class="stat-label">Valid ✓</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" style="color: #e74c3c;" id="invalidFiles">0</div>
+                        <div class="stat-label">Invalid ✗</div>
+                    </div>
+                </div>
+
+                <!-- Files List -->
+                <div class="files-list" id="filesList">
+                    <h4>Hasil Validasi:</h4>
+                    <div id="filesContainer"></div>
+                </div>
+
+                <!-- Buttons -->
                 <div class="btn-group">
-                    <button class="btn btn-secondary" onclick="goBackToSearch()">
-                        <i class="fas fa-arrow-left"></i> Kembali
+                    <button class="btn btn-secondary" onclick="resetUpload()">
+                        <i class="fas fa-redo"></i> Reset
                     </button>
                     <button class="btn btn-success" id="btnUpload" disabled>
-                        <i class="fas fa-upload"></i> Upload PDF
-                    </button>
-                </div>
-            </div>
-
-            <!-- Step 3: Success -->
-            <div class="card" id="card3" style="display: none;">
-                <div class="success-message show">
-                    <i class="fas fa-check-circle"></i>
-                    <p>✅ PDF berhasil diupload!</p>
-                </div>
-
-                <div style="background: white; padding: 20px; border-radius: 6px; border: 1px solid #ecf0f1;">
-                    <p style="margin: 10px 0; color: #2c3e50;">
-                        <strong>Nomor Faktur:</strong> <span id="successFaktur">-</span>
-                    </p>
-                    <p style="margin: 10px 0; color: #2c3e50;">
-                        <strong>Status:</strong> <span style="color: #27ae60; font-weight: 600;">✓ UPLOADED</span>
-                    </p>
-                    <p style="margin: 10px 0; color: #2c3e50;">
-                        <strong>Path:</strong> <span id="successPath" style="font-size: 12px; color: #7f8c8d;">-</span>
-                    </p>
-                </div>
-
-                <div class="btn-group" style="margin-top: 30px;">
-                    <button class="btn btn-primary" onclick="resetForm()">
-                        <i class="fas fa-redo"></i> Upload File Lain
-                    </button>
-                    <button class="btn btn-success" onclick="goDashboard()">
-                        <i class="fas fa-arrow-right"></i> Ke Dashboard
+                        <i class="fas fa-upload"></i> Upload File Valid
                     </button>
                 </div>
             </div>

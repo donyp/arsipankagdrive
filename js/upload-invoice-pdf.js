@@ -1,14 +1,13 @@
 // ============================================
-// Upload Invoice PDF Flow
+// Bulk Upload Invoice PDF with Validation
 // ============================================
 
-let currentInvoice = null;
-let currentFile = null;
+let selectedFiles = [];
+let validationResults = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
-    const fakturInput = document.getElementById('fakturInput');
 
     // Drag and drop
     dropZone.addEventListener('dragover', (e) => {
@@ -24,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         dropZone.classList.remove('drag-over');
         if (e.dataTransfer.files.length > 0) {
-            handleFileSelected(e.dataTransfer.files[0]);
+            handleFilesSelected(e.dataTransfer.files);
         }
     });
 
@@ -35,192 +34,232 @@ document.addEventListener('DOMContentLoaded', () => {
 
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
-            handleFileSelected(e.target.files[0]);
-        }
-    });
-
-    // Enter key on faktur input
-    fakturInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            searchFaktur();
+            handleFilesSelected(e.target.files);
         }
     });
 });
 
-async function searchFaktur() {
-    const fakturInput = document.getElementById('fakturInput').value.trim();
+function handleFilesSelected(files) {
+    console.log('[PDF Bulk] Files selected:', files.length);
     
-    if (!fakturInput) {
-        showError('Masukkan nomor faktur terlebih dahulu');
-        return;
-    }
-
-    // Remove .pdf extension if present
-    let faktur = fakturInput.replace(/\.pdf$/i, '');
+    // Filter only PDF files
+    selectedFiles = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
     
-    console.log('[PDF Upload] Searching for faktur:', faktur);
-    hideError();
-
-    try {
-        const token = API.getToken() || localStorage.getItem('jwt_token');
-        const headers = {};
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const response = await fetch(`/api/invoice/check-faktur/${faktur}`, {
-            method: 'GET',
-            headers: headers
-        });
-
-        const result = await response.json();
-        console.log('[PDF Upload] Check result:', result);
-
-        if (response.ok && result.data) {
-            const invoice = result.data;
-            currentInvoice = invoice;
-
-            // Show invoice info
-            document.getElementById('infofaktur').textContent = invoice.faktur || '-';
-            document.getElementById('infokonsumen').textContent = invoice.konsumen || '-';
-            document.getElementById('infotoko').textContent = invoice.toko || '-';
-            document.getElementById('infototal').textContent = 'Rp ' + parseInt(invoice.total_jumlah_jual).toLocaleString('id-ID');
-            document.getElementById('infoketerangan').textContent = invoice.keterangan || '-';
-            document.getElementById('invoiceInfo').classList.add('show');
-
-            // Move to step 2
-            document.getElementById('card1').style.display = 'none';
-            document.getElementById('card2').style.display = 'block';
-        } else {
-            showError('Faktur tidak ditemukan: ' + faktur);
-            currentInvoice = null;
-        }
-    } catch (error) {
-        console.error('[PDF Upload] Error:', error);
-        showError('Error: ' + error.message);
-    }
-}
-
-function handleFileSelected(file) {
-    console.log('[PDF] File selected:', file.name);
-    
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
+    if (selectedFiles.length === 0) {
         alert('❌ Hanya file PDF yang diizinkan');
         return;
     }
 
-    currentFile = file;
+    console.log('[PDF Bulk] PDF files:', selectedFiles.length);
 
-    // Show file info
-    document.getElementById('fileName').textContent = file.name;
-    document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(2) + ' KB';
-    document.getElementById('fileInfo').classList.add('show');
-
-    // Enable upload button
-    document.getElementById('btnUpload').disabled = false;
+    // Start validation
+    validateAllFiles();
 }
 
-async function uploadPdf() {
-    if (!currentFile || !currentInvoice) {
-        alert('❌ File atau invoice tidak valid');
+async function validateAllFiles() {
+    const dropZone = document.getElementById('dropZone');
+    const filesList = document.getElementById('filesList');
+    const stats = document.getElementById('stats');
+    const validating = document.getElementById('validating');
+
+    // Show validating spinner
+    dropZone.style.display = 'none';
+    validating.style.display = 'block';
+
+    validationResults = [];
+
+    try {
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        // Validate each file with small delay to show progress
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const file = selectedFiles[i];
+            const faktur = file.name.replace(/\.pdf$/i, '').trim();
+            
+            console.log(`[PDF Bulk] Validating ${i+1}/${selectedFiles.length}: ${faktur}`);
+            
+            try {
+                const response = await fetch(`/api/invoice/check-faktur/${faktur}`, {
+                    method: 'GET',
+                    headers: headers
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.data) {
+                    validationResults.push({
+                        file: file,
+                        faktur: faktur,
+                        valid: true,
+                        invoice: result.data
+                    });
+                    console.log('[PDF Bulk] ✓ Valid:', faktur);
+                } else {
+                    validationResults.push({
+                        file: file,
+                        faktur: faktur,
+                        valid: false,
+                        error: 'Faktur tidak ditemukan'
+                    });
+                    console.log('[PDF Bulk] ✗ Invalid:', faktur);
+                }
+            } catch (error) {
+                validationResults.push({
+                    file: file,
+                    faktur: faktur,
+                    valid: false,
+                    error: error.message
+                });
+                console.error('[PDF Bulk] Error validating:', faktur, error);
+            }
+
+            // Small delay to avoid overwhelming server
+            if (i < selectedFiles.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+        }
+
+        // Hide validating, show results
+        validating.style.display = 'none';
+
+        // Render UI
+        renderValidationResults();
+        stats.style.display = 'grid';
+        filesList.classList.add('show');
+
+    } catch (error) {
+        console.error('[PDF Bulk] Validation error:', error);
+        alert('Error: ' + error.message);
+        validating.style.display = 'none';
+        dropZone.style.display = 'block';
+    }
+}
+
+function renderValidationResults() {
+    const stats = document.getElementById('stats');
+    const filesContainer = document.getElementById('filesContainer');
+    
+    const validCount = validationResults.filter(r => r.valid).length;
+    const invalidCount = validationResults.filter(r => !r.valid).length;
+    const totalCount = validationResults.length;
+
+    // Update stats
+    document.getElementById('totalFiles').textContent = totalCount;
+    document.getElementById('validFiles').textContent = validCount;
+    document.getElementById('invalidFiles').textContent = invalidCount;
+
+    // Render file items
+    filesContainer.innerHTML = validationResults.map(result => {
+        const className = result.valid ? 'valid' : 'invalid';
+        const icon = result.valid ? '✓' : '✗';
+        const status = result.valid ? 'VALID' : 'INVALID';
+        const statusText = result.valid ? 'Faktur ditemukan' : (result.error || 'Faktur tidak ditemukan');
+
+        return `
+            <div class="file-item ${className}">
+                <div class="file-item-icon">${icon}</div>
+                <div style="flex: 1;">
+                    <div class="file-item-name">${result.file.name}</div>
+                    <div class="file-item-faktur">
+                        Faktur: ${result.faktur} ${result.valid ? `| ${result.invoice.konsumen}` : `| ${statusText}`}
+                    </div>
+                </div>
+                <div class="file-item-status">${status}</div>
+            </div>
+        `;
+    }).join('');
+
+    // Enable/disable upload button
+    document.getElementById('btnUpload').disabled = validCount === 0;
+}
+
+async function uploadValidFiles() {
+    const validFiles = validationResults.filter(r => r.valid);
+    
+    if (validFiles.length === 0) {
+        alert('Tidak ada file valid untuk diupload');
         return;
     }
 
     const btnUpload = document.getElementById('btnUpload');
-    const originalText = btnUpload.textContent;
+    const originalText = btnUpload.innerHTML;
     btnUpload.disabled = true;
-    btnUpload.textContent = '⏳ Uploading...';
+    btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
 
     try {
-        console.log('[PDF] Uploading PDF for faktur:', currentInvoice.faktur);
-
-        const formData = new FormData();
-        formData.append('pdf', currentFile);
-
         const token = API.getToken() || localStorage.getItem('jwt_token');
-        const headers = {};
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        // Upload each file
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const fileResult of validFiles) {
+            try {
+                const formData = new FormData();
+                // File dikirim dengan key 'pdf'
+                formData.append('pdf', fileResult.file);
+                // Faktur diekstrak dari filename (sudah ada di validationResults)
+                
+                console.log(`[PDF Bulk] Uploading: ${fileResult.file.name} (faktur: ${fileResult.faktur})`);
+
+                const response = await fetch('/api/invoice/upload-pdf', {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    successCount++;
+                    console.log('[PDF Bulk] ✓ Uploaded:', fileResult.faktur);
+                } else {
+                    failCount++;
+                    console.error('[PDF Bulk] ✗ Upload failed:', fileResult.faktur, result.error);
+                }
+            } catch (error) {
+                failCount++;
+                console.error('[PDF Bulk] Upload error:', fileResult.faktur, error);
+            }
         }
 
-        const response = await fetch('/api/invoice/upload-pdf', {
-            method: 'POST',
-            headers: headers,
-            body: formData
-        });
+        // Show result message
+        const message = `✅ ${successCount} file berhasil diupload${failCount > 0 ? `, ${failCount} file gagal` : ''}`;
+        alert(message);
 
-        const result = await response.json();
-        console.log('[PDF] Response:', result);
-
-        if (response.ok && result.success) {
-            console.log('[PDF] ✅ Success!');
-            
-            document.getElementById('successFaktur').textContent = result.faktur;
-            document.getElementById('successPath').textContent = result.remotePath;
-
-            document.getElementById('card2').style.display = 'none';
-            document.getElementById('card3').style.display = 'block';
-        } else {
-            alert('❌ Error: ' + (result.error || 'Upload failed'));
-            btnUpload.disabled = false;
-            btnUpload.textContent = originalText;
+        // Reset if all successful
+        if (failCount === 0) {
+            resetUpload();
         }
+
     } catch (error) {
-        console.error('[PDF] Exception:', error);
-        alert('❌ Error: ' + error.message);
+        console.error('[PDF Bulk] Exception:', error);
+        alert('Error: ' + error.message);
+    } finally {
         btnUpload.disabled = false;
-        btnUpload.textContent = originalText;
+        btnUpload.innerHTML = originalText;
     }
 }
 
-function showError(message) {
-    const errorEl = document.getElementById('errorMessage');
-    errorEl.textContent = '❌ ' + message;
-    errorEl.classList.add('show');
-}
+function resetUpload() {
+    selectedFiles = [];
+    validationResults = [];
 
-function hideError() {
-    const errorEl = document.getElementById('errorMessage');
-    errorEl.classList.remove('show');
-}
-
-function goBackToSearch() {
-    currentFile = null;
     document.getElementById('fileInput').value = '';
-    document.getElementById('fileInfo').classList.remove('show');
+    document.getElementById('filesContainer').innerHTML = '';
+    document.getElementById('filesList').classList.remove('show');
+    document.getElementById('stats').style.display = 'none';
+    document.getElementById('dropZone').style.display = 'block';
+    document.getElementById('validating').style.display = 'none';
     document.getElementById('btnUpload').disabled = true;
-    document.getElementById('invoiceInfo').classList.remove('show');
-
-    document.getElementById('card1').style.display = 'block';
-    document.getElementById('card2').style.display = 'none';
-    hideError();
-}
-
-function resetForm() {
-    currentInvoice = null;
-    currentFile = null;
-
-    document.getElementById('fakturInput').value = '';
-    document.getElementById('fileInput').value = '';
-    document.getElementById('fileInfo').classList.remove('show');
-    document.getElementById('invoiceInfo').classList.remove('show');
-    document.getElementById('btnUpload').disabled = true;
-
-    document.getElementById('card1').style.display = 'block';
-    document.getElementById('card2').style.display = 'none';
-    document.getElementById('card3').style.display = 'none';
-
-    hideError();
-}
-
-function goDashboard() {
-    window.location.href = '/invoice-list.html';
 }
 
 // Attach upload button handler
 document.addEventListener('DOMContentLoaded', () => {
     const btnUpload = document.getElementById('btnUpload');
     if (btnUpload) {
-        btnUpload.addEventListener('click', uploadPdf);
+        btnUpload.addEventListener('click', uploadValidFiles);
     }
 });
