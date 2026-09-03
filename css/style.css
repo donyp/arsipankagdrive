@@ -552,6 +552,13 @@ select.input-field option {
     transition: all 0.2s ease;
 }
 
+/* Override strong and b tags in table */
+td > strong,
+td > b {
+    font-size: 15px !important;
+    font-weight: 900 !important;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
     .sidebar {

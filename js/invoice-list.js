@@ -416,9 +416,9 @@ function renderInvoiceTable(invoices = null) {
         return `
         <tr>
             <td>
-                <span style="font-size: 15px !important; font-weight: 900 !important; color: ${statusClass === 'uploaded' ? '#27ae60' : statusClass === 'missing' ? '#e74c3c' : '#f39c12'}; display: inline !important; padding: 0 !important; margin: 0 !important; line-height: 1.2 !important; transform: scale(1) !important; letter-spacing: normal !important; text-transform: none !important; border-radius: 0 !important; border: none !important;">
+                <strong style="font-size: 15px !important; font-weight: 900 !important; color: ${statusClass === 'uploaded' ? '#27ae60' : statusClass === 'missing' ? '#e74c3c' : '#f39c12'} !important; line-height: 1.2 !important;">
                     ${statusText}
-                </span>
+                </strong>
             </td>
             <td>${formattedDate}</td>
             <td><strong>${inv.faktur || '-'}</strong></td>
