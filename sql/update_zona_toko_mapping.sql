@@ -1,24 +1,21 @@
 -- Clear old zona and toko data safely
--- Delete ALL files first (they reference zonas)
+-- Delete ALL tables that reference zonas to avoid FK constraint violations
 
--- Step 1: Delete ALL files (archive files - will be re-uploaded if needed)
-DELETE FROM files;
+-- Step 1: Delete ALL dependent tables first (in order of FK dependencies)
+DELETE FROM bug_reports;      -- references zonas
+DELETE FROM files;             -- references zonas
+DELETE FROM invoice_file_list; -- references toko
+DELETE FROM toko;              -- references zonas
 
--- Step 2: Clear invoice_file_list (references toko and zonas)
-DELETE FROM invoice_file_list;
-
--- Step 3: Clear toko
-DELETE FROM toko;
-
--- Step 4: Clear users that reference old zonas
+-- Step 2: Clear users that reference old zonas
 UPDATE users 
 SET zona_id = NULL 
 WHERE zona_id IS NOT NULL;
 
--- Step 5: Now safely delete old zonas (all FK references cleared)
+-- Step 3: Now safely delete old zonas (all FK references cleared)
 DELETE FROM zonas;
 
--- Step 6: Recreate zonas table with all 17 zones
+-- Step 4: Recreate zonas table with all 17 zones
 INSERT INTO zonas (kode, nama) VALUES
 ('Zona 01', 'Zona 01'),
 ('Zona 02', 'Zona 02'),
@@ -40,7 +37,7 @@ INSERT INTO zonas (kode, nama) VALUES
 ('Zona 16', 'Zona 16'),
 ('Zona 17', 'Zona 17');
 
--- Step 7: Insert all toko data with their kode and zona
+-- Step 5: Insert all toko data with their kode and zona
 INSERT INTO toko (kode, nama, zona_id) VALUES
 -- Zona 01
 ('8474003', 'Mega Baja Balaraja', (SELECT id FROM zonas WHERE kode='Zona 01')),
@@ -204,8 +201,9 @@ INSERT INTO toko (kode, nama, zona_id) VALUES
 ('8474129', 'Mega Baja Sukadami', (SELECT id FROM zonas WHERE kode='Zona 17')),
 ('8474130', 'Mega Baja Cibarusah', (SELECT id FROM zonas WHERE kode='Zona 17'));
 
--- Step 8: Log completion and verify
+-- Step 6: Log completion and verify
 SELECT 'Zona-Toko mapping update complete!' as status;
 SELECT COUNT(*) as total_zonas FROM zonas;
 SELECT COUNT(*) as total_tokos FROM toko;
-SELECT COUNT(*) as remaining_files FROM files;
+SELECT COUNT(*) as total_files FROM files;
+SELECT COUNT(*) as total_bug_reports FROM bug_reports;
