@@ -2730,6 +2730,54 @@ function updateInvoiceStats(result) {
     }
 }
 
+// Load unique filter values from database
+async function loadFilterOptions() {
+    try {
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        
+        const response = await fetch('/api/invoice/list?limit=1000&offset=0', {
+            method: 'GET',
+            headers: headers
+        });
+        
+        if (!response.ok) throw new Error('Failed to load filter options');
+        
+        const result = await response.json();
+        const invoices = result.data || [];
+        
+        // Get unique values
+        const tokos = [...new Set(invoices.map(inv => inv.toko).filter(Boolean))];
+        const keterangans = [...new Set(invoices.map(inv => inv.keterangan).filter(Boolean))];
+        
+        console.log('[Filter] Loaded options - Tokos:', tokos, 'Keterangans:', keterangans);
+        
+        // Populate toko select
+        const tokoSelect = document.getElementById('filterToko');
+        if (tokoSelect) {
+            tokos.forEach(toko => {
+                const option = document.createElement('option');
+                option.value = toko;
+                option.textContent = toko;
+                tokoSelect.appendChild(option);
+            });
+        }
+        
+        // Populate keterangan select
+        const keteranganSelect = document.getElementById('filterKeterangan');
+        if (keteranganSelect) {
+            keterangans.forEach(ket => {
+                const option = document.createElement('option');
+                option.value = ket;
+                option.textContent = ket;
+                keteranganSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('[Filter] Error loading options:', error);
+    }
+}
+
 // Load invoices when dashboard loads
 document.addEventListener('DOMContentLoaded', async () => {
     // Wait for auth to complete
@@ -2746,6 +2794,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (document.getElementById('invoiceTableBody')) {
         console.log('[Dashboard] Invoice table found, loading data...');
+        // Load filter options first
+        await loadFilterOptions();
         loadInvoicesInDashboard(1);
     } else {
         console.warn('[Dashboard] Invoice table not found after 5 seconds');
