@@ -156,21 +156,36 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 console.log(`[Invoice API] Inserting ${newInvoices.length} new invoices...`);
                 
                 // BULK INSERT: Insert all new invoices at once
-                const invoicesToInsert = newInvoices.map(item => ({
-                    tanggal: item.tanggal,
-                    toko: item.toko,
-                    faktur: item.faktur,
-                    metode_bayar: item.metode_bayar,
-                    jenis_transaksi: item.jenis_transaksi,
-                    konsumen: item.konsumen,
-                    keterangan: item.keterangan,
-                    total_jumlah_jual: item.total_jumlah_jual,
-                    item_count: item.item_count || 1,
-                    status: 'PENDING',
-                    excel_batch_id: batchId,
-                    excel_uploaded_at: new Date().toISOString(),
-                    excel_uploaded_by: req.user.id
-                }));
+                const invoicesToInsert = newInvoices.map(item => {
+                    // Parse date string (DD-MM-YYYY format from Excel) to ISO date
+                    let tanggalDate = null;
+                    if (item.tanggal) {
+                        try {
+                            const [day, month, year] = item.tanggal.toString().split('-');
+                            if (day && month && year) {
+                                tanggalDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                            }
+                        } catch (e) {
+                            console.warn(`[Invoice API] Could not parse date for faktur ${item.faktur}:`, item.tanggal);
+                        }
+                    }
+                    
+                    return {
+                        tanggal: tanggalDate || new Date().toISOString().split('T')[0], // Fallback to today if parse fails
+                        toko: item.toko,
+                        faktur: item.faktur,
+                        metode_bayar: item.metode_bayar,
+                        jenis_transaksi: item.jenis_transaksi,
+                        konsumen: item.konsumen,
+                        keterangan: item.keterangan,
+                        total_jumlah_jual: parseFloat(item.total_jumlah_jual) || 0,
+                        item_count: parseInt(item.item_count) || 1,
+                        status: 'PENDING',
+                        excel_batch_id: batchId,
+                        excel_uploaded_at: new Date().toISOString(),
+                        excel_uploaded_by: req.user.id
+                    };
+                });
                 
                 let processedCount = 0;
                 let failedCount = 0;
