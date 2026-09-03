@@ -589,10 +589,64 @@
                 <!-- Invoice List Container (will be populated from invoice-list.html) -->
                 <div id="invoice-content-container">
                     <!-- Invoice list will be loaded here -->
-                    <div id="invoice-embed" class="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
-                        <div class="text-center py-12">
-                            <div class="inline-block w-12 h-12 border-4 border-blue-50 border-t-blue-600 rounded-full animate-spin"></div>
-                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-4 animate-pulse">Memuat Daftar Invoice...</p>
+                    <div id="invoice-embed" class="bg-white rounded-3xl border border-gray-100 shadow-sm">
+                        <!-- Invoice Header -->
+                        <div style="padding: 30px; border-bottom: 1px solid #e5e7eb;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h2 style="font-size: 24px; font-weight: 700; color: #2c3e50; margin: 0;">📋 Daftar File Invoice</h2>
+                                <div style="display: flex; gap: 10px;">
+                                    <button onclick="location.href='/upload-excel.html'" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                                        <i class="fas fa-upload"></i> Upload Excel
+                                    </button>
+                                    <button onclick="location.href='/upload-invoice-pdf.html'" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                                        <i class="fas fa-file-pdf"></i> Upload PDF
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Stats -->
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                                <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 3px solid #3498db;">
+                                    <div style="font-size: 24px; font-weight: 700; color: #3498db;" data-stat="total">0</div>
+                                    <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Total Invoice</div>
+                                </div>
+                                <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; border-left: 3px solid #27ae60;">
+                                    <div style="font-size: 24px; font-weight: 700; color: #27ae60;" data-stat="uploaded">0</div>
+                                    <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Uploaded</div>
+                                </div>
+                                <div style="background: #fffbeb; padding: 15px; border-radius: 8px; border-left: 3px solid #f39c12;">
+                                    <div style="font-size: 24px; font-weight: 700; color: #f39c12;" data-stat="pending">0</div>
+                                    <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Pending</div>
+                                </div>
+                                <div style="background: #fef2f2; padding: 15px; border-radius: 8px; border-left: 3px solid #e74c3c;">
+                                    <div style="font-size: 24px; font-weight: 700; color: #e74c3c;" data-stat="missing">0</div>
+                                    <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Missing</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Invoice Table -->
+                        <div style="padding: 20px; overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #34495e;">
+                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; color: white;">STATUS</th>
+                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; color: white;">TANGGAL</th>
+                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; color: white;">NO FAKTUR</th>
+                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; color: white;">STATUS BAYAR</th>
+                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; color: white;">TIPE</th>
+                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; color: white;">NAMA KONSUMEN</th>
+                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; color: white;">NAMA TOKO</th>
+                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; color: white;">TOTAL</th>
+                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; color: white;">KETERANGAN</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invoiceTableBody">
+                                    <tr>
+                                        <td colspan="9" style="text-align: center; padding: 40px; color: #7f8c8d;">Memuat data invoice...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -609,7 +663,6 @@
     <script src="js/utils.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/dashboard.js"></script>
-    <script src="js/invoice-list.js"></script>
     
     <script>
         // Load invoice list content into dashboard (including header with buttons)

@@ -2601,3 +2601,114 @@ function extractNominalFromFilename(filename) {
 function openFileDetail(fileId) {
     window.location.href = `file-detail.html?id=${fileId}`;
 }
+
+
+// ============================================
+// INVOICE LIST FUNCTIONS - Migrated from invoice-list.js
+// ============================================
+
+const INVOICE_PAGE_SIZE = 20;
+let invoiceCurrentPage = 1;
+
+async function loadInvoicesInDashboard(page = 1) {
+    try {
+        console.log('[LoadInvoices] Loading page', page);
+        
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const offset = (page - 1) * INVOICE_PAGE_SIZE;
+        const response = await fetch(`/api/invoice/list?limit=${INVOICE_PAGE_SIZE}&offset=${offset}`, {
+            method: 'GET',
+            headers: headers
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load invoices: ' + response.statusText);
+        }
+        
+        const result = await response.json();
+        console.log('[LoadInvoices] Result:', result);
+        
+        renderInvoiceTable(result.data || []);
+        updateInvoiceStats(result);
+        invoiceCurrentPage = page;
+        
+    } catch (error) {
+        console.error('[LoadInvoices] Error:', error);
+    }
+}
+
+function renderInvoiceTable(invoices) {
+    const tbody = document.getElementById('invoiceTableBody');
+    if (!tbody) {
+        console.warn('[RenderTable] invoiceTableBody not found');
+        return;
+    }
+    
+    if (invoices.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #7f8c8d;">Belum ada data invoice</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = invoices.map(inv => {
+        const statusClass = inv.status === 'UPLOADED' ? 'uploaded' : inv.status === 'MISSING' ? 'missing' : 'pending';
+        const statusText = inv.status || 'PENDING';
+        const statusStyle = statusClass === 'uploaded' ? 'background: #d5f4e6; color: #27ae60;' : 
+                           statusClass === 'pending' ? 'background: #fff3cd; color: #f39c12;' : 
+                           'background: #fadbd8; color: #e74c3c;';
+        
+        return `
+        <tr style="border-bottom: 1px solid #ecf0f1; transition: background 0.2s;">
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">
+                <span style="display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
+                    ${statusText}
+                </span>
+            </td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.tanggal || '-'}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;"><strong>${inv.faktur || '-'}</strong></td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.metode_bayar || '-'}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.jenis_transaksi || '-'}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.konsumen || '-'}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.toko || '-'}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${formatCurrency(inv.total_jumlah_jual)}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50;">${inv.keterangan || '-'}</td>
+        </tr>
+    `}).join('');
+}
+
+function formatCurrency(value) {
+    if (!value) return 'Rp 0';
+    return 'Rp ' + parseInt(value).toLocaleString('id-ID');
+}
+
+function updateInvoiceStats(result) {
+    // Update stats cards
+    if (result.count !== undefined) {
+        const statElements = document.querySelectorAll('[data-stat="total"]');
+        statElements.forEach(el => el.textContent = result.count);
+    }
+    
+    // Count by status
+    if (result.data) {
+        const uploaded = result.data.filter(r => r.status === 'UPLOADED').length;
+        const pending = result.data.filter(r => r.status === 'PENDING').length;
+        const missing = result.data.filter(r => r.status === 'MISSING').length;
+        
+        document.querySelectorAll('[data-stat="uploaded"]').forEach(el => el.textContent = uploaded);
+        document.querySelectorAll('[data-stat="pending"]').forEach(el => el.textContent = pending);
+        document.querySelectorAll('[data-stat="missing"]').forEach(el => el.textContent = missing);
+    }
+}
+
+// Load invoices when dashboard loads
+document.addEventListener('DOMContentLoaded', async () => {
+    // Wait for auth to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    console.log('[Dashboard] Loading invoices...');
+    loadInvoicesInDashboard(1);
+});
