@@ -2635,29 +2635,12 @@ async function loadInvoicesInDashboard(page = 1) {
         console.log('[LoadInvoices] Result:', result);
         
         renderInvoiceTable(result.data || []);
-        
-        // Load stats from dedicated endpoint
-        try {
-            const statsResponse = await fetch('/api/invoice/stats', {
-                method: 'GET',
-                headers: headers
-            });
-            if (statsResponse.ok) {
-                const statsResult = await statsResponse.json();
-                console.log('[LoadInvoices] Stats from API:', statsResult);
-                updateInvoiceStats(statsResult);
-            }
-        } catch (statsErr) {
-            console.error('[LoadInvoices] Could not load stats:', statsErr);
-            // Fallback to using result data if stats endpoint fails
-            updateInvoiceStats(result);
-        }
-        
         invoiceCurrentPage = page;
         
         // Track total count for pagination
         if (result.count !== undefined) {
             invoiceTotalCount = result.count;
+            console.log('[LoadInvoices] Set invoiceTotalCount to', invoiceTotalCount);
             updatePaginationInfo();
         }
         
@@ -2717,50 +2700,14 @@ function formatCurrency(value) {
     return 'Rp ' + parseInt(value).toLocaleString('id-ID');
 }
 
-function updateInvoiceStats(result) {
-    console.log('[UpdateStats] Updating stats with result:', result);
-    
-    // Handle stats endpoint format: { success, stats: { total_count, uploaded_count, pending_count, missing_count } }
-    let stats = result.stats || result;
-    
-    // Get counts
-    let totalCount = stats.total_count || stats.count || 0;
-    let uploadedCount = stats.uploaded_count || 0;
-    let pendingCount = stats.pending_count || 0;
-    let missingCount = stats.missing_count || 0;
-    
-    console.log('[UpdateStats] Stats - Total:', totalCount, 'Uploaded:', uploadedCount, 'Pending:', pendingCount, 'Missing:', missingCount);
-    
-    // Update total
-    const statElements = document.querySelectorAll('[data-stat="total"]');
-    console.log('[UpdateStats] Found', statElements.length, 'total stat elements');
-    statElements.forEach(el => {
-        el.textContent = totalCount;
-    });
-    
-    // Update uploaded
-    const uploadedEls = document.querySelectorAll('[data-stat="uploaded"]');
-    uploadedEls.forEach(el => el.textContent = uploadedCount);
-    console.log('[UpdateStats] Updated', uploadedEls.length, 'uploaded elements');
-    
-    // Update pending
-    const pendingEls = document.querySelectorAll('[data-stat="pending"]');
-    pendingEls.forEach(el => el.textContent = pendingCount);
-    console.log('[UpdateStats] Updated', pendingEls.length, 'pending elements');
-    
-    // Update missing
-    const missingEls = document.querySelectorAll('[data-stat="missing"]');
-    missingEls.forEach(el => el.textContent = missingCount);
-    console.log('[UpdateStats] Updated', missingEls.length, 'missing elements');
-}
-
 // Load unique filter values from database
 async function loadFilterOptions() {
     try {
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
         
-        const response = await fetch('/api/invoice/list?limit=1000&offset=0', {
+        // Get all invoices with high limit to count everything
+        const response = await fetch('/api/invoice/list?limit=10000&offset=0', {
             method: 'GET',
             headers: headers
         });
@@ -2772,7 +2719,7 @@ async function loadFilterOptions() {
         
         // Track total count
         invoiceTotalCount = result.count || 0;
-        console.log('[Filter] Total invoice count:', invoiceTotalCount);
+        console.log('[Filter] Total invoice count:', invoiceTotalCount, 'Result:', result);
         
         // Get unique values
         const tokos = [...new Set(invoices.map(inv => inv.toko).filter(Boolean))];
@@ -2809,9 +2756,37 @@ async function loadFilterOptions() {
                 keteranganSelect.appendChild(option);
             });
         }
+        
+        // Update pagination and stats based on loaded data
+        updateInvoiceStatsFromData(invoices, invoiceTotalCount);
+        
     } catch (error) {
         console.error('[Filter] Error loading options:', error);
     }
+}
+
+// Update stats from loaded invoice data
+function updateInvoiceStatsFromData(invoices, totalCount) {
+    console.log('[StatsFromData] Updating with', invoices.length, 'invoices, total:', totalCount);
+    
+    const uploaded = invoices.filter(r => r.status === 'UPLOADED').length;
+    const pending = invoices.filter(r => r.status === 'PENDING').length;
+    const missing = invoices.filter(r => r.status === 'MISSING').length;
+    
+    console.log('[StatsFromData] Counts - Total:', totalCount, 'Uploaded:', uploaded, 'Pending:', pending, 'Missing:', missing);
+    
+    // Update stat elements
+    const statElements = document.querySelectorAll('[data-stat="total"]');
+    statElements.forEach(el => el.textContent = totalCount);
+    
+    const uploadedEls = document.querySelectorAll('[data-stat="uploaded"]');
+    uploadedEls.forEach(el => el.textContent = uploaded);
+    
+    const pendingEls = document.querySelectorAll('[data-stat="pending"]');
+    pendingEls.forEach(el => el.textContent = pending);
+    
+    const missingEls = document.querySelectorAll('[data-stat="missing"]');
+    missingEls.forEach(el => el.textContent = missing);
 }
 
 // Load invoices when dashboard loads
@@ -2866,6 +2841,8 @@ async function applyInvoiceFilters() {
         params.append('limit', INVOICE_PAGE_SIZE);
         params.append('offset', 0);
         
+        console.log('[Filter] Query params:', params.toString());
+        
         const response = await fetch(`/api/invoice/list?${params.toString()}`, {
             method: 'GET',
             headers: headers
@@ -2876,28 +2853,15 @@ async function applyInvoiceFilters() {
         }
         
         const result = await response.json();
+        console.log('[Filter] Result:', result);
+        
         renderInvoiceTable(result.data || []);
-        
-        // Load stats from dedicated endpoint
-        try {
-            const statsResponse = await fetch('/api/invoice/stats', {
-                method: 'GET',
-                headers: headers
-            });
-            if (statsResponse.ok) {
-                const statsResult = await statsResponse.json();
-                console.log('[Filter] Stats from API:', statsResult);
-                updateInvoiceStats(statsResult);
-            }
-        } catch (statsErr) {
-            console.error('[Filter] Could not load stats:', statsErr);
-        }
-        
         invoiceCurrentPage = 1;
         
         // Track total count for pagination
         if (result.count !== undefined) {
             invoiceTotalCount = result.count;
+            console.log('[Filter] Set invoiceTotalCount to', invoiceTotalCount);
             updatePaginationInfo();
         }
         
