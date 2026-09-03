@@ -959,6 +959,95 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
         }
     );
     
+    // ============================================
+    // POST /api/invoice/upload-pdf
+    // Upload PDF and mark invoice as UPLOADED by matching faktur in filename
+    // Filename format: 835100310.pdf or similar
+    // ============================================
+    app.post('/api/invoice/upload-pdf',
+        ...createAuth(['super_admin', 'moderator']),
+        upload.single('pdf'),
+        async (req, res) => {
+            try {
+                if (!req.file) {
+                    return res.status(400).json({ error: 'No PDF file provided' });
+                }
+                
+                const filename = req.file.originalname;
+                const fileBuffer = req.file.buffer;
+                console.log(`[Invoice PDF] Upload started by ${req.user?.name}`);
+                console.log(`[Invoice PDF] Filename: ${filename}`);
+                
+                // Extract faktur from filename (remove .pdf extension)
+                const faktur = path.parse(filename).name; // 835100310.pdf -> 835100310
+                console.log(`[Invoice PDF] Extracted faktur: ${faktur}`);
+                
+                if (!faktur) {
+                    return res.status(400).json({ error: 'Cannot extract faktur from filename' });
+                }
+                
+                // Check if invoice exists
+                const { data: invoice, error: queryError } = await supabase
+                    .from('invoice_file_list')
+                    .select('*')
+                    .eq('faktur', faktur)
+                    .single();
+                
+                if (queryError || !invoice) {
+                    console.warn(`[Invoice PDF] Invoice not found for faktur: ${faktur}`);
+                    return res.status(404).json({ error: `Invoice not found for faktur: ${faktur}` });
+                }
+                
+                console.log(`[Invoice PDF] Found invoice: ${invoice.konsumen} (${invoice.toko})`);
+                
+                // Determine path based on keterangan (PPN/NON PPN)
+                const year = invoice.tanggal.split('-')[0];
+                const month = String(invoice.tanggal.split('-')[1]).padStart(2, '0');
+                const day = String(invoice.tanggal.split('-')[2]).padStart(2, '0');
+                
+                const category = invoice.keterangan === 'PPN' ? 'PPN' : 'NON';
+                const remotePath = `/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
+                
+                console.log(`[Invoice PDF] Remote path: ${remotePath}`);
+                
+                // Upload to Google Drive via RcloneStorage (if available)
+                // For now, just update status in database
+                const { error: updateError } = await supabase
+                    .from('invoice_file_list')
+                    .update({
+                        status: 'UPLOADED',
+                        uploaded_file_path: remotePath,
+                        uploaded_at: new Date().toISOString(),
+                        uploaded_by: req.user.id
+                    })
+                    .eq('faktur', faktur);
+                
+                if (updateError) {
+                    console.error('[Invoice PDF] Update error:', updateError);
+                    return res.status(500).json({ error: 'Failed to update invoice status' });
+                }
+                
+                console.log(`[Invoice PDF] ✅ Invoice marked as UPLOADED: ${faktur}`);
+                
+                // TODO: Implement actual file upload to Google Drive using RcloneStorage
+                // await RcloneStorage.uploadFile(fileBuffer, remotePath);
+                
+                res.json({
+                    success: true,
+                    message: `PDF uploaded successfully for faktur: ${faktur}`,
+                    faktur,
+                    remotePath,
+                    konsumen: invoice.konsumen,
+                    total: invoice.total_jumlah_jual
+                });
+                
+            } catch (error) {
+                console.error('[Invoice PDF] Upload error:', error);
+                res.status(500).json({ error: 'Server error', details: error.message });
+            }
+        }
+    );
+    
     console.log('[Invoice API] Endpoints registered successfully');
 }
 

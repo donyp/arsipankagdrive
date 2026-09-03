@@ -242,7 +242,7 @@ window.uploadExcelFile = async function() {
         }
         
         // Transform data to match backend expectation
-        const invoices = parsedData.map(row => ({
+        let invoices = parsedData.map(row => ({
             tanggal: row['TANGGAL'] || row['tanggal'],
             toko: row['TOKO'] || row['toko'],
             faktur: row['FAKTUR'] || row['faktur'],
@@ -253,7 +253,25 @@ window.uploadExcelFile = async function() {
             keterangan: row['KET 2'] || row['ket_2'] || 'NON PPN'
         })).filter(inv => inv.faktur); // Remove rows without faktur
         
-        console.log('[Upload] Processed', invoices.length, 'valid invoices');
+        // AGGREGATION: Group by faktur and sum totals for duplicate fakturs
+        console.log('[Upload] Before aggregation:', invoices.length, 'total rows');
+        const aggregated = {};
+        invoices.forEach(inv => {
+            if (aggregated[inv.faktur]) {
+                // Faktur already exists - add to total
+                aggregated[inv.faktur].total_jumlah_jual += inv.total_jumlah_jual;
+                aggregated[inv.faktur].item_count = (aggregated[inv.faktur].item_count || 1) + 1;
+            } else {
+                // First occurrence of this faktur
+                aggregated[inv.faktur] = {
+                    ...inv,
+                    item_count: 1
+                };
+            }
+        });
+        
+        invoices = Object.values(aggregated);
+        console.log('[Upload] After aggregation:', invoices.length, 'unique fakturs (duplicates summed)');
         
         uploadBtn.textContent = 'Uploading...';
         
@@ -368,24 +386,37 @@ function renderInvoiceTable(invoices) {
     }
     
     if (invoices.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px; color: #7f8c8d;">Belum ada data invoice</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: #7f8c8d;">Belum ada data invoice</td></tr>';
         return;
     }
     
-    tbody.innerHTML = invoices.map(inv => `
+    tbody.innerHTML = invoices.map(inv => {
+        const statusClass = inv.status === 'UPLOADED' ? 'uploaded' : inv.status === 'MISSING' ? 'missing' : 'pending';
+        const statusText = inv.status || 'PENDING';
+        
+        return `
         <tr>
-            <td>-</td>
+            <td>
+                <span class="status-badge ${statusClass}">
+                    ${statusText}
+                </span>
+            </td>
             <td>${inv.tanggal || '-'}</td>
-            <td>${inv.faktur || '-'}</td>
+            <td><strong>${inv.faktur || '-'}</strong></td>
             <td>${inv.metode_bayar || '-'}</td>
             <td>${inv.jenis_transaksi || '-'}</td>
             <td>${inv.konsumen || '-'}</td>
             <td>${inv.toko || '-'}</td>
             <td>${formatCurrency(inv.total_jumlah_jual)}</td>
             <td>${inv.keterangan || '-'}</td>
-            <td><button class="btn-view-file" style="cursor: pointer;" onclick="viewInvoiceDetail('${inv.id}')">View</button></td>
+            <td>
+                ${inv.status === 'PENDING' ? 
+                    `<button class="btn-upload-pdf" onclick="openPdfUploadModal('${inv.faktur}')">Upload PDF</button>` :
+                    `<span style="color: #27ae60; font-weight: 600;">✓ Uploaded</span>`
+                }
+            </td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 function formatCurrency(value) {
@@ -404,6 +435,103 @@ function updateInvoiceStats(result) {
 function viewInvoiceDetail(invoiceId) {
     console.log('[ViewInvoice] ID:', invoiceId);
     alert('Detail invoice akan ditampilkan di modal (soon)');
+}
+
+// ============================================
+// PDF Upload Modal Functions
+// ============================================
+function openPdfUploadModal(faktur) {
+    console.log('[PDF Upload] Opening modal for faktur:', faktur);
+    
+    const modal = document.getElementById('pdfUploadModal');
+    if (!modal) {
+        console.error('[PDF Upload] Modal not found!');
+        return;
+    }
+    
+    // Store faktur for upload
+    document.getElementById('pdfFaktur').value = faktur;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closePdfUploadModal() {
+    const modal = document.getElementById('pdfUploadModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    const input = document.getElementById('pdfFileInput');
+    if (input) input.value = '';
+}
+
+async function uploadPdfFile() {
+    const faktur = document.getElementById('pdfFaktur').value;
+    const fileInput = document.getElementById('pdfFileInput');
+    const uploadBtn = document.getElementById('pdfUploadBtn');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Pilih file PDF terlebih dahulu');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    console.log('[PDF] Uploading:', file.name, 'for faktur:', faktur);
+    
+    // Check file extension
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        alert('Hanya file PDF yang diizinkan');
+        return;
+    }
+    
+    const originalText = uploadBtn.textContent;
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = 'Uploading...';
+    
+    try {
+        const formData = new FormData();
+        formData.append('pdf', file);
+        
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        console.log('[PDF] Posting to /api/invoice/upload-pdf');
+        const response = await fetch('/api/invoice/upload-pdf', {
+            method: 'POST',
+            headers: headers,
+            body: formData
+        });
+        
+        const result = await response.json();
+        console.log('[PDF] Response:', result);
+        
+        if (response.ok && result.success) {
+            console.log('[PDF] SUCCESS');
+            alert('✅ PDF Uploaded!\n\nFaktur: ' + faktur + '\nKonsumen: ' + result.konsumen);
+            closePdfUploadModal();
+            
+            // Reload table
+            setTimeout(() => {
+                console.log('[PDF] Reloading invoice table...');
+                currentPage = 1;
+                loadInvoices();
+            }, 1000);
+        } else {
+            const errMsg = result.error || 'Upload failed';
+            console.log('[PDF] FAILED:', errMsg);
+            alert('❌ Error: ' + errMsg);
+        }
+    } catch (error) {
+        console.error('[PDF] Exception:', error);
+        alert('❌ Error: ' + error.message);
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = originalText;
+    }
 }
 
 // Load invoices on page load

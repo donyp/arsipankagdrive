@@ -262,20 +262,22 @@
             color: #e74c3c;
         }
 
-        /* Upload Button in Row */
-        .btn-view-file {
-            background: #3498db;
+        /* Upload PDF Button */
+        .btn-upload-pdf {
+            background: #e74c3c;
             color: white;
             border: none;
             padding: 8px 16px;
             border-radius: 6px;
             font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s;
         }
 
-        .btn-view-file:hover {
-            background: #2980b9;
+        .btn-upload-pdf:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
         }
 
         /* Pagination */
@@ -488,7 +490,7 @@
                 <table class="invoice-table">
                     <thead>
                         <tr>
-                            <th>Attachments</th>
+                            <th>Status</th>
                             <th>Tanggal</th>
                             <th>No Faktur</th>
                             <th>Status Bayar</th>
@@ -596,5 +598,107 @@
     <script src="js/auth.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/invoice-list.js"></script>
+
+    <!-- PDF Upload Modal -->
+    <div id="pdfUploadModal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closePdfUploadModal()" style="z-index: 9998;"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6" style="z-index: 10000;">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">Upload Invoice PDF</h2>
+                <button onclick="closePdfUploadModal()" class="text-gray-500 hover:text-gray-700 text-2xl" style="background: none; border: none; cursor: pointer; padding: 0;">×</button>
+            </div>
+
+            <!-- Faktur Info -->
+            <div class="bg-blue-50 p-4 rounded-lg mb-4 border-l-4 border-blue-500">
+                <p class="text-sm text-gray-600">
+                    <strong>Nomor Faktur:</strong>
+                </p>
+                <p class="text-lg font-bold text-blue-600" id="displayFaktur">-</p>
+                <p class="text-xs text-gray-500 mt-2">
+                    Nama file harus sesuai dengan nomor faktur (contoh: 835100310.pdf)
+                </p>
+            </div>
+
+            <!-- Drag Drop Area -->
+            <div id="pdfDropZone" class="border-2 border-dashed border-red-300 rounded-xl p-8 text-center cursor-pointer hover:border-red-500 hover:bg-red-50 transition-all mb-4">
+                <i class="fas fa-file-pdf text-4xl text-red-400 mb-3" style="display: block; margin-bottom: 12px;"></i>
+                <p class="text-gray-700 font-semibold mb-2">Drag & drop PDF di sini</p>
+                <p class="text-gray-500 text-sm mb-4">atau klik untuk memilih file</p>
+                <input type="file" id="pdfFileInput" accept=".pdf" class="hidden">
+                <button onclick="document.getElementById('pdfFileInput').click()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition" style="border: none; cursor: pointer; font-weight: 500;">
+                    Pilih File PDF
+                </button>
+            </div>
+
+            <!-- File Info -->
+            <div id="pdfFileInfo" class="hidden bg-gray-50 p-4 rounded-lg mb-4">
+                <p class="text-sm text-gray-600 mb-2">
+                    <strong>File:</strong> <span id="pdfFileName">-</span>
+                </p>
+                <p class="text-sm text-gray-600">
+                    <strong>Ukuran:</strong> <span id="pdfFileSize">-</span>
+                </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+                <button onclick="closePdfUploadModal()" style="padding: 10px 24px; background: #ccc; color: #333; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                    Batal
+                </button>
+                <button id="pdfUploadBtn" onclick="uploadPdfFile()" style="padding: 10px 24px; background: #e74c3c; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; min-width: 120px;">
+                    Upload
+                </button>
+            </div>
+
+            <!-- Hidden field to store faktur -->
+            <input type="hidden" id="pdfFaktur" value="">
+        </div>
+    </div>
+
+    <script>
+        // Setup PDF upload modal
+        document.addEventListener('DOMContentLoaded', () => {
+            const pdfDropZone = document.getElementById('pdfDropZone');
+            const pdfFileInput = document.getElementById('pdfFileInput');
+            
+            if (pdfDropZone) {
+                pdfDropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    pdfDropZone.style.borderColor = '#e74c3c';
+                });
+                
+                pdfDropZone.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    pdfDropZone.style.borderColor = '#fcb4ad';
+                });
+                
+                pdfDropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files.length > 0) {
+                        pdfFileInput.files = e.dataTransfer.files;
+                        updatePdfFileInfo();
+                    }
+                });
+            }
+            
+            if (pdfFileInput) {
+                pdfFileInput.addEventListener('change', updatePdfFileInfo);
+            }
+        });
+        
+        function updatePdfFileInfo() {
+            const fileInput = document.getElementById('pdfFileInput');
+            const fileInfo = document.getElementById('pdfFileInfo');
+            const faktur = document.getElementById('pdfFaktur').value;
+            
+            if (fileInput.files && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                document.getElementById('pdfFileName').textContent = file.name;
+                document.getElementById('pdfFileSize').textContent = (file.size / 1024).toFixed(2) + ' KB';
+                document.getElementById('displayFaktur').textContent = faktur;
+                fileInfo.classList.remove('hidden');
+            }
+        }
+    </script>
 </body>
 </html>
