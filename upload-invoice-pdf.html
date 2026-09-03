@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload PDF Invoice - ARSIP ANKA</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .upload-container {
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .upload-header {
+            margin-bottom: 40px;
+        }
+
+        .upload-header h1 {
+            font-size: 32px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .upload-header p {
+            font-size: 16px;
+            color: #7f8c8d;
+        }
+
+        /* Card */
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 18px;
+        }
+
+        /* Faktur Selection */
+        .faktur-section {
+            margin-bottom: 30px;
+        }
+
+        .faktur-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .faktur-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .faktur-input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .faktur-input-group input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn-search {
+            padding: 12px 24px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-search:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        /* Invoice Info */
+        .invoice-info {
+            display: none;
+            background: #ecf8ff;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .invoice-info.show {
+            display: block;
+        }
+
+        .invoice-info p {
+            margin: 8px 0;
+            color: #2c3e50;
+        }
+
+        .invoice-info strong {
+            color: #2980b9;
+        }
+
+        /* Error Message */
+        .error-message {
+            display: none;
+            background: #fadbd8;
+            border-left: 4px solid #e74c3c;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            color: #e74c3c;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed #e74c3c;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fff5f3;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: #c0392b;
+            background: #fadbd8;
+        }
+
+        .drop-zone i {
+            font-size: 48px;
+            color: #e74c3c;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .drop-zone p {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .drop-zone span {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        /* File Info */
+        .file-info {
+            display: none;
+            background: #d5f4e6;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #27ae60;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Success Message */
+        .success-message {
+            display: none;
+            background: #d5f4e6;
+            border-left: 4px solid #27ae60;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-message i {
+            color: #27ae60;
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .success-message p {
+            margin: 0;
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        /* Hidden input */
+        input[type="file"] {
+            display: none;
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #856404;
+        }
+
+        .info-box i {
+            color: #f39c12;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar-container"></div>
+
+    <div class="main-content">
+        <div class="upload-container">
+            <!-- Header -->
+            <div class="upload-header">
+                <h1>📄 Upload PDF Invoice</h1>
+                <p>Upload file PDF invoice. Nama file harus sesuai dengan nomor faktur (contoh: 835100310.pdf)</p>
+            </div>
+
+            <!-- Step 1: Search Faktur -->
+            <div class="card" id="card1">
+                <h3>Step 1: Cari Nomor Faktur</h3>
+                
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    Masukkan nomor faktur yang ingin diupload filenya
+                </div>
+
+                <div class="faktur-section">
+                    <label>Nomor Faktur:</label>
+                    <div class="faktur-input-group">
+                        <input type="text" id="fakturInput" placeholder="Contoh: 835100310 atau 835100310.pdf">
+                        <button class="btn-search" onclick="searchFaktur()">
+                            <i class="fas fa-search"></i> Cari
+                        </button>
+                    </div>
+                </div>
+
+                <div id="errorMessage" class="error-message"></div>
+
+                <div id="invoiceInfo" class="invoice-info">
+                    <p><strong>Nomor Faktur:</strong> <span id="infofaktur">-</span></p>
+                    <p><strong>Konsumen:</strong> <span id="infokonsumen">-</span></p>
+                    <p><strong>Toko:</strong> <span id="infotoko">-</span></p>
+                    <p><strong>Total:</strong> <span id="infototal">-</span></p>
+                    <p><strong>Keterangan:</strong> <span id="infoketerangan">-</span></p>
+                </div>
+            </div>
+
+            <!-- Step 2: Upload File -->
+            <div class="card" id="card2" style="display: none;">
+                <h3>Step 2: Upload File PDF</h3>
+
+                <div class="drop-zone" id="dropZone">
+                    <i class="fas fa-file-pdf"></i>
+                    <p>Drag & drop file PDF di sini</p>
+                    <span>atau klik untuk memilih file</span>
+                </div>
+
+                <input type="file" id="fileInput" accept=".pdf">
+
+                <div id="fileInfo" class="file-info">
+                    <p><strong>📁 File:</strong> <span id="fileName">-</span></p>
+                    <p><strong>📦 Ukuran:</strong> <span id="fileSize">-</span></p>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="goBackToSearch()">
+                        <i class="fas fa-arrow-left"></i> Kembali
+                    </button>
+                    <button class="btn btn-success" id="btnUpload" disabled>
+                        <i class="fas fa-upload"></i> Upload PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Success -->
+            <div class="card" id="card3" style="display: none;">
+                <div class="success-message show">
+                    <i class="fas fa-check-circle"></i>
+                    <p>✅ PDF berhasil diupload!</p>
+                </div>
+
+                <div style="background: white; padding: 20px; border-radius: 6px; border: 1px solid #ecf0f1;">
+                    <p style="margin: 10px 0; color: #2c3e50;">
+                        <strong>Nomor Faktur:</strong> <span id="successFaktur">-</span>
+                    </p>
+                    <p style="margin: 10px 0; color: #2c3e50;">
+                        <strong>Status:</strong> <span style="color: #27ae60; font-weight: 600;">✓ UPLOADED</span>
+                    </p>
+                    <p style="margin: 10px 0; color: #2c3e50;">
+                        <strong>Path:</strong> <span id="successPath" style="font-size: 12px; color: #7f8c8d;">-</span>
+                    </p>
+                </div>
+
+                <div class="btn-group" style="margin-top: 30px;">
+                    <button class="btn btn-primary" onclick="resetForm()">
+                        <i class="fas fa-redo"></i> Upload File Lain
+                    </button>
+                    <button class="btn btn-success" onclick="goDashboard()">
+                        <i class="fas fa-arrow-right"></i> Ke Dashboard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/upload-invoice-pdf.js"></script>
+</body>
+</html>
