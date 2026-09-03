@@ -2652,10 +2652,12 @@ async function loadInvoicesInDashboard(page = 1) {
             invoiceTotalCount = result.count;
             console.log('[LoadInvoices] ✅ Set invoiceTotalCount to', invoiceTotalCount);
             updatePaginationInfo();
+            updateInvoiceStatsFromData(result.data || [], result.count);
         } else {
             console.warn('[LoadInvoices] ⚠️ result.count is undefined! Using data.length instead');
             invoiceTotalCount = (result.data || []).length;
             updatePaginationInfo();
+            updateInvoiceStatsFromData(result.data || [], invoiceTotalCount);
         }
         
     } catch (error) {
