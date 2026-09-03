@@ -123,15 +123,15 @@ async function checkData() {
         // Transform and aggregate
         let invoices = parsed.map(row => {
             // Normalize toko values
-            let tokoValue = (row['TOKO'] || row['toko'] || '').trim();
+            let tokoValue = (row['TOKO'] || row['toko'] || '').trim().toUpperCase();
             
-            // If toko is just "ANKA", expand to "ANKA BEKASI"
-            if (tokoValue.toUpperCase() === 'ANKA') {
-                tokoValue = 'ANKA BEKASI';
-            }
-            // If contains "PEMALANG", ensure it's "ANKA PEMALANG"
-            else if (tokoValue.toUpperCase().includes('PEMALANG')) {
+            console.log('[Upload] Raw toko:', row['TOKO'], '-> Normalized:', tokoValue);
+            
+            // Map all toko variations to their normalized names
+            if (tokoValue.includes('PEMALANG')) {
                 tokoValue = 'ANKA PEMALANG';
+            } else if (tokoValue.includes('ANKA') || tokoValue === 'ANKA') {
+                tokoValue = 'ANKA BEKASI';
             }
             
             return {

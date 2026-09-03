@@ -2799,7 +2799,8 @@ async function loadFilterOptions() {
 
 // Update stats from loaded invoice data
 function updateInvoiceStatsFromData(invoices, totalCount) {
-    console.log('[StatsFromData] Updating with', invoices.length, 'invoices, total:', totalCount);
+    console.log('[StatsFromData] ===== UPDATING STATS =====');
+    console.log('[StatsFromData] Invoices:', invoices.length, 'Total count:', totalCount);
     
     const uploaded = invoices.filter(r => r.status === 'UPLOADED').length;
     const pending = invoices.filter(r => r.status === 'PENDING').length;
@@ -2809,16 +2810,34 @@ function updateInvoiceStatsFromData(invoices, totalCount) {
     
     // Update stat elements
     const statElements = document.querySelectorAll('[data-stat="total"]');
-    statElements.forEach(el => el.textContent = totalCount);
+    console.log('[StatsFromData] Found', statElements.length, 'total stat elements');
+    statElements.forEach((el, i) => {
+        console.log('[StatsFromData] Setting total[' + i + '] from', el.textContent, 'to', totalCount);
+        el.textContent = totalCount;
+    });
     
     const uploadedEls = document.querySelectorAll('[data-stat="uploaded"]');
-    uploadedEls.forEach(el => el.textContent = uploaded);
+    console.log('[StatsFromData] Found', uploadedEls.length, 'uploaded stat elements');
+    uploadedEls.forEach((el, i) => {
+        console.log('[StatsFromData] Setting uploaded[' + i + '] to', uploaded);
+        el.textContent = uploaded;
+    });
     
     const pendingEls = document.querySelectorAll('[data-stat="pending"]');
-    pendingEls.forEach(el => el.textContent = pending);
+    console.log('[StatsFromData] Found', pendingEls.length, 'pending stat elements');
+    pendingEls.forEach((el, i) => {
+        console.log('[StatsFromData] Setting pending[' + i + '] to', pending);
+        el.textContent = pending;
+    });
     
     const missingEls = document.querySelectorAll('[data-stat="missing"]');
-    missingEls.forEach(el => el.textContent = missing);
+    console.log('[StatsFromData] Found', missingEls.length, 'missing stat elements');
+    missingEls.forEach((el, i) => {
+        console.log('[StatsFromData] Setting missing[' + i + '] to', missing);
+        el.textContent = missing;
+    });
+    
+    console.log('[StatsFromData] ===== STATS UPDATE COMPLETE =====');
 }
 
 // Load invoices when dashboard loads
