@@ -192,23 +192,24 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         .insert(invoicesToInsert);
                     
                     if (insertError) {
-                        // Check if it's only duplicate key errors (which is OK)
-                        if (insertError.code === '23505' || insertError.message?.includes('duplicate')) {
-                            // All duplicates - that's fine, count them all as processed/duplicate
+                        // There IS an error
+                        if (insertError.code === '23505') {
+                            // Duplicate key constraint - expected on re-upload
                             processedCount = 0;
                             duplicateCount = invoicesToInsert.length;
-                            console.log('[Invoice API] All rows were duplicates (expected on re-upload)');
+                            console.log('[Invoice API] ℹ️ All rows were duplicates (expected on re-upload)');
                         } else {
-                            // Real error
+                            // Real error - something went wrong
                             failedCount = invoicesToInsert.length;
                             errors.push(`Bulk insert failed: ${insertError.message}`);
                             console.error('[Invoice API] Insert error:', insertError.message);
                         }
                     } else {
-                        // SUCCESS: All inserted (or no error = all succeeded)
+                        // NO ERROR = SUCCESS!
                         processedCount = invoicesToInsert.length;
                         duplicateCount = 0;
-                        console.log(`[Invoice API] ✅ Inserted ${processedCount} invoices`);
+                        failedCount = 0;
+                        console.log(`[Invoice API] ✅ Successfully inserted ${processedCount} invoices`);
                     }
                 } else {
                     console.warn('[Invoice API] No invoices to insert');
