@@ -550,6 +550,8 @@ select.input-field option {
     letter-spacing: normal !important;
     text-transform: none !important;
     transition: all 0.2s ease;
+    background: transparent !important;
+    background-color: transparent !important;
 }
 
 /* Override strong and b tags in table */
@@ -557,6 +559,8 @@ td > strong,
 td > b {
     font-size: 15px !important;
     font-weight: 900 !important;
+    background: transparent !important;
+    background-color: transparent !important;
 }
 
 /* ---- Responsive ---- */
