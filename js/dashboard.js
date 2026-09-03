@@ -2963,12 +2963,11 @@ function resetInvoiceFilters() {
 function setupAdminZonaFilters() {
     console.log('[AdminZonaFilters] Setting up admin zona specific filters');
     
-    // Hide Total Invoice stat card
-    const statCards = document.querySelectorAll('.stat-card');
-    if (statCards && statCards.length > 0) {
-        // First stat card is usually Total
-        statCards[0].style.display = 'none';
-        console.log('[AdminZonaFilters] ✅ Total Invoice stat card hidden');
+    // Hide ALL stat cards for admin zona
+    const statsContainer = document.querySelector('.stats-container');
+    if (statsContainer) {
+        statsContainer.style.display = 'none';
+        console.log('[AdminZonaFilters] ✅ All statistics cards hidden');
     }
     
     // Hide Status filter
