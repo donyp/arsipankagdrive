@@ -542,13 +542,7 @@ select.input-field option {
 td > span {
     font-size: 15px !important;
     font-weight: 900 !important;
-    background: transparent !important;
-    background-color: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: inline !important;
-    border: none !important;
-    border-radius: 0 !important;
+    display: inline-block !important;
 }
 
 /* ---- Responsive ---- */
