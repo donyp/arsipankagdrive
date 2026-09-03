@@ -2827,48 +2827,8 @@ function updateInvoiceStatsFromData(invoices, totalCount) {
     console.log('[StatsFromData] ===== STATS UPDATE COMPLETE =====');
 }
 
-// Initialize invoice system after content is loaded
-function initInvoiceSystem() {
-    console.log('[InvoiceInit] Initializing invoice system');
-    
-    // Setup pagination buttons
-    const btnNext = document.getElementById('btnNextPage');
-    const btnPrev = document.getElementById('btnPrevPage');
-    
-    if (btnNext) {
-        btnNext.onclick = nextInvoicePage;
-        console.log('[InvoiceInit] ✅ Next button event listener attached');
-    } else {
-        console.warn('[InvoiceInit] ⚠️ btnNextPage not found');
-    }
-    
-    if (btnPrev) {
-        btnPrev.onclick = previousInvoicePage;
-        console.log('[InvoiceInit] ✅ Prev button event listener attached');
-    } else {
-        console.warn('[InvoiceInit] ⚠️ btnPrevPage not found');
-    }
-    
-    // Setup filter buttons with IDs from invoice-list.html
-    const btnApply = document.getElementById('btnApplyFilter');
-    const btnReset = document.getElementById('btnResetFilter');
-    
-    if (btnApply) {
-        btnApply.onclick = applyInvoiceFilters;
-        console.log('[InvoiceInit] ✅ Apply filter button event listener attached');
-    } else {
-        console.warn('[InvoiceInit] ⚠️ btnApplyFilter not found');
-    }
-    
-    if (btnReset) {
-        btnReset.onclick = resetInvoiceFilters;
-        console.log('[InvoiceInit] ✅ Reset filter button event listener attached');
-    } else {
-        console.warn('[InvoiceInit] ⚠️ btnResetFilter not found');
-    }
-    
-    console.log('[InvoiceInit] ✅ Invoice system initialized');
-}
+// Load invoices when dashboard loads
+document.addEventListener('DOMContentLoaded', async () => {
     // Wait for auth to complete
     await new Promise(resolve => setTimeout(resolve, 100));
     
@@ -2886,8 +2846,6 @@ function initInvoiceSystem() {
         // Load filter options first
         await loadFilterOptions();
         loadInvoicesInDashboard(1);
-        // Initialize invoice system (pagination, filters, etc)
-        initInvoiceSystem();
     } else {
         console.warn('[Dashboard] Invoice table not found after 5 seconds');
     }
