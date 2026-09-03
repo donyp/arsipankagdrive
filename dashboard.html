@@ -237,26 +237,31 @@
 
         /* Status Badge */
         .status-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 11px;
+            display: inline;
+            font-size: 2px;
             font-weight: 700;
-            text-transform: uppercase;
+            padding: 0;
+            margin: 0;
+            line-height: 0.5;
+        }
+
+        .status-badge::before {
+            content: "●";
+            margin-right: 1px;
         }
 
         .status-badge.uploaded {
-            background: #d5f4e6;
+            background: transparent;
             color: #27ae60;
         }
 
         .status-badge.pending {
-            background: #fff3cd;
+            background: transparent;
             color: #f39c12;
         }
 
         .status-badge.missing {
-            background: #fadbd8;
+            background: transparent;
             color: #e74c3c;
         }
 
@@ -730,7 +735,7 @@
     <script src="js/auth.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/sidebar.js"></script>
-    <script src="js/dashboard.js?v=7"></script>
+    <script src="js/dashboard.js?v=999"></script>
     
     <script>
         // Load invoice list content into dashboard (including header with buttons)
