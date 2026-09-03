@@ -150,22 +150,31 @@ function renderValidationResults() {
     document.getElementById('invalidFiles').textContent = invalidCount;
 
     // Render file items
-    filesContainer.innerHTML = validationResults.map(result => {
+    filesContainer.innerHTML = validationResults.map((result, index) => {
         const className = result.valid ? 'valid' : 'invalid';
         const icon = result.valid ? '✓' : '✗';
         const status = result.valid ? 'VALID' : 'INVALID';
         const statusText = result.valid ? 'Faktur ditemukan' : (result.error || 'Faktur tidak ditemukan');
+        const fakturText = result.faktur && result.faktur.trim() ? result.faktur : '(tidak terdeteksi)';
+        
+        let deleteBtn = '';
+        if (!result.valid) {
+            deleteBtn = `<button onclick="removeInvalidFile(${index})" class="delete-btn" title="Hapus file">
+                <i class="fas fa-times"></i>
+            </button>`;
+        }
 
         return `
-            <div class="file-item ${className}">
+            <div class="file-item ${className}" id="file-item-${index}">
                 <div class="file-item-icon">${icon}</div>
                 <div style="flex: 1;">
                     <div class="file-item-name">${result.file.name}</div>
                     <div class="file-item-faktur">
-                        Faktur: ${result.faktur} ${result.valid ? `| ${result.invoice.konsumen}` : `| ${statusText}`}
+                        Faktur: ${fakturText} ${result.valid ? `| ${result.invoice.konsumen}` : `| ${statusText}`}
                     </div>
                 </div>
                 <div class="file-item-status">${status}</div>
+                ${deleteBtn}
             </div>
         `;
     }).join('');
@@ -241,6 +250,16 @@ async function uploadValidFiles() {
         btnUpload.disabled = false;
         btnUpload.innerHTML = originalText;
     }
+}
+
+function removeInvalidFile(index) {
+    console.log('[PDF Bulk] Removing invalid file at index:', index);
+    
+    // Remove from validationResults
+    validationResults.splice(index, 1);
+    
+    // Re-render
+    renderValidationResults();
 }
 
 function resetUpload() {
