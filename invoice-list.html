@@ -42,10 +42,31 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 14px;
         }
 
         .btn-upload-excel:hover {
             background: #229954;
+            transform: translateY(-2px);
+        }
+
+        .btn-clear-test {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-clear-test:hover {
+            background: #c0392b;
             transform: translateY(-2px);
         }
 
@@ -379,13 +400,13 @@
             <!-- Header -->
             <div class="invoice-header">
                 <div class="header-actions">
-                    <button id="btnUploadExcel" class="btn-upload-excel" style="background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; font-size: 14px; z-index: 10;">
+                    <button id="btnUploadExcel" class="btn-upload-excel">
                         <i class="fas fa-file-excel"></i> Upload Excel
                     </button>
-                    <button id="btnClearTestData" class="btn-clear-test" style="background: #e74c3c; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; font-size: 14px; z-index: 10;">
+                    <button id="btnClearTestData" class="btn-clear-test">
                         <i class="fas fa-trash-alt"></i> Clear Test Data
                     </button>
-                    <button class="btn-refresh" onclick="location.reload()" style="z-index: 10;">
+                    <button class="btn-refresh" onclick="location.reload()">
                         <i class="fas fa-sync-alt"></i> Refresh
                     </button>
                 </div>

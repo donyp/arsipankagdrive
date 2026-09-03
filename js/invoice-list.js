@@ -87,13 +87,19 @@ function setupExcelUploadModal() {
         backdrop: !!backdrop
     });
 
+    // Direct click handler for main upload button
     if (btnUploadExcel) {
-        btnUploadExcel.addEventListener('click', function() {
+        const clickHandler = function(e) {
             console.log('[Invoice-Setup] btnUploadExcel clicked');
+            e.preventDefault();
+            e.stopPropagation();
             window.openUploadExcelModal();
-        });
+        };
+        btnUploadExcel.onclick = clickHandler;
+        btnUploadExcel.addEventListener('click', clickHandler);
         console.log('[Invoice-Setup] Bound: btnUploadExcel');
     }
+    
     if (btnSelectFile) {
         btnSelectFile.addEventListener('click', function() {
             console.log('[Invoice-Setup] btnSelectFile clicked');
@@ -122,7 +128,7 @@ function setupExcelUploadModal() {
         });
         console.log('[Invoice-Setup] Bound: backdrop');
     }
-if (uploadBtn) {
+    if (uploadBtn) {
         uploadBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -133,14 +139,6 @@ if (uploadBtn) {
     }
     
     console.log('[Invoice-Setup] Setup complete');
-    
-    // Fallback: Use event delegation for upload button in case element gets replaced
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.id === 'uploadBtn') {
-            console.log('[Invoice-Delegation] uploadBtn clicked via delegation');
-            window.uploadExcelFile();
-        }
-    }, true); // Use capture phase
 }
 
 window.handleExcelFileSelected = function(file) {
@@ -621,37 +619,28 @@ window.clearTestData = async function() {
 };
 
 // Setup event listener for clear button
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        const clearBtn = document.getElementById('btnClearTestData');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', window.clearTestData);
-            console.log('[Invoice-Init] Clear test data button handler attached');
-        }
-    });
-} else {
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('[Invoice-Init] DOMContentLoaded - setting up handlers');
+    setupExcelUploadModal();
+    
     const clearBtn = document.getElementById('btnClearTestData');
     if (clearBtn) {
         clearBtn.addEventListener('click', window.clearTestData);
+        clearBtn.onclick = window.clearTestData;
         console.log('[Invoice-Init] Clear test data button handler attached');
     }
-}
+});
 
+// Also setup after short delay to be safe
 setTimeout(() => {
+    console.log('[Invoice-Init] Setting up handlers (delayed 200ms)');
+    setupExcelUploadModal();
+    
     const clearBtn = document.getElementById('btnClearTestData');
-    if (clearBtn) {
+    if (clearBtn && !clearBtn._setupDone) {
         clearBtn.addEventListener('click', window.clearTestData);
+        clearBtn.onclick = window.clearTestData;
+        clearBtn._setupDone = true;
         console.log('[Invoice-Init] Clear test data button handler attached (delayed)');
     }
-}, 500);
-
-if (document.readyState === 'loading') {
-    console.log('[Invoice-Init] Document loading, waiting for DOMContentLoaded');
-    document.addEventListener('DOMContentLoaded', setupExcelUploadModal);
-} else {
-    console.log('[Invoice-Init] Document already loaded, calling setup now');
-    setupExcelUploadModal();
-}
-
-console.log('[Invoice-Init] Also scheduling setup for 500ms');
-setTimeout(setupExcelUploadModal, 500);
+}, 200);
