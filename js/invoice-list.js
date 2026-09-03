@@ -410,11 +410,8 @@ function renderInvoiceTable(invoices = null) {
             ? inv.jenis_transaksi.charAt(0).toUpperCase() + inv.jenis_transaksi.slice(1).toLowerCase()
             : '-';
         
-        // Auto-adjust font size for long text
         const konsumenText = inv.konsumen || '-';
         const tokoText = inv.toko || '-';
-        const konsumenFontSize = konsumenText.length > 25 ? '5px' : '7px';
-        const tokoFontSize = tokoText.length > 20 ? '5px' : '7px';
         
         return `
         <tr>
@@ -427,8 +424,8 @@ function renderInvoiceTable(invoices = null) {
             <td><strong>${inv.faktur || '-'}</strong></td>
             <td>${inv.metode_bayar || '-'}</td>
             <td>${capitalizedTipe}</td>
-            <td style="font-size: ${konsumenFontSize};">${konsumenText}</td>
-            <td style="font-size: ${tokoFontSize};">${tokoText}</td>
+            <td>${konsumenText}</td>
+            <td>${tokoText}</td>
             <td>${formatCurrency(inv.total_jumlah_jual)}</td>
             <td>${inv.keterangan || '-'}</td>
             <td>
