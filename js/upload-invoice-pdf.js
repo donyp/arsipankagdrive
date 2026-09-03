@@ -16,6 +16,93 @@ function formatRupiah(amount) {
     }).format(amount);
 }
 
+// Custom notification system (toast)
+function showNotification(message, type = 'success', duration = 4000) {
+    // Create toast container if not exists
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        `;
+        document.body.appendChild(toastContainer);
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    const bgColor = type === 'success' ? '#27ae60' : (type === 'error' ? '#e74c3c' : '#3498db');
+    const icon = type === 'success' ? '✓' : (type === 'error' ? '✕' : 'ℹ');
+    
+    toast.style.cssText = `
+        background: ${bgColor};
+        color: white;
+        padding: 16px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 300px;
+        animation: slideInRight 0.3s ease-out;
+        font-weight: 500;
+        font-size: 14px;
+        pointer-events: auto;
+    `;
+    
+    toast.innerHTML = `
+        <span style="font-size: 18px; font-weight: bold;">${icon}</span>
+        <span>${message}</span>
+    `;
+    
+    toastContainer.appendChild(toast);
+
+    // Auto remove after duration
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease-in';
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, duration);
+}
+
+// Add animation keyframes if not exists
+if (!document.getElementById('toast-animations')) {
+    const style = document.createElement('style');
+    style.id = 'toast-animations';
+    style.textContent = `
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
@@ -57,7 +144,7 @@ function handleFilesSelected(files) {
     selectedFiles = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
     
     if (selectedFiles.length === 0) {
-        alert('❌ Hanya file PDF yang diizinkan');
+        showNotification('❌ Hanya file PDF yang diizinkan', 'error');
         return;
     }
 
@@ -205,7 +292,7 @@ async function uploadValidFiles() {
     const validFiles = validationResults.filter(r => r.valid);
     
     if (validFiles.length === 0) {
-        alert('Tidak ada file valid untuk diupload');
+        showNotification('Tidak ada file valid untuk diupload', 'error');
         return;
     }
 
@@ -254,7 +341,7 @@ async function uploadValidFiles() {
 
         // Show result message
         const message = `✅ ${successCount} file berhasil diupload${failCount > 0 ? `, ${failCount} file gagal` : ''}`;
-        alert(message);
+        showNotification(message, successCount > 0 ? 'success' : 'error', 5000);
 
         // Reset if all successful
         if (failCount === 0) {
@@ -263,7 +350,7 @@ async function uploadValidFiles() {
 
     } catch (error) {
         console.error('[PDF Bulk] Exception:', error);
-        alert('Error: ' + error.message);
+        showNotification('Error: ' + error.message, 'error', 5000);
     } finally {
         btnUpload.disabled = false;
         btnUpload.innerHTML = originalText;
