@@ -3318,6 +3318,84 @@ app.post('/api/admin/migrate-zona-codes', async (req, res) => {
     }
 });
 
+// POST /api/admin/recreate-admin-zona-users - Delete all admin_zona users and recreate with proper zona_id
+app.post('/api/admin/recreate-admin-zona-users', async (req, res) => {
+    try {
+        console.log('[ADMIN] Recreating admin_zona users...');
+        
+        // Step 1: Get all zonas
+        const { data: zonas, error: zonaError } = await supabase
+            .from('zonas')
+            .select('id, kode, nama')
+            .order('id', { ascending: true });
+        
+        if (zonaError) throw zonaError;
+        
+        if (!zonas || zonas.length === 0) {
+            return res.status(400).json({ error: 'No zonas found' });
+        }
+        
+        console.log(`[ADMIN] Found ${zonas.length} zonas`);
+        
+        // Step 2: Delete all existing admin_zona users
+        const { error: deleteError } = await supabase
+            .from('users')
+            .delete()
+            .eq('role', 'admin_zona');
+        
+        if (deleteError) throw deleteError;
+        console.log('[ADMIN] Deleted all existing admin_zona users');
+        
+        // Step 3: Create new admin_zona users for each zona
+        const defaultPassword = 'admin123456'; // Default password - user should change on first login
+        const salt = await bcrypt.genSalt(12);
+        const password_hash = await bcrypt.hash(defaultPassword, salt);
+        
+        const newUsers = [];
+        for (const zona of zonas) {
+            const email = `admin_zona_${zona.id}`;
+            const name = `Admin ${zona.nama}`;
+            
+            const { data: user, error: insertError } = await supabase
+                .from('users')
+                .insert({
+                    email,
+                    password_hash,
+                    name,
+                    role: 'admin_zona',
+                    zona_id: zona.id,
+                    is_active: true,
+                    permissions: []
+                })
+                .select()
+                .single();
+            
+            if (insertError) {
+                console.error(`[ADMIN] Failed to create user for zona ${zona.id}:`, insertError);
+            } else {
+                console.log(`[ADMIN] Created user: ${email} for zona_id: ${zona.id}`);
+                newUsers.push({
+                    email,
+                    name,
+                    zona_id: zona.id,
+                    zona_nama: zona.nama,
+                    default_password: defaultPassword
+                });
+            }
+        }
+        
+        res.json({
+            success: true,
+            message: `Created ${newUsers.length} admin_zona users`,
+            count: newUsers.length,
+            users: newUsers
+        });
+    } catch (err) {
+        console.error('[ADMIN] Recreate admin_zona users error:', err);
+        res.status(500).json({ error: 'Failed to recreate admin_zona users: ' + err.message });
+    }
+});
+
 // PUT /api/users/:id Ã¢â‚¬â€ update user
 app.put('/api/users/:id', authenticateToken, requirePermission('manage_users'), async (req, res) => {
     try {
