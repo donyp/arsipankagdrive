@@ -1,10 +1,20 @@
 // Rename Faktur Pajak Endpoints
 // Extracts data from PDF and renames as: tax-NAMA_TOKO NOMINAL
 
-const pdfParse = require('pdf-parse');
-const PDFDocument = require('pdfkit');
-const fs = require('fs');
-const path = require('path');
+let pdfParse = null;
+
+// Lazy-load pdf-parse only if needed
+async function initPdfParse() {
+    if (!pdfParse) {
+        try {
+            pdfParse = require('pdf-parse');
+        } catch (err) {
+            console.error('[Rename Faktur] pdf-parse not installed:', err.message);
+            throw err;
+        }
+    }
+    return pdfParse;
+}
 
 module.exports = (app, supabase) => {
     // ============================================
@@ -22,8 +32,11 @@ module.exports = (app, supabase) => {
 
             console.log(`[Rename Faktur] Processing: ${originalName}`);
 
+            // Initialize pdf-parse
+            const pdf = await initPdfParse();
+
             // Parse PDF
-            const pdfData = await pdfParse(file.data);
+            const pdfData = await pdf(file.data);
             const textContent = pdfData.text;
 
             console.log(`[Rename Faktur] PDF text extracted, length: ${textContent.length}`);
@@ -104,6 +117,7 @@ module.exports = (app, supabase) => {
                 return res.status(403).json({ error: 'Access denied' });
             }
 
+            const fs = require('fs');
             if (fs.existsSync(filepath)) {
                 res.download(filepath, filename, (err) => {
                     if (!err) {
