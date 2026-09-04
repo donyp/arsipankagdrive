@@ -15,9 +15,9 @@
 <body class="bg-[#F0F2F5] min-h-screen text-gray-800 font-sans">
     <div class="flex">
         <div id="mobile-overlay" class="mobile-overlay" onclick="toggleSidebar()"></div>
-        <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-40 hidden"></aside>
+        <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-40"></aside>
 
-        <main id="main-content" class="min-h-screen transition-all duration-300 flex-1">
+        <main id="main-content" class="min-h-screen transition-all duration-300 flex-1 ml-64 lg:ml-64">
             <!-- Top Bar -->
             <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4">
                 <div class="flex items-center justify-between">
@@ -97,11 +97,28 @@
     <script src="js/utils.js"></script>
     <script src="js/rename-faktur.js"></script>
     <script>
+        // Initialize page after auth
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initAuth();
+            document.documentElement.style.opacity = '1';
+            document.documentElement.classList.remove('auth-loading');
+        });
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobile-overlay');
             sidebar.classList.toggle('open');
             overlay.classList.toggle('active');
+        }
+
+        // Fallback Toast if utils.js doesn't load
+        if (typeof Toast === 'undefined') {
+            window.Toast = {
+                error: (msg) => alert('Error: ' + msg),
+                success: (msg) => alert('Success: ' + msg),
+                warning: (msg) => alert('Warning: ' + msg),
+                info: (msg) => alert(msg)
+            };
         }
     </script>
 </body>
