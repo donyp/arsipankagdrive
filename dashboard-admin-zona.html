@@ -227,9 +227,14 @@
                     </button>
                     <h1 class="text-2xl font-bold text-gray-900">Dashboard Admin Zona</h1>
                 </div>
-                <div id="user-info" class="text-right">
-                    <p id="user-name" class="font-semibold text-gray-900"></p>
-                    <p id="user-zona" class="text-sm text-gray-500"></p>
+                <div id="user-info" class="flex items-center gap-4">
+                    <div class="text-right">
+                        <p id="user-name" class="font-semibold text-gray-900">Loading...</p>
+                        <p id="user-zona" class="text-sm text-gray-500">Zona: -</p>
+                    </div>
+                    <button onclick="logout()" class="btn" style="background: #e74c3c; padding: 8px 12px; font-size: 12px;">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
                 </div>
             </div>
         </header>
@@ -246,22 +251,6 @@
                     <button class="btn-refresh" onclick="location.reload()">
                         <i class="fas fa-sync"></i> Refresh
                     </button>
-                </div>
-            </div>
-
-            <!-- Stats -->
-            <div class="stats-container">
-                <div class="stat-card total">
-                    <div class="stat-value" id="statTotal">0</div>
-                    <div class="stat-label">Total Invoice</div>
-                </div>
-                <div class="stat-card belum-lunas">
-                    <div class="stat-value" id="statBelumLunas">0</div>
-                    <div class="stat-label">Belum Lunas</div>
-                </div>
-                <div class="stat-card lunas">
-                    <div class="stat-value" id="statLunas">0</div>
-                    <div class="stat-label">Lunas</div>
                 </div>
             </div>
 
@@ -391,9 +380,16 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await initAuth();
             
-            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            document.getElementById('user-name').textContent = user.email || 'User';
-            document.getElementById('user-zona').textContent = `Zona: ${user.zona_kode || user.zona_id}`;
+            // Get current user from localStorage
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const userEmail = currentUser.email || 'Admin Zona';
+            const userZona = currentUser.zona_kode || currentUser.zona_id || '-';
+            
+            console.log('[AdminZona] Current user:', userEmail, 'Zona:', userZona);
+            
+            // Display user info
+            document.getElementById('user-name').textContent = userEmail;
+            document.getElementById('user-zona').textContent = `Zona: ${userZona}`;
 
             // Load all data first to populate filters
             await loadAllInvoices();
@@ -430,7 +426,7 @@
                     yearSelect.appendChild(opt);
                 });
 
-                // Populate month dropdown (only months that have data)
+                // ONLY populate month dropdown with months that have data
                 const monthSelect = document.getElementById('filterMonth');
                 const monthNames = {
                     '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
@@ -438,6 +434,12 @@
                     '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
                 };
                 
+                // Remove all existing options except "Semua Bulan"
+                while (monthSelect.options.length > 1) {
+                    monthSelect.remove(1);
+                }
+                
+                // Only add months that have data
                 const months = Array.from(monthsSet).sort();
                 months.forEach(month => {
                     const opt = document.createElement('option');
@@ -502,7 +504,6 @@
                 }
 
                 renderInvoices(invoices);
-                updateStats(invoices);
                 updatePagination();
 
                 console.log('[AdminZona] Loaded', invoices.length, 'invoices');
@@ -511,6 +512,15 @@
                 document.getElementById('invoiceTableBody').innerHTML = `
                     <tr><td colspan="7" class="empty-state text-red-500">Error: ${err.message}</td></tr>
                 `;
+            }
+        }
+
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                localStorage.removeItem('jwt_token');
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('sessionToken');
+                window.location.href = 'index.html';
             }
         }
 
@@ -542,16 +552,6 @@
                     </td>
                 </tr>
             `).join('');
-        }
-
-        function updateStats(invoices) {
-            const total = invoices.length;
-            const belumLunas = invoices.filter(i => i.status !== 'Lunas').length;
-            const lunas = invoices.filter(i => i.status === 'Lunas').length;
-
-            document.getElementById('statTotal').textContent = total;
-            document.getElementById('statBelumLunas').textContent = belumLunas;
-            document.getElementById('statLunas').textContent = lunas;
         }
 
         function updatePagination() {
