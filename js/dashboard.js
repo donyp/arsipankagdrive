@@ -3010,7 +3010,9 @@ function setupAdminZonaFilters() {
 
 // Setup regular filters for super_admin and moderator
 function setupRegularFilters() {
-    console.log('[RegularFilters] Setting up regular user filters (super_admin/moderator)');
+    console.log('[RegularFilters] ===== SETTING UP REGULAR USER FILTERS =====');
+    console.log('[RegularFilters] currentUser:', currentUser);
+    console.log('[RegularFilters] currentUser?.role:', currentUser?.role);
     
     // Show extra filters for super_admin/moderator
     const filterStatusGroup = document.getElementById('filterStatusGroup');
@@ -3019,13 +3021,36 @@ function setupRegularFilters() {
     const filterSearchGroup = document.getElementById('filterSearchGroup');
     const filterMonthGroup = document.getElementById('filterMonthGroup');
     
-    if (filterStatusGroup) filterStatusGroup.style.display = 'block';
-    if (filterDateFromGroup) filterDateFromGroup.style.display = 'block';
-    if (filterDateToGroup) filterDateToGroup.style.display = 'block';
-    if (filterSearchGroup) filterSearchGroup.style.display = 'block';
-    if (filterMonthGroup) filterMonthGroup.style.display = 'none';
+    console.log('[RegularFilters] Elements found:', {
+        filterStatusGroup: !!filterStatusGroup,
+        filterDateFromGroup: !!filterDateFromGroup,
+        filterDateToGroup: !!filterDateToGroup,
+        filterSearchGroup: !!filterSearchGroup,
+        filterMonthGroup: !!filterMonthGroup
+    });
     
-    console.log('[RegularFilters] ✅ Regular user filters setup complete');
+    if (filterStatusGroup) {
+        filterStatusGroup.style.display = 'block';
+        console.log('[RegularFilters] ✅ Status filter shown');
+    }
+    if (filterDateFromGroup) {
+        filterDateFromGroup.style.display = 'block';
+        console.log('[RegularFilters] ✅ Date From filter shown');
+    }
+    if (filterDateToGroup) {
+        filterDateToGroup.style.display = 'block';
+        console.log('[RegularFilters] ✅ Date To filter shown');
+    }
+    if (filterSearchGroup) {
+        filterSearchGroup.style.display = 'block';
+        console.log('[RegularFilters] ✅ Search filter shown');
+    }
+    if (filterMonthGroup) {
+        filterMonthGroup.style.display = 'none';
+        console.log('[RegularFilters] ✅ Month filter hidden');
+    }
+    
+    console.log('[RegularFilters] ===== REGULAR USER FILTERS SETUP COMPLETE =====');
 }
 
 // Note: The HTML uses input type="month" which automatically handles YYYY-MM format
