@@ -566,7 +566,66 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     });
     
     // ============================================
-    // GET /api/invoice/stats
+    // GET /api/invoice/zona/:zonaId/summary
+    // Get toko summary for a specific zona
+    // ============================================
+    app.get('/api/invoice/zona/:zonaId/summary', createAuth(), async (req, res) => {
+        try {
+            const zonaId = req.params.zonaId;
+            
+            // Fetch invoices for this zona
+            const { data: invoices, error } = await supabase
+                .from('invoice_file_list')
+                .select('*')
+                .eq('zona_id', zonaId);
+            
+            if (error) {
+                console.error('[Invoice API] Error fetching zona summary:', error);
+                return res.status(500).json({ error: 'Failed to fetch zona summary' });
+            }
+            
+            // Aggregate by toko
+            const tokoStats = {};
+            invoices.forEach(inv => {
+                if (!tokoStats[inv.toko]) {
+                    tokoStats[inv.toko] = {
+                        toko: inv.toko,
+                        total: 0,
+                        pending: 0,
+                        uploaded: 0,
+                        missing: 0,
+                        total_nominal: 0,
+                        latest_date: null
+                    };
+                }
+                tokoStats[inv.toko].total++;
+                tokoStats[inv.toko][inv.status?.toLowerCase() || 'missing']++;
+                tokoStats[inv.toko].total_nominal += inv.total_jumlah_jual || 0;
+                
+                if (!tokoStats[inv.toko].latest_date || inv.tanggal > tokoStats[inv.toko].latest_date) {
+                    tokoStats[inv.toko].latest_date = inv.tanggal;
+                }
+            });
+            
+            const summary = Object.values(tokoStats).sort((a, b) => b.total - a.total);
+            
+            console.log(`[Invoice API] Zona ${zonaId} summary: ${summary.length} toko, ${invoices.length} total invoices`);
+            
+            res.json({
+                success: true,
+                zona_id: zonaId,
+                total_invoices: invoices.length,
+                total_toko: summary.length,
+                toko_summary: summary
+            });
+            
+        } catch (error) {
+            console.error('[Invoice API] Zona summary error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    });
+    
+    // ============================================
     // Get invoice statistics
     // ============================================
     app.get('/api/invoice/stats', createAuth(), async (req, res) => {
