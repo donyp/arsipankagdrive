@@ -115,8 +115,11 @@ module.exports = (app, supabase) => {
 
             console.log(`[Rename Faktur] New Name: ${newName}`);
 
-            // Return success with new filename
-            // File will be downloaded directly - not stored on server
+            // Convert PDF file to base64 for download
+            const fileBase64 = file.data.toString('base64');
+
+            // Return success with new filename and file data
+            // Client will download file without server storage
             res.json({
                 success: true,
                 originalName,
@@ -124,7 +127,8 @@ module.exports = (app, supabase) => {
                 namaToko,
                 harga,
                 ppn,
-                totalNominal
+                totalNominal,
+                fileData: fileBase64  // Base64 encoded PDF file
             });
 
         } catch (err) {
@@ -132,40 +136,6 @@ module.exports = (app, supabase) => {
             res.status(500).json({
                 error: 'Gagal memproses PDF: ' + err.message
             });
-        }
-    });
-
-    // ============================================
-    // GET /api/invoice/rename-faktur/download/:filename
-    // Download renamed faktur (if stored)
-    // ============================================
-    app.get('/api/invoice/rename-faktur/download/:filename', async (req, res) => {
-        try {
-            const filename = req.params.filename;
-            const tempDir = path.join(__dirname, '../temp-faktur');
-            const filepath = path.join(tempDir, filename);
-
-            // Security: prevent directory traversal
-            if (!filepath.startsWith(tempDir)) {
-                return res.status(403).json({ error: 'Access denied' });
-            }
-
-            const fs = require('fs');
-            if (fs.existsSync(filepath)) {
-                res.download(filepath, filename, (err) => {
-                    if (!err) {
-                        // Delete file after download
-                        fs.unlink(filepath, (err) => {
-                            if (err) console.error('[Rename Faktur] Error deleting temp file:', err);
-                        });
-                    }
-                });
-            } else {
-                res.status(404).json({ error: 'File tidak ditemukan' });
-            }
-        } catch (err) {
-            console.error('[Rename Faktur] Download error:', err);
-            res.status(500).json({ error: 'Gagal download file' });
         }
     });
 };

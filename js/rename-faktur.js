@@ -115,7 +115,7 @@ async function processFiles() {
                     ${r.success ? 
                         `<p class="text-sm ${r.success ? 'text-emerald-700' : 'text-red-700'} mt-1">
                             Nama baru: <span class="font-mono">${r.newName}</span>
-                            <button onclick="downloadFile('${r.newName}')" class="ml-2 text-blue-600 hover:underline">Download</button>
+                            <button onclick="downloadFile('${r.newName}', '${r.fileData}')" class="ml-2 text-blue-600 hover:underline">Download</button>
                         </p>`
                         : `<p class="text-sm text-red-700 mt-1">${r.error}</p>`
                     }
@@ -133,7 +133,7 @@ async function processFiles() {
     if (successFiles.length > 0) {
         setTimeout(() => {
             successFiles.forEach(r => {
-                downloadFile(r.newName);
+                downloadFile(r.newName, r.fileData);
             });
         }, 500);
     }
@@ -172,7 +172,8 @@ async function processFile(file) {
                 newName: result.newName,
                 namaToko: result.namaToko,
                 harga: result.harga,
-                ppn: result.ppn
+                ppn: result.ppn,
+                fileData: result.fileData  // Base64 encoded PDF
             };
         } else {
             return {
@@ -194,19 +195,25 @@ async function processFile(file) {
 // ============================================
 // Download File
 // ============================================
-function downloadFile(filename) {
-    // Get file data from results
-    const resultsSection = document.getElementById('resultsSection');
-    const resultHTML = resultsSection.innerHTML;
-    
-    // This will be triggered from the Download button in results
-    // File data comes from server's returned fileData (base64)
+function downloadFile(filename, fileData) {
+    // Create blob from base64
+    const byteCharacters = atob(fileData);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+    // Create download link
     const link = document.createElement('a');
-    link.href = `/api/invoice/rename-faktur/download/${filename}`;
+    const url = URL.createObjectURL(blob);
+    link.href = url;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
 
 // ============================================
