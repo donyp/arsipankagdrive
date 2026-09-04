@@ -2,6 +2,7 @@
 // Extract nama toko & nominal from PDF, rename as: tax-NAMA_TOKO NOMINAL
 
 let selectedFiles = [];
+let processHistory = [];  // Track success/fail history
 
 // ============================================
 // Setup Drag & Drop
@@ -73,7 +74,7 @@ function removeFile(index) {
     if (selectedFiles.length === 0) {
         document.getElementById('fileList').classList.add('hidden');
         document.getElementById('processButtonContainer').classList.add('hidden');
-        document.getElementById('resultsSection').classList.add('hidden');
+        // Don't hide results - keep history visible
     } else {
         handleFiles(new DataTransfer().items.length === 0 ? selectedFiles : selectedFiles);
     }
@@ -102,8 +103,11 @@ async function processFiles() {
         results.push(result);
     }
 
-    // Display results
-    resultsList.innerHTML = results.map(r => `
+    // Update process history
+    processHistory = results;
+
+    // Display results with numbering
+    resultsList.innerHTML = results.map((r, idx) => `
         <div class="p-4 rounded-lg border ${r.success ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}">
             <div class="flex items-start gap-3">
                 ${r.success ? 
@@ -111,13 +115,13 @@ async function processFiles() {
                     : '<svg class="w-5 h-5 text-red-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>'
                 }
                 <div class="flex-1">
-                    <p class="font-bold ${r.success ? 'text-emerald-900' : 'text-red-900'}">${r.originalName}</p>
+                    <p class="font-bold ${r.success ? 'text-emerald-900' : 'text-red-900'}">${idx + 1}. ${r.originalName}</p>
                     ${r.success ? 
-                        `<p class="text-sm ${r.success ? 'text-emerald-700' : 'text-red-700'} mt-1">
-                            Nama baru: <span class="font-mono">${r.newName}</span>
-                            <button onclick="downloadFile('${r.newName}', '${r.fileData}')" class="ml-2 text-blue-600 hover:underline">Download</button>
+                        `<p class="text-sm text-emerald-700 mt-1">
+                            ✓ Nama baru: <span class="font-mono text-xs">${r.newName}</span>
+                            <button onclick="downloadFile('${r.newName}', '${r.fileData}')" class="ml-2 text-blue-600 hover:underline text-xs">Download</button>
                         </p>`
-                        : `<p class="text-sm text-red-700 mt-1">${r.error}</p>`
+                        : `<p class="text-sm text-red-700 mt-1">✗ ${r.error}</p>`
                     }
                 </div>
             </div>
@@ -138,10 +142,12 @@ async function processFiles() {
         }, 500);
     }
 
-    // Show error notification if any failed
+    // Show notification
     const failedCount = results.filter(r => !r.success).length;
     if (failedCount > 0) {
-        Toast.error(`${failedCount} file gagal diproses`);
+        Toast.error(`${failedCount} dari ${results.length} file gagal diproses`);
+    } else {
+        Toast.success(`${successFiles.length} file berhasil diproses!`);
     }
 }
 
@@ -214,6 +220,35 @@ function downloadFile(filename, fileData) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+}
+
+// ============================================
+// Export History (not stored on server)
+// ============================================
+function exportHistory() {
+    if (processHistory.length === 0) {
+        Toast.warning('Tidak ada history untuk diexport');
+        return;
+    }
+
+    const timestamp = new Date().toLocaleString('id-ID');
+    const csvContent = [
+        'No,Status,Nama File Original,Nama File Baru,Error Pesan,Timestamp',
+        ...processHistory.map((r, idx) => 
+            `${idx + 1},"${r.success ? 'BERHASIL' : 'GAGAL'}","${r.originalName}","${r.newName || '-'}","${(r.error || '-').replace(/"/g, '\\"')}","${timestamp}"`
+        )
+    ].join('\n');
+
+    // Create CSV download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `rename-faktur-history-${new Date().getTime()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    Toast.success('History diexport ke CSV');
 }
 
 // ============================================
