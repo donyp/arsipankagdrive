@@ -898,10 +898,13 @@ async function populateTokoDropdown() {
             
             if (data && data.length > 0) {
                 // Extract unique konsumen values
+                // Filter OUT supplier names (ANKA BEKASI, ANKA PEMALANG, etc)
+                const supplierNames = ['ANKA BEKASI', 'ANKA PEMALANG'];
+                
                 const uniqueKonsumen = [...new Set(
                     data
                         .map(row => row.konsumen)
-                        .filter(k => k && k.trim().length > 0)
+                        .filter(k => k && k.trim().length > 0 && !supplierNames.includes(k.trim().toUpperCase()))
                 )].sort();
                 
                 uniqueKonsumen.forEach(konsumen => {
@@ -911,6 +914,14 @@ async function populateTokoDropdown() {
                     tokoSelect.appendChild(option);
                 });
                 console.log('[Invoice-Filter] ✅ Konsumen dropdown populated with', uniqueKonsumen.length, 'stores from zone:', uniqueKonsumen);
+                
+                // Log any supplier names that slipped through (for debugging)
+                const invalidKonsumen = data
+                    .map(row => row.konsumen)
+                    .filter(k => k && supplierNames.includes(k.trim().toUpperCase()));
+                if (invalidKonsumen.length > 0) {
+                    console.warn('[Invoice-Filter] ⚠️ Found supplier names in konsumen column:', invalidKonsumen);
+                }
             } else {
                 console.warn('[Invoice-Filter] ⚠️ No invoices found for zona_id:', user.zona_id);
             }
