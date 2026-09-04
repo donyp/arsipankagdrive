@@ -3012,6 +3012,20 @@ function setupAdminZonaFilters() {
     if (statPending) statPending.closest('div').style.display = 'none';
     if (statMissing) statMissing.closest('div').style.display = 'none';
     
+    // Hide invoice table filters and show admin_zona filters
+    const invoiceTableSection = document.getElementById('invoiceTableSection');
+    const adminZonaFilterSection = document.getElementById('adminZonaFilterSection');
+    
+    if (invoiceTableSection) {
+        invoiceTableSection.style.display = 'none';
+        console.log('[AdminZonaFilters] ✅ Invoice table section hidden');
+    }
+    
+    if (adminZonaFilterSection) {
+        adminZonaFilterSection.style.display = 'block';
+        console.log('[AdminZonaFilters] ✅ Admin Zona filter section shown');
+    }
+    
     console.log('[AdminZonaFilters] ✅ Admin Zona filters setup complete');
 }
 
@@ -3022,8 +3036,44 @@ function setupRegularFilters() {
     console.log('[RegularFilters] ✅ Regular user filters active');
 }
 
-// Note: The HTML uses input type="month" which automatically handles YYYY-MM format
-// No need to manually populate dropdowns - browser handles it
+// Admin Zona Filter Functions
+async function applyAdminZonaFilters() {
+    const supplier = document.getElementById('filterSupplier')?.value || '';
+    const keterangan = document.getElementById('filterAdminZonaKeterangan')?.value || '';
+    const year = document.getElementById('filterYear')?.value || '';
+    const month = document.getElementById('filterAdminZonaMonth')?.value || '';
+    
+    console.log('[AdminZonaFilter] Applying filters:', { supplier, keterangan, year, month });
+    
+    try {
+        const params = new URLSearchParams();
+        if (supplier) params.append('konsumen', supplier);
+        if (keterangan) params.append('keterangan', keterangan);
+        if (year) params.append('year', year);
+        if (month) params.append('month', month);
+        
+        const url = `/api/invoice/list?${params.toString()}`;
+        console.log('[AdminZonaFilter] Calling:', url);
+        
+        const response = await API.get(url);
+        console.log('[AdminZonaFilter] Response:', response);
+        
+        // Display results - for now just log
+        alert(`Found ${response.count || 0} invoices matching filters`);
+    } catch (err) {
+        console.error('[AdminZonaFilter] Error:', err);
+        alert('Gagal memuat data: ' + err.message);
+    }
+}
+
+function resetAdminZonaFilters() {
+    document.getElementById('filterSupplier').value = '';
+    document.getElementById('filterAdminZonaKeterangan').value = '';
+    document.getElementById('filterYear').value = '';
+    document.getElementById('filterAdminZonaMonth').value = '';
+    
+    console.log('[AdminZonaFilter] Filters reset');
+}
 function populateMonthDropdown() {
     console.log('[PopulateMonth] Month input (type=month) is handled by browser');
     // input type="month" returns value in YYYY-MM format automatically

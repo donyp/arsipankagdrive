@@ -646,8 +646,8 @@
                             </div>
                         </div>
 
-                        <!-- Invoice Table -->
-                        <div style="padding: 10px; overflow-x: auto;">
+                        <!-- Invoice Table - HIDDEN FOR ADMIN_ZONA -->
+                        <div id="invoiceTableSection" style="padding: 10px; overflow-x: auto;">
                             <!-- Filters -->
                             <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
@@ -735,6 +735,69 @@
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <!-- ADMIN_ZONA FILTER SECTION - HIDDEN BY DEFAULT -->
+                        <div id="adminZonaFilterSection" style="display: none; padding: 10px;">
+                            <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                                    <!-- SUPPLIER (Konsumen) filter -->
+                                    <div>
+                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Supplier</label>
+                                        <select id="filterSupplier" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                            <option value="">Semua Supplier</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- KETERANGAN filter -->
+                                    <div>
+                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Keterangan</label>
+                                        <select id="filterAdminZonaKeterangan" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                            <option value="">Semua</option>
+                                            <option value="PPN">PPN</option>
+                                            <option value="NON PPN">NON PPN</option>
+                                            <option value="GUNGGUNG">GUNGGUNG</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- TAHUN filter -->
+                                    <div>
+                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Tahun</label>
+                                        <select id="filterYear" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                            <option value="">Semua Tahun</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- BULAN filter -->
+                                    <div>
+                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Bulan</label>
+                                        <select id="filterAdminZonaMonth" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                            <option value="">Semua Bulan</option>
+                                            <option value="01">Januari</option>
+                                            <option value="02">Februari</option>
+                                            <option value="03">Maret</option>
+                                            <option value="04">April</option>
+                                            <option value="05">Mei</option>
+                                            <option value="06">Juni</option>
+                                            <option value="07">Juli</option>
+                                            <option value="08">Agustus</option>
+                                            <option value="09">September</option>
+                                            <option value="10">Oktober</option>
+                                            <option value="11">November</option>
+                                            <option value="12">Desember</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 10px; margin-top: 12px;">
+                                    <button onclick="applyAdminZonaFilters()" style="background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;">
+                                        <i class="fas fa-filter"></i> Terapkan Filter
+                                    </button>
+                                    <button onclick="resetAdminZonaFilters()" style="background: #95a5a6; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;">
+                                        <i class="fas fa-redo"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                            <p style="color: #7f8c8d; font-size: 13px;">Filter by Supplier (Konsumen), Keterangan, Tahun, dan Bulan untuk invoices di zona Anda.</p>
                         </div>
                 </div>
 
