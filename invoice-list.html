@@ -574,49 +574,62 @@
             </div>
 
             <!-- Filters -->
-            <div class="filters-container">
-                <div class="filters-grid">
-                    <div class="filter-group">
-                        <label>Supplier</label>
-                        <select id="filterToko">
-                            <option value="">Semua Supplier</option>
-                            <option value="ANKA BEKASI">ANKA BEKASI</option>
-                            <option value="ANKA PEMALANG">ANKA PEMALANG</option>
+            <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                    <!-- STATUS filter -->
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Status</label>
+                        <select id="filterStatus" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                            <option value="">Semua Status</option>
+                            <option value="Belum Lunas">Belum Lunas</option>
+                            <option value="Lunas">Lunas</option>
                         </select>
                     </div>
-                    <div class="filter-group">
-                        <label>Keterangan</label>
-                        <select id="filterKeterangan">
+                    
+                    <!-- TOKO filter -->
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Toko</label>
+                        <select id="filterToko" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                            <option value="">Semua Toko</option>
+                        </select>
+                    </div>
+                    
+                    <!-- KETERANGAN filter -->
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Keterangan</label>
+                        <select id="filterKeterangan" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
                             <option value="">Semua</option>
                             <option value="PPN">PPN</option>
                             <option value="NON PPN">NON PPN</option>
+                            <option value="GUNGGUNG">GUNGGUNG</option>
                         </select>
                     </div>
-                    <div class="filter-group">
-                        <label>Tahun</label>
-                        <select id="filterYear">
-                            <option value="">Semua Tahun</option>
-                        </select>
+                    
+                    <!-- DARI TANGGAL filter -->
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Dari Tanggal</label>
+                        <input type="date" id="filterDateFrom" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
                     </div>
-                    <div class="filter-group">
-                        <label>Bulan</label>
-                        <select id="filterMonth">
-                            <option value="">Semua Bulan</option>
-                        </select>
+                    
+                    <!-- SAMPAI TANGGAL filter -->
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Sampai Tanggal</label>
+                        <input type="date" id="filterDateTo" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                    </div>
+                    
+                    <!-- CARI filter -->
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Cari (Faktur/Nomor/Kode)</label>
+                        <input type="text" id="filterSearch" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
                     </div>
                 </div>
-                <div class="filter-actions">
-                    <div class="filter-total">
-                        Total: <span id="filterTotal">Rp 0</span>
-                    </div>
-                    <div class="filter-buttons">
-                        <button class="btn-filter" id="btnApplyFilter">
-                            <i class="fas fa-filter"></i> Terapkan Filter
-                        </button>
-                        <button class="btn-reset" id="btnResetFilter">
-                            <i class="fas fa-redo"></i> Reset
-                        </button>
-                    </div>
+                <div style="display: flex; gap: 10px; margin-top: 12px;">
+                    <button id="btnApplyFilter" style="background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;">
+                        <i class="fas fa-filter"></i> Terapkan Filter
+                    </button>
+                    <button id="btnResetFilter" style="background: #95a5a6; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
                 </div>
             </div>
 
