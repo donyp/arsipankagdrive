@@ -2888,30 +2888,38 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function applyInvoiceFilters() {
     try {
+        const status = document.getElementById('filterStatus')?.value || '';
         const toko = document.getElementById('filterToko')?.value || '';
         const keterangan = document.getElementById('filterKeterangan')?.value || '';
-        const monthValue = document.getElementById('filterMonth')?.value || ''; // Format: YYYY-MM from input type="month"
+        const month = document.getElementById('filterMonth')?.value || '';
+        const dateFrom = document.getElementById('filterDateFrom')?.value || '';
+        const dateTo = document.getElementById('filterDateTo')?.value || '';
+        const search = document.getElementById('filterSearch')?.value || '';
         
-        console.log('[Filter] Applying filters:', { toko, keterangan, month: monthValue });
+        console.log('[Filter] Applying filters:', { status, toko, keterangan, month, dateFrom, dateTo, search });
         
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
         
         // Build query string
         const params = new URLSearchParams();
+        if (status) params.append('status', status);
         if (toko) params.append('toko', toko);
         if (keterangan) params.append('keterangan', keterangan);
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+        if (search) params.append('search', search);
         
-        // Handle Month filtering (input type="month" gives YYYY-MM format)
-        if (monthValue) {
+        // Handle Month filtering for admin_zona (input type="month" gives YYYY-MM format)
+        if (month) {
             // monthValue is in format YYYY-MM
-            const [year, month] = monthValue.split('-');
-            const dateFrom = `${year}-${month}-01`;
-            const dateToObj = new Date(year, parseInt(month), 0);
-            const dateTo = `${year}-${month}-${dateToObj.getDate()}`;
-            params.append('date_from', dateFrom);
-            params.append('date_to', dateTo);
-            console.log('[Filter] Filtering by month:', { monthValue, dateFrom, dateTo });
+            const [year, monthNum] = month.split('-');
+            const dateFromMonthValue = `${year}-${monthNum}-01`;
+            const dateToObj = new Date(year, parseInt(monthNum), 0);
+            const dateToMonthValue = `${year}-${monthNum}-${dateToObj.getDate()}`;
+            params.append('date_from', dateFromMonthValue);
+            params.append('date_to', dateToMonthValue);
+            console.log('[Filter] Filtering by month:', { month, dateFromMonthValue, dateToMonthValue });
         }
         
         params.append('limit', INVOICE_PAGE_SIZE);
@@ -2950,13 +2958,21 @@ async function applyInvoiceFilters() {
 
 function resetInvoiceFilters() {
     console.log('[Filter] Resetting filters');
+    const filterStatus = document.getElementById('filterStatus');
     const filterToko = document.getElementById('filterToko');
     const filterKeterangan = document.getElementById('filterKeterangan');
     const filterMonth = document.getElementById('filterMonth');
+    const filterDateFrom = document.getElementById('filterDateFrom');
+    const filterDateTo = document.getElementById('filterDateTo');
+    const filterSearch = document.getElementById('filterSearch');
     
+    if (filterStatus) filterStatus.value = '';
     if (filterToko) filterToko.value = '';
     if (filterKeterangan) filterKeterangan.value = '';
     if (filterMonth) filterMonth.value = '';
+    if (filterDateFrom) filterDateFrom.value = '';
+    if (filterDateTo) filterDateTo.value = '';
+    if (filterSearch) filterSearch.value = '';
     
     loadInvoicesInDashboard(1);
 }
@@ -2965,7 +2981,7 @@ function resetInvoiceFilters() {
 function setupAdminZonaFilters() {
     console.log('[AdminZonaFilters] Setting up admin zona specific filters');
     
-    // Hide ALL stat cards for admin zona
+    // Hide stats for admin zona
     const statTotal = document.getElementById('statTotal');
     const statUploaded = document.getElementById('statUploaded');
     const statPending = document.getElementById('statPending');
@@ -2976,14 +2992,40 @@ function setupAdminZonaFilters() {
     if (statPending) statPending.closest('div').style.display = 'none';
     if (statMissing) statMissing.closest('div').style.display = 'none';
     
+    // Hide extra filters for admin_zona (show only Toko, Keterangan, Month)
+    const filterStatusGroup = document.getElementById('filterStatusGroup');
+    const filterDateFromGroup = document.getElementById('filterDateFromGroup');
+    const filterDateToGroup = document.getElementById('filterDateToGroup');
+    const filterSearchGroup = document.getElementById('filterSearchGroup');
+    const filterMonthGroup = document.getElementById('filterMonthGroup');
+    
+    if (filterStatusGroup) filterStatusGroup.style.display = 'none';
+    if (filterDateFromGroup) filterDateFromGroup.style.display = 'none';
+    if (filterDateToGroup) filterDateToGroup.style.display = 'none';
+    if (filterSearchGroup) filterSearchGroup.style.display = 'none';
+    if (filterMonthGroup) filterMonthGroup.style.display = 'block';
+    
     console.log('[AdminZonaFilters] ✅ Admin Zona filters setup complete');
 }
 
-// Setup non-admin-zona filters (regular users use default filters)
+// Setup regular filters for super_admin and moderator
 function setupRegularFilters() {
-    console.log('[RegularFilters] Setting up regular user filters - using default');
-    // Regular users (super_admin, moderator) use all available filters as-is
-    console.log('[RegularFilters] ✅ Regular filters active');
+    console.log('[RegularFilters] Setting up regular user filters (super_admin/moderator)');
+    
+    // Show extra filters for super_admin/moderator
+    const filterStatusGroup = document.getElementById('filterStatusGroup');
+    const filterDateFromGroup = document.getElementById('filterDateFromGroup');
+    const filterDateToGroup = document.getElementById('filterDateToGroup');
+    const filterSearchGroup = document.getElementById('filterSearchGroup');
+    const filterMonthGroup = document.getElementById('filterMonthGroup');
+    
+    if (filterStatusGroup) filterStatusGroup.style.display = 'block';
+    if (filterDateFromGroup) filterDateFromGroup.style.display = 'block';
+    if (filterDateToGroup) filterDateToGroup.style.display = 'block';
+    if (filterSearchGroup) filterSearchGroup.style.display = 'block';
+    if (filterMonthGroup) filterMonthGroup.style.display = 'none';
+    
+    console.log('[RegularFilters] ✅ Regular user filters setup complete');
 }
 
 // Note: The HTML uses input type="month" which automatically handles YYYY-MM format
