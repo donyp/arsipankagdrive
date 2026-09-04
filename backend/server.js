@@ -3191,6 +3191,62 @@ app.post('/api/users', authenticateToken, requirePermission('manage_users'), asy
     }
 });
 
+// POST /api/admin/fix-admin-zona-zona-id - Fix admin_zona users with missing zona_id
+app.post('/api/admin/fix-admin-zona-zona-id', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
+    try {
+        console.log('[ADMIN] Fixing admin_zona users with missing zona_id...');
+        
+        // Get all admin_zona users with NULL zona_id
+        const { data: affectedUsers, error: selectError } = await supabase
+            .from('users')
+            .select('id, email, role, zona_id')
+            .eq('role', 'admin_zona')
+            .is('zona_id', null);
+        
+        if (selectError) throw selectError;
+        
+        if (!affectedUsers || affectedUsers.length === 0) {
+            return res.json({ success: true, message: 'No admin_zona users with NULL zona_id', count: 0 });
+        }
+        
+        // For each admin_zona user, try to extract zona number from email
+        const updates = affectedUsers.map(user => {
+            // Try to extract zona number from email patterns like:
+            // admin_zona_1, zone_1, zona1, etc
+            const match = user.email.match(/(\d+)/);
+            const zonaId = match ? parseInt(match[1]) : 1; // Default to zona 1
+            
+            return { id: user.id, email: user.email, zonaId };
+        });
+        
+        console.log('[ADMIN] Updates to apply:', updates);
+        
+        // Apply updates
+        for (const update of updates) {
+            const { error: updateError } = await supabase
+                .from('users')
+                .update({ zona_id: update.zonaId })
+                .eq('id', update.id);
+            
+            if (updateError) {
+                console.error(`[ADMIN] Failed to update user ${update.email}:`, updateError);
+            } else {
+                console.log(`[ADMIN] Updated ${update.email} -> zona_id: ${update.zonaId}`);
+            }
+        }
+        
+        res.json({
+            success: true,
+            message: `Fixed ${updates.length} admin_zona users`,
+            count: updates.length,
+            updates: updates
+        });
+    } catch (err) {
+        console.error('[ADMIN] Fix admin_zona error:', err);
+        res.status(500).json({ error: 'Failed to fix admin_zona users: ' + err.message });
+    }
+});
+
 // PUT /api/users/:id Ã¢â‚¬â€ update user
 app.put('/api/users/:id', authenticateToken, requirePermission('manage_users'), async (req, res) => {
     try {
