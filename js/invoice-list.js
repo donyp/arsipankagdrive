@@ -1127,9 +1127,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Build query
             let query = supabase.from('invoice_file_list').select('*');
             
+            // Filter by zona if admin_zona
+            if (window.currentUser && window.currentUser.role === 'admin_zona' && window.currentUser.zona_id) {
+                query = query.eq('zona_id', window.currentUser.zona_id);
+                console.log('[Invoice-Filter] Admin zona detected - filtering by zona_id:', window.currentUser.zona_id);
+            }
+            
             if (status) query = query.eq('status', status);
             if (supplier) query = query.eq('supplier', supplier);
-            if (toko) query = query.eq('toko', toko);
+            if (toko) {
+                query = query.eq('toko', toko);
+                console.log('[Invoice-Filter] Filtering by toko:', toko);
+            }
             if (keterangan) query = query.eq('keterangan', keterangan);
             if (search) {
                 query = query.or(`faktur.ilike.%${search}%,konsumen.ilike.%${search}%`);
@@ -1177,6 +1186,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error('[Invoice-Filter] Error:', error);
                 alert('Error applying filter');
                 return;
+            }
+            
+            // Check if toko was selected but no data found
+            if (toko && (!data || data.length === 0)) {
+                console.warn('[Invoice-Filter] ⚠️ Toko selected but no data found:', toko);
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Tidak Ada Data',
+                    text: `Tidak ada faktur untuk toko "${toko}". Silakan pilih toko lain atau upload data terlebih dahulu.`,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3498db'
+                });
             }
             
             // Fade out animation
