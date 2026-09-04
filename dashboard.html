@@ -765,6 +765,7 @@
             try {
                 // Wait for auth
                 const user = await initAuth();
+                console.log('[Dashboard] User loaded:', user?.role, user?.zona_id);
                 if (!user) return;
 
                 // Set current date/time greeting
@@ -772,6 +773,7 @@
 
                 // Determine which invoice list file to load based on user role
                 const invoiceFile = (user.role === 'admin_zona') ? 'invoice-list.html' : 'invoice-list-admin.html';
+                console.log('[Dashboard] Loading invoice file:', invoiceFile, 'for role:', user.role);
 
                 // Try to load invoice list HTML content if it exists
                 try {
