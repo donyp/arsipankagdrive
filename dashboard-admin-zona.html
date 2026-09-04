@@ -268,6 +268,12 @@
             <!-- Filters -->
             <div class="filter-section">
                 <div class="filter-grid">
+                    <!-- Search Faktur/Konsumen -->
+                    <div class="filter-group">
+                        <label for="filterSearch">Cari Faktur/Konsumen</label>
+                        <input type="text" id="filterSearch" placeholder="Cari faktur atau konsumen...">
+                    </div>
+
                     <!-- Supplier -->
                     <div class="filter-group">
                         <label for="filterSupplier">Supplier (Konsumen)</label>
@@ -389,40 +395,70 @@
             document.getElementById('user-name').textContent = user.email || 'User';
             document.getElementById('user-zona').textContent = `Zona: ${user.zona_kode || user.zona_id}`;
 
-            // Populate year dropdown
-            const currentYear = new Date().getFullYear();
-            const yearSelect = document.getElementById('filterYear');
-            for (let i = currentYear; i >= currentYear - 5; i--) {
-                const opt = document.createElement('option');
-                opt.value = i;
-                opt.textContent = i;
-                yearSelect.appendChild(opt);
-            }
-
-            // Load data
-            await loadSuppliers();
+            // Load all data first to populate filters
+            await loadAllInvoices();
+            
+            // Load filtered data
             await loadInvoices();
         });
 
-        async function loadSuppliers() {
+        // Load ALL invoices to get unique years and months
+        async function loadAllInvoices() {
             try {
                 const res = await API.get('/api/invoice/list?limit=10000&offset=0');
                 const invoices = res.data || [];
                 
-                // Get unique suppliers
-                const suppliers = [...new Set(invoices.map(inv => inv.konsumen).filter(Boolean))].sort();
+                // Extract unique years and months from data
+                const yearsSet = new Set();
+                const monthsSet = new Set();
                 
-                const select = document.getElementById('filterSupplier');
+                invoices.forEach(inv => {
+                    if (inv.tanggal) {
+                        const date = new Date(inv.tanggal);
+                        yearsSet.add(date.getFullYear().toString());
+                        monthsSet.add(String(date.getMonth() + 1).padStart(2, '0'));
+                    }
+                });
+
+                // Populate year dropdown with actual years from data
+                const yearSelect = document.getElementById('filterYear');
+                const years = Array.from(yearsSet).sort((a, b) => b - a); // Newest first
+                years.forEach(year => {
+                    const opt = document.createElement('option');
+                    opt.value = year;
+                    opt.textContent = year;
+                    yearSelect.appendChild(opt);
+                });
+
+                // Populate month dropdown (only months that have data)
+                const monthSelect = document.getElementById('filterMonth');
+                const monthNames = {
+                    '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
+                    '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
+                    '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
+                };
+                
+                const months = Array.from(monthsSet).sort();
+                months.forEach(month => {
+                    const opt = document.createElement('option');
+                    opt.value = month;
+                    opt.textContent = monthNames[month];
+                    monthSelect.appendChild(opt);
+                });
+
+                // Get unique suppliers and populate dropdown
+                const suppliers = [...new Set(invoices.map(inv => inv.konsumen).filter(Boolean))].sort();
+                const supplierSelect = document.getElementById('filterSupplier');
                 suppliers.forEach(supplier => {
                     const opt = document.createElement('option');
                     opt.value = supplier;
                     opt.textContent = supplier;
-                    select.appendChild(opt);
+                    supplierSelect.appendChild(opt);
                 });
 
-                console.log('[AdminZona] Loaded', suppliers.length, 'unique suppliers');
+                console.log('[AdminZona] Loaded', invoices.length, 'invoices - Years:', years.length, 'Months:', months.length, 'Suppliers:', suppliers.length);
             } catch (err) {
-                console.error('[AdminZona] Error loading suppliers:', err);
+                console.error('[AdminZona] Error loading all invoices:', err);
             }
         }
 
@@ -438,9 +474,11 @@
                 const keterangan = document.getElementById('filterKeterangan')?.value;
                 const year = document.getElementById('filterYear')?.value;
                 const month = document.getElementById('filterMonth')?.value;
+                const search = document.getElementById('filterSearch')?.value;
 
                 if (supplier) params.append('konsumen', supplier);
                 if (keterangan) params.append('keterangan', keterangan);
+                if (search) params.append('search', search); // Add search parameter
 
                 const url = `/api/invoice/list?${params.toString()}`;
                 console.log('[AdminZona] Loading from:', url);
@@ -534,6 +572,7 @@
         }
 
         function resetFilters() {
+            document.getElementById('filterSearch').value = '';
             document.getElementById('filterSupplier').value = '';
             document.getElementById('filterKeterangan').value = '';
             document.getElementById('filterYear').value = '';
