@@ -391,8 +391,8 @@
             try {
                 await loginWithCredentials(username, password);
                 
-                // Show success notification - longer duration with button
-                await Swal.fire({
+                // Show success notification - wait for user to click or timer
+                const result = await Swal.fire({
                     icon: 'success',
                     title: 'Login Berhasil!',
                     text: 'Anda akan diarahkan ke dashboard...',
@@ -402,14 +402,9 @@
                     timer: 4000,
                     timerProgressBar: true,
                     allowOutsideClick: false,
-                    didOpen: (modal) => {
-                        // Auto-close when timer runs out
-                        const observer = new MutationObserver(() => {
-                            if (!document.body.contains(modal)) {
-                                observer.disconnect();
-                            }
-                        });
-                        observer.observe(document.body, { childList: true, subtree: true });
+                    willClose: () => {
+                        // Auto-redirect after popup closes (either by button click or timer)
+                        window.location.href = 'dashboard.html';
                     }
                 });
                 

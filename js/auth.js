@@ -112,8 +112,9 @@ async function loginWithCredentials(email, password) {
         // Non-blocking - continue login even if session creation fails
     }
 
-    // Redirect to dashboard
-    window.location.href = 'dashboard.html';
+    // DON'T redirect here - let the caller handle it after showing notification
+    // Return success so caller knows to show notification
+    return { success: true, token, user };
 }
 
 // ---- Logout ----
