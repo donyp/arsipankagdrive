@@ -873,13 +873,14 @@ async function populateTokoDropdown() {
         const isAdminZona = window.currentUser && window.currentUser.role === 'admin_zona';
         
         if (isAdminZona && window.currentUser.zona_id) {
-            // For admin_zona: Get toko from zona_toko_mapping
+            // For admin_zona: Get toko directly from zona_toko_mapping
             console.log('[Invoice-Filter] Admin zona detected, fetching tokos for zona_id:', window.currentUser.zona_id);
             
             let { data, error } = await supabase
                 .from('zona_toko_mapping')
                 .select('toko_id, toko_name')
-                .eq('zona_id', window.currentUser.zona_id);
+                .eq('zona_id', window.currentUser.zona_id)
+                .order('toko_name', { ascending: true });
             
             if (error) {
                 console.error('[Invoice-Filter] Error fetching zona tokos:', error);
@@ -893,7 +894,9 @@ async function populateTokoDropdown() {
                     option.textContent = row.toko_name;
                     tokoSelect.appendChild(option);
                 });
-                console.log('[Invoice-Filter] ✅ Toko dropdown populated with', data.length, 'tokos from zone');
+                console.log('[Invoice-Filter] ✅ Toko dropdown populated with', data.length, 'tokos from zone:', data.map(d => d.toko_name));
+            } else {
+                console.warn('[Invoice-Filter] ⚠️ No tokos found for this zona');
             }
         } else {
             // For super_admin/moderator: Get distinct toko from invoice_file_list
