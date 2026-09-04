@@ -20,6 +20,23 @@ async function initPdfParse() {
 
 module.exports = (app, supabase) => {
     // ============================================
+    // GET /api/invoice/rename-faktur/status
+    // Check if PDF processing is ready
+    // ============================================
+    app.get('/api/invoice/rename-faktur/status', (req, res) => {
+        try {
+            require('pdf-parse');
+            res.json({ ready: true, message: 'PDF processing ready' });
+        } catch (err) {
+            res.json({ 
+                ready: false, 
+                message: 'PDF processing not ready - npm install in progress',
+                error: err.message 
+            });
+        }
+    });
+
+    // ============================================
     // POST /api/invoice/rename-faktur
     // Extract data from PDF and prepare renamed file
     // ============================================
