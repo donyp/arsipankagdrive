@@ -3247,6 +3247,77 @@ app.post('/api/admin/fix-admin-zona-zona-id', async (req, res) => {
     }
 });
 
+// POST /api/admin/migrate-zona-codes - Update zona codes from zona-XX to simplified format
+app.post('/api/admin/migrate-zona-codes', async (req, res) => {
+    try {
+        console.log('[ADMIN] Migrating zona codes...');
+        
+        const zoneMapping = {
+            'zona-01': '1',
+            'zona-02': '2',
+            'zona-03a': '3a',
+            'zona-03b': '3b',
+            'zona-04': '4',
+            'zona-05': '5',
+            'zona-06a': '6a',
+            'zona-06b': '6b',
+            'zona-07': '7',
+            'zona-08': '8',
+            'zona-09': '9',
+            'zona-10': '10',
+            'zona-11': '11',
+            'zona-12': '12',
+            'zona-13': '13',
+            'zona-14': '14',
+            'zona-15': '15',
+            'zona-16': '16',
+            'zona-17': '17'
+        };
+        
+        // Get all zonas with old codes
+        const { data: zonas, error: selectError } = await supabase
+            .from('zonas')
+            .select('id, kode, nama')
+            .like('kode', 'zona-%');
+        
+        if (selectError) throw selectError;
+        
+        if (!zonas || zonas.length === 0) {
+            return res.json({ success: true, message: 'No zonas with old codes found', count: 0 });
+        }
+        
+        console.log(`[ADMIN] Found ${zonas.length} zonas to migrate`);
+        
+        const updates = [];
+        for (const zona of zonas) {
+            const newKode = zoneMapping[zona.kode];
+            if (newKode) {
+                const { error: updateError } = await supabase
+                    .from('zonas')
+                    .update({ kode: newKode })
+                    .eq('id', zona.id);
+                
+                if (updateError) {
+                    console.error(`[ADMIN] Failed to update zona ${zona.kode}:`, updateError);
+                } else {
+                    console.log(`[ADMIN] Updated zona: ${zona.kode} -> ${newKode}`);
+                    updates.push({ old: zona.kode, new: newKode, nama: zona.nama });
+                }
+            }
+        }
+        
+        res.json({
+            success: true,
+            message: `Migrated ${updates.length} zona codes`,
+            count: updates.length,
+            updates: updates
+        });
+    } catch (err) {
+        console.error('[ADMIN] Migrate zona codes error:', err);
+        res.status(500).json({ error: 'Failed to migrate zona codes: ' + err.message });
+    }
+});
+
 // PUT /api/users/:id Ã¢â‚¬â€ update user
 app.put('/api/users/:id', authenticateToken, requirePermission('manage_users'), async (req, res) => {
     try {
