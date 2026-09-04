@@ -189,11 +189,8 @@ function showPreview() {
     // Render preview immediately WITHOUT zona (non-blocking)
     tbody.innerHTML = preview.map(inv => `
         <tr>
-            <td><span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">Belum Lunas</span></td>
             <td>${inv.tanggal || '-'}</td>
             <td><strong>${inv.faktur || '-'}</strong></td>
-            <td>${inv.metode_bayar || '-'}</td>
-            <td>${inv.jenis_transaksi || 'Jual'}</td>
             <td>${inv.konsumen || '-'}</td>
             <td>${inv.toko || '-'}</td>
             <td data-konsumen="${inv.konsumen || ''}">⏳ Loading...</td>
@@ -205,7 +202,13 @@ function showPreview() {
     // Fetch zona data in background (don't block render)
     setTimeout(async () => {
         try {
-            const { data: tokoData } = await supabase
+            const client = window.supabase;
+            if (!client) {
+                console.warn('[Preview] window.supabase not available');
+                return;
+            }
+            
+            const { data: tokoData } = await client
                 .from('toko')
                 .select('nama, zona_id, zonas(kode, nama)');
             
