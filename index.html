@@ -391,19 +391,16 @@
             try {
                 await loginWithCredentials(username, password);
                 
-                // Show success notification - wait for user to click or timer
-                const result = await Swal.fire({
+                // Show success notification - auto redirect after 2.5 seconds
+                await Swal.fire({
                     icon: 'success',
                     title: 'Login Berhasil!',
                     text: 'Anda akan diarahkan ke dashboard...',
-                    showConfirmButton: true,
-                    confirmButtonText: 'Lanjut ke Dashboard',
-                    confirmButtonColor: '#10b981',
-                    timer: 4000,
+                    showConfirmButton: false,
+                    timer: 2500,
                     timerProgressBar: true,
                     allowOutsideClick: false,
                     willClose: () => {
-                        // Auto-redirect after popup closes (either by button click or timer)
                         window.location.href = 'dashboard.html';
                     }
                 });
