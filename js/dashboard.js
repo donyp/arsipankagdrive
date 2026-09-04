@@ -3010,6 +3010,13 @@ function setupAdminZonaFilters() {
     if (statPending) statPending.closest('div').style.display = 'none';
     if (statMissing) statMissing.closest('div').style.display = 'none';
     
+    // Hide toko dropdown for admin_zona users - use search instead
+    const tokoFilterContainer = document.getElementById('tokoFilterContainer');
+    if (tokoFilterContainer) {
+        tokoFilterContainer.style.display = 'none';
+        console.log('[AdminZonaFilters] ✅ Toko dropdown hidden - admin_zona will use search/date filters');
+    }
+    
     console.log('[AdminZonaFilters] ✅ Admin Zona filters setup complete');
 }
 
