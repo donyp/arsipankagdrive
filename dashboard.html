@@ -775,56 +775,75 @@
                 // Set current date/time greeting
                 setCurrentDate();
 
-                // Load invoice list HTML content
-                const response = await fetch('invoice-list.html');
-                const html = await response.text();
-                
-                // Extract main content from invoice-list.html
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                
-                // Get the invoice container with header and all content
-                const invoiceContent = doc.querySelector('.invoice-container');
-                if (invoiceContent) {
-                    const container = document.getElementById('invoice-content-container');
-                    
-                    // Load entire invoice container content (including header with buttons)
-                    container.innerHTML = invoiceContent.innerHTML;
-                    
-                    // Extract and apply styles from invoice-list.html
-                    const styleElements = doc.querySelectorAll('style');
-                    styleElements.forEach(style => {
-                        if (style.textContent.includes('.invoice-container') || 
-                            style.textContent.includes('.stat-card') ||
-                            style.textContent.includes('.filters-container')) {
-                            const newStyle = document.createElement('style');
-                            newStyle.textContent = style.textContent;
-                            document.head.appendChild(newStyle);
+                // Try to load invoice list HTML content if it exists
+                try {
+                    const response = await fetch('invoice-list.html');
+                    if (response.ok) {
+                        const html = await response.text();
+                        
+                        // Extract main content from invoice-list.html
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Get the invoice container with header and all content
+                        const invoiceContent = doc.querySelector('.invoice-container');
+                        if (invoiceContent) {
+                            const container = document.getElementById('invoice-content-container');
+                            
+                            // Load entire invoice container content (including header with buttons)
+                            container.innerHTML = invoiceContent.innerHTML;
+                            
+                            // Extract and apply styles from invoice-list.html
+                            const styleElements = doc.querySelectorAll('style');
+                            styleElements.forEach(style => {
+                                if (style.textContent.includes('.invoice-container') || 
+                                    style.textContent.includes('.stat-card') ||
+                                    style.textContent.includes('.filters-container')) {
+                                    const newStyle = document.createElement('style');
+                                    newStyle.textContent = style.textContent;
+                                    document.head.appendChild(newStyle);
+                                }
+                            });
+                            
+                            // Extract and inject the upload modal
+                            const uploadModal = doc.getElementById('uploadExcelModal');
+                            if (uploadModal) {
+                                const modalClone = uploadModal.cloneNode(true);
+                                document.body.appendChild(modalClone);
+                                console.log('[Dashboard] ✅ Upload modal injected');
+                            } else {
+                                console.warn('[Dashboard] ⚠️ Upload modal not found in invoice-list.html');
+                            }
+                            
+                            // Reinit invoice list functions
+                            if (typeof init === 'function') {
+                                init();
+                            }
+                            
+                            // Setup modal after a small delay
+                            setTimeout(() => {
+                                if (typeof setupExcelUploadModal === 'function') {
+                                    setupExcelUploadModal();
+                                }
+                            }, 100);
                         }
-                    });
-                    
-                    // Extract and inject the upload modal
-                    const uploadModal = doc.getElementById('uploadExcelModal');
-                    if (uploadModal) {
-                        const modalClone = uploadModal.cloneNode(true);
-                        document.body.appendChild(modalClone);
-                        console.log('[Dashboard] ✅ Upload modal injected');
-                    } else {
-                        console.warn('[Dashboard] ⚠️ Upload modal not found in invoice-list.html');
                     }
-                    
-                    // Reinit invoice list functions
-                    if (typeof init === 'function') {
-                        init();
-                    }
-                    
-                    // Setup modal after a small delay
-                    setTimeout(() => {
-                        if (typeof setupExcelUploadModal === 'function') {
-                            setupExcelUploadModal();
-                        }
-                    }, 100);
+                } catch (invoiceLoadError) {
+                    console.warn('[Dashboard] invoice-list.html not found, using embedded filters');
                 }
+                
+                // Initialize invoice system with role-based filters (ALWAYS call this)
+                setTimeout(() => {
+                    console.log('[Dashboard] Calling initInvoiceSystem after DOM loaded');
+                    if (typeof initInvoiceSystem === 'function') {
+                        initInvoiceSystem();
+                    }
+                    // Load first page of invoices
+                    if (typeof loadInvoicesInDashboard === 'function') {
+                        loadInvoicesInDashboard(1);
+                    }
+                }, 200);
+                
             } catch (error) {
                 console.error('Error loading invoice content:', error);
             }
