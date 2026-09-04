@@ -85,24 +85,32 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Express-fileupload middleware with caching
+// Express-fileupload middleware
 let fileUploadMiddleware = null;
+let fileUploadError = null;
+
+try {
+    const fileUpload = require('express-fileupload');
+    fileUploadMiddleware = fileUpload({
+        useTempFiles: true,
+        tempFileDir: '/tmp/',
+        fileSize: 50 * 1024 * 1024, // 50MB max
+    });
+    console.log('[FileUpload] Module loaded successfully');
+} catch (err) {
+    fileUploadError = err.message;
+    console.error('[FileUpload] Failed to load:', fileUploadError);
+}
+
 app.use((req, res, next) => {
-    if (!fileUploadMiddleware) {
-        try {
-            const fileUpload = require('express-fileupload');
-            fileUploadMiddleware = fileUpload({
-                useTempFiles: true,
-                tempFileDir: '/tmp/',
-                fileSize: 50 * 1024 * 1024, // 50MB max
-            });
-            console.log('[FileUpload] Middleware initialized');
-        } catch (err) {
-            console.error('[FileUpload] Failed to load:', err.message);
-            return res.status(503).json({ error: 'File upload service not ready' });
-        }
+    if (fileUploadError && req.path === '/api/invoice/rename-faktur') {
+        return res.status(503).json({ error: 'File upload service not ready: ' + fileUploadError });
     }
-    fileUploadMiddleware(req, res, next);
+    if (fileUploadMiddleware) {
+        fileUploadMiddleware(req, res, next);
+    } else {
+        next();
+    }
 });
 
 // Serve Static Frontend from root

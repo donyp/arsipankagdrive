@@ -23,7 +23,12 @@ module.exports = (app, supabase) => {
     // ============================================
     app.post('/api/invoice/rename-faktur', async (req, res) => {
         try {
+            console.log('[Rename Faktur] POST request received');
+            console.log('[Rename Faktur] req.files:', req.files ? Object.keys(req.files) : 'undefined');
+            console.log('[Rename Faktur] req.body:', Object.keys(req.body || {}));
+
             if (!req.files || !req.files.file) {
+                console.error('[Rename Faktur] Missing file in request');
                 return res.status(400).json({ error: 'File PDF wajib diupload' });
             }
 
@@ -132,9 +137,10 @@ module.exports = (app, supabase) => {
             });
 
         } catch (err) {
-            console.error('[Rename Faktur] Error:', err.message);
+            console.error('[Rename Faktur] Error:', err.message, err.stack);
             res.status(500).json({
-                error: 'Gagal memproses PDF: ' + err.message
+                error: 'Gagal memproses PDF: ' + err.message,
+                details: process.env.NODE_ENV === 'production' ? undefined : err.stack
             });
         }
     });
