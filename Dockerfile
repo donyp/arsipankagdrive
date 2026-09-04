@@ -13,9 +13,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Copy backend dependencies first (better layer caching)
-# Last updated: 2026-09-02 14:55:27 - Added uuid and xlsx dependencies
+# Last updated: 2026-09-04 - Added root package.json for pdf-parse
+COPY package*.json ./
 COPY backend/package*.json ./backend/
-RUN cd backend && npm install --production && npm cache clean --force
+RUN npm install --production && cd backend && npm install --production && npm cache clean --force
 
 # Copy frontend files
 COPY css ./css
