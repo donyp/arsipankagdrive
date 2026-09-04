@@ -255,20 +255,20 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         }
                     }
                     
-                    // Look up zona_id from toko name
+                    // Look up zona_id from konsumen name (actual store name in toko table)
                     let zona_id = null;
-                    if (item.toko) {
+                    if (item.konsumen) {
                         const { data: tokoData } = await supabase
                             .from('toko')
                             .select('zona_id')
-                            .eq('nama', item.toko)
+                            .eq('nama', item.konsumen)
                             .maybeSingle();
                         
                         if (tokoData && tokoData.zona_id) {
                             zona_id = tokoData.zona_id;
-                            console.log(`[Invoice API] Mapped toko "${item.toko}" to zona_id ${zona_id}`);
+                            console.log(`[Invoice API] Mapped konsumen "${item.konsumen}" to zona_id ${zona_id}`);
                         } else {
-                            console.warn(`[Invoice API] Could not find zona_id for toko: ${item.toko}`);
+                            console.warn(`[Invoice API] Could not find zona_id for konsumen: ${item.konsumen}`);
                         }
                     }
                     
