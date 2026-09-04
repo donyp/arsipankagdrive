@@ -4,14 +4,15 @@
 let pdfParse = null;
 const busboy = require('busboy');
 
-// Lazy-load pdf-parse only if needed
+// Lazy-load pdf-parse with better error handling
 async function initPdfParse() {
     if (!pdfParse) {
         try {
             pdfParse = require('pdf-parse');
+            console.log('[Rename Faktur] pdf-parse loaded successfully');
         } catch (err) {
             console.error('[Rename Faktur] pdf-parse not installed:', err.message);
-            throw err;
+            throw new Error(`PDF parsing library not ready. Please wait while npm installs dependencies. Error: ${err.message}`);
         }
     }
     return pdfParse;

@@ -183,6 +183,16 @@ async function processFile(file) {
                 error: result.error,
                 details: result
             });
+            
+            // Check if it's a "not ready yet" error
+            if (response.status === 500 && result.error && result.error.includes('not ready')) {
+                return {
+                    success: false,
+                    originalName: file.name,
+                    error: 'Sistem masih sedang diinisialisasi... Silakan coba lagi dalam beberapa detik'
+                };
+            }
+            
             return {
                 success: false,
                 originalName: file.name,
