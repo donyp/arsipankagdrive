@@ -391,14 +391,26 @@
             try {
                 await loginWithCredentials(username, password);
                 
-                // Show success notification
+                // Show success notification - longer duration with button
                 await Swal.fire({
                     icon: 'success',
                     title: 'Login Berhasil!',
                     text: 'Anda akan diarahkan ke dashboard...',
-                    showConfirmButton: false,
-                    timer: 1500,
-                    timerProgressBar: true
+                    showConfirmButton: true,
+                    confirmButtonText: 'Lanjut ke Dashboard',
+                    confirmButtonColor: '#10b981',
+                    timer: 4000,
+                    timerProgressBar: true,
+                    allowOutsideClick: false,
+                    didOpen: (modal) => {
+                        // Auto-close when timer runs out
+                        const observer = new MutationObserver(() => {
+                            if (!document.body.contains(modal)) {
+                                observer.disconnect();
+                            }
+                        });
+                        observer.observe(document.body, { childList: true, subtree: true });
+                    }
                 });
                 
             } catch (err) {
@@ -420,8 +432,9 @@
                     icon: 'error',
                     title: errorTitle,
                     text: errorMessage,
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#3b82f6'
+                    confirmButtonText: 'OK, Coba Lagi',
+                    confirmButtonColor: '#ef4444',
+                    allowOutsideClick: false
                 });
             }
         });
