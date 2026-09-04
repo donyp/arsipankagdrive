@@ -770,13 +770,16 @@
                 // Set current date/time greeting
                 setCurrentDate();
 
+                // Determine which invoice list file to load based on user role
+                const invoiceFile = (user.role === 'admin_zona') ? 'invoice-list.html' : 'invoice-list-admin.html';
+
                 // Try to load invoice list HTML content if it exists
                 try {
-                    const response = await fetch('invoice-list.html');
+                    const response = await fetch(invoiceFile);
                     if (response.ok) {
                         const html = await response.text();
                         
-                        // Extract main content from invoice-list.html
+                        // Extract main content from invoice file
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, 'text/html');
                         
@@ -788,7 +791,7 @@
                             // Load entire invoice container content (including header with buttons)
                             container.innerHTML = invoiceContent.innerHTML;
                             
-                            // Extract and apply styles from invoice-list.html
+                            // Extract and apply styles from invoice file
                             const styleElements = doc.querySelectorAll('style');
                             styleElements.forEach(style => {
                                 if (style.textContent.includes('.invoice-container') || 
@@ -807,7 +810,7 @@
                                 document.body.appendChild(modalClone);
                                 console.log('[Dashboard] ✅ Upload modal injected');
                             } else {
-                                console.warn('[Dashboard] ⚠️ Upload modal not found in invoice-list.html');
+                                console.warn('[Dashboard] ⚠️ Upload modal not found');
                             }
                             
                             // Reinit invoice list functions

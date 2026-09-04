@@ -416,7 +416,7 @@ function renderInvoiceTable(invoices = null) {
         return `
         <tr>
             <td style="font-size: 15px !important; font-weight: 900 !important;">
-                <span style="color: ${statusClass === 'uploaded' ? '#27ae60' : statusClass === 'missing' ? '#e74c3c' : '#f39c12'} !important;">
+                <span style="color: #000000 !important; background-color: ${statusClass === 'uploaded' ? '#d4edda' : statusClass === 'missing' ? '#f8d7da' : '#fff3cd'} !important; padding: 6px 12px !important; border-radius: 4px !important; display: inline-block !important; margin: 0 !important;">
                     ${statusText}
                 </span>
             </td>
