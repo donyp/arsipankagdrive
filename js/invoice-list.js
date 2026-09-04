@@ -887,7 +887,7 @@ async function populateTokoDropdown() {
             // Get distinct konsumen for their zona
             let { data, error } = await supabase
                 .from('invoice_file_list')
-                .select('DISTINCT konsumen')
+                .select('konsumen')
                 .eq('zona_id', user.zona_id)
                 .order('konsumen', { ascending: true });
             
@@ -897,16 +897,22 @@ async function populateTokoDropdown() {
             }
             
             if (data && data.length > 0) {
-                const uniqueKonsumen = [...new Set(data.map(row => row.konsumen).filter(Boolean))].sort();
+                // Extract unique konsumen values
+                const uniqueKonsumen = [...new Set(
+                    data
+                        .map(row => row.konsumen)
+                        .filter(k => k && k.trim().length > 0)
+                )].sort();
+                
                 uniqueKonsumen.forEach(konsumen => {
                     const option = document.createElement('option');
                     option.value = konsumen;
                     option.textContent = konsumen;
                     tokoSelect.appendChild(option);
                 });
-                console.log('[Invoice-Filter] ✅ Toko dropdown populated with', uniqueKonsumen.length, 'stores from zone:', uniqueKonsumen);
+                console.log('[Invoice-Filter] ✅ Konsumen dropdown populated with', uniqueKonsumen.length, 'stores from zone:', uniqueKonsumen);
             } else {
-                console.warn('[Invoice-Filter] ⚠️ No toko found for zona_id:', user.zona_id);
+                console.warn('[Invoice-Filter] ⚠️ No invoices found for zona_id:', user.zona_id);
             }
         } else {
             // For super_admin/moderator: Show TOKO (supplier names)
@@ -922,24 +928,22 @@ async function populateTokoDropdown() {
                 return;
             }
             
-            const tokos = new Set();
-            if (data) {
-                data.forEach(row => {
-                    if (row.toko) {
-                        tokos.add(row.toko);
-                    }
+            // Extract unique toko values
+            if (data && data.length > 0) {
+                const uniqueToko = [...new Set(
+                    data
+                        .map(row => row.toko)
+                        .filter(t => t && t.trim().length > 0)
+                )].sort();
+                
+                uniqueToko.forEach(toko => {
+                    const option = document.createElement('option');
+                    option.value = toko;
+                    option.textContent = toko;
+                    tokoSelect.appendChild(option);
                 });
+                console.log('[Invoice-Filter] ✅ Toko (supplier) dropdown populated with', uniqueToko.length, 'suppliers:', uniqueToko);
             }
-            
-            const sortedTokos = Array.from(tokos).sort();
-            sortedTokos.forEach(toko => {
-                const option = document.createElement('option');
-                option.value = toko;
-                option.textContent = toko;
-                tokoSelect.appendChild(option);
-            });
-            
-            console.log('[Invoice-Filter] ✅ Toko dropdown populated with', sortedTokos.length, 'suppliers:', sortedTokos);
         }
     } catch (err) {
         console.error('[Invoice-Filter] Error in populateTokoDropdown:', err);
