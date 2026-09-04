@@ -186,46 +186,17 @@ function showPreview() {
     const tbody = document.getElementById('previewTable');
     if (!tbody) return;
     
-    // Render preview immediately WITHOUT zona (non-blocking)
+    // Render preview immediately
     tbody.innerHTML = preview.map(inv => `
         <tr>
             <td>${inv.tanggal || '-'}</td>
             <td><strong>${inv.faktur || '-'}</strong></td>
             <td>${inv.konsumen || '-'}</td>
             <td>${inv.toko || '-'}</td>
-            <td data-konsumen="${inv.konsumen || ''}">⏳ Loading...</td>
             <td>Rp ${parseInt(inv.total_jumlah_jual).toLocaleString('id-ID')}</td>
             <td>${inv.keterangan || '-'}</td>
         </tr>
     `).join('');
-    
-    // Fetch zona data in background (don't block render)
-    setTimeout(async () => {
-        try {
-            const client = window.supabase;
-            if (!client) {
-                console.warn('[Preview] window.supabase not available');
-                return;
-            }
-            
-            const { data: tokoData } = await client
-                .from('toko')
-                .select('nama, zona_id, zonas(kode, nama)');
-            
-            if (tokoData) {
-                // Update zona cells
-                tokoData.forEach(t => {
-                    const cells = tbody.querySelectorAll(`[data-konsumen="${t.nama}"]`);
-                    cells.forEach(cell => {
-                        cell.innerHTML = `<strong>${t.zonas?.kode || '?'}</strong><br><span style="font-size: 10px; color: #666;">${t.zonas?.nama || 'Unknown'}</span>`;
-                    });
-                });
-            }
-        } catch (err) {
-            console.warn('[Preview] Zone lookup failed:', err);
-            // Silently fail - keep "Loading..." or let user continue
-        }
-    }, 100);
 }
 
 function goToValidation() {
