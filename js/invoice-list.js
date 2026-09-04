@@ -859,59 +859,85 @@ function formatRupiah(amount) {
 }
 
 // ============================================
-// Populate Year and Month Dropdowns
+// Populate Year and Month Dropdowns from Database
 // ============================================
-function populateYearDropdown() {
+async function populateYearDropdown() {
     const yearSelect = document.getElementById('filterYear');
     if (!yearSelect) {
         console.warn('[Invoice-Filter] filterYear not found');
         return;
     }
     
-    const currentYear = new Date().getFullYear();
-    const startYear = 2020;
-    
-    // Add years from startYear to currentYear
-    for (let year = currentYear; year >= startYear; year--) {
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        yearSelect.appendChild(option);
+    try {
+        // Get distinct years from database
+        let { data, error } = await supabase
+            .from('invoice_file_list')
+            .select('tanggal');
+        
+        if (error) {
+            console.error('[Invoice-Filter] Error fetching years:', error);
+            // Fallback to static years
+            const currentYear = new Date().getFullYear();
+            const startYear = 2020;
+            for (let year = currentYear; year >= startYear; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+            return;
+        }
+        
+        // Extract unique years from dates
+        const years = new Set();
+        if (data) {
+            data.forEach(row => {
+                if (row.tanggal) {
+                    const year = new Date(row.tanggal).getFullYear();
+                    years.add(year);
+                }
+            });
+        }
+        
+        // Sort years descending
+        const sortedYears = Array.from(years).sort((a, b) => b - a);
+        
+        // Add to dropdown
+        sortedYears.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        });
+        
+        console.log('[Invoice-Filter] ✅ Year dropdown populated with years:', sortedYears);
+    } catch (err) {
+        console.error('[Invoice-Filter] Error in populateYearDropdown:', err);
     }
-    
-    console.log('[Invoice-Filter] Year dropdown populated');
 }
 
-function populateMonthDropdown() {
+async function populateMonthDropdown() {
     const monthSelect = document.getElementById('filterMonth');
     if (!monthSelect) {
         console.warn('[Invoice-Filter] filterMonth not found');
         return;
     }
     
-    const months = [
-        { value: '01', label: 'Januari' },
-        { value: '02', label: 'Februari' },
-        { value: '03', label: 'Maret' },
-        { value: '04', label: 'April' },
-        { value: '05', label: 'Mei' },
-        { value: '06', label: 'Juni' },
-        { value: '07', label: 'Juli' },
-        { value: '08', label: 'Agustus' },
-        { value: '09', label: 'September' },
-        { value: '10', label: 'Oktober' },
-        { value: '11', label: 'November' },
-        { value: '12', label: 'Desember' }
+    // Month names in Indonesian
+    const monthNames = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
     
-    months.forEach(month => {
+    // Add all 12 months (these are always available)
+    for (let i = 1; i <= 12; i++) {
         const option = document.createElement('option');
-        option.value = month.value;
-        option.textContent = month.label;
+        option.value = String(i).padStart(2, '0');
+        option.textContent = monthNames[i - 1];
         monthSelect.appendChild(option);
-    });
+    }
     
-    console.log('[Invoice-Filter] Month dropdown populated');
+    console.log('[Invoice-Filter] ✅ Month dropdown populated with 12 months');
 }
 
 // ============================================
