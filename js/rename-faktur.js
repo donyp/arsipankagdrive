@@ -150,29 +150,35 @@ async function processFiles() {
 // ============================================
 async function processFile(file) {
     try {
-        const arrayBuffer = await file.arrayBuffer();
-        const data = new FormData();
-        data.append('file', new Blob([arrayBuffer], { type: 'application/pdf' }));
-        data.append('filename', file.name);
+        const formData = new FormData();
+        formData.append('file', file);
 
-        const response = await API.request('/api/invoice/rename-faktur', {
+        console.log(`[Rename Faktur] Uploading file: ${file.name}, size: ${file.size}`);
+
+        const response = await fetch('/api/invoice/rename-faktur', {
             method: 'POST',
-            body: data,
-            headers: {} // FormData sets its own headers
+            body: formData
+            // NO Content-Type header - browser will set it with boundary
         });
 
-        if (response.success) {
+        const result = await response.json();
+
+        console.log(`[Rename Faktur] Response:`, result);
+
+        if (response.ok && result.success) {
             return {
                 success: true,
                 originalName: file.name,
-                newName: response.newName,
-                fileData: response.fileData // Base64 encoded PDF
+                newName: result.newName,
+                namaToko: result.namaToko,
+                harga: result.harga,
+                ppn: result.ppn
             };
         } else {
             return {
                 success: false,
                 originalName: file.name,
-                error: response.error || 'Gagal memproses file'
+                error: result.error || 'Gagal memproses file'
             };
         }
     } catch (err) {

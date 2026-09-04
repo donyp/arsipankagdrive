@@ -84,6 +84,11 @@ console.log('[CONFIG] Environment configuration loaded.\n');
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(require('express-fileupload')({
+    useTempFiles: true,
+    tempFileDir: '/tmp/',
+    fileSize: 50 * 1024 * 1024, // 50MB max
+}));
 
 // Serve Static Frontend from root
 app.use(express.static(path.join(__dirname, '..')));

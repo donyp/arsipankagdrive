@@ -40,29 +40,62 @@ module.exports = (app, supabase) => {
             const textContent = pdfData.text;
 
             console.log(`[Rename Faktur] PDF text extracted, length: ${textContent.length}`);
+            console.log(`[Rename Faktur] First 500 chars: ${textContent.substring(0, 500)}`);
 
-            // Extract nama toko (Pembeli Barang Kena Pajak)
-            const namaTokoMatch = textContent.match(/Pembeli\s+Barang\s+Kena\s+Pajak\/Penerima\s+Jasa\s+Kena\s+Pajak:[^\n]*\n\s*Nama\s*:\s*([^\n]+)/i);
-            const namaToko = namaTokoMatch ? namaTokoMatch[1].trim() : null;
+            // Extract nama toko (Pembeli Barang Kena Pajak) - more flexible regex
+            let namaToko = null;
+            
+            // Try multiple patterns
+            const patterns = [
+                /Pembeli\s+Barang\s+Kena\s+Pajak.*?Penerima\s+Jasa\s+Kena\s+Pajak[:\s]*Nama\s*:\s*([^\n]+)/is,
+                /Penerima\s+Jasa\s+Kena\s+Pajak[:\s]*Nama\s*:\s*([^\n]+)/i,
+                /Pembeli\s+Barang[^:]*Nama\s*:\s*([^\n]+)/i,
+                /Nama\s*:\s*([A-Z][^\n]*(?:PT|CV|UD|TOKO|KOPERASI|FIRMA)[^\n]*)/i,
+            ];
+            
+            for (const pattern of patterns) {
+                const match = textContent.match(pattern);
+                if (match) {
+                    namaToko = match[1].trim();
+                    console.log(`[Rename Faktur] Pattern matched: ${pattern}`);
+                    break;
+                }
+            }
 
-            // Skip if nama adalah Garuda Gemilang Indonesia
-            if (!namaToko || namaToko.includes('GARUDA GEMILANG INDONESIA')) {
+            // Skip if nama adalah Garuda Gemilang Indonesia (pengguna pajak)
+            if (!namaToko) {
                 return res.json({
                     success: false,
-                    error: 'Nama toko tidak valid atau merupakan Garuda Gemilang Indonesia'
+                    error: 'Nama toko tidak ditemukan di PDF'
+                });
+            }
+
+            if (namaToko.toUpperCase().includes('GARUDA') || namaToko.toUpperCase().includes('GEMILANG')) {
+                return res.json({
+                    success: false,
+                    error: 'File adalah dari Garuda Gemilang Indonesia (pengguna pajak, bukan pembeli)'
                 });
             }
 
             console.log(`[Rename Faktur] Nama Toko: ${namaToko}`);
 
-            // Extract Harga Jual/Penggantian/Uang Muka/Termin
-            const hargaMatch = textContent.match(/Harga\s+Jual\s*\/\s*Penggantian\s*\/\s*Uang\s+Muka\s*\/\s*Termin[^\d]*?([\d.,]+)/i);
+            // Extract Harga Jual/Penggantian/Uang Muka/Termin - more flexible
+            let hargaMatch = textContent.match(/Harga\s+Jual\s*\/\s*Penggantian\s*\/\s*Uang\s+Muka\s*\/\s*Termin[:\s]*([0-9.,]+)/i);
+            if (!hargaMatch) {
+                hargaMatch = textContent.match(/Harga\s+Jual[:\s]*([0-9.,]+)/i);
+            }
+            if (!hargaMatch) {
+                hargaMatch = textContent.match(/(?:Harga|Nilai)[^:]*:[^0-9]*([0-9.,]+)/);
+            }
             const harga = hargaMatch ? cleanNumber(hargaMatch[1]) : 0;
 
             console.log(`[Rename Faktur] Harga: ${harga}`);
 
-            // Extract Jumlah PPN
-            const ppnMatch = textContent.match(/Jumlah\s+PPN\s*\([^)]*\)[^\d]*?([\d.,]+)/i);
+            // Extract Jumlah PPN - more flexible
+            let ppnMatch = textContent.match(/Jumlah\s+PPN[^:]*(?:Pajak\s+Pertambahan\s+Nilai)?[:\s]*([0-9.,]+)/i);
+            if (!ppnMatch) {
+                ppnMatch = textContent.match(/PPN[:\s]*([0-9.,]+)/i);
+            }
             const ppn = ppnMatch ? cleanNumber(ppnMatch[1]) : 0;
 
             console.log(`[Rename Faktur] PPN: ${ppn}`);
