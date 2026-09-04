@@ -859,6 +859,80 @@ function formatRupiah(amount) {
 }
 
 // ============================================
+// Populate Toko Dropdown from Zone or Database
+// ============================================
+async function populateTokoDropdown() {
+    const tokoSelect = document.getElementById('filterToko');
+    if (!tokoSelect) {
+        console.warn('[Invoice-Filter] filterToko not found');
+        return;
+    }
+    
+    try {
+        // Check if user is admin_zona
+        const isAdminZona = window.currentUser && window.currentUser.role === 'admin_zona';
+        
+        if (isAdminZona && window.currentUser.zona_id) {
+            // For admin_zona: Get toko from zona_toko_mapping
+            console.log('[Invoice-Filter] Admin zona detected, fetching tokos for zona_id:', window.currentUser.zona_id);
+            
+            let { data, error } = await supabase
+                .from('zona_toko_mapping')
+                .select('toko_id, toko_name')
+                .eq('zona_id', window.currentUser.zona_id);
+            
+            if (error) {
+                console.error('[Invoice-Filter] Error fetching zona tokos:', error);
+                return;
+            }
+            
+            if (data && data.length > 0) {
+                data.forEach(row => {
+                    const option = document.createElement('option');
+                    option.value = row.toko_name;
+                    option.textContent = row.toko_name;
+                    tokoSelect.appendChild(option);
+                });
+                console.log('[Invoice-Filter] ✅ Toko dropdown populated with', data.length, 'tokos from zone');
+            }
+        } else {
+            // For super_admin/moderator: Get distinct toko from invoice_file_list
+            console.log('[Invoice-Filter] Super admin/moderator, fetching all tokos from invoices');
+            
+            let { data, error } = await supabase
+                .from('invoice_file_list')
+                .select('toko');
+            
+            if (error) {
+                console.error('[Invoice-Filter] Error fetching toko:', error);
+                return;
+            }
+            
+            const tokos = new Set();
+            if (data) {
+                data.forEach(row => {
+                    if (row.toko) {
+                        tokos.add(row.toko);
+                    }
+                });
+            }
+            
+            const sortedTokos = Array.from(tokos).sort();
+            sortedTokos.forEach(toko => {
+                const option = document.createElement('option');
+                option.value = toko;
+                option.textContent = toko;
+                tokoSelect.appendChild(option);
+            });
+            
+            console.log('[Invoice-Filter] ✅ Toko dropdown populated with', sortedTokos.length, 'tokos from database');
+        }
+    } catch (err) {
+        console.error('[Invoice-Filter] Error in populateTokoDropdown:', err);
+    }
+}
+
+// ============================================
 // Populate Year and Month Dropdowns from Database
 // ============================================
 async function populateYearDropdown() {
@@ -975,7 +1049,8 @@ async function updateFilterTotal() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[Invoice-Filter] Setting up filter handlers');
     
-    // Populate Year and Month dropdowns
+    // Populate all dropdowns
+    populateTokoDropdown();
     populateYearDropdown();
     populateMonthDropdown();
     
@@ -988,6 +1063,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Get filter values
             const status = document.getElementById('filterStatus')?.value || '';
+            const supplier = document.getElementById('filterSupplier')?.value || '';
             const toko = document.getElementById('filterToko')?.value || '';
             const keterangan = document.getElementById('filterKeterangan')?.value || '';
             const dateFrom = document.getElementById('filterDateFrom')?.value || '';
@@ -1000,6 +1076,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let query = supabase.from('invoice_file_list').select('*');
             
             if (status) query = query.eq('status', status);
+            if (supplier) query = query.eq('supplier', supplier);
             if (toko) query = query.eq('toko', toko);
             if (keterangan) query = query.eq('keterangan', keterangan);
             if (search) {
@@ -1076,6 +1153,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Clear all filters
             const filterStatus = document.getElementById('filterStatus');
+            const filterSupplier = document.getElementById('filterSupplier');
             const filterToko = document.getElementById('filterToko');
             const filterKeterangan = document.getElementById('filterKeterangan');
             const filterDateFrom = document.getElementById('filterDateFrom');
@@ -1085,6 +1163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const filterMonth = document.getElementById('filterMonth');
             
             if (filterStatus) filterStatus.value = '';
+            if (filterSupplier) filterSupplier.value = '';
             if (filterToko) filterToko.value = '';
             if (filterKeterangan) filterKeterangan.value = '';
             if (filterDateFrom) filterDateFrom.value = '';
