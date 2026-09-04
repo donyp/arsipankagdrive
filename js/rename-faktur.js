@@ -116,51 +116,62 @@ async function processFiles() {
     const resultsSection = document.getElementById('resultsSection');
     const resultsList = document.getElementById('resultsList');
 
-    for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        console.log(`[Rename Faktur] Processing file ${i + 1}/${selectedFiles.length}: ${file.name}`);
+    try {
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const file = selectedFiles[i];
+            console.log(`[Rename Faktur] Processing file ${i + 1}/${selectedFiles.length}: ${file.name}`);
+            
+            // Update loading modal
+            updateLoadingModal(i + 1, file.name, selectedFiles.length);
+            
+            const result = await processFile(file);
+            results.push(result);
+        }
+
+        // Hide loading modal
+        hideLoadingModal();
+
+        // Save to persistent history (only name, not file data)
+        const historyToSave = results.map(r => ({
+            success: r.success,
+            originalName: r.originalName,
+            newName: r.newName || null,
+            error: r.error || null
+        }));
+        addToHistory(historyToSave);
+
+        // Update process history for current session
+        processHistory = results;
+
+        // Reload and display persistent history
+        loadPersistentHistory();
+
+        // Auto-download successful files
+        const successFiles = results.filter(r => r.success);
+        if (successFiles.length > 0) {
+            setTimeout(() => {
+                successFiles.forEach(r => {
+                    downloadFile(r.newName, r.fileData);
+                });
+            }, 500);
+        }
+
+        // Show notification
+        const failedCount = results.filter(r => !r.success).length;
+        if (failedCount > 0) {
+            Toast.error(`${failedCount} dari ${results.length} file gagal diproses`);
+        } else {
+            Toast.success(`${successFiles.length} file berhasil diproses!`);
+        }
+    } finally {
+        // Always re-enable button at the end (success or error)
+        processBtn.disabled = false;
         
-        // Update loading modal
-        updateLoadingModal(i + 1, file.name, selectedFiles.length);
-        
-        const result = await processFile(file);
-        results.push(result);
-    }
-
-    // Hide loading modal
-    hideLoadingModal();
-
-    // Save to persistent history (only name, not file data)
-    const historyToSave = results.map(r => ({
-        success: r.success,
-        originalName: r.originalName,
-        newName: r.newName || null,
-        error: r.error || null
-    }));
-    addToHistory(historyToSave);
-
-    // Update process history for current session
-    processHistory = results;
-
-    // Reload and display persistent history
-    loadPersistentHistory();
-
-    // Auto-download successful files
-    const successFiles = results.filter(r => r.success);
-    if (successFiles.length > 0) {
-        setTimeout(() => {
-            successFiles.forEach(r => {
-                downloadFile(r.newName, r.fileData);
-            });
-        }, 500);
-    }
-
-    // Show notification
-    const failedCount = results.filter(r => !r.success).length;
-    if (failedCount > 0) {
-        Toast.error(`${failedCount} dari ${results.length} file gagal diproses`);
-    } else {
-        Toast.success(`${successFiles.length} file berhasil diproses!`);
+        // Clear selected files dan reset UI untuk bisa rename lagi
+        selectedFiles = [];
+        document.getElementById('fileList').classList.add('hidden');
+        document.getElementById('processButtonContainer').classList.add('hidden');
+        console.log('[Rename Faktur] Process complete - button re-enabled for next batch');
     }
 }
 
