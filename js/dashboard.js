@@ -2977,11 +2977,11 @@ function resetInvoiceFilters() {
     loadInvoicesInDashboard(1);
 }
 
-// Setup admin zona specific filters
+// Setup admin zona specific filters - hide stats
 function setupAdminZonaFilters() {
     console.log('[AdminZonaFilters] Setting up admin zona specific filters');
     
-    // Hide stats for admin zona
+    // Hide stats for admin zona (they only see their zone's data)
     const statTotal = document.getElementById('statTotal');
     const statUploaded = document.getElementById('statUploaded');
     const statPending = document.getElementById('statPending');
@@ -2992,78 +2992,14 @@ function setupAdminZonaFilters() {
     if (statPending) statPending.closest('div').style.display = 'none';
     if (statMissing) statMissing.closest('div').style.display = 'none';
     
-    // Hide extra filters for admin_zona (show only Toko, Keterangan, Month)
-    const filterStatusGroup = document.getElementById('filterStatusGroup');
-    const filterDateFromGroup = document.getElementById('filterDateFromGroup');
-    const filterDateToGroup = document.getElementById('filterDateToGroup');
-    const filterSearchGroup = document.getElementById('filterSearchGroup');
-    const filterMonthGroup = document.getElementById('filterMonthGroup');
-    
-    if (filterStatusGroup) filterStatusGroup.style.display = 'none';
-    if (filterDateFromGroup) filterDateFromGroup.style.display = 'none';
-    if (filterDateToGroup) filterDateToGroup.style.display = 'none';
-    if (filterSearchGroup) filterSearchGroup.style.display = 'none';
-    if (filterMonthGroup) filterMonthGroup.style.display = 'block';
-    
     console.log('[AdminZonaFilters] ✅ Admin Zona filters setup complete');
 }
 
-// Setup regular filters for super_admin and moderator
+// Setup regular filters for super_admin and moderator - no special setup needed
 function setupRegularFilters() {
-    console.log('[RegularFilters] ===== SETTING UP REGULAR USER FILTERS =====');
-    console.log('[RegularFilters] currentUser:', currentUser);
-    console.log('[RegularFilters] currentUser?.role:', currentUser?.role);
-    
-    // Show extra filters for super_admin/moderator
-    const filterStatusGroup = document.getElementById('filterStatusGroup');
-    const filterDateFromGroup = document.getElementById('filterDateFromGroup');
-    const filterDateToGroup = document.getElementById('filterDateToGroup');
-    const filterSearchGroup = document.getElementById('filterSearchGroup');
-    const filterMonthGroup = document.getElementById('filterMonthGroup');
-    
-    console.log('[RegularFilters] Elements found:', {
-        filterStatusGroup: !!filterStatusGroup,
-        filterDateFromGroup: !!filterDateFromGroup,
-        filterDateToGroup: !!filterDateToGroup,
-        filterSearchGroup: !!filterSearchGroup,
-        filterMonthGroup: !!filterMonthGroup
-    });
-    
-    // Force display:block using !important to override any CSS
-    if (filterStatusGroup) {
-        filterStatusGroup.style.setProperty('display', 'block', 'important');
-        console.log('[RegularFilters] ✅ Status filter shown - display:', filterStatusGroup.style.display);
-    } else {
-        console.error('[RegularFilters] ❌ filterStatusGroup not found in DOM!');
-    }
-    
-    if (filterDateFromGroup) {
-        filterDateFromGroup.style.setProperty('display', 'block', 'important');
-        console.log('[RegularFilters] ✅ Date From filter shown - display:', filterDateFromGroup.style.display);
-    } else {
-        console.error('[RegularFilters] ❌ filterDateFromGroup not found in DOM!');
-    }
-    
-    if (filterDateToGroup) {
-        filterDateToGroup.style.setProperty('display', 'block', 'important');
-        console.log('[RegularFilters] ✅ Date To filter shown - display:', filterDateToGroup.style.display);
-    } else {
-        console.error('[RegularFilters] ❌ filterDateToGroup not found in DOM!');
-    }
-    
-    if (filterSearchGroup) {
-        filterSearchGroup.style.setProperty('display', 'block', 'important');
-        console.log('[RegularFilters] ✅ Search filter shown - display:', filterSearchGroup.style.display);
-    } else {
-        console.error('[RegularFilters] ❌ filterSearchGroup not found in DOM!');
-    }
-    
-    if (filterMonthGroup) {
-        filterMonthGroup.style.setProperty('display', 'none', 'important');
-        console.log('[RegularFilters] ✅ Month filter hidden');
-    }
-    
-    console.log('[RegularFilters] ===== REGULAR USER FILTERS SETUP COMPLETE =====');
+    console.log('[RegularFilters] Setting up regular user filters (super_admin/moderator)');
+    // All filters already visible in HTML for regular users
+    console.log('[RegularFilters] ✅ Regular user filters active');
 }
 
 // Note: The HTML uses input type="month" which automatically handles YYYY-MM format

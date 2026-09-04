@@ -651,8 +651,8 @@
                             <!-- Filters -->
                             <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
-                                    <!-- STATUS filter (hidden for admin_zona) -->
-                                    <div id="filterStatusGroup" style="display: none;">
+                                    <!-- STATUS filter -->
+                                    <div>
                                         <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Status</label>
                                         <select id="filterStatus" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
                                             <option value="">Semua Status</option>
@@ -663,9 +663,9 @@
                                     
                                     <!-- TOKO filter -->
                                     <div>
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Supplier</label>
+                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Toko</label>
                                         <select id="filterToko" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
-                                            <option value="">Semua Supplier</option>
+                                            <option value="">Semua Toko</option>
                                         </select>
                                     </div>
                                     
@@ -676,29 +676,24 @@
                                             <option value="">Semua</option>
                                             <option value="PPN">PPN</option>
                                             <option value="NON PPN">NON PPN</option>
+                                            <option value="GUNGGUNG">GUNGGUNG</option>
                                         </select>
                                     </div>
                                     
-                                    <!-- BULAN filter (hidden for non-admin_zona) -->
-                                    <div id="filterMonthGroup" style="display: none;">
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Bulan</label>
-                                        <input type="month" id="filterMonth" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
-                                    </div>
-                                    
-                                    <!-- DARI TANGGAL filter (hidden for admin_zona) -->
-                                    <div id="filterDateFromGroup" style="display: none;">
+                                    <!-- DARI TANGGAL filter -->
+                                    <div>
                                         <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Dari Tanggal</label>
                                         <input type="date" id="filterDateFrom" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
                                     </div>
                                     
-                                    <!-- SAMPAI TANGGAL filter (hidden for admin_zona) -->
-                                    <div id="filterDateToGroup" style="display: none;">
+                                    <!-- SAMPAI TANGGAL filter -->
+                                    <div>
                                         <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Sampai Tanggal</label>
                                         <input type="date" id="filterDateTo" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
                                     </div>
                                     
-                                    <!-- CARI filter (hidden for admin_zona) -->
-                                    <div id="filterSearchGroup" style="display: none;">
+                                    <!-- CARI filter -->
+                                    <div>
                                         <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Cari (Faktur/Nomor/Kode)</label>
                                         <input type="text" id="filterSearch" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
                                     </div>
