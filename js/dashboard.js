@@ -2775,14 +2775,16 @@ async function loadFilterOptions() {
         }
         
         // Get unique values from filtered invoices
-        // For admin_zona: only includes stores from their zone (auto-filtered by API)
-        // For regular users: includes all stores
-        const tokos = [...new Set(invoices.map(inv => inv.toko).filter(Boolean))];
+        // For admin_zona: show konsumen (actual store names from Excel)
+        // For regular users: show toko field
+        const tokos = [...new Set(invoices.map(inv => 
+            currentUser?.role === 'admin_zona' ? inv.konsumen : inv.toko
+        ).filter(Boolean))];
         const keterangans = [...new Set(invoices.map(inv => inv.keterangan).filter(Boolean))];
         
         console.log('[Filter] Loaded options - Tokos:', tokos.length, 'Keterangans:', keterangans.length);
         if (currentUser?.role === 'admin_zona') {
-            console.log('[Filter] ✅ Admin Zona: Supplier list is zone-filtered');
+            console.log('[Filter] ✅ Admin Zona: Showing actual konsumen (store) names from invoices');
         }
         
         // Populate toko select - clear existing first to avoid duplicates
