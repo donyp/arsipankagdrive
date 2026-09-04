@@ -869,7 +869,7 @@ async function populateTokoDropdown() {
     }
     
     try {
-        // Get current user from auth module (not window.currentUser)
+        // Get current user from auth module
         const user = getCurrentUser ? getCurrentUser() : null;
         const isAdminZona = user && user.role === 'admin_zona';
         
@@ -881,38 +881,41 @@ async function populateTokoDropdown() {
         });
         
         if (isAdminZona && user.zona_id) {
-            // For admin_zona: Get toko directly from toko table filtered by zona_id
-            console.log('[Invoice-Filter] Admin zona detected, fetching tokos for zona_id:', user.zona_id);
+            // For admin_zona: Show KONSUMEN (actual toko names from their zona)
+            console.log('[Invoice-Filter] Admin zona detected - fetching konsumen from their zona');
             
+            // Get distinct konsumen for their zona
             let { data, error } = await supabase
-                .from('toko')
-                .select('id, nama')
+                .from('invoice_file_list')
+                .select('DISTINCT konsumen')
                 .eq('zona_id', user.zona_id)
-                .order('nama', { ascending: true });
+                .order('konsumen', { ascending: true });
             
             if (error) {
-                console.error('[Invoice-Filter] Error fetching zona tokos:', error);
+                console.error('[Invoice-Filter] Error fetching zona konsumen:', error);
                 return;
             }
             
             if (data && data.length > 0) {
-                data.forEach(row => {
+                const uniqueKonsumen = [...new Set(data.map(row => row.konsumen).filter(Boolean))].sort();
+                uniqueKonsumen.forEach(konsumen => {
                     const option = document.createElement('option');
-                    option.value = row.nama;
-                    option.textContent = row.nama;
+                    option.value = konsumen;
+                    option.textContent = konsumen;
                     tokoSelect.appendChild(option);
                 });
-                console.log('[Invoice-Filter] ✅ Toko dropdown populated with', data.length, 'tokos from zone:', data.map(d => d.nama));
+                console.log('[Invoice-Filter] ✅ Toko dropdown populated with', uniqueKonsumen.length, 'stores from zone:', uniqueKonsumen);
             } else {
-                console.warn('[Invoice-Filter] ⚠️ No tokos found for zona_id:', user.zona_id);
+                console.warn('[Invoice-Filter] ⚠️ No toko found for zona_id:', user.zona_id);
             }
         } else {
-            // For super_admin/moderator: Get distinct toko from invoice_file_list
-            console.log('[Invoice-Filter] Super admin/moderator, fetching all tokos from invoices');
+            // For super_admin/moderator: Show TOKO (supplier names)
+            console.log('[Invoice-Filter] Super admin/moderator - fetching suppliers (toko column)');
             
             let { data, error } = await supabase
                 .from('invoice_file_list')
-                .select('toko');
+                .select('toko')
+                .order('toko', { ascending: true });
             
             if (error) {
                 console.error('[Invoice-Filter] Error fetching toko:', error);
@@ -936,7 +939,7 @@ async function populateTokoDropdown() {
                 tokoSelect.appendChild(option);
             });
             
-            console.log('[Invoice-Filter] ✅ Toko dropdown populated with', sortedTokos.length, 'tokos from database');
+            console.log('[Invoice-Filter] ✅ Toko dropdown populated with', sortedTokos.length, 'suppliers:', sortedTokos);
         }
     } catch (err) {
         console.error('[Invoice-Filter] Error in populateTokoDropdown:', err);
@@ -1124,7 +1127,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Get filter values
             const status = document.getElementById('filterStatus')?.value || '';
             const supplier = document.getElementById('filterSupplier')?.value || '';
-            const toko = document.getElementById('filterToko')?.value || '';
+            const tokoFilter = document.getElementById('filterToko')?.value || '';
             const keterangan = document.getElementById('filterKeterangan')?.value || '';
             const dateFrom = document.getElementById('filterDateFrom')?.value || '';
             const dateTo = document.getElementById('filterDateTo')?.value || '';
@@ -1132,22 +1135,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             const year = document.getElementById('filterYear')?.value || '';
             const month = document.getElementById('filterMonth')?.value || '';
             
+            // Get current user to determine filter type
+            const user = getCurrentUser ? getCurrentUser() : null;
+            const isAdminZona = user && user.role === 'admin_zona';
+            
             // Build query
             let query = supabase.from('invoice_file_list').select('*');
             
             // Filter by zona if admin_zona
-            const user = getCurrentUser ? getCurrentUser() : null;
-            if (user && user.role === 'admin_zona' && user.zona_id) {
+            if (isAdminZona && user.zona_id) {
                 query = query.eq('zona_id', user.zona_id);
                 console.log('[Invoice-Filter] Admin zona detected - filtering by zona_id:', user.zona_id);
             }
             
             if (status) query = query.eq('status', status);
             if (supplier) query = query.eq('supplier', supplier);
-            if (toko) {
-                query = query.eq('toko', toko);
-                console.log('[Invoice-Filter] Filtering by toko:', toko);
+            
+            // Handle toko filter based on role
+            if (tokoFilter) {
+                if (isAdminZona) {
+                    // For admin_zona: filter by konsumen (actual toko name)
+                    query = query.eq('konsumen', tokoFilter);
+                    console.log('[Invoice-Filter] Admin zona - filtering by konsumen:', tokoFilter);
+                } else {
+                    // For super_admin/moderator: filter by toko (supplier name)
+                    query = query.eq('toko', tokoFilter);
+                    console.log('[Invoice-Filter] Super admin - filtering by toko (supplier):', tokoFilter);
+                }
             }
+            
             if (keterangan) query = query.eq('keterangan', keterangan);
             if (search) {
                 query = query.or(`faktur.ilike.%${search}%,konsumen.ilike.%${search}%`);
@@ -1198,12 +1214,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             // Check if toko was selected but no data found
-            if (toko && (!data || data.length === 0)) {
-                console.warn('[Invoice-Filter] ⚠️ Toko selected but no data found:', toko);
+            if (tokoFilter && (!data || data.length === 0)) {
+                console.warn('[Invoice-Filter] ⚠️ Toko selected but no data found:', tokoFilter);
                 Swal.fire({
                     icon: 'info',
                     title: 'Tidak Ada Data',
-                    text: `Tidak ada faktur untuk toko "${toko}". Silakan pilih toko lain atau upload data terlebih dahulu.`,
+                    text: `Tidak ada faktur untuk toko "${tokoFilter}". Silakan pilih toko lain atau upload data terlebih dahulu.`,
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#3498db'
                 });
