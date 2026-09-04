@@ -1087,13 +1087,24 @@ async function updateFilterTotal() {
 // ============================================
 // Setup Filter Event Listeners
 // ============================================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Invoice-Filter] Setting up filter handlers');
+    console.log('[Invoice-Filter] currentUser at DOMContentLoaded:', window.currentUser);
+    
+    // Wait a bit for currentUser to be available
+    let retries = 0;
+    while (!window.currentUser && retries < 10) {
+        console.log('[Invoice-Filter] Waiting for currentUser... retry', retries);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        retries++;
+    }
+    
+    console.log('[Invoice-Filter] currentUser after wait:', window.currentUser);
     
     // Populate all dropdowns
-    populateTokoDropdown();
-    populateYearDropdown();
-    populateMonthDropdown();
+    await populateTokoDropdown();
+    await populateYearDropdown();
+    await populateMonthDropdown();
     
     const btnApplyFilter = document.getElementById('btnApplyFilter');
     const btnResetFilter = document.getElementById('btnResetFilter');
