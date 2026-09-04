@@ -3029,24 +3029,37 @@ function setupRegularFilters() {
         filterMonthGroup: !!filterMonthGroup
     });
     
+    // Force display:block using !important to override any CSS
     if (filterStatusGroup) {
-        filterStatusGroup.style.display = 'block';
-        console.log('[RegularFilters] ✅ Status filter shown');
+        filterStatusGroup.style.setProperty('display', 'block', 'important');
+        console.log('[RegularFilters] ✅ Status filter shown - display:', filterStatusGroup.style.display);
+    } else {
+        console.error('[RegularFilters] ❌ filterStatusGroup not found in DOM!');
     }
+    
     if (filterDateFromGroup) {
-        filterDateFromGroup.style.display = 'block';
-        console.log('[RegularFilters] ✅ Date From filter shown');
+        filterDateFromGroup.style.setProperty('display', 'block', 'important');
+        console.log('[RegularFilters] ✅ Date From filter shown - display:', filterDateFromGroup.style.display);
+    } else {
+        console.error('[RegularFilters] ❌ filterDateFromGroup not found in DOM!');
     }
+    
     if (filterDateToGroup) {
-        filterDateToGroup.style.display = 'block';
-        console.log('[RegularFilters] ✅ Date To filter shown');
+        filterDateToGroup.style.setProperty('display', 'block', 'important');
+        console.log('[RegularFilters] ✅ Date To filter shown - display:', filterDateToGroup.style.display);
+    } else {
+        console.error('[RegularFilters] ❌ filterDateToGroup not found in DOM!');
     }
+    
     if (filterSearchGroup) {
-        filterSearchGroup.style.display = 'block';
-        console.log('[RegularFilters] ✅ Search filter shown');
+        filterSearchGroup.style.setProperty('display', 'block', 'important');
+        console.log('[RegularFilters] ✅ Search filter shown - display:', filterSearchGroup.style.display);
+    } else {
+        console.error('[RegularFilters] ❌ filterSearchGroup not found in DOM!');
     }
+    
     if (filterMonthGroup) {
-        filterMonthGroup.style.display = 'none';
+        filterMonthGroup.style.setProperty('display', 'none', 'important');
         console.log('[RegularFilters] ✅ Month filter hidden');
     }
     

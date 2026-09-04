@@ -834,15 +834,27 @@
                 
                 // Initialize invoice system with role-based filters (ALWAYS call this)
                 setTimeout(() => {
-                    console.log('[Dashboard] Calling initInvoiceSystem after DOM loaded');
+                    console.log('[Dashboard] ===== INITIALIZING AFTER DOM LOADED =====');
+                    console.log('[Dashboard] Filter elements check:');
+                    console.log('[Dashboard]   filterStatusGroup:', !!document.getElementById('filterStatusGroup'));
+                    console.log('[Dashboard]   filterToko:', !!document.getElementById('filterToko'));
+                    console.log('[Dashboard]   filterDateFromGroup:', !!document.getElementById('filterDateFromGroup'));
+                    
                     if (typeof initInvoiceSystem === 'function') {
+                        console.log('[Dashboard] Calling initInvoiceSystem...');
                         initInvoiceSystem();
+                    } else {
+                        console.error('[Dashboard] ❌ initInvoiceSystem is not a function!');
                     }
+                    
                     // Load first page of invoices
                     if (typeof loadInvoicesInDashboard === 'function') {
+                        console.log('[Dashboard] Calling loadInvoicesInDashboard(1)...');
                         loadInvoicesInDashboard(1);
+                    } else {
+                        console.error('[Dashboard] ❌ loadInvoicesInDashboard is not a function!');
                     }
-                }, 200);
+                }, 500);
                 
             } catch (error) {
                 console.error('Error loading invoice content:', error);
