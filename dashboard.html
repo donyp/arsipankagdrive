@@ -815,8 +815,18 @@
     <script src="js/dashboard.js?v=1006&t=1735862400"></script>
     
     <script>
-        // Load invoice list content into dashboard (including header with buttons)
+        // REDIRECT admin_zona users to their dedicated dashboard
         document.addEventListener('DOMContentLoaded', async () => {
+            // Wait for auth
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            if (user.role === 'admin_zona') {
+                console.log('[Dashboard] Admin_zona user detected, redirecting to dashboard-admin-zona.html');
+                window.location.href = 'dashboard-admin-zona.html';
+                return;
+            }
+        });
             try {
                 // Wait for auth
                 const user = await initAuth();

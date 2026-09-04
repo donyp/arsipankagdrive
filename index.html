@@ -389,7 +389,11 @@
             </span>`;
 
             try {
-                await loginWithCredentials(username, password);
+                const result = await loginWithCredentials(username, password);
+                
+                // Get user role to decide dashboard redirect
+                const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                const dashboardPage = user.role === 'admin_zona' ? 'dashboard-admin-zona.html' : 'dashboard.html';
                 
                 // Show success notification - auto redirect after 2.5 seconds
                 await Swal.fire({
@@ -401,7 +405,7 @@
                     timerProgressBar: true,
                     allowOutsideClick: false,
                     willClose: () => {
-                        window.location.href = 'dashboard.html';
+                        window.location.href = dashboardPage;
                     }
                 });
                 
