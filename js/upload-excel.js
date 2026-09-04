@@ -183,20 +183,29 @@ function showPreview() {
 
     // Show first 5 items
     const preview = parsedData.slice(0, 5);
-    // Fetch toko data for zona lookup
-    const { data: tokoData } = await supabase.from('toko').select('nama, zona_id, zonas(kode, nama)');
-    const tokoMap = {};
-    if (tokoData) {
-        tokoData.forEach(t => {
-            tokoMap[t.nama] = {
-                zona_id: t.zona_id,
-                zona_kode: t.zonas?.kode || '?',
-                zona_nama: t.zonas?.nama || 'Unknown'
-            };
-        });
+    // Fetch toko data for zona lookup (non-blocking)
+    let tokoMap = {};
+    try {
+        const { data: tokoData, error } = await supabase
+            .from('toko')
+            .select('nama, zona_id, zonas(kode, nama)');
+        
+        if (!error && tokoData) {
+            tokoData.forEach(t => {
+                tokoMap[t.nama] = {
+                    zona_id: t.zona_id,
+                    zona_kode: t.zonas?.kode || '?',
+                    zona_nama: t.zonas?.nama || 'Unknown'
+                };
+            });
+        }
+    } catch (err) {
+        console.warn('[Preview] Zone lookup failed, continuing without zona info:', err);
     }
 
     const tbody = document.getElementById('previewTable');
+    if (!tbody) return;
+    
     tbody.innerHTML = preview.map(inv => {
         // Lookup zona from konsumen (store name)
         const zonaInfo = tokoMap[inv.konsumen] || { zona_id: '?', zona_kode: '?', zona_nama: 'N/A' };
