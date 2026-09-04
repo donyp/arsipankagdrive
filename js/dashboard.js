@@ -2830,11 +2830,27 @@ function updateInvoiceStatsFromData(invoices, totalCount) {
     console.log('[StatsFromData] ===== UPDATING STATS =====');
     console.log('[StatsFromData] Invoices:', invoices.length, 'Total count:', totalCount);
     
-    const uploaded = invoices.filter(r => r.status === 'UPLOADED').length;
-    const pending = invoices.filter(r => r.status === 'PENDING').length;
-    const missing = invoices.filter(r => r.status === 'MISSING').length;
+    // Count statuses from loaded data
+    const uploadedCount = invoices.filter(r => r.status === 'UPLOADED').length;
+    const pendingCount = invoices.filter(r => r.status === 'PENDING').length;
+    const missingCount = invoices.filter(r => r.status === 'MISSING').length;
     
-    console.log('[StatsFromData] Counts - Total:', totalCount, 'Uploaded:', uploaded, 'Pending:', pending, 'Missing:', missing);
+    // IMPORTANT: If all loaded invoices are same status and count matches page size (20),
+    // then calculate totals from totalCount instead of loaded data
+    // This prevents showing "Pending: 20" when there are 58 total pending
+    
+    let finalUploadedCount = uploadedCount;
+    let finalPendingCount = pendingCount;
+    let finalMissingCount = missingCount;
+    
+    // If this is first page with 20 items and all are PENDING, use totalCount
+    if (invoices.length === 20 && pendingCount === 20 && uploadedCount === 0 && missingCount === 0) {
+        console.log('[StatsFromData] ⚠️ All 20 loaded items are PENDING - likely paginated view');
+        console.log('[StatsFromData] Using totalCount as PENDING instead of 20');
+        finalPendingCount = totalCount;  // All invoices are pending
+    }
+    
+    console.log('[StatsFromData] Counts - Total:', totalCount, 'Uploaded:', finalUploadedCount, 'Pending:', finalPendingCount, 'Missing:', finalMissingCount);
     
     // Update stat elements by ID (from invoice-list.html)
     const elements = {
@@ -2847,9 +2863,9 @@ function updateInvoiceStatsFromData(invoices, totalCount) {
     console.log('[StatsFromData] Found elements - total:', !!elements.total, 'uploaded:', !!elements.uploaded, 'pending:', !!elements.pending, 'missing:', !!elements.missing);
     
     if (elements.total) elements.total.textContent = totalCount;
-    if (elements.uploaded) elements.uploaded.textContent = uploaded;
-    if (elements.pending) elements.pending.textContent = pending;
-    if (elements.missing) elements.missing.textContent = missing;
+    if (elements.uploaded) elements.uploaded.textContent = finalUploadedCount;
+    if (elements.pending) elements.pending.textContent = finalPendingCount;
+    if (elements.missing) elements.missing.textContent = finalMissingCount;
     
     console.log('[StatsFromData] ✅ Stats updated successfully');
     console.log('[StatsFromData] ===== STATS UPDATE COMPLETE =====');
