@@ -380,16 +380,24 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await initAuth();
             
-            // Get current user from localStorage
-            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            const userEmail = currentUser.email || 'Admin Zona';
-            const userZona = currentUser.zona_kode || currentUser.zona_id || '-';
+            // Get current user from API (more reliable than localStorage)
+            const currentUser = window.currentUser;
             
-            console.log('[AdminZona] Current user:', userEmail, 'Zona:', userZona);
+            if (!currentUser) {
+                console.error('[AdminZona] currentUser not available');
+                document.getElementById('user-name').textContent = 'Unknown';
+                document.getElementById('user-zona').textContent = 'Zona: -';
+                return;
+            }
             
             // Display user info
+            const userEmail = currentUser.email || currentUser.name || 'Admin Zona';
+            const zonaName = currentUser.zonas?.nama || currentUser.zonas?.kode || currentUser.zona_kode || 'Unknown';
+            
             document.getElementById('user-name').textContent = userEmail;
-            document.getElementById('user-zona').textContent = `Zona: ${userZona}`;
+            document.getElementById('user-zona').textContent = `Zona: ${zonaName}`;
+            
+            console.log('[AdminZona] User:', userEmail, 'Zona:', zonaName);
 
             // Load all data first to populate filters
             await loadAllInvoices();
