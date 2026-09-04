@@ -1,13 +1,14 @@
 -- ============================================
 -- Refresh Toko Table with Correct Data
 -- Source: Database Toko.xlsx
+-- SAFE: Does NOT delete zonas (preserves user assignments)
 -- ============================================
 
--- Clear existing toko data
+-- Clear only toko data (not zonas)
 DELETE FROM public.toko;
-DELETE FROM public.zonas;
 
--- Re-insert zonas first
+-- Keep existing zonas - just update/ensure they exist
+-- Get zona IDs from existing zonas table
 INSERT INTO public.zonas (kode, nama) VALUES
 ('01', 'Zona 01'),
 ('02', 'Zona 02'),
@@ -27,7 +28,8 @@ INSERT INTO public.zonas (kode, nama) VALUES
 ('14', 'Zona 14'),
 ('15', 'Zona 15'),
 ('16', 'Zona 16'),
-('17', 'Zona 17');
+('17', 'Zona 17')
+ON CONFLICT (kode) DO UPDATE SET nama = EXCLUDED.nama;
 
 -- Re-insert toko data with correct zona mapping
 INSERT INTO public.toko (kode, nama, zona_id) VALUES
