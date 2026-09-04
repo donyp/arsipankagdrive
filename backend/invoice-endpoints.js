@@ -256,50 +256,27 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     }
                     
                     // Look up zona_id from konsumen name (actual store name in toko table)
-                    // Use fuzzy/partial matching to handle name variations
+                    // Zona lookup: EXACT MATCH ONLY (no fuzzy/partial matching)
                     let zona_id = null;
                     if (item.konsumen) {
                         const konsumenLower = item.konsumen.trim().toLowerCase();
                         
-                        // Get all toko records and do client-side matching
+                        // Get all toko records for exact matching
                         const { data: allToko } = await supabase
                             .from('toko')
                             .select('nama, zona_id');
                         
                         if (allToko) {
-                            // Strategy 1: Exact match (case-insensitive)
-                            let match = allToko.find(t => 
+                            // EXACT MATCH ONLY: case-insensitive, whitespace-normalized
+                            const match = allToko.find(t => 
                                 t.nama.trim().toLowerCase() === konsumenLower
                             );
                             
-                            // Strategy 2: Partial match - check if konsumen contains toko nama
-                            if (!match) {
-                                match = allToko.find(t => {
-                                    const tokoLower = t.nama.trim().toLowerCase();
-                                    // Check if any word in toko.nama is in konsumen
-                                    return tokoLower.split(' ').some(word => 
-                                        word.length > 2 && konsumenLower.includes(word)
-                                    ) || konsumenLower.includes(tokoLower);
-                                });
-                            }
-                            
-                            // Strategy 3: Extract location name (last significant word before parentheses)
-                            if (!match) {
-                                const locationMatch = item.konsumen.match(/^MEGA BAJA\s+(\w+.*?)(?:\s*\(|$)/i);
-                                if (locationMatch) {
-                                    const location = locationMatch[1].trim().toLowerCase();
-                                    match = allToko.find(t => 
-                                        t.nama.trim().toLowerCase().includes(location) || 
-                                        location.includes(t.nama.trim().toLowerCase())
-                                    );
-                                }
-                            }
-                            
                             if (match && match.zona_id) {
                                 zona_id = match.zona_id;
-                                console.log(`[Invoice API] Mapped konsumen "${item.konsumen}" to zona_id ${zona_id} via toko "${match.nama}"`);
+                                console.log(`[Invoice API] ✅ Matched konsumen "${item.konsumen}" to zona_id ${zona_id}`);
                             } else {
-                                console.warn(`[Invoice API] Could not find zona_id for konsumen: "${item.konsumen}"`);
+                                console.warn(`[Invoice API] ⚠️  No exact match for konsumen: "${item.konsumen}" (zona_id will be NULL)`);
                             }
                         }
                     }
@@ -626,8 +603,9 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
             
             // Auto-filter by zona for admin_zona users
             if (req.user && req.user.role === 'admin_zona' && req.user.zona_id) {
-                console.log(`[Invoice List] Filtering for admin_zona with zona_id: ${req.user.zona_id}`);
-                query = query.eq('zona_id', req.user.zona_id);
+                const userZonaId = parseInt(req.user.zona_id) || req.user.zona_id;
+                console.log(`[Invoice List] Filtering for admin_zona with zona_id: ${userZonaId} (type: ${typeof userZonaId}, orig: ${req.user.zona_id})`);
+                query = query.eq('zona_id', userZonaId);
             } else if (req.user) {
                 console.log(`[Invoice List] User role: ${req.user.role}, zona_id: ${req.user.zona_id}`);
             }
@@ -678,6 +656,17 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
             
             console.log(`[Invoice List] Returned ${data?.length || 0} invoices (total: ${count})`);
             
+            // Debug: Show sample data if admin_zona returns 0 results
+            if (req.user && req.user.role === 'admin_zona' && count === 0) {
+                console.warn(`[Invoice List] ⚠️ Admin_zona ${req.user.userId} (zona_id: ${req.user.zona_id}) returned 0 invoices!`);
+                // Check if invoices exist at all for this zona
+                const { data: checkData, error: checkErr } = await supabase
+                    .from('invoice_file_list')
+                    .select('COUNT(*)', { count: 'exact' })
+                    .eq('zona_id', parseInt(req.user.zona_id) || req.user.zona_id);
+                console.warn(`[Invoice List] Total invoices in zona ${req.user.zona_id}:`, checkData, checkErr);
+            }
+            
             res.json({
                 success: true,
                 data,
@@ -699,7 +688,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // ============================================
     app.get('/api/invoice/zona/:zonaId/summary', createAuth(), async (req, res) => {
         try {
-            const zonaId = req.params.zonaId;
+            const zonaId = parseInt(req.params.zonaId) || req.params.zonaId;
             
             // Fetch invoices for this zona
             const { data: invoices, error } = await supabase
