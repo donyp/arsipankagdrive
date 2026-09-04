@@ -89,27 +89,42 @@ module.exports = (app, supabase) => {
                     console.log(`[Rename Faktur] PDF text extracted, length: ${textContent.length}`);
                     console.log(`[Rename Faktur] First 500 chars: ${textContent.substring(0, 500)}`);
 
-                    // Extract nama toko (Pembeli Barang Kena Pajak) - more flexible regex
+                    // Extract nama toko (Pembeli Barang Kena Pajak) - strict pattern
                     let namaToko = null;
                     
-                    // Try multiple patterns
-                    const patterns = [
-                        /Pembeli\s+Barang\s+Kena\s+Pajak.*?Penerima\s+Jasa\s+Kena\s+Pajak[:\s]*Nama\s*:\s*([^\n]+)/is,
-                        /Penerima\s+Jasa\s+Kena\s+Pajak[:\s]*Nama\s*:\s*([^\n]+)/i,
-                        /Pembeli\s+Barang[^:]*Nama\s*:\s*([^\n]+)/i,
-                        /Nama\s*:\s*([A-Z][^\n]*(?:PT|CV|UD|TOKO|KOPERASI|FIRMA)[^\n]*)/i,
-                    ];
+                    // Find "Pembeli Barang Kena Pajak/Penerima Jasa Kena Pajak" section first
+                    const pembeligPattern = /Pembeli\s+Barang\s+Kena\s+Pajak\s*\/\s*Penerima\s+Jasa\s+Kena\s+Pajak\s*:\s*(.+?)(?=Pembeli|Pengguna|$)/is;
+                    const pemberliMatch = textContent.match(pembeligPattern);
                     
-                    for (const pattern of patterns) {
-                        const match = textContent.match(pattern);
-                        if (match) {
-                            namaToko = match[1].trim();
-                            console.log(`[Rename Faktur] Pattern matched: ${pattern}`);
-                            break;
+                    if (pemberliMatch) {
+                        // Look for "Nama :" within this section only
+                        const pemberliSection = pemberliMatch[1];
+                        const namaMatch = pemberliSection.match(/Nama\s*:\s*([^\n]+)/i);
+                        if (namaMatch) {
+                            namaToko = namaMatch[1].trim();
+                            console.log(`[Rename Faktur] Extracted from Pembeli section: ${namaToko}`);
+                        }
+                    }
+                    
+                    // Fallback patterns if not found
+                    if (!namaToko) {
+                        const fallbackPatterns = [
+                            /Penerima\s+Jasa\s+Kena\s+Pajak[:\s]*Nama\s*:\s*([^\n]+)/i,
+                            /Pembeli\s+Barang[^:]*Nama\s*:\s*([^\n]+)/i,
+                            /Nama\s*:\s*([A-Z][^\n]*(?:PT|CV|UD|TOKO|KOPERASI|FIRMA)[^\n]*)/i,
+                        ];
+                        
+                        for (const pattern of fallbackPatterns) {
+                            const match = textContent.match(pattern);
+                            if (match) {
+                                namaToko = match[1].trim();
+                                console.log(`[Rename Faktur] Fallback pattern matched: ${pattern}`);
+                                break;
+                            }
                         }
                     }
 
-                    // Skip if nama adalah Garuda Gemilang Indonesia (pengguna pajak)
+                    // Skip if nama tidak ditemukan
                     if (!namaToko) {
                         return res.json({
                             success: false,
@@ -117,7 +132,8 @@ module.exports = (app, supabase) => {
                         });
                     }
 
-                    if (namaToko.toUpperCase().includes('GARUDA') || namaToko.toUpperCase().includes('GEMILANG')) {
+                    // Skip if nama adalah Garuda Gemilang Indonesia (pengguna pajak, bukan pembeli)
+                    if (namaToko.toUpperCase().includes('GARUDA GEMILANG')) {
                         return res.json({
                             success: false,
                             error: 'File adalah dari Garuda Gemilang Indonesia (pengguna pajak, bukan pembeli)'
