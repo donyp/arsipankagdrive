@@ -134,18 +134,23 @@ module.exports = (app, supabase) => {
                     if (!hargaMatch) {
                         hargaMatch = textContent.match(/(?:Harga|Nilai)[^:]*:[^0-9]*([0-9.,]+)/);
                     }
-                    const harga = hargaMatch ? cleanNumber(hargaMatch[1]) : 0;
-
-                    console.log(`[Rename Faktur] Harga: ${harga}`);
+                    const hargaStr = hargaMatch ? hargaMatch[1].trim() : '0';
+                    const harga = cleanNumber(hargaStr);
+                    
+                    console.log(`[Rename Faktur] Harga raw: "${hargaStr}" → parsed: ${harga}`);
 
                     // Extract Jumlah PPN - more flexible
-                    let ppnMatch = textContent.match(/Jumlah\s+PPN[^:]*(?:Pajak\s+Pertambahan\s+Nilai)?[:\s]*([0-9.,]+)/i);
+                    let ppnMatch = textContent.match(/Jumlah\s+PPN\s*\([^)]*\)[:\s]*([0-9.,]+)/i);
+                    if (!ppnMatch) {
+                        ppnMatch = textContent.match(/Jumlah\s+PPN[^:]*(?:Pajak\s+Pertambahan\s+Nilai)?[:\s]*([0-9.,]+)/i);
+                    }
                     if (!ppnMatch) {
                         ppnMatch = textContent.match(/PPN[:\s]*([0-9.,]+)/i);
                     }
-                    const ppn = ppnMatch ? cleanNumber(ppnMatch[1]) : 0;
-
-                    console.log(`[Rename Faktur] PPN: ${ppn}`);
+                    const ppnStr = ppnMatch ? ppnMatch[1].trim() : '0';
+                    const ppn = cleanNumber(ppnStr);
+                    
+                    console.log(`[Rename Faktur] PPN raw: "${ppnStr}" → parsed: ${ppn}`);
 
                     // Calculate total nominal
                     const totalNominal = harga + ppn;
@@ -204,11 +209,41 @@ module.exports = (app, supabase) => {
 // ============================================
 
 function cleanNumber(str) {
-    // Remove currency formatting: 3.321.394,00 -> 3321394
-    return parseInt(str.replace(/[.,]/g, '')) || 0;
+    // Remove currency formatting: 4.410.720,00 -> 4410720
+    // Handle both Indonesian (. as thousands, , as decimal) and US (,as thousands, . as decimal) formats
+    if (!str) return 0;
+    
+    str = str.trim();
+    console.log(`[cleanNumber] Input: "${str}"`);
+    
+    // Remove spaces
+    str = str.replace(/\s/g, '');
+    
+    // Check if this is Indonesian format (last separator is comma for decimals)
+    // or US format (last separator is period for decimals)
+    const lastCommaPos = str.lastIndexOf(',');
+    const lastPeriodPos = str.lastIndexOf('.');
+    
+    let cleaned;
+    if (lastCommaPos > lastPeriodPos) {
+        // Indonesian format: 4.410.720,00 -> remove periods, replace comma with nothing for integer
+        cleaned = str.replace(/\./g, '').replace(/,/, '');
+    } else if (lastPeriodPos > lastCommaPos) {
+        // US format: 4,410,720.00 -> remove commas, replace period with nothing for integer
+        cleaned = str.replace(/,/g, '').replace(/\./, '');
+    } else {
+        // No separator, just remove all non-digits except last 2 (for decimals if any)
+        cleaned = str.replace(/[^0-9]/g, '');
+    }
+    
+    const result = parseInt(cleaned) || 0;
+    console.log(`[cleanNumber] Output: ${result}`);
+    return result;
 }
 
 function formatCurrency(num) {
-    // Format: 3321394 -> 3.321.394
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    // Format: 4896000 -> 4.896.000 (remove last 2 digits as user requested)
+    // Divide by 100 to remove cents, then format with thousands separator
+    const withoutCents = Math.floor(num / 100);
+    return withoutCents.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
