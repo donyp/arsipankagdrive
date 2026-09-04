@@ -93,12 +93,17 @@ async function processFiles() {
     processBtn.disabled = true;
     processBtn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Memproses...';
 
+    // Hide file list and process button while processing
+    document.getElementById('fileList').classList.add('hidden');
+    document.getElementById('processButtonContainer').classList.add('hidden');
+
     const results = [];
     const resultsSection = document.getElementById('resultsSection');
     const resultsList = document.getElementById('resultsList');
 
     for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
+        console.log(`[Rename Faktur] Processing file ${i + 1}/${selectedFiles.length}: ${file.name}`);
         const result = await processFile(file);
         results.push(result);
     }
@@ -169,9 +174,24 @@ async function processFile(file) {
 
         const result = await response.json();
 
-        console.log(`[Rename Faktur] Response:`, result);
+        console.log(`[Rename Faktur] Response status: ${response.status}`, result);
 
-        if (response.ok && result.success) {
+        if (!response.ok) {
+            console.error(`[Rename Faktur] Error response:`, {
+                status: response.status,
+                statusText: response.statusText,
+                error: result.error,
+                details: result
+            });
+            return {
+                success: false,
+                originalName: file.name,
+                error: result.error || `HTTP ${response.status}: ${response.statusText}`
+            };
+        }
+
+        if (result.success) {
+            console.log(`[Rename Faktur] Success:`, result.newName);
             return {
                 success: true,
                 originalName: file.name,
@@ -182,6 +202,7 @@ async function processFile(file) {
                 fileData: result.fileData  // Base64 encoded PDF
             };
         } else {
+            console.error(`[Rename Faktur] Processing failed:`, result.error);
             return {
                 success: false,
                 originalName: file.name,
@@ -189,7 +210,7 @@ async function processFile(file) {
             };
         }
     } catch (err) {
-        console.error('[Rename Faktur] Error:', err);
+        console.error('[Rename Faktur] Network/Parse error:', err);
         return {
             success: false,
             originalName: file.name,

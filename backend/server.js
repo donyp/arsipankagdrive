@@ -85,20 +85,24 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Lazy-load express-fileupload middleware
+// Express-fileupload middleware with caching
+let fileUploadMiddleware = null;
 app.use((req, res, next) => {
-    try {
-        const fileUpload = require('express-fileupload');
-        const middleware = fileUpload({
-            useTempFiles: true,
-            tempFileDir: '/tmp/',
-            fileSize: 50 * 1024 * 1024, // 50MB max
-        });
-        middleware(req, res, next);
-    } catch (err) {
-        console.error('[FileUpload] Module not loaded yet, will retry on next request');
-        next();
+    if (!fileUploadMiddleware) {
+        try {
+            const fileUpload = require('express-fileupload');
+            fileUploadMiddleware = fileUpload({
+                useTempFiles: true,
+                tempFileDir: '/tmp/',
+                fileSize: 50 * 1024 * 1024, // 50MB max
+            });
+            console.log('[FileUpload] Middleware initialized');
+        } catch (err) {
+            console.error('[FileUpload] Failed to load:', err.message);
+            return res.status(503).json({ error: 'File upload service not ready' });
+        }
     }
+    fileUploadMiddleware(req, res, next);
 });
 
 // Serve Static Frontend from root
