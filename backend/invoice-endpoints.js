@@ -81,6 +81,100 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     });
     
     // ============================================
+    // POST /api/invoice/populate-zona-ids
+    // Populate zona_id for invoices that don't have it
+    // Admin only - repair migration
+    // ============================================
+    app.post('/api/invoice/populate-zona-ids', createAuth(['super_admin', 'moderator']), async (req, res) => {
+        try {
+            console.log('[Invoice API] Populating zona_id for invoices...');
+            
+            // Get all invoices without zona_id
+            const { data: invoicesWithoutZona, error: fetchError } = await supabase
+                .from('invoice_file_list')
+                .select('id, toko')
+                .is('zona_id', null);
+            
+            if (fetchError) {
+                console.error('[Invoice API] Error fetching invoices:', fetchError);
+                return res.status(500).json({ error: 'Failed to fetch invoices', details: fetchError.message });
+            }
+            
+            console.log(`[Invoice API] Found ${invoicesWithoutZona?.length || 0} invoices without zona_id`);
+            
+            if (!invoicesWithoutZona || invoicesWithoutZona.length === 0) {
+                return res.json({
+                    success: true,
+                    message: 'All invoices already have zona_id populated',
+                    updated: 0
+                });
+            }
+            
+            // Populate zona_id from toko table
+            let updated = 0;
+            let failed = 0;
+            
+            for (const inv of invoicesWithoutZona) {
+                try {
+                    // Look up zona_id from toko name
+                    const { data: tokoData, error: tokoError } = await supabase
+                        .from('toko')
+                        .select('id, zona_id')
+                        .eq('nama', inv.toko)
+                        .maybeSingle();
+                    
+                    if (tokoError) {
+                        console.error(`[Invoice API] Error looking up toko "${inv.toko}":`, tokoError);
+                        failed++;
+                        continue;
+                    }
+                    
+                    if (tokoData && tokoData.zona_id) {
+                        // Update invoice with zona_id
+                        const { error: updateError } = await supabase
+                            .from('invoice_file_list')
+                            .update({ 
+                                zona_id: tokoData.zona_id,
+                                toko_id: tokoData.id
+                            })
+                            .eq('id', inv.id);
+                        
+                        if (updateError) {
+                            console.error(`[Invoice API] Error updating invoice ${inv.id}:`, updateError);
+                            failed++;
+                        } else {
+                            updated++;
+                            if (updated % 10 === 0) {
+                                console.log(`[Invoice API] Progress: ${updated} updated...`);
+                            }
+                        }
+                    } else {
+                        console.warn(`[Invoice API] Could not find zona_id for toko: "${inv.toko}"`);
+                        failed++;
+                    }
+                } catch (err) {
+                    console.error(`[Invoice API] Error processing invoice ${inv.id}:`, err);
+                    failed++;
+                }
+            }
+            
+            console.log(`[Invoice API] ✅ Zona ID population complete: ${updated} updated, ${failed} failed`);
+            
+            res.json({
+                success: true,
+                message: `Updated ${updated} invoices with zona_id`,
+                updated,
+                failed,
+                total: invoicesWithoutZona.length
+            });
+            
+        } catch (error) {
+            console.error('[Invoice API] Populate zona error:', error);
+            res.status(500).json({ error: 'Server error', details: error.message });
+        }
+    });
+    
+    // ============================================
     // POST /api/invoice/upload-excel-data
     // Upload pre-parsed Excel data (from frontend validation)
     // RESTRICTED: super_admin & moderator only
@@ -512,12 +606,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
             }
             
             if (toko) {
-                // For admin_zona, ensure toko belongs to their zone
-                if (req.user && req.user.role === 'admin_zona') {
-                    query = query.eq('toko', toko).eq('zona_id', req.user.zona_id);
-                } else {
-                    query = query.eq('toko', toko);
-                }
+                query = query.eq('toko', toko);
             }
             
             if (keterangan) {
@@ -546,7 +635,13 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
             
             if (error) {
                 console.error('[Invoice API] Error fetching list:', error);
-                return res.status(500).json({ error: 'Failed to fetch invoice list' });
+                console.error('[Invoice API] Error details:', {
+                    code: error.code,
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint
+                });
+                return res.status(500).json({ error: 'Failed to fetch invoice list', details: error.message });
             }
             
             console.log(`[Invoice List] Returned ${data?.length || 0} invoices (total: ${count})`);
@@ -561,7 +656,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
             
         } catch (error) {
             console.error('[Invoice API] List error:', error);
-            res.status(500).json({ error: 'Server error' });
+            console.error('[Invoice API] Stack:', error.stack);
+            res.status(500).json({ error: 'Server error', details: error.message });
         }
     });
     
