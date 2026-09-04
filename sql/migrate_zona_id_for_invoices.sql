@@ -17,14 +17,16 @@ SELECT
     COUNT(CASE WHEN zona_id IS NULL THEN 1 END) as missing_zona_id
 FROM invoice_file_list;
 
--- Step 5: Migrate zona_id - match toko names with toko table
+-- Step 5: Migrate zona_id
+-- Match using KONSUMEN (actual toko name) instead of TOKO (supplier name)
+-- Because: toko = supplier (ANKA BEKASI), konsumen = actual store (Pasar Kemis, Balaraja)
 UPDATE invoice_file_list i
 SET 
     zona_id = t.zona_id,
     toko_id = t.id,
     updated_at = NOW()
 FROM toko t
-WHERE LOWER(TRIM(i.toko)) = LOWER(TRIM(t.nama))
+WHERE LOWER(TRIM(i.konsumen)) = LOWER(TRIM(t.nama))
   AND i.zona_id IS NULL;
 
 -- Step 6: Check result after migration
@@ -38,11 +40,11 @@ SELECT
     END as status
 FROM invoice_file_list;
 
--- Step 7: Show which toko names could not be matched (if any)
-SELECT DISTINCT toko, COUNT(*) as count
+-- Step 7: Show which konsumen names could not be matched (if any)
+SELECT DISTINCT konsumen, COUNT(*) as count
 FROM invoice_file_list
 WHERE zona_id IS NULL
-GROUP BY toko
+GROUP BY konsumen
 ORDER BY count DESC;
 
 -- Step 8: Show the migration results - invoices by zona
@@ -51,10 +53,18 @@ SELECT
     z.kode as zona_kode,
     z.nama as zona_nama,
     COUNT(i.id) as invoice_count,
-    COUNT(DISTINCT i.toko) as toko_count,
-    STRING_AGG(DISTINCT i.toko, ', ') as tokos
+    COUNT(DISTINCT i.toko) as supplier_count,
+    COUNT(DISTINCT i.konsumen) as toko_count,
+    STRING_AGG(DISTINCT i.konsumen, ', ' ORDER BY i.konsumen) as tokos
 FROM invoice_file_list i
 LEFT JOIN zonas z ON i.zona_id = z.id
 GROUP BY z.id, z.kode, z.nama
 ORDER BY z.id;
+
+-- Step 9: Show sample data for verification
+SELECT id, tanggal, toko, konsumen, faktur, zona_id, status
+FROM invoice_file_list
+ORDER BY zona_id, tanggal DESC
+LIMIT 10;
+
 
