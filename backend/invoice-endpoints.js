@@ -147,7 +147,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 console.log(`[Invoice API] Sample existing:`, Array.from(existingFakturs).slice(0, 5));
                 
                 // BULK INSERT: Insert all invoices one-by-one to handle duplicates
-                const invoicesToInsert = data.map(item => {
+                const invoicesToInsert = await Promise.all(data.map(async (item) => {
                     // Parse date string (DD-MM-YYYY format from Excel) to ISO date
                     let tanggalDate = null;
                     if (item.tanggal) {
@@ -161,9 +161,27 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         }
                     }
                     
+                    // Look up zona_id from toko name
+                    let zona_id = null;
+                    if (item.toko) {
+                        const { data: tokoData } = await supabase
+                            .from('toko')
+                            .select('zona_id')
+                            .eq('nama', item.toko)
+                            .maybeSingle();
+                        
+                        if (tokoData && tokoData.zona_id) {
+                            zona_id = tokoData.zona_id;
+                            console.log(`[Invoice API] Mapped toko "${item.toko}" to zona_id ${zona_id}`);
+                        } else {
+                            console.warn(`[Invoice API] Could not find zona_id for toko: ${item.toko}`);
+                        }
+                    }
+                    
                     return {
                         tanggal: tanggalDate || new Date().toISOString().split('T')[0], // Fallback to today if parse fails
                         toko: item.toko,
+                        zona_id: zona_id,  // ADD ZONA_ID!
                         faktur: item.faktur,
                         metode_bayar: item.metode_bayar,
                         jenis_transaksi: item.jenis_transaksi,
@@ -176,7 +194,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         excel_uploaded_at: new Date().toISOString(),
                         excel_uploaded_by: req.user.id
                     };
-                });
+                }));
                 
                 let processedCount = 0;
                 let duplicateCount = 0;  // RESET THIS!
