@@ -3038,13 +3038,18 @@ function populateMonthDropdown() {
 // Initialize invoice system after content is loaded
 function initInvoiceSystem() {
     console.log('[InvoiceInit] ===== INITIALIZING INVOICE SYSTEM =====');
+    console.log('[InvoiceInit] currentUser:', currentUser);
+    console.log('[InvoiceInit] currentUser?.role:', currentUser?.role);
+    console.log('[InvoiceInit] Check: currentUser !== undefined:', typeof currentUser !== 'undefined');
+    console.log('[InvoiceInit] Check: currentUser truthy:', !!currentUser);
     
     // Setup admin zona specific filters or regular filters based on role
     if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin_zona') {
-        console.log('[InvoiceInit] Admin Zona detected - setting up admin zona filters');
+        console.log('[InvoiceInit] ✅ Admin Zona detected - setting up admin zona filters');
         setupAdminZonaFilters();
     } else {
-        console.log('[InvoiceInit] Regular user detected - setting up regular filters');
+        console.log('[InvoiceInit] ✅ Regular user (super_admin/moderator) detected - setting up regular filters');
+        console.log('[InvoiceInit] currentUser.role =', currentUser?.role);
         setupRegularFilters();
     }
     
