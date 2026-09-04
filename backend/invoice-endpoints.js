@@ -256,19 +256,27 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     }
                     
                     // Look up zona_id from konsumen name (actual store name in toko table)
+                    // Use case-insensitive and trimmed matching to handle various formats
                     let zona_id = null;
                     if (item.konsumen) {
-                        const { data: tokoData } = await supabase
-                            .from('toko')
-                            .select('zona_id')
-                            .eq('nama', item.konsumen)
-                            .maybeSingle();
+                        const konsumenLower = item.konsumen.trim().toLowerCase();
                         
-                        if (tokoData && tokoData.zona_id) {
-                            zona_id = tokoData.zona_id;
-                            console.log(`[Invoice API] Mapped konsumen "${item.konsumen}" to zona_id ${zona_id}`);
-                        } else {
-                            console.warn(`[Invoice API] Could not find zona_id for konsumen: ${item.konsumen}`);
+                        // Get all toko records and do client-side case-insensitive matching
+                        const { data: allToko } = await supabase
+                            .from('toko')
+                            .select('nama, zona_id');
+                        
+                        if (allToko) {
+                            const match = allToko.find(t => 
+                                t.nama.trim().toLowerCase() === konsumenLower
+                            );
+                            
+                            if (match && match.zona_id) {
+                                zona_id = match.zona_id;
+                                console.log(`[Invoice API] Mapped konsumen "${item.konsumen}" (${konsumenLower}) to zona_id ${zona_id} via toko "${match.nama}"`);
+                            } else {
+                                console.warn(`[Invoice API] Could not find zona_id for konsumen: "${item.konsumen}" (${konsumenLower}). Available toko: ${allToko.map(t => t.nama).slice(0,5).join(', ')}...`);
+                            }
                         }
                     }
                     
