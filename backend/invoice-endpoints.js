@@ -256,26 +256,50 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     }
                     
                     // Look up zona_id from konsumen name (actual store name in toko table)
-                    // Use case-insensitive and trimmed matching to handle various formats
+                    // Use fuzzy/partial matching to handle name variations
                     let zona_id = null;
                     if (item.konsumen) {
                         const konsumenLower = item.konsumen.trim().toLowerCase();
                         
-                        // Get all toko records and do client-side case-insensitive matching
+                        // Get all toko records and do client-side matching
                         const { data: allToko } = await supabase
                             .from('toko')
                             .select('nama, zona_id');
                         
                         if (allToko) {
-                            const match = allToko.find(t => 
+                            // Strategy 1: Exact match (case-insensitive)
+                            let match = allToko.find(t => 
                                 t.nama.trim().toLowerCase() === konsumenLower
                             );
                             
+                            // Strategy 2: Partial match - check if konsumen contains toko nama
+                            if (!match) {
+                                match = allToko.find(t => {
+                                    const tokoLower = t.nama.trim().toLowerCase();
+                                    // Check if any word in toko.nama is in konsumen
+                                    return tokoLower.split(' ').some(word => 
+                                        word.length > 2 && konsumenLower.includes(word)
+                                    ) || konsumenLower.includes(tokoLower);
+                                });
+                            }
+                            
+                            // Strategy 3: Extract location name (last significant word before parentheses)
+                            if (!match) {
+                                const locationMatch = item.konsumen.match(/^MEGA BAJA\s+(\w+.*?)(?:\s*\(|$)/i);
+                                if (locationMatch) {
+                                    const location = locationMatch[1].trim().toLowerCase();
+                                    match = allToko.find(t => 
+                                        t.nama.trim().toLowerCase().includes(location) || 
+                                        location.includes(t.nama.trim().toLowerCase())
+                                    );
+                                }
+                            }
+                            
                             if (match && match.zona_id) {
                                 zona_id = match.zona_id;
-                                console.log(`[Invoice API] Mapped konsumen "${item.konsumen}" (${konsumenLower}) to zona_id ${zona_id} via toko "${match.nama}"`);
+                                console.log(`[Invoice API] Mapped konsumen "${item.konsumen}" to zona_id ${zona_id} via toko "${match.nama}"`);
                             } else {
-                                console.warn(`[Invoice API] Could not find zona_id for konsumen: "${item.konsumen}" (${konsumenLower}). Available toko: ${allToko.map(t => t.nama).slice(0,5).join(', ')}...`);
+                                console.warn(`[Invoice API] Could not find zona_id for konsumen: "${item.konsumen}"`);
                             }
                         }
                     }
