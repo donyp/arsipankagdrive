@@ -69,7 +69,7 @@ const BACKUP_DIR = path.join(__dirname, '..', 'data', 'backups');
 const BACKUP_RETENTION_COUNT = Math.max(1, Number(process.env.BACKUP_RETENTION_COUNT) || 30);
 
 console.log('================================================');
-console.log(`[BOOT] Pusat Arsip Anka - v2.1.0-fixed`);
+console.log(`[BOOT] Pusat Arsip Anka - v2.2.1-dashboard-fix`);
 console.log(`[BOOT] Time: ${new Date().toISOString()}`);
 console.log('================================================');
 
