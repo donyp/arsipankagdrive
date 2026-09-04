@@ -873,14 +873,14 @@ async function populateTokoDropdown() {
         const isAdminZona = window.currentUser && window.currentUser.role === 'admin_zona';
         
         if (isAdminZona && window.currentUser.zona_id) {
-            // For admin_zona: Get toko directly from zona_toko_mapping
+            // For admin_zona: Get toko directly from toko table filtered by zona_id
             console.log('[Invoice-Filter] Admin zona detected, fetching tokos for zona_id:', window.currentUser.zona_id);
             
             let { data, error } = await supabase
-                .from('zona_toko_mapping')
-                .select('toko_id, toko_name')
+                .from('toko')
+                .select('id, nama')
                 .eq('zona_id', window.currentUser.zona_id)
-                .order('toko_name', { ascending: true });
+                .order('nama', { ascending: true });
             
             if (error) {
                 console.error('[Invoice-Filter] Error fetching zona tokos:', error);
@@ -890,13 +890,13 @@ async function populateTokoDropdown() {
             if (data && data.length > 0) {
                 data.forEach(row => {
                     const option = document.createElement('option');
-                    option.value = row.toko_name;
-                    option.textContent = row.toko_name;
+                    option.value = row.nama;
+                    option.textContent = row.nama;
                     tokoSelect.appendChild(option);
                 });
-                console.log('[Invoice-Filter] ✅ Toko dropdown populated with', data.length, 'tokos from zone:', data.map(d => d.toko_name));
+                console.log('[Invoice-Filter] ✅ Toko dropdown populated with', data.length, 'tokos from zone:', data.map(d => d.nama));
             } else {
-                console.warn('[Invoice-Filter] ⚠️ No tokos found for this zona');
+                console.warn('[Invoice-Filter] ⚠️ No tokos found for zona_id:', window.currentUser.zona_id);
             }
         } else {
             // For super_admin/moderator: Get distinct toko from invoice_file_list
