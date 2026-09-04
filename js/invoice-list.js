@@ -997,21 +997,59 @@ async function populateMonthDropdown() {
         return;
     }
     
-    // Month names in Indonesian
-    const monthNames = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-    ];
-    
-    // Add all 12 months (these are always available)
-    for (let i = 1; i <= 12; i++) {
-        const option = document.createElement('option');
-        option.value = String(i).padStart(2, '0');
-        option.textContent = monthNames[i - 1];
-        monthSelect.appendChild(option);
+    try {
+        // Get distinct months from database
+        let { data, error } = await supabase
+            .from('invoice_file_list')
+            .select('tanggal');
+        
+        if (error) {
+            console.error('[Invoice-Filter] Error fetching months:', error);
+            // Fallback to all 12 months
+            const monthNames = [
+                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            ];
+            for (let i = 1; i <= 12; i++) {
+                const option = document.createElement('option');
+                option.value = String(i).padStart(2, '0');
+                option.textContent = monthNames[i - 1];
+                monthSelect.appendChild(option);
+            }
+            return;
+        }
+        
+        // Extract unique months from dates
+        const months = new Set();
+        if (data) {
+            data.forEach(row => {
+                if (row.tanggal) {
+                    const month = String(new Date(row.tanggal).getMonth() + 1).padStart(2, '0');
+                    months.add(month);
+                }
+            });
+        }
+        
+        // Sort months numerically
+        const sortedMonths = Array.from(months).sort();
+        
+        const monthNames = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        
+        // Add to dropdown
+        sortedMonths.forEach(monthNum => {
+            const option = document.createElement('option');
+            option.value = monthNum;
+            option.textContent = monthNames[parseInt(monthNum) - 1];
+            monthSelect.appendChild(option);
+        });
+        
+        console.log('[Invoice-Filter] ✅ Month dropdown populated with months:', sortedMonths);
+    } catch (err) {
+        console.error('[Invoice-Filter] Error in populateMonthDropdown:', err);
     }
-    
-    console.log('[Invoice-Filter] ✅ Month dropdown populated with 12 months');
 }
 
 // ============================================
