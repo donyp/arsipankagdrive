@@ -859,6 +859,62 @@ function formatRupiah(amount) {
 }
 
 // ============================================
+// Populate Year and Month Dropdowns
+// ============================================
+function populateYearDropdown() {
+    const yearSelect = document.getElementById('filterYear');
+    if (!yearSelect) {
+        console.warn('[Invoice-Filter] filterYear not found');
+        return;
+    }
+    
+    const currentYear = new Date().getFullYear();
+    const startYear = 2020;
+    
+    // Add years from startYear to currentYear
+    for (let year = currentYear; year >= startYear; year--) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    }
+    
+    console.log('[Invoice-Filter] Year dropdown populated');
+}
+
+function populateMonthDropdown() {
+    const monthSelect = document.getElementById('filterMonth');
+    if (!monthSelect) {
+        console.warn('[Invoice-Filter] filterMonth not found');
+        return;
+    }
+    
+    const months = [
+        { value: '01', label: 'Januari' },
+        { value: '02', label: 'Februari' },
+        { value: '03', label: 'Maret' },
+        { value: '04', label: 'April' },
+        { value: '05', label: 'Mei' },
+        { value: '06', label: 'Juni' },
+        { value: '07', label: 'Juli' },
+        { value: '08', label: 'Agustus' },
+        { value: '09', label: 'September' },
+        { value: '10', label: 'Oktober' },
+        { value: '11', label: 'November' },
+        { value: '12', label: 'Desember' }
+    ];
+    
+    months.forEach(month => {
+        const option = document.createElement('option');
+        option.value = month.value;
+        option.textContent = month.label;
+        monthSelect.appendChild(option);
+    });
+    
+    console.log('[Invoice-Filter] Month dropdown populated');
+}
+
+// ============================================
 // Update Filter Total
 // ============================================
 async function updateFilterTotal() {
@@ -893,6 +949,10 @@ async function updateFilterTotal() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[Invoice-Filter] Setting up filter handlers');
     
+    // Populate Year and Month dropdowns
+    populateYearDropdown();
+    populateMonthDropdown();
+    
     const btnApplyFilter = document.getElementById('btnApplyFilter');
     const btnResetFilter = document.getElementById('btnResetFilter');
     
@@ -907,6 +967,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateFrom = document.getElementById('filterDateFrom')?.value || '';
             const dateTo = document.getElementById('filterDateTo')?.value || '';
             const search = document.getElementById('filterSearch')?.value || '';
+            const year = document.getElementById('filterYear')?.value || '';
+            const month = document.getElementById('filterMonth')?.value || '';
             
             // Build query
             let query = supabase.from('invoice_file_list').select('*');
@@ -922,6 +984,34 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (dateTo) {
                 query = query.lte('tanggal', dateTo);
+            }
+            
+            // Filter by year and month if provided
+            if (year || month) {
+                let { data: dateData, error: dateError } = await supabase
+                    .from('invoice_file_list')
+                    .select('id, tanggal');
+                
+                if (!dateError && dateData) {
+                    const filteredIds = dateData
+                        .filter(row => {
+                            if (!row.tanggal) return false;
+                            const rowYear = new Date(row.tanggal).getFullYear().toString();
+                            const rowMonth = String(new Date(row.tanggal).getMonth() + 1).padStart(2, '0');
+                            
+                            if (year && rowYear !== year) return false;
+                            if (month && rowMonth !== month) return false;
+                            
+                            return true;
+                        })
+                        .map(row => row.id);
+                    
+                    if (filteredIds.length > 0) {
+                        query = query.in('id', filteredIds);
+                    } else {
+                        query = query.eq('id', null); // Return empty result
+                    }
+                }
             }
             
             query = query.order('tanggal', { ascending: false }).limit(500);
@@ -959,12 +1049,23 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('[Invoice-Filter] Reset filter clicked');
             
             // Clear all filters
-            document.getElementById('filterStatus').value = '';
-            document.getElementById('filterToko').value = '';
-            document.getElementById('filterKeterangan').value = '';
-            document.getElementById('filterDateFrom').value = '';
-            document.getElementById('filterDateTo').value = '';
-            document.getElementById('filterSearch').value = '';
+            const filterStatus = document.getElementById('filterStatus');
+            const filterToko = document.getElementById('filterToko');
+            const filterKeterangan = document.getElementById('filterKeterangan');
+            const filterDateFrom = document.getElementById('filterDateFrom');
+            const filterDateTo = document.getElementById('filterDateTo');
+            const filterSearch = document.getElementById('filterSearch');
+            const filterYear = document.getElementById('filterYear');
+            const filterMonth = document.getElementById('filterMonth');
+            
+            if (filterStatus) filterStatus.value = '';
+            if (filterToko) filterToko.value = '';
+            if (filterKeterangan) filterKeterangan.value = '';
+            if (filterDateFrom) filterDateFrom.value = '';
+            if (filterDateTo) filterDateTo.value = '';
+            if (filterSearch) filterSearch.value = '';
+            if (filterYear) filterYear.value = '';
+            if (filterMonth) filterMonth.value = '';
             
             // Fade out animation
             const table = document.querySelector('.invoice-table');
