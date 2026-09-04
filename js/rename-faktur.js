@@ -32,12 +32,21 @@ dropzone.addEventListener('drop', (e) => {
 // Handle Files
 // ============================================
 function handleFiles(files) {
-    selectedFiles = Array.from(files).filter(f => f.type === 'application/pdf');
+    let fileArray = Array.from(files).filter(f => f.type === 'application/pdf');
     
-    if (selectedFiles.length === 0) {
+    if (fileArray.length === 0) {
         Toast.error('Pilih file PDF yang valid');
         return;
     }
+
+    // Max 10 files limit
+    const MAX_FILES = 10;
+    if (fileArray.length > MAX_FILES) {
+        Toast.warning(`Maksimal ${MAX_FILES} file sekaligus. ${fileArray.length - MAX_FILES} file dihapus dari antrian.`);
+        fileArray = fileArray.slice(0, MAX_FILES);
+    }
+
+    selectedFiles = fileArray;
 
     // Show file list
     const fileList = document.getElementById('fileList');
@@ -51,7 +60,7 @@ function handleFiles(files) {
                 <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
                 </svg>
-                <span class="text-sm font-medium text-gray-700">${f.name}</span>
+                <span class="text-sm font-medium text-gray-700">${i + 1}. ${f.name}</span>
                 <span class="text-xs text-gray-500">${(f.size / 1024).toFixed(1)} KB</span>
             </div>
             <button onclick="removeFile(${i})" class="p-1 text-red-500 hover:bg-red-50 rounded">
@@ -61,6 +70,12 @@ function handleFiles(files) {
             </button>
         </div>
     `).join('');
+
+    // Add max files note
+    const maxFilesNote = document.createElement('p');
+    maxFilesNote.className = 'text-xs text-gray-500 mt-3 italic';
+    maxFilesNote.textContent = `Maksimal ${MAX_FILES} file, ${selectedFiles.length} file dipilih`;
+    filesContainer.appendChild(maxFilesNote);
     
     processButtonContainer.classList.remove('hidden');
 }
