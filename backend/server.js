@@ -84,11 +84,22 @@ console.log('[CONFIG] Environment configuration loaded.\n');
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(require('express-fileupload')({
-    useTempFiles: true,
-    tempFileDir: '/tmp/',
-    fileSize: 50 * 1024 * 1024, // 50MB max
-}));
+
+// Lazy-load express-fileupload middleware
+app.use((req, res, next) => {
+    try {
+        const fileUpload = require('express-fileupload');
+        const middleware = fileUpload({
+            useTempFiles: true,
+            tempFileDir: '/tmp/',
+            fileSize: 50 * 1024 * 1024, // 50MB max
+        });
+        middleware(req, res, next);
+    } catch (err) {
+        console.error('[FileUpload] Module not loaded yet, will retry on next request');
+        next();
+    }
+});
 
 // Serve Static Frontend from root
 app.use(express.static(path.join(__dirname, '..')));
