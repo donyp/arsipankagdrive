@@ -1,27 +1,37 @@
--- Update zona kode from zona-01, zona-02, etc to 1, 2, 3, etc
--- This simplifies the zona identification system
+-- Update zona kode from zona-XX format to numeric/alphanumeric format
+-- Convert zona-01, zona-02 to 1, 2
+-- Convert zona-03a, zona-03b to 3a, 3b
+-- Convert zona-06a, zona-06b to 6a, 6b
+-- Keep numbering consistent across all 17 zones
 
 -- First, check current zonas
 SELECT id, kode, nama FROM zonas ORDER BY id;
 
--- Update kode for each zona (1-17)
-UPDATE zonas SET kode = '1' WHERE kode = 'zona-01';
-UPDATE zonas SET kode = '2' WHERE kode = 'zona-02';
-UPDATE zonas SET kode = '3' WHERE kode = 'zona-03';
-UPDATE zonas SET kode = '4' WHERE kode = 'zona-04';
-UPDATE zonas SET kode = '5' WHERE kode = 'zona-05';
-UPDATE zonas SET kode = '6' WHERE kode = 'zona-06';
-UPDATE zonas SET kode = '7' WHERE kode = 'zona-07';
-UPDATE zonas SET kode = '8' WHERE kode = 'zona-08';
-UPDATE zonas SET kode = '9' WHERE kode = 'zona-09';
-UPDATE zonas SET kode = '10' WHERE kode = 'zona-10';
-UPDATE zonas SET kode = '11' WHERE kode = 'zona-11';
-UPDATE zonas SET kode = '12' WHERE kode = 'zona-12';
-UPDATE zonas SET kode = '13' WHERE kode = 'zona-13';
-UPDATE zonas SET kode = '14' WHERE kode = 'zona-14';
-UPDATE zonas SET kode = '15' WHERE kode = 'zona-15';
-UPDATE zonas SET kode = '16' WHERE kode = 'zona-16';
-UPDATE zonas SET kode = '17' WHERE kode = 'zona-17';
+-- Update all zona codes by removing 'zona-' prefix and leading zeros
+UPDATE zonas SET kode = 
+  CASE 
+    WHEN kode = 'zona-01' THEN '1'
+    WHEN kode = 'zona-02' THEN '2'
+    WHEN kode = 'zona-03a' THEN '3a'
+    WHEN kode = 'zona-03b' THEN '3b'
+    WHEN kode = 'zona-04' THEN '4'
+    WHEN kode = 'zona-05' THEN '5'
+    WHEN kode = 'zona-06a' THEN '6a'
+    WHEN kode = 'zona-06b' THEN '6b'
+    WHEN kode = 'zona-07' THEN '7'
+    WHEN kode = 'zona-08' THEN '8'
+    WHEN kode = 'zona-09' THEN '9'
+    WHEN kode = 'zona-10' THEN '10'
+    WHEN kode = 'zona-11' THEN '11'
+    WHEN kode = 'zona-12' THEN '12'
+    WHEN kode = 'zona-13' THEN '13'
+    WHEN kode = 'zona-14' THEN '14'
+    WHEN kode = 'zona-15' THEN '15'
+    WHEN kode = 'zona-16' THEN '16'
+    WHEN kode = 'zona-17' THEN '17'
+    ELSE kode
+  END
+WHERE kode LIKE 'zona-%';
 
 -- Verify updates
 SELECT id, kode, nama FROM zonas ORDER BY id;
