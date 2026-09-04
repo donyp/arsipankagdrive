@@ -380,11 +380,17 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await initAuth();
             
-            // Get current user from API (more reliable than localStorage)
+            // Wait for window.currentUser to be set by initAuth
+            let retries = 0;
+            while (!window.currentUser && retries < 50) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+                retries++;
+            }
+            
             const currentUser = window.currentUser;
             
             if (!currentUser) {
-                console.error('[AdminZona] currentUser not available');
+                console.error('[AdminZona] currentUser still not available after retries');
                 document.getElementById('user-name').textContent = 'Unknown';
                 document.getElementById('user-zona').textContent = 'Zona: -';
                 return;
@@ -394,10 +400,10 @@
             const userEmail = currentUser.email || currentUser.name || 'Admin Zona';
             const zonaName = currentUser.zonas?.nama || currentUser.zonas?.kode || currentUser.zona_kode || 'Unknown';
             
+            console.log('[AdminZona] User:', userEmail, 'Zona:', zonaName, 'Full user:', currentUser);
+            
             document.getElementById('user-name').textContent = userEmail;
             document.getElementById('user-zona').textContent = `Zona: ${zonaName}`;
-            
-            console.log('[AdminZona] User:', userEmail, 'Zona:', zonaName);
 
             // Load all data first to populate filters
             await loadAllInvoices();
