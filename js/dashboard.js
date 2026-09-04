@@ -2889,8 +2889,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (document.getElementById('invoiceTableBody')) {
         console.log('[Dashboard] Invoice table found, loading data...');
-        // Load filter options first
-        await loadFilterOptions();
+        // Load filter options first (skip for admin_zona to avoid toko dropdown issues)
+        if (currentUser?.role !== 'admin_zona') {
+            await loadFilterOptions();
+        }
         loadInvoicesInDashboard(1);
         // Initialize event listeners for pagination and filters
         initInvoiceSystem();
@@ -3009,13 +3011,6 @@ function setupAdminZonaFilters() {
     if (statUploaded) statUploaded.closest('div').style.display = 'none';
     if (statPending) statPending.closest('div').style.display = 'none';
     if (statMissing) statMissing.closest('div').style.display = 'none';
-    
-    // Hide toko dropdown for admin_zona users - use search instead
-    const tokoFilterContainer = document.getElementById('tokoFilterContainer');
-    if (tokoFilterContainer) {
-        tokoFilterContainer.style.display = 'none';
-        console.log('[AdminZonaFilters] ✅ Toko dropdown hidden - admin_zona will use search/date filters');
-    }
     
     console.log('[AdminZonaFilters] ✅ Admin Zona filters setup complete');
 }
