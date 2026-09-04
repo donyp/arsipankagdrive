@@ -391,9 +391,10 @@
             try {
                 const result = await loginWithCredentials(username, password);
                 
-                // Get user role to decide dashboard redirect
-                const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                const dashboardPage = user.role === 'admin_zona' ? 'dashboard-admin-zona.html' : 'dashboard.html';
+                // Get user role from the login response
+                const dashboardPage = result.user?.role === 'admin_zona' ? 'dashboard-admin-zona.html' : 'dashboard.html';
+                
+                console.log('[Login] User role:', result.user?.role, '→ Redirecting to:', dashboardPage);
                 
                 // Show success notification - auto redirect after 2.5 seconds
                 await Swal.fire({
