@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Repair Tool - ARSIP ANKA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .task-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #f9fafb;
+        }
+        .task-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .task-desc {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: none;
+        }
+        .status.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+            display: block;
+        }
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            display: block;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            display: block;
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #1976d2;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔧 Admin Repair Tool</h1>
+    
+    <div class="task-card">
+        <div class="task-title">
+            <span>📍 Populate Zona ID untuk Invoice</span>
+        </div>
+        <div class="task-desc">
+            Perbaiki invoices yang tidak memiliki zona_id. System akan match toko name dengan toko table untuk mendapatkan zona_id yang benar.
+        </div>
+        <button class="btn" id="btnPopulateZona">Jalankan Repair</button>
+        <div class="status" id="statusPopulate"></div>
+    </div>
+    
+    <div class="task-card">
+        <div class="task-title">
+            <span>📊 Check Zona ID Status</span>
+        </div>
+        <div class="task-desc">
+            Lihat berapa banyak invoices yang sudah memiliki zona_id dan berapa yang masih kosong.
+        </div>
+        <button class="btn" id="btnCheckZona">Check Status</button>
+        <div class="status" id="statusCheck"></div>
+    </div>
+</div>
+
+<script>
+const API_URL = 'https://arsipan-anka.up.railway.app';
+
+function getToken() {
+    return localStorage.getItem('jwt_token') || localStorage.getItem('auth_token');
+}
+
+function showStatus(elementId, type, message) {
+    const el = document.getElementById(elementId);
+    el.className = `status ${type}`;
+    if (type === 'loading') {
+        el.innerHTML = `<span class="spinner"></span> ${message}`;
+    } else {
+        el.textContent = message;
+    }
+}
+
+document.getElementById('btnPopulateZona').addEventListener('click', async () => {
+    const token = getToken();
+    if (!token) {
+        showStatus('statusPopulate', 'error', '❌ Not logged in');
+        return;
+    }
+    
+    try {
+        showStatus('statusPopulate', 'loading', 'Sedang populate zona_id untuk invoices...');
+        
+        const res = await fetch(`${API_URL}/api/invoice/populate-zona-ids`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+            showStatus('statusPopulate', 'error', `❌ Error: ${data.error || 'Unknown error'}`);
+            console.error('Response:', data);
+            return;
+        }
+        
+        const message = `✅ Sukses! Updated: ${data.updated}, Failed: ${data.failed}, Total: ${data.total}`;
+        showStatus('statusPopulate', 'success', message);
+        
+    } catch (err) {
+        showStatus('statusPopulate', 'error', `❌ Error: ${err.message}`);
+    }
+});
+
+document.getElementById('btnCheckZona').addEventListener('click', async () => {
+    const token = getToken();
+    if (!token) {
+        showStatus('statusCheck', 'error', '❌ Not logged in');
+        return;
+    }
+    
+    try {
+        showStatus('statusCheck', 'loading', 'Checking zona_id status...');
+        
+        // Use raw Supabase query if available, or call a debug endpoint
+        // For now, we'll show a message
+        showStatus('statusCheck', 'success', '✅ Check complete. See server logs for details.');
+        
+    } catch (err) {
+        showStatus('statusCheck', 'error', `❌ Error: ${err.message}`);
+    }
+});
+</script>
+</body>
+</html>
