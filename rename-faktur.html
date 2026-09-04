@@ -97,6 +97,43 @@
         </main>
     </div>
 
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4">
+            <!-- Animated Spinner -->
+            <div class="flex justify-center mb-6">
+                <div class="relative w-20 h-20">
+                    <!-- Outer rotating ring -->
+                    <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 border-r-blue-400 animate-spin" style="animation-duration: 1.5s;"></div>
+                    <!-- Middle rotating ring (opposite) -->
+                    <div class="absolute inset-2 rounded-full border-3 border-transparent border-b-blue-600 border-l-blue-400 animate-spin" style="animation-duration: 2.5s; animation-direction: reverse;"></div>
+                    <!-- Center dot -->
+                    <div class="absolute inset-6 rounded-full bg-gradient-to-br from-blue-600 to-blue-400 shadow-lg shadow-blue-300"></div>
+                </div>
+            </div>
+
+            <!-- Status Text -->
+            <h3 class="text-lg font-bold text-gray-900 text-center mb-2">Memproses Faktur</h3>
+            <p class="text-sm text-gray-600 text-center mb-6" id="loadingStatus">Sedang mengscan dan mengekstrak data...</p>
+
+            <!-- Progress Bar -->
+            <div class="space-y-3">
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div id="loadingProgressBar" class="bg-gradient-to-r from-blue-600 to-blue-400 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-gray-500 text-center">
+                    <span id="loadingProgressText">0</span>/<span id="loadingTotalFiles">0</span> file selesai
+                </p>
+            </div>
+
+            <!-- File Being Processed -->
+            <div class="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p class="text-xs text-gray-600 mb-1">File sedang diproses:</p>
+                <p class="text-sm font-mono text-blue-700 truncate" id="loadingCurrentFile">-</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/sidebar.js?v=ULTRACLEAN_2026"></script>
     <script src="js/config.js"></script>

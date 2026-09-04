@@ -106,11 +106,11 @@ async function processFiles() {
 
     const processBtn = event.target.closest('button');
     processBtn.disabled = true;
-    processBtn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Memproses...';
 
-    // Hide file list and process button while processing
+    // Hide file list and process button, show loading modal
     document.getElementById('fileList').classList.add('hidden');
     document.getElementById('processButtonContainer').classList.add('hidden');
+    showLoadingModal(selectedFiles.length);
 
     const results = [];
     const resultsSection = document.getElementById('resultsSection');
@@ -119,9 +119,16 @@ async function processFiles() {
     for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
         console.log(`[Rename Faktur] Processing file ${i + 1}/${selectedFiles.length}: ${file.name}`);
+        
+        // Update loading modal
+        updateLoadingModal(i + 1, file.name, selectedFiles.length);
+        
         const result = await processFile(file);
         results.push(result);
     }
+
+    // Hide loading modal
+    hideLoadingModal();
 
     // Update process history
     processHistory = results;
@@ -303,3 +310,40 @@ function exportHistory() {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Rename Faktur] Initialized');
 });
+
+// ============================================
+// Loading Modal Functions
+// ============================================
+function showLoadingModal(totalFiles) {
+    const modal = document.getElementById('loadingModal');
+    document.getElementById('loadingTotalFiles').textContent = totalFiles;
+    document.getElementById('loadingProgressText').textContent = '0';
+    document.getElementById('loadingProgressBar').style.width = '0%';
+    modal.classList.remove('hidden');
+}
+
+function hideLoadingModal() {
+    const modal = document.getElementById('loadingModal');
+    modal.classList.add('hidden');
+}
+
+function updateLoadingModal(current, fileName, total) {
+    // Update progress bar
+    const percentage = (current / total) * 100;
+    document.getElementById('loadingProgressBar').style.width = percentage + '%';
+    
+    // Update counters
+    document.getElementById('loadingProgressText').textContent = current;
+    
+    // Update current file being processed
+    const displayName = fileName.length > 35 ? fileName.substring(0, 32) + '...' : fileName;
+    document.getElementById('loadingCurrentFile').textContent = displayName;
+    
+    // Update status message based on progress
+    const statusEl = document.getElementById('loadingStatus');
+    if (current < total) {
+        statusEl.textContent = `Mengscan file ${current} dari ${total}...`;
+    } else {
+        statusEl.textContent = 'Menyelesaikan proses...';
+    }
+}
