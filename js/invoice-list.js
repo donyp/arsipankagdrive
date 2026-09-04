@@ -869,17 +869,25 @@ async function populateTokoDropdown() {
     }
     
     try {
-        // Check if user is admin_zona
-        const isAdminZona = window.currentUser && window.currentUser.role === 'admin_zona';
+        // Get current user from auth module (not window.currentUser)
+        const user = getCurrentUser ? getCurrentUser() : null;
+        const isAdminZona = user && user.role === 'admin_zona';
         
-        if (isAdminZona && window.currentUser.zona_id) {
+        console.log('[Invoice-Filter] Current user:', {
+            name: user?.name,
+            role: user?.role,
+            zona_id: user?.zona_id,
+            isAdminZona
+        });
+        
+        if (isAdminZona && user.zona_id) {
             // For admin_zona: Get toko directly from toko table filtered by zona_id
-            console.log('[Invoice-Filter] Admin zona detected, fetching tokos for zona_id:', window.currentUser.zona_id);
+            console.log('[Invoice-Filter] Admin zona detected, fetching tokos for zona_id:', user.zona_id);
             
             let { data, error } = await supabase
                 .from('toko')
                 .select('id, nama')
-                .eq('zona_id', window.currentUser.zona_id)
+                .eq('zona_id', user.zona_id)
                 .order('nama', { ascending: true });
             
             if (error) {
@@ -896,7 +904,7 @@ async function populateTokoDropdown() {
                 });
                 console.log('[Invoice-Filter] ✅ Toko dropdown populated with', data.length, 'tokos from zone:', data.map(d => d.nama));
             } else {
-                console.warn('[Invoice-Filter] ⚠️ No tokos found for zona_id:', window.currentUser.zona_id);
+                console.warn('[Invoice-Filter] ⚠️ No tokos found for zona_id:', user.zona_id);
             }
         } else {
             // For super_admin/moderator: Get distinct toko from invoice_file_list
@@ -1128,9 +1136,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             let query = supabase.from('invoice_file_list').select('*');
             
             // Filter by zona if admin_zona
-            if (window.currentUser && window.currentUser.role === 'admin_zona' && window.currentUser.zona_id) {
-                query = query.eq('zona_id', window.currentUser.zona_id);
-                console.log('[Invoice-Filter] Admin zona detected - filtering by zona_id:', window.currentUser.zona_id);
+            const user = getCurrentUser ? getCurrentUser() : null;
+            if (user && user.role === 'admin_zona' && user.zona_id) {
+                query = query.eq('zona_id', user.zona_id);
+                console.log('[Invoice-Filter] Admin zona detected - filtering by zona_id:', user.zona_id);
             }
             
             if (status) query = query.eq('status', status);

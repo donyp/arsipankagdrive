@@ -5,6 +5,11 @@
 
 let currentUser = null;
 
+// ---- Get current user (public function) ----
+function getCurrentUser() {
+    return currentUser;
+}
+
 // ---- Initialize Auth (check JWT on page load) ----
 async function initAuth(requiredRole = null) {
     const token = API.getToken();
