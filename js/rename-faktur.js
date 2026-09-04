@@ -130,34 +130,20 @@ async function processFiles() {
     // Hide loading modal
     hideLoadingModal();
 
-    // Update process history
+    // Save to persistent history (only name, not file data)
+    const historyToSave = results.map(r => ({
+        success: r.success,
+        originalName: r.originalName,
+        newName: r.newName || null,
+        error: r.error || null
+    }));
+    addToHistory(historyToSave);
+
+    // Update process history for current session
     processHistory = results;
 
-    // Display results with numbering
-    resultsList.innerHTML = results.map((r, idx) => `
-        <div class="p-4 rounded-lg border ${r.success ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}">
-            <div class="flex items-start gap-3">
-                ${r.success ? 
-                    '<svg class="w-5 h-5 text-emerald-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>'
-                    : '<svg class="w-5 h-5 text-red-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>'
-                }
-                <div class="flex-1">
-                    <p class="font-bold ${r.success ? 'text-emerald-900' : 'text-red-900'}">${idx + 1}. ${r.originalName}</p>
-                    ${r.success ? 
-                        `<p class="text-sm text-emerald-700 mt-1">
-                            ✓ Nama baru: <span class="font-mono text-xs">${r.newName}</span>
-                            <button onclick="downloadFile('${r.newName}', '${r.fileData}')" class="ml-2 text-blue-600 hover:underline text-xs">Download</button>
-                        </p>`
-                        : `<p class="text-sm text-red-700 mt-1">✗ ${r.error}</p>`
-                    }
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-    resultsSection.classList.remove('hidden');
-    processBtn.disabled = false;
-    processBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> Proses & Download';
+    // Reload and display persistent history
+    loadPersistentHistory();
 
     // Auto-download successful files
     const successFiles = results.filter(r => r.success);
@@ -309,7 +295,155 @@ function exportHistory() {
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Rename Faktur] Initialized');
+    
+    // Load and display history on page load
+    loadPersistentHistory();
+    
+    // Cleanup old history on page load (items older than 1 day)
+    cleanupOldHistory();
 });
+
+// ============================================
+// Persistent History Management (localStorage)
+// ============================================
+const HISTORY_STORAGE_KEY = 'renameFakturHistory';
+const HISTORY_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+const ITEMS_PER_PAGE = 10;
+
+function getHistoryFromStorage() {
+    try {
+        const data = localStorage.getItem(HISTORY_STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch (err) {
+        console.error('[History] Error reading from localStorage:', err);
+        return [];
+    }
+}
+
+function saveHistoryToStorage(history) {
+    try {
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+    } catch (err) {
+        console.error('[History] Error saving to localStorage:', err);
+    }
+}
+
+function addToHistory(results) {
+    const history = getHistoryFromStorage();
+    
+    // Add new results with timestamp
+    const newEntries = results.map(r => ({
+        ...r,
+        timestamp: new Date().getTime(),
+        id: Math.random().toString(36).substring(2, 11)
+    }));
+    
+    // Add to beginning (newest first)
+    const updated = [...newEntries, ...history];
+    saveHistoryToStorage(updated);
+}
+
+function cleanupOldHistory() {
+    const now = new Date().getTime();
+    const history = getHistoryFromStorage();
+    
+    // Keep only items from last 24 hours
+    const filtered = history.filter(item => {
+        const age = now - item.timestamp;
+        return age < HISTORY_EXPIRY_MS;
+    });
+    
+    if (filtered.length !== history.length) {
+        console.log(`[History] Removed ${history.length - filtered.length} expired items`);
+        saveHistoryToStorage(filtered);
+    }
+}
+
+function loadPersistentHistory(page = 1) {
+    const history = getHistoryFromStorage();
+    const resultsSection = document.getElementById('resultsSection');
+    const resultsList = document.getElementById('resultsList');
+    
+    if (history.length === 0) {
+        resultsSection.classList.add('hidden');
+        return;
+    }
+    
+    // Pagination
+    const totalItems = history.length;
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+    const startIdx = (page - 1) * ITEMS_PER_PAGE;
+    const endIdx = startIdx + ITEMS_PER_PAGE;
+    const pageItems = history.slice(startIdx, endIdx);
+    
+    // Display results
+    resultsList.innerHTML = pageItems.map((r, idx) => {
+        const itemIdx = startIdx + idx + 1;
+        const timestamp = new Date(r.timestamp).toLocaleString('id-ID');
+        
+        return `
+            <div class="p-4 rounded-lg border ${r.success ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-start gap-3 flex-1">
+                        ${r.success ? 
+                            '<svg class="w-5 h-5 text-emerald-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>'
+                            : '<svg class="w-5 h-5 text-red-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>'
+                        }
+                        <div class="flex-1">
+                            <p class="font-bold ${r.success ? 'text-emerald-900' : 'text-red-900'}">${itemIdx}. ${r.originalName}</p>
+                            ${r.success ? 
+                                `<p class="text-sm text-emerald-700 mt-1">
+                                    ✓ Nama baru: <span class="font-mono text-xs">${r.newName}</span>
+                                </p>`
+                                : `<p class="text-sm text-red-700 mt-1">✗ ${r.error}</p>`
+                            }
+                            <p class="text-xs text-gray-500 mt-2">${timestamp}</p>
+                        </div>
+                    </div>
+                    <button onclick="deleteHistoryItem('${r.id}')" class="p-1 text-red-500 hover:bg-red-100 rounded flex-shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    resultsSection.classList.remove('hidden');
+    
+    // Add pagination if needed
+    if (totalPages > 1) {
+        const paginationHTML = `
+            <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                <p class="text-xs text-gray-600">Halaman ${page} dari ${totalPages} (Total: ${totalItems} history)</p>
+                <div class="flex gap-2">
+                    ${page > 1 ? `<button onclick="loadPersistentHistory(${page - 1})" class="px-4 py-2 text-sm rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200">← Sebelumnya</button>` : ''}
+                    ${page < totalPages ? `<button onclick="loadPersistentHistory(${page + 1})" class="px-4 py-2 text-sm rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200">Selanjutnya →</button>` : ''}
+                </div>
+            </div>
+        `;
+        resultsList.insertAdjacentHTML('afterend', paginationHTML);
+    }
+}
+
+function deleteHistoryItem(id) {
+    const history = getHistoryFromStorage();
+    const filtered = history.filter(item => item.id !== id);
+    saveHistoryToStorage(filtered);
+    
+    // Reload history display
+    loadPersistentHistory();
+    Toast.success('History item dihapus');
+}
+
+function clearAllHistory() {
+    if (confirm('Hapus semua history rename faktur?')) {
+        localStorage.removeItem(HISTORY_STORAGE_KEY);
+        document.getElementById('resultsSection').classList.add('hidden');
+        Toast.success('Semua history dihapus');
+    }
+}
 
 // ============================================
 // Loading Modal Functions
