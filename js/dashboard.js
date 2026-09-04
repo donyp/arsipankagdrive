@@ -2890,11 +2890,9 @@ async function applyInvoiceFilters() {
     try {
         const toko = document.getElementById('filterToko')?.value || '';
         const keterangan = document.getElementById('filterKeterangan')?.value || '';
-        const yearValue = document.getElementById('filterYear')?.value || '';
-        const monthValue = document.getElementById('filterMonth')?.value || '';
-        const search = document.getElementById('filterSearch')?.value || '';
+        const monthValue = document.getElementById('filterMonth')?.value || ''; // Format: YYYY-MM from input type="month"
         
-        console.log('[Filter] Applying filters:', { toko, keterangan, year: yearValue, month: monthValue, search });
+        console.log('[Filter] Applying filters:', { toko, keterangan, month: monthValue });
         
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -2904,7 +2902,7 @@ async function applyInvoiceFilters() {
         if (toko) params.append('toko', toko);
         if (keterangan) params.append('keterangan', keterangan);
         
-        // Handle Year/Month filtering
+        // Handle Month filtering (input type="month" gives YYYY-MM format)
         if (monthValue) {
             // monthValue is in format YYYY-MM
             const [year, month] = monthValue.split('-');
@@ -2913,17 +2911,9 @@ async function applyInvoiceFilters() {
             const dateTo = `${year}-${month}-${dateToObj.getDate()}`;
             params.append('date_from', dateFrom);
             params.append('date_to', dateTo);
-            console.log('[Filter] Filtering by month:', { dateFrom, dateTo });
-        } else if (yearValue) {
-            // Only year selected
-            const dateFrom = `${yearValue}-01-01`;
-            const dateTo = `${yearValue}-12-31`;
-            params.append('date_from', dateFrom);
-            params.append('date_to', dateTo);
-            console.log('[Filter] Filtering by year:', { dateFrom, dateTo });
+            console.log('[Filter] Filtering by month:', { monthValue, dateFrom, dateTo });
         }
         
-        if (search) params.append('search', search);
         params.append('limit', INVOICE_PAGE_SIZE);
         params.append('offset', 0);
         
@@ -2960,23 +2950,13 @@ async function applyInvoiceFilters() {
 
 function resetInvoiceFilters() {
     console.log('[Filter] Resetting filters');
-    const filterStatus = document.getElementById('filterStatus');
     const filterToko = document.getElementById('filterToko');
     const filterKeterangan = document.getElementById('filterKeterangan');
-    const filterYear = document.getElementById('filterYear');
     const filterMonth = document.getElementById('filterMonth');
-    const filterDateFrom = document.getElementById('filterDateFrom');
-    const filterDateTo = document.getElementById('filterDateTo');
-    const filterSearch = document.getElementById('filterSearch');
     
-    if (filterStatus) filterStatus.value = '';
     if (filterToko) filterToko.value = '';
     if (filterKeterangan) filterKeterangan.value = '';
-    if (filterYear) filterYear.value = '';
     if (filterMonth) filterMonth.value = '';
-    if (filterDateFrom) filterDateFrom.value = '';
-    if (filterDateTo) filterDateTo.value = '';
-    if (filterSearch) filterSearch.value = '';
     
     loadInvoicesInDashboard(1);
 }
@@ -2986,190 +2966,31 @@ function setupAdminZonaFilters() {
     console.log('[AdminZonaFilters] Setting up admin zona specific filters');
     
     // Hide ALL stat cards for admin zona
-    const statsContainer = document.querySelector('.stats-container');
-    if (statsContainer) {
-        statsContainer.style.display = 'none';
-        console.log('[AdminZonaFilters] ✅ All statistics cards hidden');
-    }
+    const statTotal = document.getElementById('statTotal');
+    const statUploaded = document.getElementById('statUploaded');
+    const statPending = document.getElementById('statPending');
+    const statMissing = document.getElementById('statMissing');
     
-    // Hide Status filter
-    const filterStatus = document.getElementById('filterStatus');
-    if (filterStatus) {
-        const statusGroup = filterStatus.closest('.filter-group');
-        if (statusGroup) {
-            statusGroup.style.display = 'none';
-            console.log('[AdminZonaFilters] ✅ Status filter hidden');
-        }
-    }
-    
-    // Hide Date filters if they exist
-    const filterDateFrom = document.getElementById('filterDateFrom');
-    const filterDateTo = document.getElementById('filterDateTo');
-    const filterSearch = document.getElementById('filterSearch');
-    
-    if (filterDateFrom) {
-        const dateFromGroup = filterDateFrom.closest('.filter-group');
-        if (dateFromGroup) {
-            dateFromGroup.style.display = 'none';
-            console.log('[AdminZonaFilters] ✅ Date From filter hidden');
-        }
-    }
-    
-    if (filterDateTo) {
-        const dateToGroup = filterDateTo.closest('.filter-group');
-        if (dateToGroup) {
-            dateToGroup.style.display = 'none';
-            console.log('[AdminZonaFilters] ✅ Date To filter hidden');
-        }
-    }
-    
-    if (filterSearch) {
-        const searchGroup = filterSearch.closest('.filter-group');
-        if (searchGroup) {
-            searchGroup.style.display = 'none';
-            console.log('[AdminZonaFilters] ✅ Search filter hidden');
-        }
-    }
-    
-    // Show Year and Month filters (ensure they're visible for admin zona)
-    const filterYear = document.getElementById('filterYear');
-    const filterMonth = document.getElementById('filterMonth');
-    
-    if (filterYear) {
-        const yearGroup = filterYear.closest('.filter-group');
-        if (yearGroup) {
-            yearGroup.style.display = 'block';
-            console.log('[AdminZonaFilters] ✅ Year filter shown');
-        }
-    }
-    
-    if (filterMonth) {
-        const monthGroup = filterMonth.closest('.filter-group');
-        if (monthGroup) {
-            monthGroup.style.display = 'block';
-            console.log('[AdminZonaFilters] ✅ Month filter shown');
-        }
-    }
-    
-    // Populate month and year dropdowns from data
-    populateMonthDropdown();
+    if (statTotal) statTotal.closest('div').style.display = 'none';
+    if (statUploaded) statUploaded.closest('div').style.display = 'none';
+    if (statPending) statPending.closest('div').style.display = 'none';
+    if (statMissing) statMissing.closest('div').style.display = 'none';
     
     console.log('[AdminZonaFilters] ✅ Admin Zona filters setup complete');
 }
 
-// Setup non-admin-zona filters (hide year/month, show status/dates)
+// Setup non-admin-zona filters (regular users use default filters)
 function setupRegularFilters() {
-    console.log('[RegularFilters] Setting up regular user filters');
-    
-    // Hide Year and Month filters for non-admin-zona
-    const filterYear = document.getElementById('filterYear');
-    const filterMonth = document.getElementById('filterMonth');
-    
-    if (filterYear) {
-        const yearGroup = filterYear.closest('.filter-group');
-        if (yearGroup) {
-            yearGroup.style.display = 'none';
-            console.log('[RegularFilters] ✅ Year filter hidden');
-        }
-    }
-    
-    if (filterMonth) {
-        const monthGroup = filterMonth.closest('.filter-group');
-        if (monthGroup) {
-            monthGroup.style.display = 'none';
-            console.log('[RegularFilters] ✅ Month filter hidden');
-        }
-    }
-    
-    // Show Status filter for regular users
-    const filterStatus = document.getElementById('filterStatus');
-    if (filterStatus) {
-        const statusGroup = filterStatus.closest('.filter-group');
-        if (statusGroup) {
-            statusGroup.style.display = 'block';
-            console.log('[RegularFilters] ✅ Status filter shown');
-        }
-    }
-    
-    console.log('[RegularFilters] ✅ Regular user filters setup complete');
+    console.log('[RegularFilters] Setting up regular user filters - using default');
+    // Regular users (super_admin, moderator) use all available filters as-is
+    console.log('[RegularFilters] ✅ Regular filters active');
 }
 
-// Populate month and year dropdowns with unique months/years from invoice data
+// Note: The HTML uses input type="month" which automatically handles YYYY-MM format
+// No need to manually populate dropdowns - browser handles it
 function populateMonthDropdown() {
-    console.log('[PopulateMonth] Starting to populate month and year dropdowns');
-    
-    const filterMonth = document.getElementById('filterMonth');
-    const filterYear = document.getElementById('filterYear');
-    
-    if (!filterMonth) {
-        console.warn('[PopulateMonth] ⚠️ filterMonth not found');
-        return;
-    }
-    
-    // Get all invoice data to extract months and years
-    fetch('/api/invoice/list?limit=10000&offset=0', {
-        method: 'GET',
-        headers: API.getToken() ? { 'Authorization': `Bearer ${API.getToken()}` } : {}
-    })
-    .then(res => res.json())
-    .then(result => {
-        const invoices = result.data || [];
-        const months = new Set();
-        const years = new Set();
-        
-        // Extract unique month-year and years from invoice dates
-        invoices.forEach(inv => {
-            if (inv.tanggal) {
-                // Format: YYYY-MM-DD or DD-MM-YYYY
-                let monthYear = '';
-                let year = '';
-                if (inv.tanggal.includes('-')) {
-                    const parts = inv.tanggal.split('-');
-                    if (parts[0].length === 4) {
-                        // Format YYYY-MM-DD
-                        monthYear = `${parts[0]}-${parts[1]}`;
-                        year = parts[0];
-                    } else if (parts[2].length === 4) {
-                        // Format DD-MM-YYYY
-                        monthYear = `${parts[2]}-${parts[1]}`;
-                        year = parts[2];
-                    }
-                }
-                if (monthYear) months.add(monthYear);
-                if (year) years.add(year);
-            }
-        });
-        
-        // Sort and populate years dropdown
-        const sortedYears = Array.from(years).sort().reverse();
-        console.log('[PopulateMonth] Found years:', sortedYears);
-        
-        sortedYears.forEach(yr => {
-            const option = document.createElement('option');
-            option.value = yr;
-            option.textContent = yr;
-            filterYear.appendChild(option);
-        });
-        
-        // Sort months in reverse order (newest first)
-        const sortedMonths = Array.from(months).sort().reverse();
-        console.log('[PopulateMonth] Found months:', sortedMonths);
-        
-        // Add months to dropdown - display only month name
-        sortedMonths.forEach(month => {
-            const option = document.createElement('option');
-            option.value = month; // Store YYYY-MM
-            const [year, monthNum] = month.split('-');
-            const monthName = new Date(year, parseInt(monthNum) - 1).toLocaleString('id-ID', { month: 'long' });
-            option.textContent = monthName; // Display only month name
-            filterMonth.appendChild(option);
-        });
-        
-        console.log('[PopulateMonth] ✅ Year and month dropdowns populated - Years:', sortedYears.length, 'Months:', sortedMonths.length);
-    })
-    .catch(err => {
-        console.error('[PopulateMonth] ❌ Error fetching invoice data:', err);
-    });
+    console.log('[PopulateMonth] Month input (type=month) is handled by browser');
+    // input type="month" returns value in YYYY-MM format automatically
 }
 
 // Initialize invoice system after content is loaded
