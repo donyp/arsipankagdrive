@@ -510,7 +510,20 @@
                     supplierSelect.appendChild(opt);
                 });
                 
-                console.log('[AdminZona] Loaded', invoices.length, 'invoices - Years:', years.length, 'Months:', months.length, 'Suppliers:', suppliers.length);
+                // Get unique keterangan (description) and populate dropdown
+                const keterangans = [...new Set(invoices.map(inv => inv.keterangan).filter(Boolean))].sort();
+                const keteranganSelect = document.getElementById('filterKeterangan');
+                
+                // Clear and rebuild keterangan dropdown
+                keteranganSelect.innerHTML = '<option value="">Semua Keterangan</option>';
+                keterangans.forEach(keterangan => {
+                    const opt = document.createElement('option');
+                    opt.value = keterangan;
+                    opt.textContent = keterangan;
+                    keteranganSelect.appendChild(opt);
+                });
+                
+                console.log('[AdminZona] Loaded', invoices.length, 'invoices - Years:', years.length, 'Months:', months.length, 'Suppliers:', suppliers.length, 'Keterangans:', keterangans.length);
             } catch (err) {
                 console.error('[AdminZona] Error loading all invoices:', err);
             }
