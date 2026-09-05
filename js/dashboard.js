@@ -2723,6 +2723,11 @@ function renderInvoiceTable(invoices) {
             <td style="padding: 15px 12px; font-size: ${tokoFontSize}; color: #2c3e50; vertical-align: middle;">${tokoText}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${formatCurrency(inv.total_jumlah_jual)}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle; text-align: center;">
+                <button onclick="deleteInvoice('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 18px; padding: 0;" title="Hapus">
+                    ⋮
+                </button>
+            </td>
         </tr>
     `}).join('');
     
@@ -2949,6 +2954,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+
+// ============================================
+// DELETE INVOICE
+// ============================================
+async function deleteInvoice(faktur, invoiceId) {
+    if (!confirm(`Yakin hapus file invoice ${faktur}?`)) {
+        return;
+    }
+    
+    try {
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        
+        console.log('[DeleteInvoice] Deleting invoice:', faktur, 'ID:', invoiceId);
+        
+        const response = await fetch(`/api/invoice/${faktur}`, {
+            method: 'DELETE',
+            headers: headers
+        });
+        
+        if (!response.ok) {
+            throw new Error('Gagal menghapus invoice');
+        }
+        
+        console.log('[DeleteInvoice] ✅ Invoice deleted successfully');
+        Toast.success(`Invoice ${faktur} berhasil dihapus`);
+        
+        // Reload the data
+        await loadInvoicesInDashboard(1);
+        await loadFilterOptions();
+        
+    } catch (error) {
+        console.error('[DeleteInvoice] Error:', error);
+        Toast.error('Gagal menghapus invoice: ' + error.message);
+    }
+}
 
 // ============================================
 // INVOICE FILTER FUNCTIONS
