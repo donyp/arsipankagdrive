@@ -2988,36 +2988,63 @@ document.addEventListener('click', () => {
 });
 
 async function deleteInvoice(faktur, invoiceId) {
-    if (!confirm(`Yakin hapus file invoice ${faktur}?`)) {
-        return;
-    }
-    
-    try {
-        const token = API.getToken() || localStorage.getItem('jwt_token');
-        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        
-        console.log('[DeleteInvoice] Deleting invoice:', faktur, 'ID:', invoiceId);
-        
-        const response = await fetch(`/api/invoice/${faktur}`, {
-            method: 'DELETE',
-            headers: headers
-        });
-        
-        if (!response.ok) {
-            throw new Error('Gagal menghapus invoice');
+    // Show custom confirmation modal instead of browser confirm
+    showConfirmation(
+        `Hapus Invoice ${faktur}?`,
+        `Apakah Anda yakin ingin menghapus invoice ${faktur}? Tindakan ini tidak dapat dibatalkan.`,
+        async () => {
+            try {
+                const token = API.getToken() || localStorage.getItem('jwt_token');
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                
+                console.log('[DeleteInvoice] Deleting invoice:', faktur, 'ID:', invoiceId);
+                
+                const response = await fetch(`/api/invoice/${faktur}`, {
+                    method: 'DELETE',
+                    headers: headers
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Gagal menghapus invoice');
+                }
+                
+                console.log('[DeleteInvoice] ✅ Invoice deleted successfully');
+                Toast.success(`Invoice ${faktur} berhasil dihapus`);
+                
+                // Reload the data
+                await loadInvoicesInDashboard(1);
+                await loadFilterOptions();
+                
+            } catch (error) {
+                console.error('[DeleteInvoice] Error:', error);
+                Toast.error('Gagal menghapus invoice: ' + error.message);
+            }
         }
-        
-        console.log('[DeleteInvoice] ✅ Invoice deleted successfully');
-        Toast.success(`Invoice ${faktur} berhasil dihapus`);
-        
-        // Reload the data
-        await loadInvoicesInDashboard(1);
-        await loadFilterOptions();
-        
-    } catch (error) {
-        console.error('[DeleteInvoice] Error:', error);
-        Toast.error('Gagal menghapus invoice: ' + error.message);
+    );
+}
+
+// ============================================
+// CUSTOM CONFIRMATION MODAL
+// ============================================
+let confirmationCallback = null;
+
+function showConfirmation(title, message, callback) {
+    confirmationCallback = callback;
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmationModal').style.display = 'flex';
+}
+
+function closeConfirmation() {
+    confirmationCallback = null;
+    document.getElementById('confirmationModal').style.display = 'none';
+}
+
+function executeConfirmation() {
+    if (confirmationCallback) {
+        confirmationCallback();
     }
+    closeConfirmation();
 }
 
 // ============================================
