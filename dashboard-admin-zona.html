@@ -20,16 +20,6 @@
             display: none !important;
         }
 
-        /* Hide main content briefly while loading */
-        #main-content {
-            opacity: 0;
-            transition: opacity 0.3s ease-in;
-        }
-
-        #main-content.ready {
-            opacity: 1;
-        }
-
         .invoice-table {
             font-family: 'Poppins', sans-serif;
         }
@@ -393,42 +383,57 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
-            await initAuth();
-            
-            // Wait for window.currentUser to be set by initAuth
-            let retries = 0;
-            while (!window.currentUser && retries < 50) {
-                await new Promise(resolve => setTimeout(resolve, 50));
-                retries++;
-            }
-            
-            const currentUser = window.currentUser;
-            
-            if (!currentUser) {
-                console.error('[AdminZona] currentUser still not available after retries');
-                document.getElementById('user-name').textContent = 'Unknown';
-                document.getElementById('user-zona').textContent = 'Zona: -';
-                return;
-            }
-            
-            // Display user info
-            const userEmail = currentUser.email || currentUser.name || 'Admin Zona';
-            const zonaName = currentUser.zonas?.nama || currentUser.zonas?.kode || currentUser.zona_kode || 'Unknown';
-            
-            console.log('[AdminZona] User:', userEmail, 'Zona:', zonaName, 'Full user:', currentUser);
-            
-            document.getElementById('user-name').textContent = userEmail;
-            document.getElementById('user-zona').textContent = `Zona: ${zonaName}`;
+            try {
+                await initAuth();
+                
+                // Wait for window.currentUser to be set by initAuth
+                let retries = 0;
+                while (!window.currentUser && retries < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                    retries++;
+                }
+                
+                const currentUser = window.currentUser;
+                
+                if (!currentUser) {
+                    console.error('[AdminZona] currentUser still not available after retries');
+                    document.getElementById('user-name').textContent = 'Unknown';
+                    document.getElementById('user-zona').textContent = 'Zona: -';
+                    // Still show the page even without user
+                    document.getElementById('sidebar').style.display = 'block';
+                    return;
+                }
+                
+                // Display user info
+                const userEmail = currentUser.email || currentUser.name || 'Admin Zona';
+                const zonaName = currentUser.zonas?.nama || currentUser.zonas?.kode || currentUser.zona_kode || 'Unknown';
+                
+                console.log('[AdminZona] User:', userEmail, 'Zona:', zonaName, 'Full user:', currentUser);
+                
+                document.getElementById('user-name').textContent = userEmail;
+                document.getElementById('user-zona').textContent = `Zona: ${zonaName}`;
 
-            // Show sidebar and main content now that initialization is complete
-            document.getElementById('sidebar').style.display = 'block';
-            document.getElementById('main-content').classList.add('ready');
+                // Show sidebar and main content now that initialization is complete
+                document.getElementById('sidebar').style.display = 'block';
 
-            // Load all data first to populate filters
-            await loadAllInvoices();
-            
-            // Load filtered data
-            await loadInvoices();
+                // Load all data first to populate filters
+                try {
+                    await loadAllInvoices();
+                } catch (err) {
+                    console.error('[AdminZona] Error loading all invoices:', err);
+                }
+                
+                // Load filtered data
+                try {
+                    await loadInvoices();
+                } catch (err) {
+                    console.error('[AdminZona] Error loading invoices:', err);
+                }
+            } catch (err) {
+                console.error('[AdminZona] Init error:', err);
+                // Still show the page even if there's an error
+                document.getElementById('sidebar').style.display = 'block';
+            }
         });
 
         // Load ALL invoices to get unique years and months
