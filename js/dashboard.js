@@ -2936,9 +2936,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (document.getElementById('invoiceTableBody')) {
         console.log('[Dashboard] Invoice table found, loading data...');
-        // Load filter options for all users (including moderators)
+        // Load invoices first
+        await loadInvoicesInDashboard(1);
+        // Then populate filters from loaded invoices
         await loadFilterOptions();
-        loadInvoicesInDashboard(1);
         // Initialize event listeners for pagination and filters
         initInvoiceSystem();
     } else {
