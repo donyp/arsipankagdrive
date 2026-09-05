@@ -3032,7 +3032,8 @@ function showConfirmation(title, message, callback) {
     confirmationCallback = callback;
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmMessage').textContent = message;
-    document.getElementById('confirmationModal').style.display = 'flex';
+    const modal = document.getElementById('confirmationModal');
+    modal.style.display = 'flex';
 }
 
 function closeConfirmation() {

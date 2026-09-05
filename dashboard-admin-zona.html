@@ -558,7 +558,8 @@
             document.getElementById('confirmTitle').textContent = title;
             document.getElementById('confirmMessage').textContent = message;
             document.getElementById('confirmBtn').textContent = 'Lanjutkan';
-            document.getElementById('confirmationModal').style.display = 'flex';
+            const modal = document.getElementById('confirmationModal');
+            modal.style.display = 'flex';
         }
 
         function closeConfirmation() {
@@ -677,7 +678,7 @@
     </script>
 
     <!-- Confirmation Modal -->
-    <div id="confirmationModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: flex; align-items: center; justify-content: center;">
+    <div id="confirmationModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
         <div style="background: white; border-radius: 8px; padding: 30px; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: center;">
             <h3 id="confirmTitle" style="margin: 0 0 15px 0; font-size: 18px; color: #2c3e50; font-weight: 600;">Konfirmasi</h3>
             <p id="confirmMessage" style="margin: 0 0 25px 0; font-size: 14px; color: #7f8c8d;">Apakah Anda yakin?</p>
