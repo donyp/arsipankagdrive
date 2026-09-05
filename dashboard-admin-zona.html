@@ -280,7 +280,7 @@
 
                     <!-- Supplier -->
                     <div class="filter-group">
-                        <label for="filterSupplier">Supplier (Konsumen)</label>
+                        <label for="filterSupplier">Supplier</label>
                         <select id="filterSupplier">
                             <option value="">Semua Supplier</option>
                         </select>
@@ -345,7 +345,7 @@
                             <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 10%; vertical-align: middle;">TANGGAL</th>
                             <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 12%; vertical-align: middle;">NO FAKTUR</th>
                             <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 11%; vertical-align: middle;">STATUS BAYAR</th>
-                            <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 15%; vertical-align: middle;">TOKO (KONSUMEN)</th>
+                            <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 15%; vertical-align: middle;">TOKO</th>
                             <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 15%; vertical-align: middle;">SUPPLIER</th>
                             <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 12%; vertical-align: middle;">TOTAL</th>
                             <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 15%; vertical-align: middle;">KETERANGAN</th>
@@ -417,7 +417,7 @@
                 }
                 
                 // Display user info
-                const userEmail = currentUser.email || currentUser.name || 'Admin Zona';
+                const userEmail = currentUser.email || currentUser.username || currentUser.name || 'Admin Zona';
                 const zonaName = currentUser.zonas?.nama || currentUser.zonas?.kode || currentUser.zona_kode || 'Unknown';
                 
                 console.log('[AdminZona] User:', userEmail, 'Zona:', zonaName, 'Full user:', currentUser);
@@ -501,7 +501,7 @@
                 });
 
                 // Get unique suppliers and populate dropdown
-                const suppliers = [...new Set(invoices.map(inv => inv.konsumen).filter(Boolean))].sort();
+                const suppliers = [...new Set(invoices.map(inv => inv.toko).filter(Boolean))].sort();
                 const supplierSelect = document.getElementById('filterSupplier');
                 suppliers.forEach(supplier => {
                     const opt = document.createElement('option');
@@ -530,7 +530,7 @@
                 const month = document.getElementById('filterMonth')?.value;
                 const search = document.getElementById('filterSearch')?.value;
 
-                if (supplier) params.append('konsumen', supplier);
+                if (supplier) params.append('toko', supplier);
                 if (keterangan) params.append('keterangan', keterangan);
                 if (search) params.append('search', search); // Add search parameter
 
@@ -594,22 +594,36 @@
         }
 
         function logout() {
-            // Show custom confirmation modal instead of browser confirm
-            showConfirmation(
-                'Logout dari Zona',
-                'Apakah Anda yakin ingin logout? Session Anda akan dihapus dan Anda harus login kembali.',
-                () => {
-                    // Clear everything and redirect
-                    localStorage.removeItem('jwt_token');
-                    localStorage.removeItem('currentUser');
-                    localStorage.removeItem('sessionToken');
-                    localStorage.removeItem('user_data');
-                    localStorage.removeItem('device_session_id');
-                    
-                    console.log('[AdminZona] User logged out');
-                    window.location.href = 'index.html';
-                }
-            );
+            // Show custom confirmation modal with icon
+            const modal = document.getElementById('confirmationModal');
+            const modalContent = modal.querySelector('div');
+            
+            // Add warning icon styling
+            let iconHTML = '<div style="font-size: 48px; color: #f39c12; margin-bottom: 15px; text-align: center;"><i class="fas fa-exclamation-circle"></i></div>';
+            
+            confirmationCallback = () => {
+                // Clear everything and redirect
+                localStorage.removeItem('jwt_token');
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('sessionToken');
+                localStorage.removeItem('user_data');
+                localStorage.removeItem('device_session_id');
+                
+                console.log('[AdminZona] User logged out');
+                window.location.href = 'index.html';
+            };
+            
+            document.getElementById('confirmTitle').textContent = 'Logout Akun?';
+            document.getElementById('confirmMessage').textContent = 'Apakah Anda yakin ingin keluar dari sistem?';
+            document.getElementById('confirmBtn').textContent = 'YA, LOGOUT';
+            
+            // Insert icon before title
+            const titleElement = document.getElementById('confirmTitle');
+            if (!titleElement.querySelector('i')) {
+                titleElement.insertAdjacentHTML('beforebegin', iconHTML);
+            }
+            
+            modal.style.display = 'flex';
         }
 
         function renderInvoices(invoices) {
