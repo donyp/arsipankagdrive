@@ -178,10 +178,27 @@ module.exports = (app, supabase) => {
                         });
                     }
 
-                    // Create new filename
-                    const newName = `tax-${namaToko.toUpperCase()} ${formatCurrency(totalNominal)}.pdf`;
+                    // Extract Referensi number from bottom of PDF - for tax reference tracking
+                    let referensi = null;
+                    const referensiMatch = textContent.match(/Referensi\s*:\s*(\d{15,20})/i);
+                    if (referensiMatch) {
+                        referensi = referensiMatch[1].trim();
+                        console.log(`[Rename Faktur] Referensi detected: ${referensi}`);
+                    } else {
+                        console.log(`[Rename Faktur] Referensi not detected - using standard format`);
+                    }
 
-                    console.log(`[Rename Faktur] New Name: ${newName}`);
+                    // Create new filename based on referensi detection
+                    let newName;
+                    if (referensi) {
+                        // Format with referensi: tax-REFERENSI NAMA NOMINAL
+                        newName = `tax-${referensi} ${namaToko.toUpperCase()} ${formatCurrency(totalNominal)}.pdf`;
+                        console.log(`[Rename Faktur] Using REFERENSI format: ${newName}`);
+                    } else {
+                        // Standard format: tax-NAMA NOMINAL
+                        newName = `tax-${namaToko.toUpperCase()} ${formatCurrency(totalNominal)}.pdf`;
+                        console.log(`[Rename Faktur] Using STANDARD format: ${newName}`);
+                    }
 
                     // Convert PDF file to base64 for download
                     const fileBase64 = fileData.toString('base64');
@@ -196,6 +213,7 @@ module.exports = (app, supabase) => {
                         harga,
                         ppn,
                         totalNominal,
+                        referensi: referensi || null,  // Include referensi in response
                         fileData: fileBase64  // Base64 encoded PDF file
                     });
 
