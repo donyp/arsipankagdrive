@@ -2936,10 +2936,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (document.getElementById('invoiceTableBody')) {
         console.log('[Dashboard] Invoice table found, loading data...');
-        // Load filter options first (skip for admin_zona to avoid toko dropdown issues)
-        if (currentUser?.role !== 'admin_zona') {
-            await loadFilterOptions();
-        }
+        // Load filter options for all users (including moderators)
+        await loadFilterOptions();
         loadInvoicesInDashboard(1);
         // Initialize event listeners for pagination and filters
         initInvoiceSystem();

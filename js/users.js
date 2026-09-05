@@ -133,44 +133,43 @@ function updateUserStats() {
 
 function createRowHtml(u, i) {
     return `
-        <tr class="animate-fade-in" style="animation-delay: ${i * 30}ms">
-            <td>
-                <div class="flex items-center gap-2">
-                    <div class="w-5 h-5 rounded-full bg-indigo-500/10 flex items-center justify-center text-[8px] font-bold text-indigo-400 uppercase border border-indigo-500/20">
+        <tr class="animate-fade-in hover:bg-gray-50/50 transition-colors" style="animation-delay: ${i * 30}ms">
+            <td class="pl-6 py-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center text-[9px] font-bold text-indigo-600 uppercase border border-indigo-500/20">
                         ${(u.name || 'A')[0]}
                     </div>
                     <div>
-                        <span class="text-sm font-medium text-gray-800">${u.name || 'Admin (System)'}</span>
-                        <div class="text-[10px] text-gray-500">${u.email}</div>
+                        <span class="text-sm font-semibold text-gray-900">${u.name || 'Admin (System)'}</span>
                     </div>
                 </div>
             </td>
-            <td>
+            <td class="py-3">
                 ${(u.role === 'moderator' || (u.permissions && u.permissions.includes('IS_MODERATOR'))) ? `
-                    <span class="badge bg-purple-100 text-purple-700 border-purple-200">Moderator</span>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700">Moderator</span>
                 ` : `
-                    <span class="${u.role === 'super_admin'
-            ? 'badge bg-indigo-100 text-indigo-700 border-indigo-200'
-            : 'badge bg-emerald-100 text-emerald-700 border-emerald-200'}">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${u.role === 'super_admin'
+            ? 'bg-indigo-100 text-indigo-700'
+            : 'bg-emerald-100 text-emerald-700'}">
                         ${u.role === 'super_admin' ? 'Super Admin' : 'Admin Zona'}
                     </span>
                 `}
             </td>
-            <td class="text-gray-600 text-sm">${u.zonas?.nama || '-'}</td>
-            <td>
-                <span class="px-2 py-0.5 rounded-full text-[10px] ${u.is_active ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}">
+            <td class="py-3 text-gray-700 text-sm font-medium">${u.zonas?.nama || '-'}</td>
+            <td class="py-3">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${u.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
                     ${u.is_active ? 'Aktif' : 'Nonaktif'}
                 </span>
             </td>
-            <td>
-                <div class="flex items-center justify-end gap-1">
+            <td class="pr-6 py-3">
+                <div class="flex items-center justify-end gap-2">
                     <button onclick='editUserById("${u.id}")'
-                        title="Edit" class="p-2 rounded-lg text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 transition-all">
+                        title="Edit" class="p-1.5 rounded-lg text-gray-500 hover:text-blue-500 hover:bg-blue-50 transition-all">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     </button>
                     ${u.id !== currentUser.id ? `
                     <button onclick="deleteUser('${u.id}', '${u.name.replace(/'/g, "\\'")}')"
-                        title="Hapus" class="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                        title="Hapus" class="p-1.5 rounded-lg text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                     ` : ''}
@@ -219,9 +218,9 @@ function renderUsers() {
     let globalIndex = 0;
 
     if (superAdmins.length > 0) {
-        html += `<tr><td colspan="5" class="bg-indigo-500/10 py-3 px-4 text-xs font-bold text-indigo-400 tracking-widest uppercase border-y border-indigo-500/20">
+        html += `<tr><td colspan="5" class="bg-indigo-50 py-2 px-6 text-xs font-bold text-indigo-600 tracking-widest uppercase border-t border-indigo-200">
             <div class="flex items-center gap-2">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z"/></svg>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z"/></svg>
                 Super Admin
             </div>
         </td></tr>`;
@@ -229,9 +228,9 @@ function renderUsers() {
     }
 
     if (moderators.length > 0) {
-        html += `<tr><td colspan="5" class="bg-purple-500/10 py-3 px-4 text-xs font-bold text-purple-400 tracking-widest uppercase border-y border-purple-500/20">
+        html += `<tr><td colspan="5" class="bg-purple-50 py-2 px-6 text-xs font-bold text-purple-600 tracking-widest uppercase border-t border-purple-200">
             <div class="flex items-center gap-2">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 21a11.959 11.959 0 01-9.618-7.016A11.955 11.955 0 0112 3c1.74 0 3.391.462 4.818 1.274"/></svg>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 21a11.959 11.959 0 01-9.618-7.016A11.955 11.955 0 0112 3c1.74 0 3.391.462 4.818 1.274"/></svg>
                 Moderator
             </div>
         </td></tr>`;
@@ -239,9 +238,9 @@ function renderUsers() {
     }
 
     if (adminZonas.length > 0) {
-        html += `<tr><td colspan="5" class="bg-emerald-500/10 py-3 px-4 text-xs font-bold text-emerald-400 tracking-widest uppercase border-y border-emerald-500/20">
+        html += `<tr><td colspan="5" class="bg-emerald-50 py-2 px-6 text-xs font-bold text-emerald-600 tracking-widest uppercase border-t border-emerald-200">
             <div class="flex items-center gap-2">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 012-2H9a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 012-2H9a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                 Admin Zona
             </div>
         </td></tr>`;
