@@ -471,12 +471,17 @@
                 // Populate year dropdown with actual years from data
                 const yearSelect = document.getElementById('filterYear');
                 const years = Array.from(yearsSet).sort((a, b) => b - a); // Newest first
+                
+                // Clear and rebuild year dropdown
+                yearSelect.innerHTML = '<option value="">Semua Tahun</option>';
                 years.forEach(year => {
                     const opt = document.createElement('option');
                     opt.value = year;
                     opt.textContent = year;
                     yearSelect.appendChild(opt);
                 });
+                
+                console.log('[AdminZona] Year filter populated with:', years.length, 'years:', years);
 
                 // ONLY populate month dropdown with months that have data
                 const monthSelect = document.getElementById('filterMonth');
@@ -486,10 +491,8 @@
                     '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
                 };
                 
-                // Remove all existing options except "Semua Bulan"
-                while (monthSelect.options.length > 1) {
-                    monthSelect.remove(1);
-                }
+                // Clear ALL existing options
+                monthSelect.innerHTML = '<option value="">Semua Bulan</option>';
                 
                 // Only add months that have data
                 const months = Array.from(monthsSet).sort();
@@ -499,17 +502,22 @@
                     opt.textContent = monthNames[month];
                     monthSelect.appendChild(opt);
                 });
+                
+                console.log('[AdminZona] Month filter populated with:', months.length, 'months:', months);
 
                 // Get unique suppliers and populate dropdown
                 const suppliers = [...new Set(invoices.map(inv => inv.toko).filter(Boolean))].sort();
                 const supplierSelect = document.getElementById('filterSupplier');
+                
+                // Clear and rebuild supplier dropdown
+                supplierSelect.innerHTML = '<option value="">Semua Supplier</option>';
                 suppliers.forEach(supplier => {
                     const opt = document.createElement('option');
                     opt.value = supplier;
                     opt.textContent = supplier;
                     supplierSelect.appendChild(opt);
                 });
-
+                
                 console.log('[AdminZona] Loaded', invoices.length, 'invoices - Years:', years.length, 'Months:', months.length, 'Suppliers:', suppliers.length);
             } catch (err) {
                 console.error('[AdminZona] Error loading all invoices:', err);
@@ -596,10 +604,20 @@
         function logout() {
             // Show custom confirmation modal with icon
             const modal = document.getElementById('confirmationModal');
-            const modalContent = modal.querySelector('div');
+            const titleElement = document.getElementById('confirmTitle');
             
-            // Add warning icon styling
-            let iconHTML = '<div style="font-size: 48px; color: #f39c12; margin-bottom: 15px; text-align: center;"><i class="fas fa-exclamation-circle"></i></div>';
+            // Remove any existing icon
+            const existingIcon = titleElement.parentElement.querySelector('.logout-icon');
+            if (existingIcon) {
+                existingIcon.remove();
+            }
+            
+            // Create and add warning icon styling
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'logout-icon';
+            iconDiv.style.cssText = 'font-size: 64px; color: #f39c12; margin-bottom: 20px; text-align: center;';
+            iconDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+            titleElement.parentElement.insertBefore(iconDiv, titleElement);
             
             confirmationCallback = () => {
                 // Clear everything and redirect
@@ -613,15 +631,9 @@
                 window.location.href = 'index.html';
             };
             
-            document.getElementById('confirmTitle').textContent = 'Logout Akun?';
+            titleElement.textContent = 'Logout Akun?';
             document.getElementById('confirmMessage').textContent = 'Apakah Anda yakin ingin keluar dari sistem?';
             document.getElementById('confirmBtn').textContent = 'YA, LOGOUT';
-            
-            // Insert icon before title
-            const titleElement = document.getElementById('confirmTitle');
-            if (!titleElement.querySelector('i')) {
-                titleElement.insertAdjacentHTML('beforebegin', iconHTML);
-            }
             
             modal.style.display = 'flex';
         }
@@ -712,14 +724,14 @@
 
     <!-- Confirmation Modal -->
     <div id="confirmationModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
-        <div style="background: white; border-radius: 8px; padding: 30px; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: center;">
-            <h3 id="confirmTitle" style="margin: 0 0 15px 0; font-size: 18px; color: #2c3e50; font-weight: 600;">Konfirmasi</h3>
-            <p id="confirmMessage" style="margin: 0 0 25px 0; font-size: 14px; color: #7f8c8d;">Apakah Anda yakin?</p>
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button onclick="closeConfirmation()" style="flex: 1; padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
+        <div style="background: white; border-radius: 12px; padding: 40px; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: center;">
+            <h3 id="confirmTitle" style="margin: 0 0 15px 0; font-size: 24px; color: #2c3e50; font-weight: 600;">Konfirmasi</h3>
+            <p id="confirmMessage" style="margin: 0 0 30px 0; font-size: 16px; color: #7f8c8d; line-height: 1.5;">Apakah Anda yakin?</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button onclick="closeConfirmation()" style="flex: 1; padding: 12px 24px; background: #95a5a6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 15px; transition: background 0.2s;">
                     Batal
                 </button>
-                <button id="confirmBtn" onclick="executeConfirmation()" style="flex: 1; padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                <button id="confirmBtn" onclick="executeConfirmation()" style="flex: 1; padding: 12px 24px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 15px; transition: background 0.2s;">
                     Lanjutkan
                 </button>
             </div>
