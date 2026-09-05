@@ -2724,10 +2724,15 @@ function renderInvoiceTable(invoices) {
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${formatCurrency(inv.total_jumlah_jual)}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
             ${(currentUser?.role === 'super_admin' || currentUser?.role === 'moderator') ? `
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle; text-align: center;">
-                <button onclick="deleteInvoice('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 18px; padding: 0;" title="Hapus">
+            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
+                <button onclick="toggleActionMenu(event, '${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 18px; padding: 0;" title="Aksi">
                     ⋮
                 </button>
+                <div id="menu-${inv.id}" class="action-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100; min-width: 120px;">
+                    <button onclick="deleteInvoice('${inv.faktur}', '${inv.id}')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #e74c3c; font-size: 13px; hover:background: #f5f5f5;">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
+                </div>
             </td>
             ` : ''}
         </tr>
@@ -2960,6 +2965,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ============================================
 // DELETE INVOICE
 // ============================================
+function toggleActionMenu(event, faktur, invoiceId) {
+    event.stopPropagation();
+    const menu = document.getElementById(`menu-${invoiceId}`);
+    
+    // Close all other menus
+    document.querySelectorAll('.action-menu').forEach(m => {
+        if (m.id !== `menu-${invoiceId}`) {
+            m.style.display = 'none';
+        }
+    });
+    
+    // Toggle current menu
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', () => {
+    document.querySelectorAll('.action-menu').forEach(m => {
+        m.style.display = 'none';
+    });
+});
+
 async function deleteInvoice(faktur, invoiceId) {
     if (!confirm(`Yakin hapus file invoice ${faktur}?`)) {
         return;
