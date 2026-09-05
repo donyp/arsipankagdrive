@@ -12,10 +12,6 @@
     <link rel="stylesheet" href="css/style.css?t=1735689600">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        html, body {
-            zoom: 0.75;
-        }
-        
         /* File list - use Poppins font */
         .invoice-table {
             font-family: 'Poppins', sans-serif;
@@ -626,7 +622,7 @@
                             </div>
 
                             <!-- Stats -->
-                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px;">
                                 <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 3px solid #3498db;">
                                     <div style="font-size: 24px; font-weight: 700; color: #3498db;" data-stat="total" id="statTotal">0</div>
                                     <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Total Invoice</div>
@@ -701,6 +697,7 @@
                             </div>
 
                             <!-- Table -->
+                            <table class="invoice-table" style="width: 100%; border-collapse: collapse;">
                                 <thead>
                                     <tr style="background: #34495e;">
                                         <th style="padding: 15px 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase; color: white; width: 10%;">STATUS</th>
