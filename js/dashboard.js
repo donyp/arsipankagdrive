@@ -2709,7 +2709,7 @@ function renderInvoiceTable(invoices) {
         const tokoFontSize = tokoText.length > 20 ? '11px' : '14px';
         
         return `
-        <tr style="transition: background 0.2s; border-bottom: 4px solid #34495e;">
+        <tr style="transition: background 0.2s; border-bottom: 2px solid #34495e;">
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">
                 <span style="display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
                     ${statusText}
@@ -2723,11 +2723,13 @@ function renderInvoiceTable(invoices) {
             <td style="padding: 15px 12px; font-size: ${tokoFontSize}; color: #2c3e50; vertical-align: middle;">${tokoText}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${formatCurrency(inv.total_jumlah_jual)}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
+            ${(currentUser?.role === 'super_admin' || currentUser?.role === 'moderator') ? `
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle; text-align: center;">
                 <button onclick="deleteInvoice('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 18px; padding: 0;" title="Hapus">
                     ⋮
                 </button>
             </td>
+            ` : ''}
         </tr>
     `}).join('');
     
