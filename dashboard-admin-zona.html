@@ -15,6 +15,21 @@
             zoom: 0.8;
         }
 
+        /* Hide sidebar initially to prevent flash */
+        #sidebar {
+            display: none !important;
+        }
+
+        /* Hide main content briefly while loading */
+        #main-content {
+            opacity: 0;
+            transition: opacity 0.3s ease-in;
+        }
+
+        #main-content.ready {
+            opacity: 1;
+        }
+
         .invoice-table {
             font-family: 'Poppins', sans-serif;
         }
@@ -404,6 +419,10 @@
             
             document.getElementById('user-name').textContent = userEmail;
             document.getElementById('user-zona').textContent = `Zona: ${zonaName}`;
+
+            // Show sidebar and main content now that initialization is complete
+            document.getElementById('sidebar').style.display = 'block';
+            document.getElementById('main-content').classList.add('ready');
 
             // Load all data first to populate filters
             await loadAllInvoices();
