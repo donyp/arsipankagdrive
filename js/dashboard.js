@@ -2782,9 +2782,56 @@ async function loadFilterOptions() {
         ).filter(Boolean))];
         const keterangans = [...new Set(invoices.map(inv => inv.keterangan).filter(Boolean))];
         
-        console.log('[Filter] Loaded options - Tokos:', tokos.length, 'Keterangans:', keterangans.length);
+        // Extract unique years and months from invoices
+        const yearMonthSet = new Set();
+        invoices.forEach(inv => {
+            if (inv.tanggal_dokumen) {
+                const date = new Date(inv.tanggal_dokumen);
+                if (!isNaN(date.getTime())) {
+                    yearMonthSet.add(date.getFullYear().toString());
+                }
+            }
+        });
+        const years = Array.from(yearMonthSet).sort().reverse();
+        
+        const monthSet = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+        const months = Array.from(monthSet).sort((a, b) => a - b);
+        
+        console.log('[Filter] Loaded options - Years:', years.length, 'Months:', months.length, 'Tokos:', tokos.length, 'Keterangans:', keterangans.length);
         if (currentUser?.role === 'admin_zona') {
             console.log('[Filter] ✅ Admin Zona: Showing actual konsumen (store) names from invoices');
+        }
+        
+        // Populate year select
+        const yearSelect = document.getElementById('filterYear');
+        if (yearSelect) {
+            while (yearSelect.options.length > 1) {
+                yearSelect.remove(1);
+            }
+            years.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            });
+            console.log('[Filter] Year select populated with', years.length, 'options');
+        }
+        
+        // Populate month select
+        const monthSelect = document.getElementById('filterMonth');
+        if (monthSelect) {
+            while (monthSelect.options.length > 1) {
+                monthSelect.remove(1);
+            }
+            months.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month;
+                const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                                   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                option.textContent = monthNames[month - 1];
+                monthSelect.appendChild(option);
+            });
+            console.log('[Filter] Month select populated with', months.length, 'options');
         }
         
         // Populate toko select - clear existing first to avoid duplicates
@@ -2833,41 +2880,41 @@ function updateInvoiceStatsFromData(invoices, totalCount) {
     console.log('[StatsFromData] Invoices:', invoices.length, 'Total count:', totalCount);
     
     // Count statuses from loaded data
-    const uploadedCount = invoices.filter(r => r.status === 'UPLOADED').length;
-    const pendingCount = invoices.filter(r => r.status === 'PENDING').length;
-    const missingCount = invoices.filter(r => r.status === 'MISSING').length;
+    // Map status to payment status for display
+    // Let's use tipe_ppn or status to determine lunas/belum lunas
+    const lunasCount = invoices.filter(r => {
+        // Lunas = UPLOADED or paid status
+        return r.status === 'UPLOADED' || r.payment_status === 'LUNAS';
+    }).length;
+    const belumLunasCount = invoices.filter(r => {
+        // Belum Lunas = PENDING or unpaid status
+        return r.status === 'PENDING' || r.payment_status === 'BELUM_LUNAS';
+    }).length;
     
-    // IMPORTANT: If all loaded invoices are same status and count matches page size (20),
-    // then calculate totals from totalCount instead of loaded data
-    // This prevents showing "Pending: 20" when there are 58 total pending
+    let finalLunasCount = lunasCount;
+    let finalBelumLunasCount = belumLunasCount;
     
-    let finalUploadedCount = uploadedCount;
-    let finalPendingCount = pendingCount;
-    let finalMissingCount = missingCount;
-    
-    // If this is first page with 20 items and all are PENDING, use totalCount
-    if (invoices.length === 20 && pendingCount === 20 && uploadedCount === 0 && missingCount === 0) {
-        console.log('[StatsFromData] ⚠️ All 20 loaded items are PENDING - likely paginated view');
-        console.log('[StatsFromData] Using totalCount as PENDING instead of 20');
-        finalPendingCount = totalCount;  // All invoices are pending
+    // If this is first page with 20 items and all are same status, use totalCount
+    if (invoices.length === 20 && belumLunasCount === 20 && lunasCount === 0) {
+        console.log('[StatsFromData] ⚠️ All 20 loaded items are BELUM LUNAS - likely paginated view');
+        console.log('[StatsFromData] Using totalCount as BELUM LUNAS instead of 20');
+        finalBelumLunasCount = totalCount;
     }
     
-    console.log('[StatsFromData] Counts - Total:', totalCount, 'Uploaded:', finalUploadedCount, 'Pending:', finalPendingCount, 'Missing:', finalMissingCount);
+    console.log('[StatsFromData] Counts - Total:', totalCount, 'Lunas:', finalLunasCount, 'Belum Lunas:', finalBelumLunasCount);
     
-    // Update stat elements by ID (from invoice-list.html)
+    // Update stat elements by ID
     const elements = {
         total: document.getElementById('statTotal'),
         uploaded: document.getElementById('statUploaded'),
-        pending: document.getElementById('statPending'),
-        missing: document.getElementById('statMissing')
+        pending: document.getElementById('statPending')
     };
     
-    console.log('[StatsFromData] Found elements - total:', !!elements.total, 'uploaded:', !!elements.uploaded, 'pending:', !!elements.pending, 'missing:', !!elements.missing);
+    console.log('[StatsFromData] Found elements - total:', !!elements.total, 'uploaded:', !!elements.uploaded, 'pending:', !!elements.pending);
     
     if (elements.total) elements.total.textContent = totalCount;
-    if (elements.uploaded) elements.uploaded.textContent = finalUploadedCount;
-    if (elements.pending) elements.pending.textContent = finalPendingCount;
-    if (elements.missing) elements.missing.textContent = finalMissingCount;
+    if (elements.uploaded) elements.uploaded.textContent = finalLunasCount;    // Renamed to Lunas
+    if (elements.pending) elements.pending.textContent = finalBelumLunasCount;  // Renamed to Belum Lunas
     
     console.log('[StatsFromData] ✅ Stats updated successfully');
     console.log('[StatsFromData] ===== STATS UPDATE COMPLETE =====');
@@ -2911,12 +2958,11 @@ async function applyInvoiceFilters() {
         const status = document.getElementById('filterStatus')?.value || '';
         const toko = document.getElementById('filterToko')?.value || '';
         const keterangan = document.getElementById('filterKeterangan')?.value || '';
+        const year = document.getElementById('filterYear')?.value || '';
         const month = document.getElementById('filterMonth')?.value || '';
-        const dateFrom = document.getElementById('filterDateFrom')?.value || '';
-        const dateTo = document.getElementById('filterDateTo')?.value || '';
         const search = document.getElementById('filterSearch')?.value || '';
         
-        console.log('[Filter] Applying filters:', { status, toko, keterangan, month, dateFrom, dateTo, search });
+        console.log('[Filter] Applying filters:', { status, toko, keterangan, year, month, search });
         
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -2926,20 +2972,33 @@ async function applyInvoiceFilters() {
         if (status) params.append('status', status);
         if (toko) params.append('toko', toko);
         if (keterangan) params.append('keterangan', keterangan);
-        if (dateFrom) params.append('date_from', dateFrom);
-        if (dateTo) params.append('date_to', dateTo);
         if (search) params.append('search', search);
         
-        // Handle Month filtering for admin_zona (input type="month" gives YYYY-MM format)
-        if (month) {
-            // monthValue is in format YYYY-MM
-            const [year, monthNum] = month.split('-');
-            const dateFromMonthValue = `${year}-${monthNum}-01`;
-            const dateToObj = new Date(year, parseInt(monthNum), 0);
-            const dateToMonthValue = `${year}-${monthNum}-${dateToObj.getDate()}`;
-            params.append('date_from', dateFromMonthValue);
-            params.append('date_to', dateToMonthValue);
-            console.log('[Filter] Filtering by month:', { month, dateFromMonthValue, dateToMonthValue });
+        // Handle Year and Month filtering
+        if (year && month) {
+            // Both year and month selected
+            const dateFromValue = `${year}-${String(month).padStart(2, '0')}-01`;
+            const dateToObj = new Date(parseInt(year), parseInt(month), 0);
+            const dateToValue = `${year}-${String(month).padStart(2, '0')}-${dateToObj.getDate()}`;
+            params.append('date_from', dateFromValue);
+            params.append('date_to', dateToValue);
+            console.log('[Filter] Filtering by year-month:', { year, month, dateFromValue, dateToValue });
+        } else if (year) {
+            // Only year selected
+            const dateFromValue = `${year}-01-01`;
+            const dateToValue = `${year}-12-31`;
+            params.append('date_from', dateFromValue);
+            params.append('date_to', dateToValue);
+            console.log('[Filter] Filtering by year only:', { year, dateFromValue, dateToValue });
+        } else if (month) {
+            // Only month (use current year)
+            const currentYear = new Date().getFullYear();
+            const dateFromValue = `${currentYear}-${String(month).padStart(2, '0')}-01`;
+            const dateToObj = new Date(currentYear, parseInt(month), 0);
+            const dateToValue = `${currentYear}-${String(month).padStart(2, '0')}-${dateToObj.getDate()}`;
+            params.append('date_from', dateFromValue);
+            params.append('date_to', dateToValue);
+            console.log('[Filter] Filtering by month only:', { month, dateFromValue, dateToValue });
         }
         
         params.append('limit', INVOICE_PAGE_SIZE);
@@ -2981,17 +3040,15 @@ function resetInvoiceFilters() {
     const filterStatus = document.getElementById('filterStatus');
     const filterToko = document.getElementById('filterToko');
     const filterKeterangan = document.getElementById('filterKeterangan');
+    const filterYear = document.getElementById('filterYear');
     const filterMonth = document.getElementById('filterMonth');
-    const filterDateFrom = document.getElementById('filterDateFrom');
-    const filterDateTo = document.getElementById('filterDateTo');
     const filterSearch = document.getElementById('filterSearch');
     
     if (filterStatus) filterStatus.value = '';
     if (filterToko) filterToko.value = '';
     if (filterKeterangan) filterKeterangan.value = '';
+    if (filterYear) filterYear.value = '';
     if (filterMonth) filterMonth.value = '';
-    if (filterDateFrom) filterDateFrom.value = '';
-    if (filterDateTo) filterDateTo.value = '';
     if (filterSearch) filterSearch.value = '';
     
     loadInvoicesInDashboard(1);

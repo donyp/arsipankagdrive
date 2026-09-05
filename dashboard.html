@@ -611,14 +611,6 @@
                         <div style="padding: 15px 10px; border-bottom: 1px solid #e5e7eb;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                                 <h2 style="font-size: 24px; font-weight: 700; color: #2c3e50; margin: 0;">📋 Daftar File Invoice</h2>
-                                <div style="display: flex; gap: 10px;">
-                                    <button onclick="location.href='/upload-excel.html'" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                                        <i class="fas fa-upload"></i> Upload Excel
-                                    </button>
-                                    <button onclick="location.href='/upload-invoice-pdf.html'" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                                        <i class="fas fa-file-pdf"></i> Upload PDF
-                                    </button>
-                                </div>
                             </div>
 
                             <!-- Stats -->
@@ -629,15 +621,11 @@
                                 </div>
                                 <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; border-left: 3px solid #27ae60;">
                                     <div style="font-size: 24px; font-weight: 700; color: #27ae60;" data-stat="uploaded" id="statUploaded">0</div>
-                                    <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Uploaded</div>
+                                    <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Lunas</div>
                                 </div>
                                 <div style="background: #fffbeb; padding: 15px; border-radius: 8px; border-left: 3px solid #f39c12;">
                                     <div style="font-size: 24px; font-weight: 700; color: #f39c12;" data-stat="pending" id="statPending">0</div>
-                                    <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Pending</div>
-                                </div>
-                                <div style="background: #fef2f2; padding: 15px; border-radius: 8px; border-left: 3px solid #e74c3c;">
-                                    <div style="font-size: 24px; font-weight: 700; color: #e74c3c;" data-stat="missing" id="statMissing">0</div>
-                                    <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Missing</div>
+                                    <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Belum Lunas</div>
                                 </div>
                             </div>
                         </div>
@@ -668,16 +656,20 @@
                                         </select>
                                     </div>
                                     
-                                    <!-- DARI TANGGAL filter -->
+                                    <!-- TAHUN filter -->
                                     <div>
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Dari Tanggal</label>
-                                        <input type="date" id="filterDateFrom" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Tahun</label>
+                                        <select id="filterYear" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                            <option value="">Semua Tahun</option>
+                                        </select>
                                     </div>
                                     
-                                    <!-- SAMPAI TANGGAL filter -->
+                                    <!-- BULAN filter -->
                                     <div>
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Sampai Tanggal</label>
-                                        <input type="date" id="filterDateTo" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Bulan</label>
+                                        <select id="filterMonth" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                            <option value="">Semua Bulan</option>
+                                        </select>
                                     </div>
                                     
                                     <!-- CARI filter -->
