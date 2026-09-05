@@ -20,6 +20,16 @@
             display: none !important;
         }
 
+        /* Main content stretches full width initially, then adjusts when sidebar shows */
+        #main-content {
+            margin-left: 0;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        #main-content.with-sidebar {
+            margin-left: 16rem; /* ml-64 = 16rem */
+        }
+
         .invoice-table {
             font-family: 'Poppins', sans-serif;
         }
@@ -222,7 +232,7 @@
     <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-40"></aside>
 
     <!-- Main Content -->
-    <main id="main-content" class="ml-64 min-h-screen transition-all duration-300">
+    <main id="main-content" class="min-h-screen transition-all duration-300">
         <!-- Top Bar -->
         <header class="bg-white border-b border-gray-200 p-4 shadow-sm">
             <div class="flex items-center justify-between">
@@ -401,6 +411,7 @@
                     document.getElementById('user-zona').textContent = 'Zona: -';
                     // Still show the page even without user
                     document.getElementById('sidebar').style.display = 'block';
+                    document.getElementById('main-content').classList.add('with-sidebar');
                     return;
                 }
                 
@@ -415,6 +426,7 @@
 
                 // Show sidebar and main content now that initialization is complete
                 document.getElementById('sidebar').style.display = 'block';
+                document.getElementById('main-content').classList.add('with-sidebar');
 
                 // Load all data first to populate filters
                 try {
@@ -433,6 +445,7 @@
                 console.error('[AdminZona] Init error:', err);
                 // Still show the page even if there's an error
                 document.getElementById('sidebar').style.display = 'block';
+                document.getElementById('main-content').classList.add('with-sidebar');
             }
         });
 
@@ -677,8 +690,7 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('main-content');
-            mainContent.classList.toggle('ml-64');
-            mainContent.classList.toggle('ml-0');
+            mainContent.classList.toggle('with-sidebar');
         }
     </script>
 
