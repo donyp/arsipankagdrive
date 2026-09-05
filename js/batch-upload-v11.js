@@ -212,6 +212,12 @@ async function uploadAllReady() {
     for (const r of ready) { if (await uploadRow(r, bid)) sc++; }
     btn.disabled = false;
     Toast.success(`${sc}/${ready.length} berhasil.`);
+    
+    // Refresh filter options after successful upload
+    if (typeof loadFilterOptions === 'function') {
+        console.log('[Upload] Calling loadFilterOptions after successful upload');
+        await loadFilterOptions();
+    }
 }
 
 async function uploadRow(row, batchId) {

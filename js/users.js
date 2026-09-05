@@ -139,11 +139,12 @@ function createRowHtml(u, i) {
                     <div class="w-5 h-5 rounded-full bg-indigo-500/10 flex items-center justify-center text-[8px] font-bold text-indigo-400 uppercase border border-indigo-500/20">
                         ${(u.name || 'A')[0]}
                     </div>
-                    <span class="text-sm font-medium text-gray-800">${u.name || 'Admin (System)'}</span>
+                    <div>
+                        <span class="text-sm font-medium text-gray-800">${u.name || 'Admin (System)'}</span>
+                        <div class="text-[10px] text-gray-500">${u.email}</div>
+                    </div>
                 </div>
             </td>
-            <td class="text-gray-600 text-sm font-mono">${u.email}</td>
-            <td class="text-gray-600 text-sm">${u.contact_email || '-'}</td>
             <td>
                 ${(u.role === 'moderator' || (u.permissions && u.permissions.includes('IS_MODERATOR'))) ? `
                     <span class="badge bg-purple-100 text-purple-700 border-purple-200">Moderator</span>
@@ -161,7 +162,6 @@ function createRowHtml(u, i) {
                     ${u.is_active ? 'Aktif' : 'Nonaktif'}
                 </span>
             </td>
-            <td class="text-gray-500 text-xs">${formatDate(u.created_at)}</td>
             <td>
                 <div class="flex items-center justify-end gap-1">
                     <button onclick='editUserById("${u.id}")'
@@ -219,7 +219,7 @@ function renderUsers() {
     let globalIndex = 0;
 
     if (superAdmins.length > 0) {
-        html += `<tr><td colspan="8" class="bg-indigo-500/10 py-3 px-4 text-xs font-bold text-indigo-400 tracking-widest uppercase border-y border-indigo-500/20">
+        html += `<tr><td colspan="5" class="bg-indigo-500/10 py-3 px-4 text-xs font-bold text-indigo-400 tracking-widest uppercase border-y border-indigo-500/20">
             <div class="flex items-center gap-2">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z"/></svg>
                 Super Admin
@@ -229,7 +229,7 @@ function renderUsers() {
     }
 
     if (moderators.length > 0) {
-        html += `<tr><td colspan="8" class="bg-purple-500/10 py-3 px-4 text-xs font-bold text-purple-400 tracking-widest uppercase border-y border-purple-500/20">
+        html += `<tr><td colspan="5" class="bg-purple-500/10 py-3 px-4 text-xs font-bold text-purple-400 tracking-widest uppercase border-y border-purple-500/20">
             <div class="flex items-center gap-2">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 21a11.959 11.959 0 01-9.618-7.016A11.955 11.955 0 0112 3c1.74 0 3.391.462 4.818 1.274"/></svg>
                 Moderator
@@ -239,7 +239,7 @@ function renderUsers() {
     }
 
     if (adminZonas.length > 0) {
-        html += `<tr><td colspan="8" class="bg-emerald-500/10 py-3 px-4 text-xs font-bold text-emerald-400 tracking-widest uppercase border-y border-emerald-500/20">
+        html += `<tr><td colspan="5" class="bg-emerald-500/10 py-3 px-4 text-xs font-bold text-emerald-400 tracking-widest uppercase border-y border-emerald-500/20">
             <div class="flex items-center gap-2">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 012-2H9a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                 Admin Zona
