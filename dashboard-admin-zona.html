@@ -630,6 +630,68 @@
             modal.style.display = 'flex';
         }
 
+        // Toggle action menu dropdown
+        function toggleActionMenu(event, faktur, invoiceId) {
+            event.stopPropagation();
+            const menu = document.getElementById(`menu-${invoiceId}`);
+            
+            // Close all other menus
+            document.querySelectorAll('.action-menu').forEach(m => {
+                if (m.id !== `menu-${invoiceId}`) {
+                    m.style.display = 'none';
+                }
+            });
+            
+            // Toggle current menu
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.action-menu').forEach(m => {
+                m.style.display = 'none';
+            });
+        });
+
+        // Delete invoice with custom confirmation
+        async function deleteInvoice(faktur, invoiceId) {
+            showConfirmation(
+                `Hapus Invoice ${faktur}?`,
+                `Apakah Anda yakin ingin menghapus invoice ${faktur}? Tindakan ini tidak dapat dibatalkan.`,
+                async () => {
+                    try {
+                        const token = API.getToken() || localStorage.getItem('jwt_token');
+                        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                        
+                        console.log('[DeleteInvoice] Deleting invoice:', faktur, 'ID:', invoiceId);
+                        
+                        const response = await fetch(`/api/invoice/${faktur}`, {
+                            method: 'DELETE',
+                            headers: headers
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Gagal menghapus invoice');
+                        }
+                        
+                        console.log('[DeleteInvoice] ✅ Invoice deleted successfully');
+                        if (window.Toast) {
+                            Toast.success(`Invoice ${faktur} berhasil dihapus`);
+                        }
+                        
+                        // Reload the data
+                        await loadInvoices();
+                        
+                    } catch (error) {
+                        console.error('[DeleteInvoice] Error:', error);
+                        if (window.Toast) {
+                            Toast.error('Gagal menghapus invoice: ' + error.message);
+                        }
+                    }
+                }
+            );
+        }
+
         function renderInvoices(invoices) {
             const tbody = document.getElementById('invoiceTableBody');
 
@@ -638,27 +700,36 @@
                 return;
             }
 
-            tbody.innerHTML = invoices.map(inv => `
+            tbody.innerHTML = invoices.map(inv => {
+                // Map status values
+                const statusDisplay = inv.status === 'Lunas' ? 'Lunas' : 'Belum Lunas';
+                const statusColor = inv.status === 'Lunas' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                
+                return `
                 <tr style="border-bottom: 2px solid #34495e;">
                     <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${new Date(inv.tanggal).toLocaleDateString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur}</strong></td>
                     <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                            ${inv.status === 'Lunas' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                            ${inv.status || 'PENDING'}
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColor}">
+                            ${statusDisplay}
                         </span>
                     </td>
                     <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.konsumen || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.toko || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
-                    <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle; text-align: center;">
-                        <button onclick="viewDetail('${inv.id}')" class="text-blue-600 hover:text-blue-900 text-sm" title="Lihat">
-                            <i class="fas fa-eye"></i>
+                    <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
+                        <button onclick="toggleActionMenu(event, '${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 18px; padding: 0;" title="Aksi">
+                            ⋮
                         </button>
+                        <div id="menu-${inv.id}" class="action-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100; min-width: 120px;">
+                            <button onclick="deleteInvoice('${inv.faktur}', '${inv.id}')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #e74c3c; font-size: 13px;">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        </div>
                     </td>
                 </tr>
-            `).join('');
+            `; }).join('');
         }
 
         function updatePagination() {
