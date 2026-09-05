@@ -49,6 +49,7 @@ async function initAuth(requiredRole = null) {
         }
 
         currentUser = user;
+        window.currentUser = user;  // Expose globally for other pages
         updateUserUI();
 
     } catch (err) {
