@@ -354,7 +354,7 @@
                     </thead>
                     <tbody id="invoiceTableBody">
                         <tr>
-                            <td colspan="7" class="empty-state">
+                            <td colspan="8" class="empty-state">
                                 <i class="fas fa-spinner fa-spin"></i> Memuat data...
                             </td>
                         </tr>
@@ -430,15 +430,19 @@
                 document.getElementById('main-content').classList.add('with-sidebar');
 
                 // Load all data first to populate filters
+                console.log('[AdminZona] Starting loadAllInvoices...');
                 try {
                     await loadAllInvoices();
+                    console.log('[AdminZona] loadAllInvoices completed');
                 } catch (err) {
                     console.error('[AdminZona] Error loading all invoices:', err);
                 }
                 
                 // Load filtered data
+                console.log('[AdminZona] Starting loadInvoices...');
                 try {
                     await loadInvoices();
+                    console.log('[AdminZona] loadInvoices completed');
                 } catch (err) {
                     console.error('[AdminZona] Error loading invoices:', err);
                 }
@@ -570,7 +574,7 @@
             } catch (err) {
                 console.error('[AdminZona] Error loading invoices:', err);
                 document.getElementById('invoiceTableBody').innerHTML = `
-                    <tr><td colspan="7" class="empty-state text-red-500">Error: ${err.message}</td></tr>
+                    <tr><td colspan="8" class="empty-state text-red-500">Error: ${err.message}</td></tr>
                 `;
             }
         }
@@ -642,7 +646,7 @@
             const tbody = document.getElementById('invoiceTableBody');
 
             if (invoices.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Tidak ada invoice yang ditemukan</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Tidak ada invoice yang ditemukan</td></tr>';
                 return;
             }
 
