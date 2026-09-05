@@ -2783,21 +2783,21 @@ async function loadFilterOptions() {
         const keterangans = [...new Set(invoices.map(inv => inv.keterangan).filter(Boolean))];
         
         // Extract unique years and months from invoices
-        const yearMonthSet = new Set();
+        const yearSet = new Set();
+        const monthSet = new Set();
         invoices.forEach(inv => {
             if (inv.tanggal_dokumen) {
                 const date = new Date(inv.tanggal_dokumen);
                 if (!isNaN(date.getTime())) {
-                    yearMonthSet.add(date.getFullYear().toString());
+                    yearSet.add(date.getFullYear().toString());
+                    monthSet.add(date.getMonth() + 1); // getMonth() returns 0-11
                 }
             }
         });
-        const years = Array.from(yearMonthSet).sort().reverse();
-        
-        const monthSet = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+        const years = Array.from(yearSet).sort().reverse();
         const months = Array.from(monthSet).sort((a, b) => a - b);
         
-        console.log('[Filter] Loaded options - Years:', years.length, 'Months:', months.length, 'Tokos:', tokos.length, 'Keterangans:', keterangans.length);
+        console.log('[Filter] Loaded options - Years:', years.length, 'Months with data:', months.length, 'Tokos:', tokos.length, 'Keterangans:', keterangans.length);
         if (currentUser?.role === 'admin_zona') {
             console.log('[Filter] ✅ Admin Zona: Showing actual konsumen (store) names from invoices');
         }
@@ -2817,7 +2817,7 @@ async function loadFilterOptions() {
             console.log('[Filter] Year select populated with', years.length, 'options');
         }
         
-        // Populate month select
+        // Populate month select - ONLY with months that have data
         const monthSelect = document.getElementById('filterMonth');
         if (monthSelect) {
             while (monthSelect.options.length > 1) {
@@ -2831,7 +2831,7 @@ async function loadFilterOptions() {
                 option.textContent = monthNames[month - 1];
                 monthSelect.appendChild(option);
             });
-            console.log('[Filter] Month select populated with', months.length, 'options');
+            console.log('[Filter] Month select populated with', months.length, 'options (only months with data)');
         }
         
         // Populate toko select - clear existing first to avoid duplicates
