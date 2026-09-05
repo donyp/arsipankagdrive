@@ -720,18 +720,18 @@
                 
                 return `
                 <tr style="border-bottom: 2px solid #34495e;">
-                    <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${new Date(inv.tanggal).toLocaleDateString('id-ID')}</td>
-                    <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur}</strong></td>
-                    <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${new Date(inv.tanggal).toLocaleDateString('id-ID')}</td>
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur}</strong></td>
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">
                         <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColor}">
                             ${statusDisplay}
                         </span>
                     </td>
-                    <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.konsumen || '-'}</td>
-                    <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.toko || '-'}</td>
-                    <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
-                    <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
-                    <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.konsumen || '-'}</td>
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.toko || '-'}</td>
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
                         <button onclick="toggleActionMenu(event, '${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 18px; padding: 0;" title="Aksi">
                             ⋮
                         </button>
