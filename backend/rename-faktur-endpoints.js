@@ -88,6 +88,8 @@ module.exports = (app, supabase) => {
 
                     console.log(`[Rename Faktur] PDF text extracted, length: ${textContent.length}`);
                     console.log(`[Rename Faktur] First 500 chars: ${textContent.substring(0, 500)}`);
+                    console.log(`[Rename Faktur] Last 500 chars (for referensi scanning): ${textContent.substring(Math.max(0, textContent.length - 500))}`);
+                    console.log(`[Rename Faktur] ========== BEGIN REFERENSI SCANNING ==========`);
 
                     // Extract nama toko (Pembeli Barang Kena Pajak) - strict pattern
                     let namaToko = null;
@@ -179,25 +181,64 @@ module.exports = (app, supabase) => {
                     }
 
                     // Extract Referensi number from bottom of PDF - for tax reference tracking
+                    // Scanning logic: mencari "Referensi:" diikuti dengan 15-20 digit number
                     let referensi = null;
-                    const referensiMatch = textContent.match(/Referensi\s*:\s*(\d{15,20})/i);
+                    
+                    // Pattern 1: Standard "Referensi : XXXXX" format
+                    let referensiMatch = textContent.match(/Referensi\s*:\s*(\d{15,20})/i);
                     if (referensiMatch) {
                         referensi = referensiMatch[1].trim();
-                        console.log(`[Rename Faktur] Referensi detected: ${referensi}`);
-                    } else {
-                        console.log(`[Rename Faktur] Referensi not detected - using standard format`);
+                        console.log(`[Rename Faktur] Referensi detected (Pattern 1): ${referensi}`);
                     }
+                    
+                    // Pattern 2: If not found, try with more flexible spacing/line breaks
+                    if (!referensi) {
+                        referensiMatch = textContent.match(/Referensi\s+:\s*\n?\s*(\d{15,20})/i);
+                        if (referensiMatch) {
+                            referensi = referensiMatch[1].trim();
+                            console.log(`[Rename Faktur] Referensi detected (Pattern 2): ${referensi}`);
+                        }
+                    }
+                    
+                    // Pattern 3: Try without colon
+                    if (!referensi) {
+                        referensiMatch = textContent.match(/Referensi\s+(\d{15,20})/i);
+                        if (referensiMatch) {
+                            referensi = referensiMatch[1].trim();
+                            console.log(`[Rename Faktur] Referensi detected (Pattern 3): ${referensi}`);
+                        }
+                    }
+                    
+                    // Pattern 4: Extract last 15-20 digits from "Referensi" section (fallback for OCR variations)
+                    if (!referensi) {
+                        const referensiSectionMatch = textContent.match(/Referensi\s*[:\s]*([A-Za-z0-9\s.-]*\d[A-Za-z0-9\s.-]*)/i);
+                        if (referensiSectionMatch) {
+                            // Extract only digits from this section
+                            const digitMatch = referensiSectionMatch[1].match(/(\d{15,20})/);
+                            if (digitMatch) {
+                                referensi = digitMatch[1].trim();
+                                console.log(`[Rename Faktur] Referensi detected (Pattern 4 - section extraction): ${referensi}`);
+                            }
+                        }
+                    }
+                    
+                    if (referensi) {
+                        console.log(`[Rename Faktur] ✓ Referensi scanning successful: ${referensi}`);
+                    } else {
+                        console.log(`[Rename Faktur] ✗ Referensi not detected - using standard format without referensi`);
+                    }
+                    console.log(`[Rename Faktur] ========== END REFERENSI SCANNING ==========`);
 
                     // Create new filename based on referensi detection
                     let newName;
                     if (referensi) {
                         // Format with referensi: tax-REFERENSI NAMA NOMINAL
                         newName = `tax-${referensi} ${namaToko.toUpperCase()} ${formatCurrency(totalNominal)}.pdf`;
-                        console.log(`[Rename Faktur] Using REFERENSI format: ${newName}`);
+                        console.log(`[Rename Faktur] ✓ REFERENSI format applied: ${newName}`);
                     } else {
                         // Standard format: tax-NAMA NOMINAL
                         newName = `tax-${namaToko.toUpperCase()} ${formatCurrency(totalNominal)}.pdf`;
-                        console.log(`[Rename Faktur] Using STANDARD format: ${newName}`);
+                        console.log(`[Rename Faktur] ✓ STANDARD format applied (no referensi): ${newName}`);
                     }
 
                     // Convert PDF file to base64 for download
