@@ -88,6 +88,32 @@ app.use(express.urlencoded({ extended: true }));
 // Serve Static Frontend from root
 app.use(express.static(path.join(__dirname, '..')));
 
+// ============================================================
+// URL Rewriting: Remove .html extension
+// Allow /index instead of /index.html
+// ============================================================
+app.get('/:page', (req, res, next) => {
+    const page = req.params.page;
+    
+    // Skip if it's an API route or has a dot (file extension)
+    if (page.startsWith('api') || page.includes('.')) {
+        return next();
+    }
+    
+    // Try to find the .html file
+    const filePath = path.join(__dirname, '..', `${page}.html`);
+    
+    fs.stat(filePath, (err) => {
+        if (!err) {
+            // File exists, serve it
+            res.sendFile(filePath);
+        } else {
+            // File doesn't exist, continue to next middleware
+            next();
+        }
+    });
+});
+
 // Route for shared files - serve shared.html for /shared/:token URLs
 app.get('/shared/:token', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'shared.html'));
