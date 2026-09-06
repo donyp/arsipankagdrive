@@ -1589,12 +1589,10 @@ const RcloneStorage = {
      * @returns {Promise<Object>} - { success, path, message }
      */
     async uploadInvoicePDF(buffer, filename, year, month, day, category) {
-        // Path with double ARSIPINVOICE (subfolder structure in GDrive)
-        // IMPORTANT: Force upload to SHARED DRIVE by prefixing with team_drive_id
-        // Format: "team_drive_id/path" tells rclone to use shared drive not My Drive
-        const teamDriveId = process.env.GDRIVE_TEAM_DRIVE_ID || '0ACE-3TF3_Cf5Uk9PVA';
-        const storagePath = `${teamDriveId}/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
-        const dirPath = `${teamDriveId}/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
+        // HARDCODED PATH: Upload directly to Shared Drive
+        // Path format: gdrive:/ARSIPINVOICE/ARSIPINVOICE/YEAR/MONTH/DAY/CATEGORY/filename
+        const storagePath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
+        const dirPath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
         
         logOperation('uploadInvoicePDF', {
             action: 'Uploading invoice PDF',
@@ -1614,26 +1612,20 @@ const RcloneStorage = {
             fs.writeFileSync(tempFilePath, buffer);
 
             try {
-                // OPTIMIZATION 1: Try single mkdir with -p flag first (faster)
+                // Create directory structure
                 const remoteDirPath = `${PRIMARY_REMOTE}:${dirPath}`;
                 
-                console.log('[uploadInvoicePDF] Creating directory (optimized single-step):', remoteDirPath);
-                try {
-                    // Try with --parents flag (faster if supported)
-                    await rcloneExec(['mkdir', '--parents', remoteDirPath]);
-                } catch (err) {
-                    // If --parents fails, fallback to recursive creation
-                    console.log('[uploadInvoicePDF] Single-step mkdir failed, using recursive creation');
-                    const pathParts = dirPath.split('/').filter(p => p);
-                    let currentPath = '';
-                    for (const part of pathParts) {
-                        currentPath += '/' + part;
-                        try {
-                            await rcloneExec(['mkdir', `${PRIMARY_REMOTE}:${currentPath}`]);
-                        } catch (mkErr) {
-                            // Directory might already exist, continue
-                            console.log(`[uploadInvoicePDF] Dir exists or created: ${currentPath}`);
-                        }
+                console.log('[uploadInvoicePDF] Creating directory:', remoteDirPath);
+                
+                // Recursive directory creation without --parents flag
+                const pathParts = dirPath.split('/').filter(p => p);
+                let currentPath = '';
+                for (const part of pathParts) {
+                    currentPath += '/' + part;
+                    try {
+                        await rcloneExec(['mkdir', `${PRIMARY_REMOTE}:${currentPath}`]);
+                    } catch (mkErr) {
+                        console.log(`[uploadInvoicePDF] Dir exists or created: ${currentPath}`);
                     }
                 }
                 
@@ -1651,9 +1643,6 @@ const RcloneStorage = {
                 
                 await rcloneExec(['copyto', tempFilePath, remoteFilePath]);
                 
-                // OPTIMIZATION 2: Skip expensive lsjson verification
-                // Trust rclone copyto exit code (0 = success, non-zero = fail)
-                // If copyto threw, we would have caught it above
                 console.log('[uploadInvoicePDF] Upload complete (verification skipped - trusting rclone)');
                 
                 logOperation('uploadInvoicePDF', {
@@ -1701,11 +1690,10 @@ const RcloneStorage = {
      * @returns {Promise<Object>} - { success, path, message }
      */
     async uploadDocumentFile(buffer, filename, year, month, day, folderType) {
-        // Path with double ARSIPINVOICE (subfolder structure in GDrive)
-        // IMPORTANT: Force upload to SHARED DRIVE by prefixing with team_drive_id
-        const teamDriveId = process.env.GDRIVE_TEAM_DRIVE_ID || '0ACE-3TF3_Cf5Uk9PVA';
-        const storagePath = `${teamDriveId}/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}/${filename}`;
-        const dirPath = `${teamDriveId}/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}`;
+        // HARDCODED PATH: Upload directly to Shared Drive
+        // Path format: gdrive:/ARSIPINVOICE/ARSIPINVOICE/YEAR/MONTH/DAY/FOLDERTYPE/filename
+        const storagePath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}/${filename}`;
+        const dirPath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}`;
         
         logOperation('uploadDocumentFile', {
             filename,
@@ -1725,19 +1713,16 @@ const RcloneStorage = {
                 
                 console.log(`[uploadDocumentFile] Creating directory: ${remoteDirPath}`);
 
-                try {
-                    await rcloneExec(['copy', '/dev/null', remoteDirPath, '--include', 'null']);
-                } catch (err) {
-                    const pathParts = dirPath.split('/').filter(p => p);
-                    let currentPath = '';
-                    for (const part of pathParts) {
-                        currentPath += '/' + part;
-                        try {
-                            const remoteCurrentPath = `${PRIMARY_REMOTE}:${currentPath}`;
-                            await rcloneExec(['mkdir', remoteCurrentPath]);
-                        } catch (mkErr) {
-                            console.log(`[uploadDocumentFile] Dir exists or created: ${currentPath}`);
-                        }
+                // Recursive directory creation
+                const pathParts = dirPath.split('/').filter(p => p);
+                let currentPath = '';
+                for (const part of pathParts) {
+                    currentPath += '/' + part;
+                    try {
+                        const remoteCurrentPath = `${PRIMARY_REMOTE}:${currentPath}`;
+                        await rcloneExec(['mkdir', remoteCurrentPath]);
+                    } catch (mkErr) {
+                        console.log(`[uploadDocumentFile] Dir exists or created: ${currentPath}`);
                     }
                 }
 
