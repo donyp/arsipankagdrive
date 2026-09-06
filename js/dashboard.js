@@ -2683,110 +2683,44 @@ function renderInvoiceTable(invoices) {
         return;
     }
     
-    // Check file existence for each invoice
+    // Render skeleton first, then check files async
     const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
     
-    Promise.all(invoices.map(async (inv) => {
-        let actualUploadedCount = 0;
-        let requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
+    // Render rows with placeholder status
+    tbody.innerHTML = invoices.map(inv => {
+        const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
+        const statusText = `0/${requiredCount}`;
+        const statusStyle = 'background: #f8d7da; color: #000000;'; // Red placeholder
         
-        // Check invoice file
-        if (inv.invoice_pdf_path) {
-            try {
-                const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.exists) actualUploadedCount++;
-                }
-            } catch (e) {}
-        }
-        
-        // Check bukti bayar
-        if (inv.bukti_bayar_path) {
-            try {
-                const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.exists) actualUploadedCount++;
-                }
-            } catch (e) {}
-        }
-        
-        // Check faktur pajak (if PPN)
-        if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
-            try {
-                const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.exists) actualUploadedCount++;
-                }
-            } catch (e) {}
-        }
-        
-        return {
-            ...inv,
-            actualUploadedCount,
-            requiredCount
-        };
-    })).then(invoicesWithFileCheck => {
-        tbody.innerHTML = invoicesWithFileCheck.map(inv => {
-            // Display X/Y status format based on actual file existence
-            const uploadedCount = inv.actualUploadedCount;
-            const requiredCount = inv.requiredCount;
-            const statusText = `${uploadedCount}/${requiredCount}`;
-            const isComplete = uploadedCount === requiredCount;
-            
-            // Different color for each status
-            let statusStyle = 'background: #fff3cd; color: #000000;'; // Default yellow for incomplete
-            
-            if (isComplete) {
-                // Complete: Green
-                statusStyle = 'background: #d4edda; color: #000000;';
-            } else if (uploadedCount === 0) {
-                // 0/2 or 0/3: Red
-                statusStyle = 'background: #f8d7da; color: #000000;';
-            } else if (uploadedCount === requiredCount - 1) {
-                // Almost complete (1/2 or 2/3): Orange/Amber
-                statusStyle = 'background: #ffe8cc; color: #000000;';
+        // Format date dd/mm/yy
+        let formattedDate = inv.tanggal || '-';
+        if (inv.tanggal && inv.tanggal.includes('-')) {
+            const parts = inv.tanggal.split('-');
+            if (parts.length === 3) {
+                formattedDate = `${parts[2]}/${parts[1]}/${parts[0].slice(-2)}`;
             }
-            // else: Yellow (partial upload) - default
-            
-            // Format date dd/mm/yy
-            let formattedDate = inv.tanggal || '-';
-            if (inv.tanggal && inv.tanggal.includes('-')) {
-                const parts = inv.tanggal.split('-');
-                if (parts.length === 3) {
-                    formattedDate = `${parts[2]}/${parts[1]}/${parts[0].slice(-2)}`;
-                }
-            }
-            
-            // Capitalize first letter of tipe
-            const tipe = inv.jenis_transaksi ? inv.jenis_transaksi.charAt(0).toUpperCase() + inv.jenis_transaksi.slice(1).toLowerCase() : '-';
-            
-            // Auto-adjust font size for long text
-            const konsumenText = inv.konsumen || '-';
-            const tokoText = inv.toko || '-';
-            const konsumenFontSize = konsumenText.length > 25 ? '11px' : '14px';
-            const tokoFontSize = tokoText.length > 20 ? '11px' : '14px';
-            
-            return `
-            <tr style="transition: background 0.2s; border-bottom: 2px solid #34495e;">
+        }
+        
+        // Capitalize first letter of tipe
+        const tipe = inv.jenis_transaksi ? inv.jenis_transaksi.charAt(0).toUpperCase() + inv.jenis_transaksi.slice(1).toLowerCase() : '-';
+        
+        // Auto-adjust font size for long text
+        const konsumenText = inv.konsumen || '-';
+        const tokoText = inv.toko || '-';
+        const konsumenFontSize = konsumenText.length > 25 ? '11px' : '14px';
+        const tokoFontSize = tokoText.length > 20 ? '11px' : '14px';
+        
+        return `
+            <tr style="transition: background 0.2s; border-bottom: 2px solid #34495e;" data-faktur="${inv.faktur}">
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">
-                    <span style="display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
+                    <span style="display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}" data-status="${inv.faktur}">
                         ${statusText}
                     </span>
-                    <div style="margin-top: 4px; display: flex; gap: 3px; flex-wrap: wrap; justify-content: center;">
-                        ${inv.invoice_pdf_path ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄</button>` : ''}
-                        ${inv.bukti_bayar_path ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰</button>` : ''}
-                        ${inv.faktur_pajak_path && inv.keterangan === 'PPN' ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋</button>` : ''}
+                    <div style="margin-top: 4px; display: flex; gap: 3px; flex-wrap: wrap; justify-content: center;" data-buttons="${inv.faktur}">
+                        <span style="color: #95a5a6; font-size: 10px;">Checking...</span>
                     </div>
-                    ${isComplete ? `<div style="margin-top: 4px;"><button onclick="combinePDF('${inv.faktur}')" style="background: #e67e22; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s; width: 100%;" title="Combine PDF">📦 Combine</button></div>` : ''}
+                    <div style="margin-top: 4px;" data-combine="${inv.faktur}">
+                    </div>
                 </td>
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${formattedDate}</td>
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur || '-'}</strong></td>
@@ -2811,8 +2745,112 @@ function renderInvoiceTable(invoices) {
             </tr>
         `}).join('');
         
+        console.log('[RenderTable] Skeleton rendered, checking files async...');
+        
+        // Now check files asynchronously for each invoice
+        invoices.forEach(inv => {
+            checkAndUpdateInvoiceButtons(inv, token);
+        });
+        
         console.log('[RenderTable] ✅ Rendered successfully');
-    });
+}
+
+// Check file existence and update buttons dynamically
+async function checkAndUpdateInvoiceButtons(inv, token) {
+    let actualUploadedCount = 0;
+    const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
+    const buttons = [];
+    
+    // Check invoice file
+    if (inv.invoice_pdf_path) {
+        try {
+            const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                console.log(`[CheckButtons] ${inv.faktur} - invoice exists: ${data.exists}`);
+                if (data.exists) {
+                    actualUploadedCount++;
+                    buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄</button>`);
+                }
+            }
+        } catch (e) {
+            console.error('[CheckButtons] Error checking invoice:', e);
+        }
+    }
+    
+    // Check bukti bayar
+    if (inv.bukti_bayar_path) {
+        try {
+            const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                console.log(`[CheckButtons] ${inv.faktur} - bukti bayar exists: ${data.exists}`);
+                if (data.exists) {
+                    actualUploadedCount++;
+                    buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰</button>`);
+                }
+            }
+        } catch (e) {
+            console.error('[CheckButtons] Error checking bukti bayar:', e);
+        }
+    }
+    
+    // Check faktur pajak (if PPN)
+    if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
+        try {
+            const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                console.log(`[CheckButtons] ${inv.faktur} - faktur pajak exists: ${data.exists}`);
+                if (data.exists) {
+                    actualUploadedCount++;
+                    buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋</button>`);
+                }
+            }
+        } catch (e) {
+            console.error('[CheckButtons] Error checking faktur pajak:', e);
+        }
+    }
+    
+    console.log(`[CheckButtons] ${inv.faktur} - Final count: ${actualUploadedCount}/${requiredCount}`);
+    
+    // Update buttons container
+    const buttonsContainer = document.querySelector(`[data-buttons="${inv.faktur}"]`);
+    if (buttonsContainer) {
+        buttonsContainer.innerHTML = buttons.length > 0 ? buttons.join('') : '<span style="color: #95a5a6; font-size: 10px;">No files</span>';
+    }
+    
+    // Update combine button
+    const combineContainer = document.querySelector(`[data-combine="${inv.faktur}"]`);
+    if (combineContainer && actualUploadedCount === requiredCount) {
+        combineContainer.innerHTML = `<button onclick="combinePDF('${inv.faktur}')" style="background: #e67e22; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s; width: 100%;" title="Combine PDF">📦 Combine</button>`;
+    }
+    
+    // Update status badge
+    const statusBadge = document.querySelector(`[data-status="${inv.faktur}"]`);
+    if (statusBadge) {
+        const statusText = `${actualUploadedCount}/${requiredCount}`;
+        const isComplete = actualUploadedCount === requiredCount;
+        
+        let statusStyle = 'background: #fff3cd; color: #000000;'; // Default yellow
+        if (isComplete) {
+            statusStyle = 'background: #d4edda; color: #000000;'; // Green
+        } else if (actualUploadedCount === 0) {
+            statusStyle = 'background: #f8d7da; color: #000000;'; // Red
+        } else if (actualUploadedCount === requiredCount - 1) {
+            statusStyle = 'background: #ffe8cc; color: #000000;'; // Orange
+        }
+        
+        statusBadge.textContent = statusText;
+        statusBadge.style.cssText = `display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}`;
+    }
+}
 }
 
 function formatCurrency(value) {
