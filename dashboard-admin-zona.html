@@ -332,18 +332,21 @@
                         <tr style="background: #34495e;">
                             <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 10%; vertical-align: middle;">TANGGAL</th>
                             <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 12%; vertical-align: middle;">NO FAKTUR</th>
-                            <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 11%; vertical-align: middle;">STATUS BAYAR</th>
+                            <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 11%; vertical-align: middle;">METODE BAYAR</th>
                             <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 15%; vertical-align: middle;">TOKO</th>
                             <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 15%; vertical-align: middle;">SUPPLIER</th>
                             <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 12%; vertical-align: middle;">TOTAL</th>
                             <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 15%; vertical-align: middle;">KETERANGAN</th>
-                            <th style="padding: 15px 12px; text-align: center; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 8%; vertical-align: middle;">AKSI</th>
+                            <th style="padding: 15px 12px; text-align: center; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 10%; vertical-align: middle;">AKSI</th>
                         </tr>
                     </thead>
                     <tbody id="invoiceTableBody">
                         <tr>
                             <td colspan="8" class="empty-state">
-                                <i class="fas fa-spinner fa-spin"></i> Memuat data...
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px;">
+                                    <div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                                    <span style="color: #7f8c8d; font-size: 14px;">Memuat data invoice...</span>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -714,7 +717,7 @@
             }
 
             // Show loading overlay while checking files
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2rem; height: 2rem; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d;">Memeriksa ketersediaan file...</span></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d; font-size: 14px;">Memeriksa ketersediaan file...</span></div></td></tr>';
 
             const token = API.getToken() || localStorage.getItem('jwt_token');
             
@@ -801,15 +804,16 @@
                 <tr style="border-bottom: 2px solid #34495e;">
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${new Date(inv.tanggal).toLocaleDateString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur}</strong></td>
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.metode_bayar || '-'}</td>
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.konsumen || '-'}</td>
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.toko || '-'}</td>
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">
                         <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColor}">
                             ${statusDisplay}
                         </span>
+                        <br><small style="color: #7f8c8d;">${inv.keterangan || '-'}</small>
                     </td>
-                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.konsumen || '-'}</td>
-                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.toko || '-'}</td>
-                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
-                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
                         <div style="display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap;">
                             ${inv.buttons.join('')}
