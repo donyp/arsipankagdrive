@@ -1182,8 +1182,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
 
     // ============================================
     // POST /api/invoice/upload-document
-    // Upload Bukti Bayar with filename format: NO_FAKTUR.pdf
-    // Path: /ARSIPINVOICE/ARSIPINVOICE/TAHUN/BULAN/TANGGAL/BUKTIBAYAR/
+    // Unified endpoint for both Bukti Bayar and Faktur Pajak
+    // Body: { type: 'bukti_bayar' | 'faktur_pajak' }
     // ============================================
     app.post('/api/invoice/upload-document',
         ...createAuth(['super_admin', 'moderator']),
@@ -1196,96 +1196,223 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
 
                 const fileBuffer = req.file.buffer;
                 const filename = req.file.originalname;
-                const fileType = req.body.type || 'bukti_bayar'; // Type: bukti_bayar
+                const fileType = req.body.type || 'bukti_bayar';
 
                 console.log(`[Invoice Document] Processing ${fileType}: ${filename}`);
 
-                // Extract nomor faktur from filename (remove .pdf extension)
-                const nomorFaktur = filename.replace(/\.pdf$/i, '').trim();
+                // Handle based on type
+                if (fileType === 'faktur_pajak') {
+                    // FAKTUR PAJAK FLOW
+                    console.log(`[Invoice Document] Handling as FAKTUR PAJAK`);
+                    
+                    // Validate filename format: must start with "tax-" and end with ".pdf"
+                    // Handle double .pdf extension
+                    let cleanFilename = filename.replace(/\.pdf\.pdf$/i, '.pdf');
+                    
+                    const filenamePattern = /^tax-(.+)\.pdf$/i;
+                    const match = cleanFilename.match(filenamePattern);
 
-                // Fetch invoice data to get the correct date
-                const { data: invoice, error: invoiceError } = await supabase
-                    .from('invoice_file_list')
-                    .select('tanggal')
-                    .eq('faktur', nomorFaktur)
-                    .single();
-
-                if (invoiceError || !invoice) {
-                    console.warn(`[Invoice Document] Invoice not found for faktur: ${nomorFaktur}, using today's date`);
-                }
-
-                // Use invoice date if available, otherwise use today's date
-                const invoiceDate = invoice?.tanggal ? new Date(invoice.tanggal) : new Date();
-                const year = invoiceDate.getFullYear().toString();
-                const month = String(invoiceDate.getMonth() + 1).padStart(2, '0');
-                const day = String(invoiceDate.getDate()).padStart(2, '0');
-
-                const monthNames = [
-                    'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
-                    'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'
-                ];
-                const monthName = monthNames[parseInt(month) - 1];
-
-                // For bukti_bayar: filename stays as nomor faktur
-                const finalFilename = `${nomorFaktur}.pdf`;
-
-                console.log(`[Invoice Document] Path: /ARSIPINVOICE/ARSIPINVOICE/${year}/${monthName}/${day}/BUKTIBAYAR/${finalFilename}`);
-
-                // Upload to Google Drive
-                let uploadResult = null;
-                try {
-                    uploadResult = await RcloneStorage.uploadDocumentFile(
-                        fileBuffer,
-                        finalFilename,
-                        year,
-                        monthName,
-                        day,
-                        'BUKTIBAYAR'
-                    );
-
-                    if (!uploadResult.success) {
-                        throw new Error(uploadResult.error || 'Upload failed');
+                    if (!match) {
+                        console.log(`[Invoice Document] Invalid faktur pajak format: ${filename}`);
+                        return res.status(400).json({
+                            success: false,
+                            error: 'ERROR : Format Nama File Tidak Sesuai'
+                        });
                     }
 
-                    console.log(`[Invoice Document] ✅ File uploaded: ${uploadResult.path}`);
-                } catch (uploadErr) {
-                    console.error(`[Invoice Document] Upload error:`, uploadErr.message);
-                    return res.status(500).json({
-                        success: false,
-                        error: `Upload failed: ${uploadErr.message}`
+                    const filenameParts = match[1]; // Everything between "tax-" and ".pdf"
+                    
+                    // Extract faktur number (first numeric part)
+                    const fakturMatch = filenameParts.match(/^(\d+)/);
+                    const fakturNumber = fakturMatch ? fakturMatch[1] : null;
+
+                    if (!fakturNumber) {
+                        console.log(`[Invoice Document] Could not extract faktur number`);
+                        return res.status(400).json({
+                            success: false,
+                            error: 'ERROR : Format Nama File Tidak Sesuai'
+                        });
+                    }
+
+                    console.log(`[Invoice Document] Extracted faktur: ${fakturNumber}`);
+
+                    // Fetch invoice data to get the correct date
+                    const { data: invoice, error: invoiceError } = await supabase
+                        .from('invoice_file_list')
+                        .select('tanggal')
+                        .eq('faktur', fakturNumber)
+                        .single();
+
+                    if (invoiceError || !invoice) {
+                        console.warn(`[Invoice Document] Invoice not found for faktur: ${fakturNumber}, using today's date`);
+                    }
+
+                    const invoiceDate = invoice?.tanggal ? new Date(invoice.tanggal) : new Date();
+                    const year = invoiceDate.getFullYear().toString();
+                    const month = String(invoiceDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(invoiceDate.getDate()).padStart(2, '0');
+
+                    const monthNames = [
+                        'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
+                        'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'
+                    ];
+                    const monthName = monthNames[parseInt(month) - 1];
+
+                    const finalFilename = cleanFilename;
+                    console.log(`[Invoice Document] Path: /ARSIPINVOICE/ARSIPINVOICE/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`);
+
+                    // Upload to Google Drive
+                    let uploadResult = null;
+                    try {
+                        uploadResult = await RcloneStorage.uploadDocumentFile(
+                            fileBuffer,
+                            finalFilename,
+                            year,
+                            monthName,
+                            day,
+                            'FAKTURPAJAK'
+                        );
+
+                        if (!uploadResult.success) {
+                            throw new Error(uploadResult.error || 'Upload failed');
+                        }
+
+                        console.log(`[Invoice Document] ✅ Faktur Pajak uploaded: ${uploadResult.path}`);
+                    } catch (uploadErr) {
+                        console.error(`[Invoice Document] Upload error:`, uploadErr.message);
+                        return res.status(500).json({
+                            success: false,
+                            error: `Upload failed: ${uploadErr.message}`
+                        });
+                    }
+
+                    // Update database
+                    if (fakturNumber) {
+                        try {
+                            const { error: updateError } = await supabase
+                                .from('invoice_file_list')
+                                .update({
+                                    faktur_pajak_path: uploadResult.path,
+                                    faktur_pajak_uploaded_at: new Date().toISOString(),
+                                    uploaded_by: req.user.id
+                                })
+                                .eq('faktur', fakturNumber);
+
+                            if (updateError) {
+                                console.warn(`[Invoice Document] DB update warning for ${fakturNumber}:`, updateError.message);
+                            } else {
+                                console.log(`[Invoice Document] ✅ DB updated for faktur: ${fakturNumber}`);
+                            }
+                        } catch (dbErr) {
+                            console.warn(`[Invoice Document] DB error:`, dbErr.message);
+                        }
+                    }
+
+                    res.json({
+                        success: true,
+                        message: 'Faktur pajak berhasil diupload',
+                        type: 'faktur_pajak',
+                        originalName: filename,
+                        remotePath: uploadResult.path,
+                        faktur: fakturNumber
+                    });
+
+                } else {
+                    // BUKTI BAYAR FLOW (default)
+                    console.log(`[Invoice Document] Handling as BUKTI BAYAR`);
+                    
+                    // Extract nomor faktur from filename (remove .pdf extensions)
+                    let nomorFaktur = filename.replace(/\.pdf\.pdf$/i, '.pdf').replace(/\.pdf$/i, '').trim();
+
+                    if (!/^\d+$/.test(nomorFaktur)) {
+                        console.log(`[Invoice Document] Invalid bukti bayar format: ${filename}`);
+                        return res.status(400).json({
+                            success: false,
+                            error: 'Nama file harus berupa nomor faktur'
+                        });
+                    }
+
+                    // Fetch invoice data to get the correct date
+                    const { data: invoice, error: invoiceError } = await supabase
+                        .from('invoice_file_list')
+                        .select('tanggal')
+                        .eq('faktur', nomorFaktur)
+                        .single();
+
+                    if (invoiceError || !invoice) {
+                        console.warn(`[Invoice Document] Invoice not found for faktur: ${nomorFaktur}, using today's date`);
+                    }
+
+                    const invoiceDate = invoice?.tanggal ? new Date(invoice.tanggal) : new Date();
+                    const year = invoiceDate.getFullYear().toString();
+                    const month = String(invoiceDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(invoiceDate.getDate()).padStart(2, '0');
+
+                    const monthNames = [
+                        'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
+                        'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'
+                    ];
+                    const monthName = monthNames[parseInt(month) - 1];
+
+                    const finalFilename = `${nomorFaktur}.pdf`;
+
+                    console.log(`[Invoice Document] Path: /ARSIPINVOICE/ARSIPINVOICE/${year}/${monthName}/${day}/BUKTIBAYAR/${finalFilename}`);
+
+                    // Upload to Google Drive
+                    let uploadResult = null;
+                    try {
+                        uploadResult = await RcloneStorage.uploadDocumentFile(
+                            fileBuffer,
+                            finalFilename,
+                            year,
+                            monthName,
+                            day,
+                            'BUKTIBAYAR'
+                        );
+
+                        if (!uploadResult.success) {
+                            throw new Error(uploadResult.error || 'Upload failed');
+                        }
+
+                        console.log(`[Invoice Document] ✅ Bukti Bayar uploaded: ${uploadResult.path}`);
+                    } catch (uploadErr) {
+                        console.error(`[Invoice Document] Upload error:`, uploadErr.message);
+                        return res.status(500).json({
+                            success: false,
+                            error: `Upload failed: ${uploadErr.message}`
+                        });
+                    }
+
+                    // Update database
+                    try {
+                        const { error: updateError } = await supabase
+                            .from('invoice_file_list')
+                            .update({
+                                bukti_bayar_path: uploadResult.path,
+                                bukti_bayar_uploaded_at: new Date().toISOString(),
+                                uploaded_by: req.user.id
+                            })
+                            .eq('faktur', nomorFaktur);
+
+                        if (updateError) {
+                            console.warn(`[Invoice Document] DB update warning for ${nomorFaktur}:`, updateError.message);
+                        } else {
+                            console.log(`[Invoice Document] ✅ DB updated for faktur: ${nomorFaktur}`);
+                        }
+                    } catch (dbErr) {
+                        console.warn(`[Invoice Document] DB error:`, dbErr.message);
+                    }
+
+                    res.json({
+                        success: true,
+                        message: 'Bukti bayar berhasil diupload',
+                        type: 'bukti_bayar',
+                        originalName: filename,
+                        newName: finalFilename,
+                        remotePath: uploadResult.path,
+                        nomor_faktur: nomorFaktur
                     });
                 }
-
-                // Update database - track bukti bayar path
-                try {
-                    const { error: updateError } = await supabase
-                        .from('invoice_file_list')
-                        .update({
-                            bukti_bayar_path: uploadResult.path,
-                            bukti_bayar_uploaded_at: new Date().toISOString(),
-                            uploaded_by: req.user.id
-                        })
-                        .eq('faktur', nomorFaktur);
-
-                    if (updateError) {
-                        console.warn(`[Invoice Document] DB update warning for ${nomorFaktur}:`, updateError.message);
-                        // Don't fail if DB update fails - file is uploaded successfully
-                    } else {
-                        console.log(`[Invoice Document] ✅ DB updated for faktur: ${nomorFaktur}`);
-                    }
-                } catch (dbErr) {
-                    console.warn(`[Invoice Document] DB error:`, dbErr.message);
-                    // Continue - file uploaded successfully
-                }
-
-                res.json({
-                    success: true,
-                    message: 'Dokumen berhasil diupload',
-                    originalName: filename,
-                    newName: finalFilename,
-                    remotePath: uploadResult.path,
-                    nomor_faktur: nomorFaktur
-                });
 
             } catch (error) {
                 console.error('[Invoice Document] Error:', error.message);

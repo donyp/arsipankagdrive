@@ -499,6 +499,7 @@
     <script src="js/supabase.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/toast.js"></script>
     <script src="js/sidebar.js?v=ULTRACLEAN_2026"></script>
     
     <script>
@@ -534,7 +535,7 @@
             filesToUpload = Array.from(files).filter(f => f.type === 'application/pdf');
             
             if (filesToUpload.length === 0) {
-                if (window.Toast) Toast.error('Hanya file PDF yang diterima');
+                Toast.error('Hanya file PDF yang diterima');
                 return;
             }
 
@@ -639,7 +640,7 @@
             });
 
             if (validFiles.length === 0) {
-                if (window.Toast) Toast.error('Tidak ada file valid');
+                Toast.error('Tidak ada file valid');
                 return;
             }
 
@@ -687,11 +688,11 @@
 
             // Show results
             if (successCount > 0) {
-                if (window.Toast) Toast.success(`✅ ${successCount} file berhasil diupload!`);
+                Toast.success(`✅ ${successCount} file berhasil diupload!`);
                 resetUpload();
             }
             if (failCount > 0) {
-                if (window.Toast) Toast.error(`⚠️ ${failCount} file gagal diupload`);
+                Toast.error(`⚠️ ${failCount} file gagal diupload`);
             }
         });
 
