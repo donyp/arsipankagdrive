@@ -326,6 +326,83 @@
             handleBuktiBayarFileSelect({ files: e.dataTransfer.files });
         });
 
+        // Event delegation for delete buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-delete-file')) {
+                const btn = e.target.closest('.btn-delete-file');
+                const filename = btn.dataset.filename;
+                console.log(`[Bukti Bayar] Deleting file: ${filename}`);
+                buktiBayarFilesToUpload = buktiBayarFilesToUpload.filter(f => f.name !== filename);
+                console.log(`[Bukti Bayar] Files remaining: ${buktiBayarFilesToUpload.length}`);
+                
+                // Re-render the list
+                if (buktiBayarFilesToUpload.length === 0) {
+                    document.getElementById('bukti-bayar-files-selected').style.display = 'none';
+                } else {
+                    handleBuktiBayarFileSelect({ files: new DataTransfer(buktiBayarFilesToUpload).items });
+                }
+            }
+        });
+
+        // Event delegation for delete buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-delete-file')) {
+                const btn = e.target.closest('.btn-delete-file');
+                const filename = btn.dataset.filename;
+                console.log(`[Bukti Bayar] Deleting file: ${filename}`);
+                buktiBayarFilesToUpload = buktiBayarFilesToUpload.filter(f => f.name !== filename);
+                console.log(`[Bukti Bayar] Files remaining: ${buktiBayarFilesToUpload.length}`);
+                
+                // Clear and re-render
+                const container = document.getElementById('bukti-bayar-files-selected');
+                const listEl = document.getElementById('bukti-bayar-files-list');
+                
+                if (buktiBayarFilesToUpload.length === 0) {
+                    container.style.display = 'none';
+                    fileInput.value = '';
+                } else {
+                    // Re-scan and re-render
+                    let validFiles = [];
+                    let invalidFiles = [];
+                    
+                    buktiBayarFilesToUpload.forEach((f) => {
+                        const fileItem = scanBuktiBayarFile(f);
+                        if (fileItem.isValid) {
+                            validFiles.push(fileItem);
+                        } else {
+                            invalidFiles.push(fileItem);
+                        }
+                    });
+                    
+                    // Simple re-render without async fetching
+                    listEl.innerHTML = [...validFiles, ...invalidFiles].map(fileItem => `
+                        <li class="file-item">
+                            <div class="file-item-left">
+                                <i class="fas fa-file-pdf"></i>
+                                <div class="file-info">
+                                    <div class="file-name">
+                                        ${fileItem.isValid ? '✅' : '❌'} ${fileItem.file.name}
+                                    </div>
+                                    <div class="file-size">
+                                        ${fileItem.isValid ? 
+                                            `NO FAKTUR: <strong>${fileItem.noFaktur}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB` : 
+                                            `${fileItem.error}`
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn-delete-file" data-filename="${fileItem.file.name}" type="button" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; pointer-events: auto;">
+                                <i class="fas fa-times"></i> Hapus
+                            </button>
+                        </li>
+                    `).join('');
+                    
+                    uploadBtn.disabled = validFiles.length === 0;
+                    console.log(`[Bukti Bayar] After delete - Valid files: ${validFiles.length}`);
+                }
+            }
+        });
+
         // File input change
         fileInput.addEventListener('change', (e) => {
             handleBuktiBayarFileSelect(e.target);
@@ -400,7 +477,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <button class="btn-delete-file" data-filename="${fileItem.file.name}" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            <button class="btn-delete-file" data-filename="${fileItem.file.name}" type="button" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; pointer-events: auto;">
                                 <i class="fas fa-times"></i> Hapus
                             </button>
                         </li>
@@ -408,16 +485,6 @@
                 }));
                 
                 listEl.innerHTML = renderedItems.join('');
-                
-                // Add delete handlers to this list specifically
-                listEl.querySelectorAll('.btn-delete-file').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const filename = btn.dataset.filename;
-                        buktiBayarFilesToUpload = buktiBayarFilesToUpload.filter(f => f.name !== filename);
-                        handleBuktiBayarFileSelect({ files: buktiBayarFilesToUpload });
-                    });
-                });
                 
                 // Update UI after rendering
                 container.style.display = 'block';

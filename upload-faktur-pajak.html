@@ -346,6 +346,65 @@
             handleFakturPajakFileSelect({ files: e.dataTransfer.files });
         });
 
+        // Event delegation for delete buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-delete-file-pajak')) {
+                const btn = e.target.closest('.btn-delete-file-pajak');
+                const filename = btn.dataset.filename;
+                console.log(`[Faktur Pajak] Deleting file: ${filename}`);
+                fakturPajakFilesToUpload = fakturPajakFilesToUpload.filter(f => f.name !== filename);
+                console.log(`[Faktur Pajak] Files remaining: ${fakturPajakFilesToUpload.length}`);
+                
+                // Clear and re-render
+                const container = document.getElementById('faktur-pajak-files-selected');
+                const listEl = document.getElementById('faktur-pajak-files-list');
+                
+                if (fakturPajakFilesToUpload.length === 0) {
+                    container.style.display = 'none';
+                    fileInput.value = '';
+                } else {
+                    // Re-scan and re-render
+                    let validFiles = [];
+                    let invalidFiles = [];
+                    
+                    fakturPajakFilesToUpload.forEach((f) => {
+                        const fileItem = scanFakturPajakFile(f);
+                        if (fileItem.isValid) {
+                            validFiles.push(fileItem);
+                        } else {
+                            invalidFiles.push(fileItem);
+                        }
+                    });
+                    
+                    // Simple re-render
+                    listEl.innerHTML = [...validFiles, ...invalidFiles].map(fileItem => `
+                        <li class="file-item">
+                            <div class="file-item-left">
+                                <i class="fas fa-file-pdf"></i>
+                                <div class="file-info">
+                                    <div class="file-name">
+                                        ${fileItem.isValid ? '✅' : '❌'} ${fileItem.file.name}
+                                    </div>
+                                    <div class="file-size">
+                                        ${fileItem.isValid ? 
+                                            `NO: <strong>${fileItem.noInvoice}</strong> | NAMA: <strong>${fileItem.nama}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB` : 
+                                            `${fileItem.error}`
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn-delete-file-pajak" data-filename="${fileItem.file.name}" type="button" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; pointer-events: auto;">
+                                <i class="fas fa-times"></i> Hapus
+                            </button>
+                        </li>
+                    `).join('');
+                    
+                    uploadBtn.disabled = validFiles.length === 0;
+                    console.log(`[Faktur Pajak] After delete - Valid files: ${validFiles.length}`);
+                }
+            }
+        });
+
         // File input change
         fileInput.addEventListener('change', (e) => {
             handleFakturPajakFileSelect(e.target);
@@ -394,21 +453,11 @@
                             </div>
                         </div>
                     </div>
-                    <button class="btn-delete-file" data-filename="${fileItem.file.name}" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                    <button class="btn-delete-file-pajak" data-filename="${fileItem.file.name}" type="button" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; pointer-events: auto;">
                         <i class="fas fa-times"></i> Hapus
                     </button>
                 </li>
             `).join('');
-            
-            // Add delete handlers using event delegation
-            listEl.querySelectorAll('.btn-delete-file').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const filename = btn.dataset.filename;
-                    fakturPajakFilesToUpload = fakturPajakFilesToUpload.filter(f => f.name !== filename);
-                    handleFakturPajakFileSelect({ files: fakturPajakFilesToUpload });
-                });
-            });
             
             container.style.display = 'block';
             const hasValidFiles = validFiles.length > 0;
