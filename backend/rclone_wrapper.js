@@ -1569,9 +1569,11 @@ const RcloneStorage = {
      */
     async uploadInvoicePDF(buffer, filename, year, month, day, category) {
         // Path with double ARSIPINVOICE (subfolder structure in GDrive)
-        // Actual path in GDrive: /Shared drives/ARSIPINVOICE/ARSIPINVOICE/TAHUN/BULAN/TANGGAL/CATEGORY
-        const storagePath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
-        const dirPath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
+        // IMPORTANT: Force upload to SHARED DRIVE by prefixing with team_drive_id
+        // Format: "team_drive_id/path" tells rclone to use shared drive not My Drive
+        const teamDriveId = process.env.GDRIVE_TEAM_DRIVE_ID || '0ACE-3TF3_Cf5Uk9PVA';
+        const storagePath = `${teamDriveId}/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
+        const dirPath = `${teamDriveId}/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
         
         logOperation('uploadInvoicePDF', {
             action: 'Uploading invoice PDF',
@@ -1679,8 +1681,10 @@ const RcloneStorage = {
      */
     async uploadDocumentFile(buffer, filename, year, month, day, folderType) {
         // Path with double ARSIPINVOICE (subfolder structure in GDrive)
-        const storagePath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}/${filename}`;
-        const dirPath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}`;
+        // IMPORTANT: Force upload to SHARED DRIVE by prefixing with team_drive_id
+        const teamDriveId = process.env.GDRIVE_TEAM_DRIVE_ID || '0ACE-3TF3_Cf5Uk9PVA';
+        const storagePath = `${teamDriveId}/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}/${filename}`;
+        const dirPath = `${teamDriveId}/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}`;
         
         logOperation('uploadDocumentFile', {
             filename,
