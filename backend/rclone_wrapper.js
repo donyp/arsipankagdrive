@@ -1590,9 +1590,9 @@ const RcloneStorage = {
      */
     async uploadInvoicePDF(buffer, filename, year, month, day, category) {
         // HARDCODED PATH: Upload directly to Shared Drive
-        // Path format: gdrive:/ARSIPINVOICE/ARSIPINVOICE/YEAR/MONTH/DAY/CATEGORY/filename
-        const storagePath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
-        const dirPath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
+        // Path format: gdrive:ARSIPINVOICE/ARSIPINVOICE/YEAR/MONTH/DAY/CATEGORY/filename (no leading slash!)
+        const storagePath = `ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
+        const dirPath = `ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
         
         logOperation('uploadInvoicePDF', {
             action: 'Uploading invoice PDF',
@@ -1621,7 +1621,7 @@ const RcloneStorage = {
                 const pathParts = dirPath.split('/').filter(p => p);
                 let currentPath = '';
                 for (const part of pathParts) {
-                    currentPath += '/' + part;
+                    currentPath = currentPath ? `${currentPath}/${part}` : part;
                     try {
                         await rcloneExec(['mkdir', `${PRIMARY_REMOTE}:${currentPath}`]);
                     } catch (mkErr) {
@@ -1691,9 +1691,9 @@ const RcloneStorage = {
      */
     async uploadDocumentFile(buffer, filename, year, month, day, folderType) {
         // HARDCODED PATH: Upload directly to Shared Drive
-        // Path format: gdrive:/ARSIPINVOICE/ARSIPINVOICE/YEAR/MONTH/DAY/FOLDERTYPE/filename
-        const storagePath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}/${filename}`;
-        const dirPath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}`;
+        // Path format: gdrive:ARSIPINVOICE/ARSIPINVOICE/YEAR/MONTH/DAY/FOLDERTYPE/filename (no leading slash!)
+        const storagePath = `ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}/${filename}`;
+        const dirPath = `ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}`;
         
         logOperation('uploadDocumentFile', {
             filename,
@@ -1717,7 +1717,7 @@ const RcloneStorage = {
                 const pathParts = dirPath.split('/').filter(p => p);
                 let currentPath = '';
                 for (const part of pathParts) {
-                    currentPath += '/' + part;
+                    currentPath = currentPath ? `${currentPath}/${part}` : part;
                     try {
                         const remoteCurrentPath = `${PRIMARY_REMOTE}:${currentPath}`;
                         await rcloneExec(['mkdir', remoteCurrentPath]);
