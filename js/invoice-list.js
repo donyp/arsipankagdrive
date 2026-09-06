@@ -412,11 +412,14 @@ function renderInvoiceTable(invoices = null) {
         if (isComplete) {
             statusBgColor = '#d4edda'; // Green - complete
             statusClass = 'uploaded';
+        } else if (filesUploaded > 0 && filesUploaded === requiredFiles - 1) {
+            statusBgColor = '#ffe8cc'; // Orange - almost complete (1 file left)
+            statusClass = 'almost-complete';
         } else if (filesUploaded > 0) {
             statusBgColor = '#fff3cd'; // Yellow - partial
             statusClass = 'partial';
         } else {
-            statusBgColor = '#f8d7da'; // Red - pending
+            statusBgColor = '#f8d7da'; // Red - no files uploaded
             statusClass = 'pending';
         }
         

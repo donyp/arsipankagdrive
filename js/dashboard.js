@@ -2689,7 +2689,21 @@ function renderInvoiceTable(invoices) {
         const requiredCount = inv.files_required_count || (inv.keterangan === 'PPN' ? 3 : 2);
         const statusText = `${uploadedCount}/${requiredCount}`;
         const isComplete = uploadedCount === requiredCount;
-        const statusStyle = isComplete ? 'background: #d4edda; color: #000000;' : 'background: #fff3cd; color: #000000;';
+        
+        // Different color for each status
+        let statusStyle = 'background: #fff3cd; color: #000000;'; // Default yellow for incomplete
+        
+        if (isComplete) {
+            // Complete: Green
+            statusStyle = 'background: #d4edda; color: #000000;';
+        } else if (uploadedCount === 0) {
+            // 0/2 or 0/3: Red
+            statusStyle = 'background: #f8d7da; color: #000000;';
+        } else if (uploadedCount === requiredCount - 1) {
+            // Almost complete (1/2 or 2/3): Orange/Amber
+            statusStyle = 'background: #ffe8cc; color: #000000;';
+        }
+        // else: Yellow (partial upload) - default
         
         // Format date dd/mm/yy
         let formattedDate = inv.tanggal || '-';

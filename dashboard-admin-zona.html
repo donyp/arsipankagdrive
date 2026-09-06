@@ -718,7 +718,21 @@
                 const uploadedCount = inv.files_uploaded_count || 0;
                 const requiredCount = inv.files_required_count || (inv.keterangan === 'PPN' ? 3 : 2);
                 const statusDisplay = `${uploadedCount}/${requiredCount}`;
-                const statusColor = (uploadedCount === requiredCount) ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                
+                // Different color for each status
+                let statusColor = 'bg-yellow-100 text-yellow-800'; // Default yellow for partial
+                
+                if (uploadedCount === requiredCount) {
+                    // Complete: Green
+                    statusColor = 'bg-green-100 text-green-800';
+                } else if (uploadedCount === 0) {
+                    // 0/2 or 0/3: Red
+                    statusColor = 'bg-red-100 text-red-800';
+                } else if (uploadedCount === requiredCount - 1) {
+                    // Almost complete (1/2 or 2/3): Orange
+                    statusColor = 'bg-orange-100 text-orange-800';
+                }
+                // else: Yellow (partial upload) - default
                 
                 return `
                 <tr style="border-bottom: 2px solid #34495e;">
