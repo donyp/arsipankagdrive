@@ -278,7 +278,12 @@ function rcloneExec(args, timeoutMs = 30000) {
             
             // Always pass --config for Railway to ensure it uses the right config
             if (railwayConfigPath && !args.includes('--config')) {
-                finalArgs = ['--config', railwayConfigPath, ...args];
+                // Add -vv for verbose logging on copyto to debug upload issues
+                if (args[0] === 'copyto') {
+                    finalArgs = ['--config', railwayConfigPath, '-vv', ...args];
+                } else {
+                    finalArgs = ['--config', railwayConfigPath, ...args];
+                }
             } else {
                 finalArgs = args;
             }
@@ -311,6 +316,11 @@ function rcloneExec(args, timeoutMs = 30000) {
             clearTimeout(timer);
             
             if (timedOut) return; // Already rejected
+            
+            // Log stderr even on success (rclone writes debug info to stderr)
+            if (stderr && stderr.trim().length > 0) {
+                console.log('[Rclone Stderr]', stderr.substring(0, 500)); // First 500 chars
+            }
             
             if (error) {
                 console.error('[Rclone Exec Error]', {
