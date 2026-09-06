@@ -103,8 +103,11 @@ app.get('/:page', (req, res, next) => {
     
     fs.stat(filePath, (err) => {
         if (!err) {
-            // File exists, serve it
-            res.sendFile(filePath);
+            // File exists, serve it WITHOUT .html in URL
+            // Use res.sendFile to serve the file while keeping URL clean
+            const htmlContent = fs.readFileSync(filePath, 'utf8');
+            res.set('Content-Type', 'text/html; charset=utf-8');
+            res.send(htmlContent);
         } else {
             // File doesn't exist, continue to next middleware
             next();
