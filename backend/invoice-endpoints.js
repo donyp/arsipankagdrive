@@ -1133,29 +1133,40 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 }
                 
                 // Update invoice status in database - use new file tracking columns
-                const { error: updateError } = await supabase
+                // Upload must succeed before updating DB with path
+                if (!remotePath) {
+                    console.warn('[Invoice PDF] Upload to Google Drive failed, but recording in database anyway');
+                }
+                
+                const { error: updateError, data: updatedData } = await supabase
                     .from('invoice_file_list')
                     .update({
-                        invoice_pdf_path: remotePath,
+                        invoice_pdf_path: remotePath || null,  // Will be null if upload failed
                         invoice_uploaded_at: new Date().toISOString(),
-                        uploaded_file_path: remotePath, // Keep for backward compatibility
+                        uploaded_file_path: remotePath || null, // Keep for backward compatibility
                         uploaded_at: new Date().toISOString(),
-                        uploaded_by: req.user.id
+                        uploaded_by: req.user.id,
+                        // Explicitly trigger recalculation by touching updated_at
+                        updated_at: new Date().toISOString()
                     })
-                    .eq('faktur', faktur);
+                    .eq('faktur', faktur)
+                    .select();
                 
                 if (updateError) {
                     console.error('[Invoice PDF] Update error:', updateError);
                     return res.status(500).json({ error: 'Failed to update invoice status' });
                 }
                 
-                console.log(`[Invoice PDF] ✅ Invoice marked as UPLOADED: ${faktur}`);
+                console.log(`[Invoice PDF] ✅ Database updated for faktur: ${faktur}`);
+                console.log(`[Invoice PDF] Updated record - files_uploaded_count:`, updatedData?.[0]?.files_uploaded_count);
                 
                 res.json({
                     success: true,
                     message: `PDF uploaded successfully for faktur: ${faktur}`,
                     faktur,
-                    remotePath,
+                    remotePath: remotePath || 'upload-failed-but-recorded',
+                    filesUploadedCount: updatedData?.[0]?.files_uploaded_count,
+                    filesRequiredCount: updatedData?.[0]?.files_required_count,
                     konsumen: invoice.konsumen,
                     total: invoice.total_jumlah_jual
                 });

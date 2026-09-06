@@ -368,6 +368,21 @@ async function uploadValidFiles() {
         const message = `✅ ${successCount}/${validFiles.length} file berhasil diupload${failCount > 0 ? ` (${failCount} gagal)` : ''}`;
         showNotification(message, successCount > 0 ? 'success' : 'error', 5000);
 
+        // Refresh invoice list to show updated status with file counts
+        console.log('[PDF Bulk] Refreshing invoice list after upload...');
+        setTimeout(() => {
+            if (typeof loadInvoicesInDashboard === 'function') {
+                console.log('[PDF Bulk] Calling loadInvoicesInDashboard(1)');
+                loadInvoicesInDashboard(1);
+            } else if (typeof loadInvoices === 'function') {
+                console.log('[PDF Bulk] Calling loadInvoices()');
+                loadInvoices();
+            } else {
+                console.warn('[PDF Bulk] No refresh function found, trying page reload');
+                location.reload();
+            }
+        }, 500);
+
         // Reset if all successful
         if (failCount === 0) {
             resetUpload();
