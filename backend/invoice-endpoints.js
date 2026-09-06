@@ -1203,11 +1203,22 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 // Extract nomor faktur from filename (remove .pdf extension)
                 const nomorFaktur = filename.replace(/\.pdf$/i, '').trim();
 
-                // Get current date for folder structure
-                const today = new Date();
-                const year = today.getFullYear().toString();
-                const month = String(today.getMonth() + 1).padStart(2, '0');
-                const day = String(today.getDate()).padStart(2, '0');
+                // Fetch invoice data to get the correct date
+                const { data: invoice, error: invoiceError } = await supabase
+                    .from('invoice_file_list')
+                    .select('tanggal')
+                    .eq('faktur', nomorFaktur)
+                    .single();
+
+                if (invoiceError || !invoice) {
+                    console.warn(`[Invoice Document] Invoice not found for faktur: ${nomorFaktur}, using today's date`);
+                }
+
+                // Use invoice date if available, otherwise use today's date
+                const invoiceDate = invoice?.tanggal ? new Date(invoice.tanggal) : new Date();
+                const year = invoiceDate.getFullYear().toString();
+                const month = String(invoiceDate.getMonth() + 1).padStart(2, '0');
+                const day = String(invoiceDate.getDate()).padStart(2, '0');
 
                 const monthNames = [
                     'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
@@ -1328,11 +1339,22 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
 
                 console.log(`[Invoice Faktur Pajak] Extracted faktur: ${fakturNumber}`);
 
-                // Get current date for folder structure
-                const today = new Date();
-                const year = today.getFullYear().toString();
-                const month = String(today.getMonth() + 1).padStart(2, '0');
-                const day = String(today.getDate()).padStart(2, '0');
+                // Fetch invoice data to get the correct date
+                const { data: invoice, error: invoiceError } = await supabase
+                    .from('invoice_file_list')
+                    .select('tanggal')
+                    .eq('faktur', fakturNumber)
+                    .single();
+
+                if (invoiceError || !invoice) {
+                    console.warn(`[Invoice Faktur Pajak] Invoice not found for faktur: ${fakturNumber}, using today's date`);
+                }
+
+                // Use invoice date if available, otherwise use today's date
+                const invoiceDate = invoice?.tanggal ? new Date(invoice.tanggal) : new Date();
+                const year = invoiceDate.getFullYear().toString();
+                const month = String(invoiceDate.getMonth() + 1).padStart(2, '0');
+                const day = String(invoiceDate.getDate()).padStart(2, '0');
 
                 const monthNames = [
                     'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',

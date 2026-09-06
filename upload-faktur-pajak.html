@@ -102,6 +102,47 @@
             margin: 5px 0;
         }
 
+        /* Loading spinner animation */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f4f6;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        .upload-progress-bar {
+            width: 100%;
+            height: 3px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .upload-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1e40af);
+            border-radius: 2px;
+            animation: progress 1.5s ease-in-out infinite;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            50% { width: 100%; }
+            100% { width: 100%; }
+        }
+            margin: 5px 0;
+        }
+
         .drop-zone {
             border: 2px dashed #a855f7;
             border-radius: 8px;
@@ -425,9 +466,8 @@
             let validFiles = [];
             let invalidFiles = [];
             
-            fakturPajakFilesToUpload.forEach((f, idx) => {
+            fakturPajakFilesToUpload.forEach((f) => {
                 const fileItem = scanFakturPajakFile(f);
-                fileItem.index = idx;
                 
                 if (fileItem.isValid) {
                     validFiles.push(fileItem);
@@ -436,33 +476,65 @@
                 }
             });
 
-            // Render file list with status
-            listEl.innerHTML = [...validFiles, ...invalidFiles].map(fileItem => `
-                <li class="file-item">
-                    <div class="file-item-left">
-                        <i class="fas fa-file-pdf"></i>
-                        <div class="file-info">
-                            <div class="file-name">
-                                ${fileItem.isValid ? '✅' : '❌'} ${fileItem.file.name}
-                            </div>
-                            <div class="file-size">
-                                ${fileItem.isValid ? 
-                                    `NO: <strong>${fileItem.noInvoice}</strong> | NAMA: <strong>${fileItem.nama}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB` : 
-                                    `${fileItem.error}`
+            // Render file list with async toko info fetch
+            const renderList = async () => {
+                const renderedItems = await Promise.all([...validFiles, ...invalidFiles].map(async (fileItem) => {
+                    let displayInfo = '';
+                    
+                    if (fileItem.isValid) {
+                        // Try to fetch toko info from API
+                        try {
+                            const res = await fetch(`/api/invoice/check-faktur/${fileItem.noInvoice}`, {
+                                headers: { 'Authorization': `Bearer ${API.getToken()}` }
+                            });
+                            if (res.ok) {
+                                const result = await res.json();
+                                if (result.exists && result.data) {
+                                    const nominal = result.data.total_jumlah_jual ? `Rp${result.data.total_jumlah_jual.toLocaleString('id-ID')}` : '?';
+                                    displayInfo = `NO : <strong>${fileItem.noInvoice}</strong> | NAMA : <strong>${result.data.konsumen || '?'}</strong> | NOMINAL : <strong>${nominal}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB`;
+                                } else {
+                                    displayInfo = `NO : <strong>${fileItem.noInvoice}</strong> (tidak ditemukan di sistem) | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB`;
                                 }
+                            } else {
+                                displayInfo = `NO : <strong>${fileItem.noInvoice}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB`;
+                            }
+                        } catch (e) {
+                            console.log('[Faktur Pajak] Error fetching invoice info:', e);
+                            displayInfo = `NO : <strong>${fileItem.noInvoice}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB`;
+                        }
+                    } else {
+                        displayInfo = `${fileItem.error}`;
+                    }
+                    
+                    return `
+                        <li class="file-item">
+                            <div class="file-item-left">
+                                <i class="fas fa-file-pdf"></i>
+                                <div class="file-info">
+                                    <div class="file-name">
+                                        ${fileItem.isValid ? '✅' : '❌'} ${fileItem.file.name}
+                                    </div>
+                                    <div class="file-size">
+                                        ${displayInfo}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <button class="btn-delete-file-pajak" data-filename="${fileItem.file.name}" type="button" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; pointer-events: auto;">
-                        <i class="fas fa-times"></i> Hapus
-                    </button>
-                </li>
-            `).join('');
+                            <button class="btn-delete-file-pajak" data-filename="${fileItem.file.name}" type="button" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; pointer-events: auto;">
+                                <i class="fas fa-times"></i> Hapus
+                            </button>
+                        </li>
+                    `;
+                }));
+                
+                listEl.innerHTML = renderedItems.join('');
+                
+                container.style.display = 'block';
+                const hasValidFiles = validFiles.length > 0;
+                uploadBtn.disabled = !hasValidFiles;
+                console.log(`[Faktur Pajak] Valid files: ${validFiles.length}, Upload button disabled: ${uploadBtn.disabled}`);
+            };
             
-            container.style.display = 'block';
-            const hasValidFiles = validFiles.length > 0;
-            uploadBtn.disabled = !hasValidFiles;
-            console.log(`[Faktur Pajak] Valid files: ${validFiles.length}, Upload button disabled: ${uploadBtn.disabled}`);
+            renderList();
         }
 
         function scanFakturPajakFile(file) {
@@ -518,7 +590,7 @@
 
             uploadBtn.disabled = true;
             const originalText = uploadBtn.innerHTML;
-            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing & Uploading...';
+            uploadBtn.innerHTML = '<div class="loading-spinner"></div> Processing & Uploading...';
 
             let successCount = 0;
             let failCount = 0;
