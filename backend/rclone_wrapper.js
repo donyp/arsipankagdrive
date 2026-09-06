@@ -1590,9 +1590,9 @@ const RcloneStorage = {
      */
     async uploadInvoicePDF(buffer, filename, year, month, day, category) {
         // HARDCODED PATH: Upload directly to Shared Drive
-        // Path format: gdrive:ARSIPINVOICE/ARSIPINVOICE/YEAR/MONTH/DAY/CATEGORY/filename (no leading slash!)
-        const storagePath = `ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
-        const dirPath = `ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
+        // Path format: gdrive:ARSIPINVOICE/YEAR/MONTH/DAY/CATEGORY/filename (single ARSIPINVOICE folder at root)
+        const storagePath = `ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
+        const dirPath = `ARSIPINVOICE/${year}/${month}/${day}/${category}`;
         
         logOperation('uploadInvoicePDF', {
             action: 'Uploading invoice PDF',
@@ -1691,9 +1691,9 @@ const RcloneStorage = {
      */
     async uploadDocumentFile(buffer, filename, year, month, day, folderType) {
         // HARDCODED PATH: Upload directly to Shared Drive
-        // Path format: gdrive:ARSIPINVOICE/ARSIPINVOICE/YEAR/MONTH/DAY/FOLDERTYPE/filename (no leading slash!)
-        const storagePath = `ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}/${filename}`;
-        const dirPath = `ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}`;
+        // Path format: gdrive:ARSIPINVOICE/YEAR/MONTH/DAY/FOLDERTYPE/filename (single ARSIPINVOICE folder at root)
+        const storagePath = `ARSIPINVOICE/${year}/${month}/${day}/${folderType}/${filename}`;
+        const dirPath = `ARSIPINVOICE/${year}/${month}/${day}/${folderType}`;
         
         logOperation('uploadDocumentFile', {
             filename,
