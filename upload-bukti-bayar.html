@@ -358,6 +358,53 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Loading overlay */
+        .upload-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .upload-overlay.show {
+            display: flex;
+        }
+
+        .upload-spinner {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .upload-spinner i {
+            font-size: 48px;
+            color: #10b981;
+            margin-bottom: 20px;
+            animation: spin 2s linear infinite;
+        }
+
+        .upload-spinner p {
+            color: #2c3e50;
+            font-weight: 600;
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .upload-progress {
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
         @media (max-width: 768px) {
             .upload-container {
                 padding: 20px;
@@ -436,6 +483,15 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Upload Overlay -->
+    <div class="upload-overlay" id="uploadOverlay">
+        <div class="upload-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Uploading Files...</p>
+            <div class="upload-progress" id="uploadProgress">0/0 files</div>
         </div>
     </div>
 
@@ -587,14 +643,17 @@
                 return;
             }
 
-            btnUpload.disabled = true;
-            const originalText = btnUpload.innerHTML;
-            btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+            // Show upload overlay
+            const overlay = document.getElementById('uploadOverlay');
+            overlay.classList.add('show');
 
             let successCount = 0;
             let failCount = 0;
 
-            for (const file of validFiles) {
+            for (let i = 0; i < validFiles.length; i++) {
+                const file = validFiles[i];
+                document.getElementById('uploadProgress').textContent = `${i + 1}/${validFiles.length} files`;
+
                 try {
                     const formData = new FormData();
                     formData.append('file', file);
@@ -608,7 +667,6 @@
 
                     if (response.ok) {
                         successCount++;
-                        if (window.Toast) Toast.success(`${file.name} berhasil diupload`);
                     } else {
                         failCount++;
                         let errorMsg = `HTTP ${response.status}`;
@@ -616,21 +674,25 @@
                             const err = await response.json();
                             errorMsg = err.error || err.message || errorMsg;
                         } catch (e) {}
-                        if (window.Toast) Toast.error(`${file.name}: ${errorMsg}`);
+                        console.error(`Error uploading ${file.name}: ${errorMsg}`);
                     }
                 } catch (err) {
                     failCount++;
-                    if (window.Toast) Toast.error(`Error: ${err.message}`);
+                    console.error(`Error uploading ${file.name}:`, err.message);
                 }
             }
 
+            // Hide overlay
+            overlay.classList.remove('show');
+
+            // Show results
             if (successCount > 0) {
-                if (window.Toast) Toast.success(`${successCount} file berhasil diupload!`);
+                if (window.Toast) Toast.success(`✅ ${successCount} file berhasil diupload!`);
                 resetUpload();
             }
-
-            btnUpload.innerHTML = originalText;
-            btnUpload.disabled = false;
+            if (failCount > 0) {
+                if (window.Toast) Toast.error(`⚠️ ${failCount} file gagal diupload`);
+            }
         });
 
         // Initialize
