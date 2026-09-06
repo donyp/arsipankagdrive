@@ -85,12 +85,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve Static Frontend from root
-app.use(express.static(path.join(__dirname, '..')));
-
 // ============================================================
 // URL Rewriting: Remove .html extension
 // Allow /index instead of /index.html
+// Must be BEFORE express.static() to intercept requests
 // ============================================================
 app.get('/:page', (req, res, next) => {
     const page = req.params.page;
@@ -118,6 +116,9 @@ app.get('/:page', (req, res, next) => {
 app.get('/shared/:token', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'shared.html'));
 });
+
+// Serve Static Frontend from root (AFTER URL rewriting)
+app.use(express.static(path.join(__dirname, '..')));
 
 // Version Header
 app.use((req, res, next) => {
