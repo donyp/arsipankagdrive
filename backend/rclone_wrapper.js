@@ -1804,7 +1804,11 @@ const RcloneStorage = {
             console.log(`[downloadFile] Downloading: ${remoteFilePath}`);
 
             // Create temp file to download to
-            const tempFilePath = path.join(TEMP_DIR, `download_${Date.now()}_${path.basename(normalizedPath)}`);
+            const tempDir = path.join(__dirname, '..', 'temp');
+            if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true });
+            }
+            const tempFilePath = path.join(tempDir, `download_${Date.now()}_${path.basename(normalizedPath)}`);
 
             try {
                 // Download file using rclone copyto
