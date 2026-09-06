@@ -997,6 +997,8 @@ select option {
     transition: margin-left 0.3s ease;
     min-height: 100vh;
     background: var(--surface);
+    display: flex;
+    flex-direction: column;
 }
 
 @media (max-width: 768px) {

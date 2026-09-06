@@ -146,8 +146,22 @@
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
 
+        // Set sidebar styles properly for fixed positioning
+        sidebar.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 16rem;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            z-index: 40;
+        `;
+
         sidebar.innerHTML = `
-            <div class="p-6 border-b border-gray-100">
+            <div class="p-6 border-b border-gray-100" style="flex-shrink: 0;">
                 <div class="flex items-center gap-3 group">
                     <div class="w-10 h-10 rounded-[1rem] bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200 group-hover:scale-105 transition-transform duration-300">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +176,7 @@
                 </div>
             </div>
 
-            <nav class="flex-1 py-4 space-y-0.5 overflow-y-auto custom-scrollbar">
+            <nav class="flex-1 py-4 space-y-0.5 overflow-y-auto custom-scrollbar" style="overflow-y: auto; overflow-x: hidden;">
                 ${navHTML}
             </nav>
         `;
