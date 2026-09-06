@@ -1617,6 +1617,15 @@ const RcloneStorage = {
                 // Upload file
                 const remoteFilePath = `${PRIMARY_REMOTE}:${storagePath}`;
                 console.log('[uploadInvoicePDF] Uploading file:', filename);
+                
+                // Debug: Check if source file exists and is readable
+                const fileStats = fs.statSync(tempFilePath);
+                console.log('[uploadInvoicePDF] Source file stats:', {
+                    path: tempFilePath,
+                    size: fileStats.size,
+                    readable: fs.constants.R_OK
+                });
+                
                 await rcloneExec(['copyto', tempFilePath, remoteFilePath]);
                 
                 // OPTIMIZATION 2: Skip expensive lsjson verification
