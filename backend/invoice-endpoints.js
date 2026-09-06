@@ -1172,7 +1172,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // Path: /ARSIPINVOICE/TAHUN/BULAN/TANGGAL/BUKTIBAYAR/
     // ============================================
     app.post('/api/invoice/upload-document',
-        ...createAuth(['super_admin', 'moderator', 'user']),
+        ...createAuth(['super_admin', 'moderator']),
         upload.single('file'),
         async (req, res) => {
             try {
@@ -1252,13 +1252,13 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
 
     // ============================================
     // POST /api/invoice/upload-faktur-pajak
-    // Upload Faktur Pajak with referensi scanning
-    // Filename format: tax-REFERENSI NAMA NOMINAL.pdf (if referensi found)
-    // or tax-NAMA NOMINAL.pdf (if not found)
+    // Upload Faktur Pajak - filename detection only
+    // Filename must match format: tax-REFERENSI NAMA NOMINAL.pdf
+    // Example: tax-835100310232 SEMESTA GEMILANG CILEGON 2.393.000.pdf
     // Path: /ARSIPINVOICE/TAHUN/BULAN/TANGGAL/FAKTURPAJAK/
     // ============================================
     app.post('/api/invoice/upload-faktur-pajak',
-        ...createAuth(['super_admin', 'moderator', 'user']),
+        ...createAuth(['super_admin', 'moderator']),
         upload.single('file'),
         async (req, res) => {
             try {
@@ -1271,44 +1271,19 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
 
                 console.log(`[Invoice Faktur Pajak] Processing: ${filename}`);
 
-                // Parse PDF to extract data (use rename-faktur-endpoints logic)
-                const pdfParse = require('pdf-parse');
-                const pdfData = await pdfParse(fileBuffer);
-                const textContent = pdfData.text;
+                // Validate filename format: must start with "tax-" and end with ".pdf"
+                const filenamePattern = /^tax-(.+)\.pdf$/i;
+                const match = filename.match(filenamePattern);
 
-                // Extract nama (simplified - get from "Nama :" field)
-                let nama = 'UNKNOWN';
-                const namaMatch = textContent.match(/Nama\s*:\s*([^\n]+)/i);
-                if (namaMatch) {
-                    nama = namaMatch[1].trim().toUpperCase();
+                if (!match) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Format nama file tidak sesuai. Harus: tax-REFERENSI NAMA NOMINAL.pdf',
+                        example: 'tax-835100310232 SEMESTA GEMILANG CILEGON 2.393.000.pdf'
+                    });
                 }
 
-                // Extract nominal (harga jual + PPN)
-                let harga = 0;
-                let ppn = 0;
-                
-                const hargaMatch = textContent.match(/Harga\s+Jual[^:]*:\s*([0-9.,]+)/i);
-                if (hargaMatch) {
-                    harga = parseInt(hargaMatch[1].replace(/\./g, '').replace(/,/, '')) || 0;
-                }
-
-                const ppnMatch = textContent.match(/Jumlah\s+PPN[^:]*:\s*([0-9.,]+)/i);
-                if (ppnMatch) {
-                    ppn = parseInt(ppnMatch[1].replace(/\./g, '').replace(/,/, '')) || 0;
-                }
-
-                const nominal = harga + ppn;
-
-                // Format nominal (e.g., 5530322 -> 5.530.322)
-                const formattedNominal = nominal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-                // Scan for referensi (15-20 digit number)
-                let referensi = null;
-                const referensiMatch = textContent.match(/Referensi\s*:\s*(\d{15,20})/i);
-                if (referensiMatch) {
-                    referensi = referensiMatch[1].trim();
-                    console.log(`[Invoice Faktur Pajak] Referensi found: ${referensi}`);
-                }
+                const filenameParts = match[1]; // Everything between "tax-" and ".pdf"
 
                 // Get current date for folder structure
                 const today = new Date();
@@ -1322,15 +1297,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 ];
                 const monthName = monthNames[parseInt(month) - 1];
 
-                // Create filename based on referensi detection
-                let finalFilename;
-                if (referensi) {
-                    finalFilename = `tax-${referensi} ${nama} ${formattedNominal}.pdf`;
-                    console.log(`[Invoice Faktur Pajak] Format: tax-REFERENSI format`);
-                } else {
-                    finalFilename = `tax-${nama} ${formattedNominal}.pdf`;
-                    console.log(`[Invoice Faktur Pajak] Format: standard format (no referensi)`);
-                }
+                // Keep filename as-is (already in correct format)
+                const finalFilename = filename;
 
                 console.log(`[Invoice Faktur Pajak] Path: /ARSIPINVOICE/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`);
 
@@ -1363,11 +1331,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     success: true,
                     message: 'Faktur pajak berhasil diupload',
                     originalName: filename,
-                    newName: finalFilename,
                     remotePath: uploadResult.path,
-                    nama,
-                    nominal,
-                    referensi: referensi || null
+                    filenameParts: filenameParts
                 });
 
             } catch (error) {
