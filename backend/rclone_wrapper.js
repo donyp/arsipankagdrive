@@ -1632,6 +1632,99 @@ const RcloneStorage = {
             };
         }
     }
+
+    /**
+     * Upload document file (Bukti Bayar atau Faktur Pajak)
+     * @param {Buffer} buffer - File content as buffer
+     * @param {string} filename - Desired filename
+     * @param {string} year - Year (YYYY)
+     * @param {string} month - Month in Indonesian (e.g., JANUARI, FEBRUARI)
+     * @param {string} day - Day (DD)
+     * @param {string} folderType - Folder type (BUKTIBAYAR or FAKTURPAJAK)
+     * @returns {Promise<Object>} - { success, path, message }
+     */
+    async uploadDocumentFile(buffer, filename, year, month, day, folderType) {
+        const storagePath = `/ARSIPINVOICE/${year}/${month}/${day}/${folderType}/${filename}`;
+        const dirPath = `/ARSIPINVOICE/${year}/${month}/${day}/${folderType}`;
+        
+        logOperation('uploadDocumentFile', {
+            filename,
+            action: `Uploading ${folderType} document`,
+            operation_type: 'upload',
+            targetPath: storagePath
+        });
+
+        try {
+            // Create temp file
+            const tempFilePath = path.join(TEMP_DIR, `${Date.now()}_${filename}`);
+            fs.writeFileSync(tempFilePath, buffer);
+
+            try {
+                // Create directory structure
+                const remoteDirPath = `${PRIMARY_REMOTE}:${dirPath}`;
+                
+                console.log(`[uploadDocumentFile] Creating directory: ${remoteDirPath}`);
+
+                try {
+                    await rcloneExec(['copy', '/dev/null', remoteDirPath, '--include', 'null']);
+                } catch (err) {
+                    const pathParts = dirPath.split('/').filter(p => p);
+                    let currentPath = '';
+                    for (const part of pathParts) {
+                        currentPath += '/' + part;
+                        try {
+                            const remoteCurrentPath = `${PRIMARY_REMOTE}:${currentPath}`;
+                            await rcloneExec(['mkdir', remoteCurrentPath]);
+                        } catch (mkErr) {
+                            console.log(`[uploadDocumentFile] Dir exists or created: ${currentPath}`);
+                        }
+                    }
+                }
+
+                // Upload file
+                const remoteFilePath = `${PRIMARY_REMOTE}:${storagePath}`;
+                console.log(`[uploadDocumentFile] Uploading file: ${filename}`);
+
+                await rcloneExec(['copyto', tempFilePath, remoteFilePath]);
+                
+                console.log('[uploadDocumentFile] Upload complete');
+                
+                logOperation('uploadDocumentFile', {
+                    status: '✅ Upload successful',
+                    path: storagePath,
+                    folderType
+                });
+
+                return {
+                    success: true,
+                    path: storagePath,
+                    message: `File uploaded to ${folderType}`
+                };
+                
+            } finally {
+                // Clean up temp file
+                try {
+                    fs.unlinkSync(tempFilePath);
+                } catch (e) {
+                    // Temp file might not exist
+                }
+            }
+            
+        } catch (err) {
+            logOperation('uploadDocumentFile', {
+                status: '❌ Upload failed',
+                error: err.message,
+                path: storagePath,
+                folderType
+            });
+            console.error('[RcloneStorage] Document upload failed:', err);
+            
+            return {
+                success: false,
+                error: err.message
+            };
+        }
+    }
 };
 
 /**

@@ -1165,6 +1165,220 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
             }
         }
     );
+
+    // ============================================
+    // POST /api/invoice/upload-document
+    // Upload Bukti Bayar with filename format: NO_FAKTUR.pdf
+    // Path: /ARSIPINVOICE/TAHUN/BULAN/TANGGAL/BUKTIBAYAR/
+    // ============================================
+    app.post('/api/invoice/upload-document',
+        ...createAuth(['super_admin', 'moderator', 'user']),
+        upload.single('file'),
+        async (req, res) => {
+            try {
+                if (!req.file) {
+                    return res.status(400).json({ error: 'File PDF wajib diupload' });
+                }
+
+                const fileBuffer = req.file.buffer;
+                const filename = req.file.originalname;
+                const fileType = req.body.type || 'bukti_bayar'; // Type: bukti_bayar
+
+                console.log(`[Invoice Document] Processing ${fileType}: ${filename}`);
+
+                // Extract nomor faktur from filename (remove .pdf extension)
+                const nomorFaktur = filename.replace(/\.pdf$/i, '').trim();
+
+                // Get current date for folder structure
+                const today = new Date();
+                const year = today.getFullYear().toString();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+
+                const monthNames = [
+                    'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
+                    'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'
+                ];
+                const monthName = monthNames[parseInt(month) - 1];
+
+                // For bukti_bayar: filename stays as nomor faktur
+                const finalFilename = `${nomorFaktur}.pdf`;
+
+                console.log(`[Invoice Document] Path: /ARSIPINVOICE/${year}/${monthName}/${day}/BUKTIBAYAR/${finalFilename}`);
+
+                // Upload to Google Drive
+                let uploadResult = null;
+                try {
+                    uploadResult = await RcloneStorage.uploadDocumentFile(
+                        fileBuffer,
+                        finalFilename,
+                        year,
+                        monthName,
+                        day,
+                        'BUKTIBAYAR'
+                    );
+
+                    if (!uploadResult.success) {
+                        throw new Error(uploadResult.error || 'Upload failed');
+                    }
+
+                    console.log(`[Invoice Document] ✅ File uploaded: ${uploadResult.path}`);
+                } catch (uploadErr) {
+                    console.error(`[Invoice Document] Upload error:`, uploadErr.message);
+                    return res.status(500).json({
+                        success: false,
+                        error: `Upload failed: ${uploadErr.message}`
+                    });
+                }
+
+                res.json({
+                    success: true,
+                    message: 'Dokumen berhasil diupload',
+                    originalName: filename,
+                    newName: finalFilename,
+                    remotePath: uploadResult.path,
+                    nomor_faktur: nomorFaktur
+                });
+
+            } catch (error) {
+                console.error('[Invoice Document] Error:', error.message);
+                res.status(500).json({
+                    success: false,
+                    error: 'Server error: ' + error.message
+                });
+            }
+        }
+    );
+
+    // ============================================
+    // POST /api/invoice/upload-faktur-pajak
+    // Upload Faktur Pajak with referensi scanning
+    // Filename format: tax-REFERENSI NAMA NOMINAL.pdf (if referensi found)
+    // or tax-NAMA NOMINAL.pdf (if not found)
+    // Path: /ARSIPINVOICE/TAHUN/BULAN/TANGGAL/FAKTURPAJAK/
+    // ============================================
+    app.post('/api/invoice/upload-faktur-pajak',
+        ...createAuth(['super_admin', 'moderator', 'user']),
+        upload.single('file'),
+        async (req, res) => {
+            try {
+                if (!req.file) {
+                    return res.status(400).json({ error: 'File PDF wajib diupload' });
+                }
+
+                const fileBuffer = req.file.buffer;
+                const filename = req.file.originalname;
+
+                console.log(`[Invoice Faktur Pajak] Processing: ${filename}`);
+
+                // Parse PDF to extract data (use rename-faktur-endpoints logic)
+                const pdfParse = require('pdf-parse');
+                const pdfData = await pdfParse(fileBuffer);
+                const textContent = pdfData.text;
+
+                // Extract nama (simplified - get from "Nama :" field)
+                let nama = 'UNKNOWN';
+                const namaMatch = textContent.match(/Nama\s*:\s*([^\n]+)/i);
+                if (namaMatch) {
+                    nama = namaMatch[1].trim().toUpperCase();
+                }
+
+                // Extract nominal (harga jual + PPN)
+                let harga = 0;
+                let ppn = 0;
+                
+                const hargaMatch = textContent.match(/Harga\s+Jual[^:]*:\s*([0-9.,]+)/i);
+                if (hargaMatch) {
+                    harga = parseInt(hargaMatch[1].replace(/\./g, '').replace(/,/, '')) || 0;
+                }
+
+                const ppnMatch = textContent.match(/Jumlah\s+PPN[^:]*:\s*([0-9.,]+)/i);
+                if (ppnMatch) {
+                    ppn = parseInt(ppnMatch[1].replace(/\./g, '').replace(/,/, '')) || 0;
+                }
+
+                const nominal = harga + ppn;
+
+                // Format nominal (e.g., 5530322 -> 5.530.322)
+                const formattedNominal = nominal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+                // Scan for referensi (15-20 digit number)
+                let referensi = null;
+                const referensiMatch = textContent.match(/Referensi\s*:\s*(\d{15,20})/i);
+                if (referensiMatch) {
+                    referensi = referensiMatch[1].trim();
+                    console.log(`[Invoice Faktur Pajak] Referensi found: ${referensi}`);
+                }
+
+                // Get current date for folder structure
+                const today = new Date();
+                const year = today.getFullYear().toString();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+
+                const monthNames = [
+                    'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
+                    'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'
+                ];
+                const monthName = monthNames[parseInt(month) - 1];
+
+                // Create filename based on referensi detection
+                let finalFilename;
+                if (referensi) {
+                    finalFilename = `tax-${referensi} ${nama} ${formattedNominal}.pdf`;
+                    console.log(`[Invoice Faktur Pajak] Format: tax-REFERENSI format`);
+                } else {
+                    finalFilename = `tax-${nama} ${formattedNominal}.pdf`;
+                    console.log(`[Invoice Faktur Pajak] Format: standard format (no referensi)`);
+                }
+
+                console.log(`[Invoice Faktur Pajak] Path: /ARSIPINVOICE/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`);
+
+                // Upload to Google Drive
+                let uploadResult = null;
+                try {
+                    uploadResult = await RcloneStorage.uploadDocumentFile(
+                        fileBuffer,
+                        finalFilename,
+                        year,
+                        monthName,
+                        day,
+                        'FAKTURPAJAK'
+                    );
+
+                    if (!uploadResult.success) {
+                        throw new Error(uploadResult.error || 'Upload failed');
+                    }
+
+                    console.log(`[Invoice Faktur Pajak] ✅ File uploaded: ${uploadResult.path}`);
+                } catch (uploadErr) {
+                    console.error(`[Invoice Faktur Pajak] Upload error:`, uploadErr.message);
+                    return res.status(500).json({
+                        success: false,
+                        error: `Upload failed: ${uploadErr.message}`
+                    });
+                }
+
+                res.json({
+                    success: true,
+                    message: 'Faktur pajak berhasil diupload',
+                    originalName: filename,
+                    newName: finalFilename,
+                    remotePath: uploadResult.path,
+                    nama,
+                    nominal,
+                    referensi: referensi || null
+                });
+
+            } catch (error) {
+                console.error('[Invoice Faktur Pajak] Error:', error.message);
+                res.status(500).json({
+                    success: false,
+                    error: 'Server error: ' + error.message
+                });
+            }
+        }
+    );
     
     console.log('[Invoice API] Endpoints registered successfully');
 }
