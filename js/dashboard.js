@@ -3132,15 +3132,10 @@ function updateInvoiceStatsFromData(invoices, totalCount) {
         return r.isComplete !== true;
     }).length;
     
+    // Calculate final counts
+    // If we're showing only a subset (pagination), we need to extrapolate
     let finalLunasCount = lunasCount;
-    let finalBelumLunasCount = belumLunasCount;
-    
-    // If this is first page with 20 items and all are same status, use totalCount
-    if (invoices.length === 20 && belumLunasCount === 20 && lunasCount === 0) {
-        console.log('[StatsFromData] ⚠️ All 20 loaded items are BELUM LUNAS - likely paginated view');
-        console.log('[StatsFromData] Using totalCount as BELUM LUNAS instead of 20');
-        finalBelumLunasCount = totalCount;
-    }
+    let finalBelumLunasCount = totalCount - lunasCount; // Always subtract from total
     
     console.log('[StatsFromData] Counts - Total:', totalCount, 'Lunas:', finalLunasCount, 'Belum Lunas:', finalBelumLunasCount);
     
