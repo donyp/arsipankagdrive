@@ -720,6 +720,10 @@
                 let actualUploadedCount = 0;
                 let requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
                 
+                let invoiceExists = false;
+                let buktiExists = false;
+                let fakturExists = false;
+                
                 // Check invoice file
                 if (inv.invoice_pdf_path) {
                     try {
@@ -728,7 +732,10 @@
                         });
                         if (res.ok) {
                             const data = await res.json();
-                            if (data.exists) actualUploadedCount++;
+                            if (data.exists) {
+                                actualUploadedCount++;
+                                invoiceExists = true;
+                            }
                         }
                     } catch (e) {}
                 }
@@ -741,7 +748,10 @@
                         });
                         if (res.ok) {
                             const data = await res.json();
-                            if (data.exists) actualUploadedCount++;
+                            if (data.exists) {
+                                actualUploadedCount++;
+                                buktiExists = true;
+                            }
                         }
                     } catch (e) {}
                 }
@@ -754,7 +764,10 @@
                         });
                         if (res.ok) {
                             const data = await res.json();
-                            if (data.exists) actualUploadedCount++;
+                            if (data.exists) {
+                                actualUploadedCount++;
+                                fakturExists = true;
+                            }
                         }
                     } catch (e) {}
                 }
@@ -762,7 +775,10 @@
                 return {
                     ...inv,
                     actualUploadedCount,
-                    requiredCount
+                    requiredCount,
+                    invoiceExists,
+                    buktiExists,
+                    fakturExists
                 };
             }));
 
@@ -801,9 +817,9 @@
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
                         <div style="display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap;">
-                            ${inv.invoice_pdf_path ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄 INV</button>` : ''}
-                            ${inv.bukti_bayar_path ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰 BB</button>` : ''}
-                            ${inv.faktur_pajak_path && inv.keterangan === 'PPN' ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋 FP</button>` : ''}
+                            ${inv.invoiceExists ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄 INV</button>` : ''}
+                            ${inv.buktiExists ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰 BB</button>` : ''}
+                            ${inv.fakturExists ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋 FP</button>` : ''}
                             ${uploadedCount === requiredCount ? `<button onclick="combinePDF('${inv.faktur}')" style="background: #e67e22; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Combine PDF">📦 Combine</button>` : ''}
                         </div>
                     </td>
