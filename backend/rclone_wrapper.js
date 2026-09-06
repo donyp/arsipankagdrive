@@ -1777,18 +1777,34 @@ const RcloneStorage = {
      * @returns {Promise<Buffer>} - File content as buffer
      */
     async downloadFile(remotePath) {
+        // Normalize path format: handle old paths with leading slash or triple ARSIPINVOICE
+        let normalizedPath = remotePath;
+        
+        // Handle old format with leading slash: /ARSIPINVOICE/... → ARSIPINVOICE/...
+        if (normalizedPath.startsWith('/')) {
+            normalizedPath = normalizedPath.substring(1);
+            console.log(`[downloadFile] Converted leading slash path: ${remotePath} → ${normalizedPath}`);
+        }
+        
+        // Handle old format with duplicate ARSIPINVOICE: ARSIPINVOICE/ARSIPINVOICE/... → ARSIPINVOICE/...
+        if (normalizedPath.includes('/ARSIPINVOICE/ARSIPINVOICE/ARSIPINVOICE/')) {
+            normalizedPath = normalizedPath.replace('/ARSIPINVOICE/ARSIPINVOICE/ARSIPINVOICE/', '/ARSIPINVOICE/');
+            console.log(`[downloadFile] Converted triple ARSIPINVOICE path: ${remotePath} → ${normalizedPath}`);
+        }
+        
         logOperation('downloadFile', {
             action: 'Downloading file from Google Drive',
             operation_type: 'download',
-            remotePath: remotePath
+            originalPath: remotePath,
+            normalizedPath: normalizedPath
         });
 
         try {
-            const remoteFilePath = `${PRIMARY_REMOTE}:${remotePath}`;
+            const remoteFilePath = `${PRIMARY_REMOTE}:${normalizedPath}`;
             console.log(`[downloadFile] Downloading: ${remoteFilePath}`);
 
             // Create temp file to download to
-            const tempFilePath = path.join(TEMP_DIR, `download_${Date.now()}_${path.basename(remotePath)}`);
+            const tempFilePath = path.join(TEMP_DIR, `download_${Date.now()}_${path.basename(normalizedPath)}`);
 
             try {
                 // Download file using rclone copyto
@@ -1801,7 +1817,7 @@ const RcloneStorage = {
 
                 logOperation('downloadFile', {
                     status: '✅ Download successful',
-                    path: remotePath,
+                    path: normalizedPath,
                     size: fileBuffer.length
                 });
 
@@ -1822,7 +1838,7 @@ const RcloneStorage = {
             logOperation('downloadFile', {
                 status: '❌ Download failed',
                 error: err.message,
-                path: remotePath
+                path: normalizedPath
             });
             console.error('[RcloneStorage] Download failed:', err);
 
