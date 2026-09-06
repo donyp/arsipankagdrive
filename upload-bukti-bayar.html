@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -50,26 +49,30 @@
             display: flex;
         }
 
-        #main-content {
-            margin-left: 280px !important;
-            transition: margin-left 0.3s ease;
+        #sidebar .items-center {
+            align-items: center;
+        }
+
+        #sidebar .gap-3 {
+            gap: 0.75rem;
         }
 
         .upload-header {
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         .upload-header h1 {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-size: 32px;
+            color: #2c3e50;
+            margin-bottom: 10px;
         }
 
         .upload-header p {
-            font-size: 13px;
-            color: #6b7280;
+            font-size: 16px;
+            color: #7f8c8d;
         }
 
+        /* Card */
         .card {
             background: white;
             padding: 30px;
@@ -84,71 +87,7 @@
             font-size: 18px;
         }
 
-        .info-box {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            color: #92400e;
-        }
-
-        .info-box i {
-            color: #f59e0b;
-            margin-right: 10px;
-        }
-
-        .info-box ul {
-            margin: 0;
-            padding-left: 20px;
-        }
-
-        .info-box li {
-            margin: 5px 0;
-        }
-
-        /* Loading spinner animation */
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #f3f4f6;
-            border-top: 2px solid #3b82f6;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 8px;
-        }
-
-        .upload-progress-bar {
-            width: 100%;
-            height: 3px;
-            background: #e5e7eb;
-            border-radius: 2px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-
-        .upload-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #3b82f6, #1e40af);
-            border-radius: 2px;
-            animation: progress 1.5s ease-in-out infinite;
-        }
-
-        @keyframes progress {
-            0% { width: 0%; }
-            50% { width: 100%; }
-            100% { width: 100%; }
-        }
-            margin: 5px 0;
-        }
-
+        /* Drop Zone */
         .drop-zone {
             border: 2px dashed #10b981;
             border-radius: 12px;
@@ -157,15 +96,10 @@
             cursor: pointer;
             transition: all 0.3s;
             background: #f0fdf4;
-            min-height: 180px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
         }
 
         .drop-zone:hover,
-        .drop-zone.dragover {
+        .drop-zone.drag-over {
             border-color: #059669;
             background: #dcfce7;
         }
@@ -178,82 +112,231 @@
         }
 
         .drop-zone p {
-            margin: 0 0 10px 0;
+            margin: 0 0 15px 0;
             color: #2c3e50;
             font-weight: 600;
             font-size: 18px;
         }
 
-        .drop-zone small {
+        .drop-zone span {
             font-size: 14px;
             color: #7f8c8d;
-            margin: 0;
         }
 
-        .file-list {
-            margin-top: 20px;
+        /* Files List */
+        .files-list {
+            display: none;
+            margin-top: 30px;
         }
 
-        .file-item {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 13px;
+        .files-list.show {
+            display: block;
         }
 
-        .file-item-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-        }
-
-        .file-item i {
-            color: #10b981;
+        .files-list h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
             font-size: 16px;
         }
 
-        .file-info {
-            flex: 1;
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid #95a5a6;
+            gap: 12px;
         }
 
-        .file-name {
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 3px;
+        .file-item.valid {
+            border-left-color: #10b981;
+            background: #f0fdf4;
         }
 
-        .file-size {
-            color: #9ca3af;
-            font-size: 12px;
+        .file-item.invalid {
+            border-left-color: #ef4444;
+            background: #fef2f2;
         }
 
-        .upload-btn {
+        .file-item-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 50%;
+            margin-right: 0;
+            font-weight: 700;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .file-item.valid .file-item-icon {
             background: #10b981;
             color: white;
+        }
+
+        .file-item.invalid .file-item-icon {
+            background: #ef4444;
+            color: white;
+        }
+
+        .file-item-name {
+            flex: 1;
+            color: #2c3e50;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .file-item-info {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+
+        .file-item-status {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .file-item.valid .file-item-status {
+            background: #d5f4e6;
+            color: #10b981;
+        }
+
+        .file-item.invalid .file-item-status {
+            background: #fadbd8;
+            color: #ef4444;
+        }
+
+        /* Delete button */
+        .delete-btn {
+            background: #ef4444;
+            color: white;
             border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            margin-left: 8px;
+            font-size: 16px;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+
+        .delete-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .btn {
             padding: 12px 24px;
+            border: none;
             border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
-            font-size: 14px;
             transition: all 0.3s;
-            width: 100%;
-            margin-top: 20px;
+            font-size: 14px;
         }
 
-        .upload-btn:hover {
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
             background: #059669;
+            transform: translateY(-2px);
         }
 
-        .upload-btn:disabled {
-            background: #d1d5db;
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: #fff3cd;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #856404;
+        }
+
+        .info-box i {
+            color: #f39c12;
+            margin-right: 10px;
         }
 
         /* Hidden input */
@@ -278,19 +361,10 @@
         @media (max-width: 768px) {
             .upload-container {
                 padding: 20px;
-                margin-left: 0;
             }
 
-            #sidebar {
-                width: 250px !important;
-            }
-
-            #main-content {
-                margin-left: 250px !important;
-            }
-
-            #main-content.sidebar-closed {
-                margin-left: 0 !important;
+            .stats {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -303,47 +377,64 @@
             <!-- Header -->
             <div class="upload-header">
                 <h1>📄 Upload Bukti Bayar</h1>
-                <p>Upload dokumen bukti pembayaran invoice</p>
+                <p>Upload dokumen bukti pembayaran invoice. Validasi NO FAKTUR secara otomatis.</p>
             </div>
 
-            <!-- Info Box -->
-            <div class="info-box">
-                <i class="fas fa-info-circle"></i>
-                <strong>Petunjuk Upload:</strong>
-                <ul>
-                    <li>File harus berformat <strong>PDF</strong></li>
-                    <li>Nama file: nomor faktur (contoh: <strong>835100310.pdf</strong>)</li>
-                    <li>Folder tujuan: <strong>BUKTIBAYAR</strong></li>
-                    <li>Path: <strong>/ARSIPINVOICE/TAHUN/BULAN/TANGGAL/BUKTIBAYAR/</strong></li>
-                </ul>
-            </div>
-
-            <!-- Upload Card -->
+            <!-- Card -->
             <div class="card">
-                <label style="font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase;">
-                    <i class="fas fa-file-pdf" style="color: #10b981;"></i> Upload Bukti Bayar
-                </label>
+                <h3>Drag & Drop Bukti Bayar PDF</h3>
+                
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    Nama file harus sesuai nomor faktur (contoh: 835100311020926004.pdf)
+                </div>
 
                 <!-- Drop Zone -->
-                <div id="bukti-bayar-drop-zone" class="drop-zone">
+                <div class="drop-zone" id="dropZone">
                     <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Klik atau seret file PDF di sini</p>
-                    <small>Maksimal 10MB per file</small>
-                </div>
-                <input id="bukti-bayar-file-input" type="file" accept=".pdf" multiple>
-
-                <!-- File List -->
-                <div id="bukti-bayar-files-selected" class="file-list" style="display: none;">
-                    <p style="font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase; margin-bottom: 10px;">
-                        <i class="fas fa-check-circle" style="color: #10b981;"></i> File yang Dipilih
-                    </p>
-                    <ul id="bukti-bayar-files-list" style="list-style: none; padding: 0; margin: 0;"></ul>
+                    <p>Drag & drop multiple PDF di sini</p>
+                    <span>atau klik untuk memilih file</span>
                 </div>
 
-                <!-- Upload Button -->
-                <button id="btn-upload-bukti-bayar" type="button" class="upload-btn" disabled>
-                    <i class="fas fa-upload"></i> Upload Bukti Bayar
-                </button>
+                <input type="file" id="fileInput" accept=".pdf" multiple>
+
+                <!-- Validating -->
+                <div class="validating" id="validating" style="display: none;">
+                    <i class="fas fa-spinner"></i>
+                    <p>Scanning dan validasi file...</p>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats" id="stats" style="display: none;">
+                    <div class="stat-box">
+                        <div class="stat-value" id="totalFiles">0</div>
+                        <div class="stat-label">Total File</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" style="color: #10b981;" id="validFiles">0</div>
+                        <div class="stat-label">Valid ✓</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" style="color: #ef4444;" id="invalidFiles">0</div>
+                        <div class="stat-label">Invalid ✗</div>
+                    </div>
+                </div>
+
+                <!-- Files List -->
+                <div class="files-list" id="filesList">
+                    <h4>Hasil Validasi:</h4>
+                    <div id="filesContainer"></div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="resetUpload()">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                    <button class="btn btn-success" id="btnUpload" disabled>
+                        <i class="fas fa-upload"></i> Upload File Valid
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -355,306 +446,206 @@
     <script src="js/sidebar.js?v=ULTRACLEAN_2026"></script>
     
     <script>
-        let buktiBayarFilesToUpload = [];
-
-        const dropZone = document.getElementById('bukti-bayar-drop-zone');
-        const fileInput = document.getElementById('bukti-bayar-file-input');
-        const uploadBtn = document.getElementById('btn-upload-bukti-bayar');
+        let filesToUpload = [];
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const btnUpload = document.getElementById('btnUpload');
+        const filesList = document.getElementById('filesList');
+        const filesContainer = document.getElementById('filesContainer');
+        const stats = document.getElementById('stats');
+        const validating = document.getElementById('validating');
 
         // Drop zone events
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            dropZone.classList.add('dragover');
+            dropZone.classList.add('drag-over');
         });
         dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
+            dropZone.classList.remove('drag-over');
         });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropZone.classList.remove('dragover');
-            handleBuktiBayarFileSelect({ files: e.dataTransfer.files });
+            dropZone.classList.remove('drag-over');
+            handleFileSelect(e.dataTransfer.files);
         });
 
-        // Event delegation for delete buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-delete-file')) {
-                const btn = e.target.closest('.btn-delete-file');
-                const filename = btn.dataset.filename;
-                console.log(`[Bukti Bayar] Deleting file: ${filename}`);
-                buktiBayarFilesToUpload = buktiBayarFilesToUpload.filter(f => f.name !== filename);
-                console.log(`[Bukti Bayar] Files remaining: ${buktiBayarFilesToUpload.length}`);
-                
-                // Re-render the list
-                if (buktiBayarFilesToUpload.length === 0) {
-                    document.getElementById('bukti-bayar-files-selected').style.display = 'none';
-                } else {
-                    handleBuktiBayarFileSelect({ files: new DataTransfer(buktiBayarFilesToUpload).items });
-                }
-            }
-        });
-
-        // Event delegation for delete buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-delete-file')) {
-                const btn = e.target.closest('.btn-delete-file');
-                const filename = btn.dataset.filename;
-                console.log(`[Bukti Bayar] Deleting file: ${filename}`);
-                buktiBayarFilesToUpload = buktiBayarFilesToUpload.filter(f => f.name !== filename);
-                console.log(`[Bukti Bayar] Files remaining: ${buktiBayarFilesToUpload.length}`);
-                
-                // Clear and re-render
-                const container = document.getElementById('bukti-bayar-files-selected');
-                const listEl = document.getElementById('bukti-bayar-files-list');
-                
-                if (buktiBayarFilesToUpload.length === 0) {
-                    container.style.display = 'none';
-                    fileInput.value = '';
-                } else {
-                    // Re-scan and re-render
-                    let validFiles = [];
-                    let invalidFiles = [];
-                    
-                    buktiBayarFilesToUpload.forEach((f) => {
-                        const fileItem = scanBuktiBayarFile(f);
-                        if (fileItem.isValid) {
-                            validFiles.push(fileItem);
-                        } else {
-                            invalidFiles.push(fileItem);
-                        }
-                    });
-                    
-                    // Simple re-render without async fetching
-                    listEl.innerHTML = [...validFiles, ...invalidFiles].map(fileItem => `
-                        <li class="file-item">
-                            <div class="file-item-left">
-                                <i class="fas fa-file-pdf"></i>
-                                <div class="file-info">
-                                    <div class="file-name">
-                                        ${fileItem.isValid ? '✅' : '❌'} ${fileItem.file.name}
-                                    </div>
-                                    <div class="file-size">
-                                        ${fileItem.isValid ? 
-                                            `NO FAKTUR: <strong>${fileItem.noFaktur}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB` : 
-                                            `${fileItem.error}`
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                            <button class="btn-delete-file" data-filename="${fileItem.file.name}" type="button" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; pointer-events: auto;">
-                                <i class="fas fa-times"></i> Hapus
-                            </button>
-                        </li>
-                    `).join('');
-                    
-                    uploadBtn.disabled = validFiles.length === 0;
-                    console.log(`[Bukti Bayar] After delete - Valid files: ${validFiles.length}`);
-                }
-            }
-        });
-
-        // File input change
         fileInput.addEventListener('change', (e) => {
-            handleBuktiBayarFileSelect(e.target);
+            handleFileSelect(e.target.files);
         });
 
-        function handleBuktiBayarFileSelect(input) {
-            buktiBayarFilesToUpload = Array.from(input.files).filter(f => f.type === 'application/pdf');
+        async function handleFileSelect(files) {
+            filesToUpload = Array.from(files).filter(f => f.type === 'application/pdf');
             
-            if (buktiBayarFilesToUpload.length === 0) {
+            if (filesToUpload.length === 0) {
                 if (window.Toast) Toast.error('Hanya file PDF yang diterima');
                 return;
             }
 
-            const container = document.getElementById('bukti-bayar-files-selected');
-            const listEl = document.getElementById('bukti-bayar-files-list');
-            
-            // Scan files and extract info
-            let validFiles = [];
-            let invalidFiles = [];
-            
-            buktiBayarFilesToUpload.forEach((f, idx) => {
-                const fileItem = scanBuktiBayarFile(f);
-                fileItem.index = idx;
-                
-                if (fileItem.isValid) {
-                    validFiles.push(fileItem);
-                } else {
-                    invalidFiles.push(fileItem);
-                }
-            });
+            validating.style.display = 'block';
+            filesList.classList.remove('show');
 
-            // Render file list with status and fetch toko info
-            const renderList = async () => {
-                const renderedItems = await Promise.all([...validFiles, ...invalidFiles].map(async (fileItem) => {
-                    let displayInfo = '';
-                    
-                    if (fileItem.isValid) {
-                        // Try to fetch toko info from API
-                        try {
-                            const res = await fetch(`/api/invoice/check-faktur/${fileItem.noFaktur}`, {
-                                headers: { 'Authorization': `Bearer ${API.getToken()}` }
-                            });
-                            if (res.ok) {
-                                const result = await res.json();
-                                if (result.exists && result.data) {
-                                    const nominal = result.data.total_jumlah_jual ? `Rp${result.data.total_jumlah_jual.toLocaleString('id-ID')}` : '?';
-                                    displayInfo = `NO FAKTUR: <strong>${fileItem.noFaktur}</strong> | TOKO: <strong>${result.data.konsumen || '?'}</strong> | NOMINAL: <strong>${nominal}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB`;
-                                } else {
-                                    displayInfo = `NO FAKTUR: <strong>${fileItem.noFaktur}</strong> (tidak ditemukan di sistem) | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB`;
-                                }
-                            } else {
-                                displayInfo = `NO FAKTUR: <strong>${fileItem.noFaktur}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB`;
-                            }
-                        } catch (e) {
-                            console.log('[Bukti Bayar] Error fetching invoice info:', e);
-                            displayInfo = `NO FAKTUR: <strong>${fileItem.noFaktur}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB`;
-                        }
-                    } else {
-                        displayInfo = `Error: ${fileItem.error}`;
-                    }
-                    
-                    return `
-                        <li class="file-item">
-                            <div class="file-item-left">
-                                <i class="fas fa-file-pdf"></i>
-                                <div class="file-info">
-                                    <div class="file-name">
-                                        ${fileItem.isValid ? '✅' : '❌'} ${fileItem.file.name}
-                                    </div>
-                                    <div class="file-size">
-                                        ${displayInfo}
-                                    </div>
-                                </div>
-                            </div>
-                            <button class="btn-delete-file" data-filename="${fileItem.file.name}" type="button" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; pointer-events: auto;">
-                                <i class="fas fa-times"></i> Hapus
-                            </button>
-                        </li>
-                    `;
-                }));
-                
-                listEl.innerHTML = renderedItems.join('');
-                
-                // Update UI after rendering
-                container.style.display = 'block';
-                const hasValidFiles = validFiles.length > 0;
-                uploadBtn.disabled = !hasValidFiles;
-                console.log(`[Bukti Bayar] Valid files: ${validFiles.length}, Upload button disabled: ${uploadBtn.disabled}`);
-            };
-            
-            renderList();
-        }
+            // Scan and validate files
+            const validated = await Promise.all(filesToUpload.map(async (file, idx) => {
+                const noFaktur = file.name.replace(/\.pdf$/i, '').trim();
+                const isValid = /^\d+$/.test(noFaktur);
 
-        function scanBuktiBayarFile(file) {
-            // Extract NO FAKTUR from filename (format: NO_FAKTUR.pdf)
-            const nameWithoutExt = file.name.replace(/\.pdf$/i, '').trim();
-            
-            // Validate: should be numeric (nomor faktur)
-            const isValid = /^\d+$/.test(nameWithoutExt);
-            
-            if (!isValid) {
-                return {
+                let info = {
                     file,
-                    isValid: false,
-                    error: 'Nama file harus berupa nomor faktur (contoh: 835100310.pdf)'
+                    index: idx,
+                    isValid,
+                    noFaktur
                 };
-            }
-            
-            return {
-                file,
-                isValid: true,
-                noFaktur: nameWithoutExt
-            };
+
+                // Fetch toko info if valid
+                if (isValid) {
+                    try {
+                        const res = await fetch(`/api/invoice/check-faktur/${noFaktur}`, {
+                            headers: { 'Authorization': `Bearer ${API.getToken()}` }
+                        });
+                        if (res.ok) {
+                            const result = await res.json();
+                            if (result.exists && result.data) {
+                                info.tokoName = result.data.konsumen || '?';
+                                info.nominal = result.data.total_jumlah_jual || 0;
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Error fetching invoice info:', e);
+                    }
+                }
+
+                return info;
+            }));
+
+            validating.style.display = 'none';
+
+            // Update stats
+            const validCount = validated.filter(v => v.isValid).length;
+            const invalidCount = validated.filter(v => !v.isValid).length;
+
+            document.getElementById('totalFiles').textContent = validated.length;
+            document.getElementById('validFiles').textContent = validCount;
+            document.getElementById('invalidFiles').textContent = invalidCount;
+            stats.style.display = validated.length > 0 ? 'grid' : 'none';
+
+            // Render file list
+            filesContainer.innerHTML = validated.map(item => `
+                <div class="file-item ${item.isValid ? 'valid' : 'invalid'}">
+                    <div class="file-item-icon">
+                        ${item.isValid ? '✓' : '✗'}
+                    </div>
+                    <div class="file-item-name">
+                        <strong>${item.file.name}</strong>
+                        <div class="file-item-info">
+                            ${item.isValid ? 
+                                `NO FAKTUR: <strong>${item.noFaktur}</strong> | TOKO: <strong>${item.tokoName || '?'}</strong> | NOMINAL: <strong>${item.nominal ? 'Rp' + item.nominal.toLocaleString('id-ID') : '?'}</strong> | ${(item.file.size / 1024 / 1024).toFixed(2)} MB` :
+                                `Format tidak sesuai - gunakan format: NOFAKTUR.pdf`
+                            }
+                        </div>
+                    </div>
+                    ${!item.isValid ? `
+                        <button class="delete-btn" onclick="deleteFile(${item.index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            filesList.classList.add('show');
+            btnUpload.disabled = validCount === 0;
         }
 
-        uploadBtn.addEventListener('click', uploadBuktiBayarPDFs);
+        function deleteFile(index) {
+            filesToUpload.splice(index, 1);
+            if (filesToUpload.length === 0) {
+                filesList.classList.remove('show');
+                stats.style.display = 'none';
+                fileInput.value = '';
+            } else {
+                handleFileSelect(filesToUpload);
+            }
+        }
 
-        async function uploadBuktiBayarPDFs() {
-            // Filter only valid files
-            const validFilesToUpload = buktiBayarFilesToUpload.filter(f => {
-                const info = scanBuktiBayarFile(f);
-                return info.isValid;
+        function resetUpload() {
+            filesToUpload = [];
+            fileInput.value = '';
+            filesList.classList.remove('show');
+            stats.style.display = 'none';
+            filesContainer.innerHTML = '';
+            btnUpload.disabled = true;
+        }
+
+        btnUpload.addEventListener('click', async () => {
+            const validFiles = filesToUpload.filter(f => {
+                const noFaktur = f.name.replace(/\.pdf$/i, '').trim();
+                return /^\d+$/.test(noFaktur);
             });
 
-            if (validFilesToUpload.length === 0) {
-                if (window.Toast) Toast.error('Tidak ada file valid untuk diupload');
+            if (validFiles.length === 0) {
+                if (window.Toast) Toast.error('Tidak ada file valid');
                 return;
             }
 
-            uploadBtn.disabled = true;
-            const originalText = uploadBtn.innerHTML;
-            uploadBtn.innerHTML = '<div class="loading-spinner"></div> Uploading...';
+            btnUpload.disabled = true;
+            const originalText = btnUpload.innerHTML;
+            btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
 
             let successCount = 0;
             let failCount = 0;
 
-            try {
-                for (const file of validFilesToUpload) {
-                    try {
-                        const formData = new FormData();
-                        formData.append('file', file);
-                        formData.append('type', 'bukti_bayar');
+            for (const file of validFiles) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('type', 'bukti_bayar');
 
-                        console.log(`[Upload Bukti Bayar] Uploading: ${file.name}`);
+                    const response = await fetch('/api/invoice/upload-document', {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'Authorization': `Bearer ${API.getToken()}` }
+                    });
 
-                        const response = await fetch('/api/invoice/upload-document', {
-                            method: 'POST',
-                            body: formData,
-                            headers: {
-                                'Authorization': `Bearer ${API.getToken()}`
-                            }
-                        });
-
-                        if (response.ok) {
-                            successCount++;
-                            const data = await response.json();
-                            console.log(`[Upload Bukti Bayar] Success:`, data);
-                            if (window.Toast) Toast.success(`${file.name} berhasil diupload`);
-                        } else {
-                            failCount++;
-                            let errorMsg = `HTTP ${response.status}`;
-                            try {
-                                const err = await response.json();
-                                errorMsg = err.error || err.message || errorMsg;
-                            } catch (parseErr) {
-                                console.log('[Upload Bukti Bayar] Could not parse error response');
-                            }
-                            console.error(`[Upload Bukti Bayar] Error (${response.status}):`, errorMsg);
-                            if (window.Toast) Toast.error(`${file.name}: ${errorMsg}`);
-                        }
-                    } catch (err) {
+                    if (response.ok) {
+                        successCount++;
+                        if (window.Toast) Toast.success(`${file.name} berhasil diupload`);
+                    } else {
                         failCount++;
-                        console.error(`[Upload Bukti Bayar] Exception:`, err);
-                        if (window.Toast) Toast.error(`Error: ${err.message}`);
+                        let errorMsg = `HTTP ${response.status}`;
+                        try {
+                            const err = await response.json();
+                            errorMsg = err.error || err.message || errorMsg;
+                        } catch (e) {}
+                        if (window.Toast) Toast.error(`${file.name}: ${errorMsg}`);
                     }
+                } catch (err) {
+                    failCount++;
+                    if (window.Toast) Toast.error(`Error: ${err.message}`);
                 }
-
-                if (successCount > 0) {
-                    if (window.Toast) Toast.success(`${successCount} file berhasil diupload!`);
-                    buktiBayarFilesToUpload = [];
-                    document.getElementById('bukti-bayar-files-selected').style.display = 'none';
-                    fileInput.value = '';
-                }
-            } finally {
-                uploadBtn.disabled = false;
-                uploadBtn.innerHTML = originalText;
             }
-        }
 
-        // Initialize auth on page load
-        document.addEventListener('DOMContentLoaded', async () => {
+            if (successCount > 0) {
+                if (window.Toast) Toast.success(`${successCount} file berhasil diupload!`);
+                resetUpload();
+            }
+
+            btnUpload.innerHTML = originalText;
+            btnUpload.disabled = false;
+        });
+
+        // Initialize
+        (async () => {
             try {
                 const user = await initAuth(['super_admin', 'moderator']);
                 if (!user) {
-                    console.error('[Upload Bukti Bayar] User not authenticated');
+                    console.error('User not authenticated');
                     return;
                 }
-                console.log('[Upload Bukti Bayar] User authenticated:', user.username);
+                console.log('User authenticated:', user.username);
             } catch (error) {
-                console.error('[Upload Bukti Bayar] Init error:', error);
+                console.error('Init error:', error);
             }
-        });
+        })();
     </script>
 </body>
 </html>
