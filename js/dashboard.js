@@ -2771,7 +2771,7 @@ function formatCurrency(value) {
 async function downloadInvoiceFile(faktur, fileType) {
     try {
         const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
-        const response = await fetch(`${API_BASE}/api/invoice/download-file/${faktur}/${fileType}`, {
+        const response = await fetch(`${CONFIG.API_URL}/api/invoice/download-file/${faktur}/${fileType}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -2808,7 +2808,7 @@ async function downloadInvoiceFile(faktur, fileType) {
 async function combinePDF(faktur) {
     try {
         const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
-        const response = await fetch(`${API_BASE}/api/invoice/combine-pdf/${faktur}`, {
+        const response = await fetch(`${CONFIG.API_URL}/api/invoice/combine-pdf/${faktur}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         

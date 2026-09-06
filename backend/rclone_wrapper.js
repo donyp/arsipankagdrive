@@ -276,6 +276,27 @@ function rcloneExec(args, timeoutMs = 30000) {
             const railwayConfigPath = process.env.RCLONE_CONFIG || configPath;
             console.log('[Rclone Exec] Railway environment - using config:', railwayConfigPath);
             
+            // DEBUG: Log rclone.conf contents on first upload attempt
+            if (args[0] === 'copyto' && !global.rcloneConfigLogged) {
+                try {
+                    const configContent = fs.readFileSync(railwayConfigPath, 'utf8');
+                    console.log('[Rclone Exec] ===== RCLONE CONFIG DEBUG =====');
+                    // Log config but hide sensitive token data
+                    const lines = configContent.split('\n');
+                    lines.forEach((line, idx) => {
+                        if (line.includes('token')) {
+                            console.log(`[Rclone Exec] Line ${idx}: token = [REDACTED]`);
+                        } else if (line.trim().length > 0) {
+                            console.log(`[Rclone Exec] Line ${idx}: ${line}`);
+                        }
+                    });
+                    console.log('[Rclone Exec] ===== END CONFIG DEBUG =====');
+                    global.rcloneConfigLogged = true;
+                } catch (err) {
+                    console.error('[Rclone Exec] Failed to read config for debug:', err.message);
+                }
+            }
+            
             // Always pass --config for Railway to ensure it uses the right config
             if (railwayConfigPath && !args.includes('--config')) {
                 // Add -vv for verbose logging on copyto to debug upload issues
