@@ -274,7 +274,7 @@ function resetUpload() {
 
 function goToDashboard() {
     // Redirect to main dashboard
-    window.location.href = '/dashboard.html';
+    window.location.href = '/dashboard';
 }
 
 function updateStep(activeStep) {

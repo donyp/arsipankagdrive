@@ -13,7 +13,7 @@ const loadingOverlay = document.getElementById('loadingOverlay');
 async function init() {
     // Check authentication
     if (!isAuthenticated()) {
-        window.location.href = 'login.html';
+        window.location.href = '/index';
         return;
     }
 
@@ -21,7 +21,7 @@ async function init() {
     const user = getUserData();
     if (!user || (user.role !== 'super_admin' && user.role !== 'moderator')) {
         alert('Akses ditolak. Hanya Super Admin dan Moderator yang dapat mengelola batch.');
-        window.location.href = 'invoice-list.html';
+        window.location.href = '/invoice-list';
         return;
     }
 

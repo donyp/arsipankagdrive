@@ -16,13 +16,13 @@ async function initAuth(requiredRole = null) {
 
     if (!token) {
         // Not logged in — redirect to login (unless already on login page)
-        if (!window.location.pathname.endsWith('index.html') && !window.location.pathname.endsWith('/')) {
+        if (!window.location.pathname.endsWith('index.html') && !window.location.pathname.endsWith('/') && !window.location.pathname.endsWith('/index')) {
             // Unhide page so user can see redirect message
             document.documentElement.style.opacity = '1';
             document.documentElement.classList.remove('auth-loading');
             
             console.warn('[Auth] No token found, redirecting to login...');
-            setTimeout(() => window.location.href = 'index.html', 1000);
+            setTimeout(() => window.location.href = '/index', 1000);
         }
         return null;
     }
@@ -39,7 +39,7 @@ async function initAuth(requiredRole = null) {
             document.documentElement.style.opacity = '1';
             document.documentElement.classList.remove('auth-loading');
             
-            setTimeout(() => window.location.href = 'index.html', 1000);
+            setTimeout(() => window.location.href = '/index', 1000);
             return null;
         }
 
@@ -65,7 +65,7 @@ async function initAuth(requiredRole = null) {
             Toast.error('Token tidak valid. Silakan login ulang.');
         }
         
-        setTimeout(() => window.location.href = 'index.html', 1500);
+        setTimeout(() => window.location.href = '/index', 1500);
         return null;
     }
 
@@ -87,7 +87,7 @@ async function initAuth(requiredRole = null) {
             if (window.Toast) Toast.error(msg);
             else alert(msg);
 
-            setTimeout(() => window.location.href = 'dashboard.html', 2000);
+            setTimeout(() => window.location.href = '/dashboard', 2000);
             return null;
         }
     }
@@ -169,7 +169,7 @@ async function logout() {
         API.clearAuth();
         localStorage.removeItem('sessionToken');
         currentUser = null;
-        window.location.href = 'index.html';
+        window.location.href = '/index';
     }
 }
 

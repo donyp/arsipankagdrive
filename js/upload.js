@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const allowedRoles = ['super_admin', 'moderator', 'admin_zona'];
     if (!allowedRoles.includes(user.role)) {
         Toast.error('Akses ditolak.');
-        setTimeout(() => window.location.href = 'dashboard.html', 1500);
+        setTimeout(() => window.location.href = '/dashboard', 1500);
         return;
     }
 

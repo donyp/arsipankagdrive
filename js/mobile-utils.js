@@ -214,7 +214,7 @@
             fab.innerHTML = '📤';
             fab.setAttribute('aria-label', 'Upload file');
             fab.addEventListener('click', () => {
-                window.location.href = 'upload.html';
+                window.location.href = '/upload';
             });
             document.body.appendChild(fab);
         }

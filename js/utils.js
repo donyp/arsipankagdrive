@@ -452,7 +452,7 @@ async function initUpdateHistoryNotification() {
             localStorage.setItem(seenUpdateKey, 'true');
             
             if (result.isConfirmed) {
-                window.location.href = 'update-history.html';
+                window.location.href = '/update-history';
             }
         });
         

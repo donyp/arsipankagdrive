@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (window.Toast) {
                 Toast.error('Akses ditolak.');
             }
-            setTimeout(() => window.location.href = 'dashboard.html', 1500);
+            setTimeout(() => window.location.href = '/dashboard', 1500);
             return;
         }
 

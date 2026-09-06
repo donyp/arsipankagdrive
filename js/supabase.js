@@ -80,7 +80,7 @@ const API = {
             const body = await res.json().catch(() => ({}));
             if (body.error?.includes('expired') || body.error?.includes('Token')) {
                 this.clearAuth();
-                window.location.href = 'index.html';
+                window.location.href = '/index';
                 const error = new Error('Sesi Anda telah berakhir. Silakan login kembali.');
                 error.status = res.status;
                 throw error;
