@@ -749,10 +749,10 @@
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
                         <div style="display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap;">
-                            ${inv.invoice_pdf_path ? `<button onclick="downloadInvoiceFile('${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;" title="Download Invoice">📄 INV</button>` : ''}
-                            ${inv.bukti_bayar_path ? `<button onclick="downloadInvoiceFile('${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;" title="Download Bukti Bayar">💰 BB</button>` : ''}
-                            ${inv.faktur_pajak_path && inv.keterangan === 'PPN' ? `<button onclick="downloadInvoiceFile('${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;" title="Download Faktur Pajak">📋 FP</button>` : ''}
-                            ${uploadedCount === requiredCount ? `<button onclick="combinePDF('${inv.faktur}')" style="background: #e67e22; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;" title="Combine PDF">📦 Combine</button>` : ''}
+                            ${inv.invoice_pdf_path ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄 INV</button>` : ''}
+                            ${inv.bukti_bayar_path ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰 BB</button>` : ''}
+                            ${inv.faktur_pajak_path && inv.keterangan === 'PPN' ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋 FP</button>` : ''}
+                            ${uploadedCount === requiredCount ? `<button onclick="combinePDF('${inv.faktur}')" style="background: #e67e22; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Combine PDF">📦 Combine</button>` : ''}
                         </div>
                     </td>
                 </tr>
@@ -802,8 +802,14 @@
         }
 
         // Download individual invoice files
-        async function downloadInvoiceFile(faktur, fileType) {
+        async function downloadInvoiceFile(btn, faktur, fileType) {
             try {
+                // Show loading state on button
+                const originalHTML = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+                btn.style.opacity = '0.7';
+                
                 const token = localStorage.getItem('access_token');
                 
                 // Check if file exists first
@@ -851,9 +857,19 @@
                 a.click();
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
+                
+                // Restore button state
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                btn.style.opacity = '1';
             } catch (error) {
                 console.error('Download error:', error);
                 alert(`Error downloading file: ${error.message}`);
+                
+                // Restore button state on error
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                btn.style.opacity = '1';
             }
         }
 
