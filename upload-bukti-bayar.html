@@ -400,7 +400,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <button class="btn-delete-file" data-index="${fileItem.index}" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            <button class="btn-delete-file" data-filename="${fileItem.file.name}" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
                                 <i class="fas fa-times"></i> Hapus
                             </button>
                         </li>
@@ -413,17 +413,20 @@
                 listEl.querySelectorAll('.btn-delete-file').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.preventDefault();
-                        const idx = parseInt(btn.dataset.index);
-                        buktiBayarFilesToUpload.splice(idx, 1);
+                        const filename = btn.dataset.filename;
+                        buktiBayarFilesToUpload = buktiBayarFilesToUpload.filter(f => f.name !== filename);
                         handleBuktiBayarFileSelect({ files: buktiBayarFilesToUpload });
                     });
                 });
+                
+                // Update UI after rendering
+                container.style.display = 'block';
+                const hasValidFiles = validFiles.length > 0;
+                uploadBtn.disabled = !hasValidFiles;
+                console.log(`[Bukti Bayar] Valid files: ${validFiles.length}, Upload button disabled: ${uploadBtn.disabled}`);
             };
             
             renderList();
-            
-            container.style.display = 'block';
-            uploadBtn.disabled = validFiles.length === 0;
         }
 
         function scanBuktiBayarFile(file) {

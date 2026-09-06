@@ -394,24 +394,26 @@
                             </div>
                         </div>
                     </div>
-                    <button class="btn-delete-file" data-index="${fileItem.index}" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                    <button class="btn-delete-file" data-filename="${fileItem.file.name}" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
                         <i class="fas fa-times"></i> Hapus
                     </button>
                 </li>
             `).join('');
             
-            // Add delete handlers to this list specifically
+            // Add delete handlers using event delegation
             listEl.querySelectorAll('.btn-delete-file').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const idx = parseInt(btn.dataset.index);
-                    fakturPajakFilesToUpload.splice(idx, 1);
+                    const filename = btn.dataset.filename;
+                    fakturPajakFilesToUpload = fakturPajakFilesToUpload.filter(f => f.name !== filename);
                     handleFakturPajakFileSelect({ files: fakturPajakFilesToUpload });
                 });
             });
             
             container.style.display = 'block';
-            uploadBtn.disabled = validFiles.length === 0;
+            const hasValidFiles = validFiles.length > 0;
+            uploadBtn.disabled = !hasValidFiles;
+            console.log(`[Faktur Pajak] Valid files: ${validFiles.length}, Upload button disabled: ${uploadBtn.disabled}`);
         }
 
         function scanFakturPajakFile(file) {
