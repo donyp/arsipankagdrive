@@ -99,9 +99,131 @@ if (!document.getElementById('toast-animations')) {
                 opacity: 0;
             }
         }
+        
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(2px);
+        }
+        
+        .loading-modal {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            min-width: 350px;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .loading-subtext {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
     `;
     document.head.appendChild(style);
 }
+
+// Loading overlay system
+let loadingOverlay = null;
+
+window.showLoadingOverlay = function(text = 'Loading...', subtext = '') {
+    if (!loadingOverlay) {
+        loadingOverlay = document.createElement('div');
+        loadingOverlay.className = 'loading-overlay';
+        document.body.appendChild(loadingOverlay);
+    }
+    
+    loadingOverlay.innerHTML = `
+        <div class="loading-modal">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">${text}</div>
+            ${subtext ? `<div class="loading-subtext">${subtext}</div>` : ''}
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width: 100%;"></div>
+            </div>
+        </div>
+    `;
+    loadingOverlay.style.display = 'flex';
+};
+
+window.hideLoadingOverlay = function() {
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     const dropZone = document.getElementById('dropZone');
@@ -298,23 +420,27 @@ async function uploadValidFiles() {
 
     const btnUpload = document.getElementById('btnUpload');
     const originalText = btnUpload.innerHTML;
+    const originalDisabled = btnUpload.disabled;
+    
     btnUpload.disabled = true;
-    btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+    btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Processing...';
+    btnUpload.style.opacity = '0.8';
 
-    // Show loading overlay
-    if (window.showLoadingOverlay) {
-        window.showLoadingOverlay(`Uploading ${validFiles.length} file...`);
-    }
+    // Show loading overlay with progress
+    window.showLoadingOverlay(
+        `📤 Uploading Files`,
+        `${validFiles.length} file${validFiles.length > 1 ? 's' : ''} akan diupload ke Google Drive`
+    );
 
     try {
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
         // OPTIMIZATION: Upload files in parallel (up to 3 concurrent uploads)
-        // Instead of sequential upload, use Promise.all with concurrency limit
         const CONCURRENT_LIMIT = 3;
         let successCount = 0;
         let failCount = 0;
+        let currentProgress = 0;
 
         // Create upload tasks
         const uploadTasks = validFiles.map((fileResult, index) => async () => {
@@ -324,10 +450,12 @@ async function uploadValidFiles() {
                 
                 console.log(`[PDF Bulk] Uploading (${index + 1}/${validFiles.length}): ${fileResult.file.name}`);
                 
-                // Update loading text
-                if (window.showLoadingOverlay) {
-                    window.showLoadingOverlay(`Uploading ${index + 1} of ${validFiles.length}...`);
-                }
+                // Update loading overlay with progress
+                currentProgress = Math.round((successCount + failCount) / validFiles.length * 100);
+                window.showLoadingOverlay(
+                    `📤 Uploading Files`,
+                    `${index + 1} of ${validFiles.length} • ${currentProgress}%`
+                );
 
                 const response = await fetch('/api/invoice/upload-pdf', {
                     method: 'POST',
@@ -360,9 +488,7 @@ async function uploadValidFiles() {
         }
 
         // Hide loading overlay
-        if (window.hideLoadingOverlay) {
-            window.hideLoadingOverlay();
-        }
+        window.hideLoadingOverlay();
 
         // Show final result message
         const message = `✅ ${successCount}/${validFiles.length} file berhasil diupload${failCount > 0 ? ` (${failCount} gagal)` : ''}`;
@@ -373,7 +499,6 @@ async function uploadValidFiles() {
         // Refresh invoice list to show updated status with file counts
         if (successCount > 0) {
             console.log('[PDF Bulk] Refreshing invoice list after successful upload...');
-            // Shorter delay since upload is already complete
             setTimeout(() => {
                 try {
                     if (typeof loadInvoicesInDashboard === 'function') {
@@ -395,18 +520,17 @@ async function uploadValidFiles() {
         if (failCount === 0) {
             setTimeout(() => {
                 resetUpload();
-            }, 2000); // Reset after 2 seconds so user sees success message
+            }, 2000);
         }
 
     } catch (error) {
         console.error('[PDF Bulk] Exception:', error);
         showNotification('Error: ' + error.message, 'error', 5000);
-        if (window.hideLoadingOverlay) {
-            window.hideLoadingOverlay();
-        }
+        window.hideLoadingOverlay();
     } finally {
-        btnUpload.disabled = false;
+        btnUpload.disabled = originalDisabled;
         btnUpload.innerHTML = originalText;
+        btnUpload.style.opacity = '1';
     }
 }
 
