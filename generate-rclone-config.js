@@ -72,6 +72,7 @@ endpoint = ${config.storj_endpoint}
 
 // Export functions for use in server.js
 function generateRcloneConfig() {
+    console.log('[RcloneConfig] ========== NEW VERSION - PARSING AT RUNTIME ==========');
     console.log('[RcloneConfig] generateRcloneConfig called - generating config now...');
     
     let finalConfig = rcloneConfig;
