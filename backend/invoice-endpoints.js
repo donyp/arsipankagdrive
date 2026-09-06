@@ -1108,6 +1108,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
                 const category = invoice.keterangan === 'PPN' ? 'PPN' : 'NON';
                 
+                // Path structure: /ARSIPINVOICE/ARSIPINVOICE/TAHUN/BULAN/TANGGAL/CATEGORY/
+                // (Note: Double ARSIPINVOICE because there's a subfolder with same name)
                 console.log(`[Invoice PDF] Path components - Year: ${year}, Month: ${monthName}, Day: ${day}, Category: ${category}`);
                 
                 // Upload to Google Drive via RcloneStorage

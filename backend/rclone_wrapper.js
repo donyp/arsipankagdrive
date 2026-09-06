@@ -1558,8 +1558,10 @@ const RcloneStorage = {
      * @returns {Promise<Object>} - { success, path, message }
      */
     async uploadInvoicePDF(buffer, filename, year, month, day, category) {
-        const storagePath = `/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
-        const dirPath = `/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
+        // Path with double ARSIPINVOICE (subfolder structure in GDrive)
+        // Actual path in GDrive: /Shared drives/ARSIPINVOICE/ARSIPINVOICE/TAHUN/BULAN/TANGGAL/CATEGORY
+        const storagePath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
+        const dirPath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${category}`;
         
         logOperation('uploadInvoicePDF', {
             action: 'Uploading invoice PDF',
@@ -1657,8 +1659,9 @@ const RcloneStorage = {
      * @returns {Promise<Object>} - { success, path, message }
      */
     async uploadDocumentFile(buffer, filename, year, month, day, folderType) {
-        const storagePath = `/ARSIPINVOICE/${year}/${month}/${day}/${folderType}/${filename}`;
-        const dirPath = `/ARSIPINVOICE/${year}/${month}/${day}/${folderType}`;
+        // Path with double ARSIPINVOICE (subfolder structure in GDrive)
+        const storagePath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}/${filename}`;
+        const dirPath = `/ARSIPINVOICE/ARSIPINVOICE/${year}/${month}/${day}/${folderType}`;
         
         logOperation('uploadDocumentFile', {
             filename,
