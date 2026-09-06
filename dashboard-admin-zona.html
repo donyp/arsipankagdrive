@@ -705,7 +705,7 @@
             );
         }
 
-        function renderInvoices(invoices) {
+        async function renderInvoices(invoices) {
             const tbody = document.getElementById('invoiceTableBody');
 
             if (invoices.length === 0) {
@@ -713,10 +713,62 @@
                 return;
             }
 
-            tbody.innerHTML = invoices.map(inv => {
-                // Display X/Y status format
-                const uploadedCount = inv.files_uploaded_count || 0;
-                const requiredCount = inv.files_required_count || (inv.keterangan === 'PPN' ? 3 : 2);
+            // Check file existence for each invoice
+            const token = API.getToken() || localStorage.getItem('jwt_token');
+            
+            const invoicesWithFileCheck = await Promise.all(invoices.map(async (inv) => {
+                let actualUploadedCount = 0;
+                let requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
+                
+                // Check invoice file
+                if (inv.invoice_pdf_path) {
+                    try {
+                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/invoice`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.exists) actualUploadedCount++;
+                        }
+                    } catch (e) {}
+                }
+                
+                // Check bukti bayar
+                if (inv.bukti_bayar_path) {
+                    try {
+                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/bukti_bayar`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.exists) actualUploadedCount++;
+                        }
+                    } catch (e) {}
+                }
+                
+                // Check faktur pajak (if PPN)
+                if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
+                    try {
+                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/faktur_pajak`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.exists) actualUploadedCount++;
+                        }
+                    } catch (e) {}
+                }
+                
+                return {
+                    ...inv,
+                    actualUploadedCount,
+                    requiredCount
+                };
+            }));
+
+            tbody.innerHTML = invoicesWithFileCheck.map(inv => {
+                const uploadedCount = inv.actualUploadedCount;
+                const requiredCount = inv.requiredCount;
                 const statusDisplay = `${uploadedCount}/${requiredCount}`;
                 
                 // Different color for each status
