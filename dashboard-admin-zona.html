@@ -788,18 +788,6 @@
             
             // Render rows with final button state
             tbody.innerHTML = invoicesWithFileStatus.map(inv => {
-                const statusDisplay = `${inv.actualUploadedCount}/${inv.requiredCount}`;
-                
-                // Color based on actual file count
-                let statusColor = 'bg-yellow-100 text-yellow-800';
-                if (inv.actualUploadedCount === inv.requiredCount) {
-                    statusColor = 'bg-green-100 text-green-800';
-                } else if (inv.actualUploadedCount === 0) {
-                    statusColor = 'bg-red-100 text-red-800';
-                } else if (inv.actualUploadedCount === inv.requiredCount - 1) {
-                    statusColor = 'bg-orange-100 text-orange-800';
-                }
-                
                 return `
                 <tr style="border-bottom: 2px solid #34495e;">
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${new Date(inv.tanggal).toLocaleDateString('id-ID')}</td>
@@ -808,12 +796,7 @@
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.konsumen || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.toko || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
-                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColor}">
-                            ${statusDisplay}
-                        </span>
-                        <br><small style="color: #7f8c8d;">${inv.keterangan || '-'}</small>
-                    </td>
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
                         <div style="display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap;">
                             ${inv.buttons.join('')}
