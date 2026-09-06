@@ -362,28 +362,104 @@
             const container = document.getElementById('faktur-pajak-files-selected');
             const listEl = document.getElementById('faktur-pajak-files-list');
             
-            listEl.innerHTML = fakturPajakFilesToUpload.map(f => `
-                <li class="file-item">
+            // Scan files and extract info
+            let validFiles = [];
+            let invalidFiles = [];
+            
+            fakturPajakFilesToUpload.forEach((f, idx) => {
+                const fileItem = scanFakturPajakFile(f);
+                fileItem.index = idx;
+                
+                if (fileItem.isValid) {
+                    validFiles.push(fileItem);
+                } else {
+                    invalidFiles.push(fileItem);
+                }
+            });
+
+            // Render file list with status
+            listEl.innerHTML = [...validFiles, ...invalidFiles].map(fileItem => `
+                <li class="file-item ${!fileItem.isValid ? 'opacity-50' : ''}">
                     <div class="file-item-left">
                         <i class="fas fa-file-pdf"></i>
                         <div class="file-info">
-                            <div class="file-name">${f.name}</div>
-                            <div class="file-size">${(f.size / 1024 / 1024).toFixed(2)} MB</div>
+                            <div class="file-name">
+                                ${fileItem.isValid ? '✅' : '❌'} ${fileItem.file.name}
+                            </div>
+                            <div class="file-size">
+                                ${fileItem.isValid ? 
+                                    `NO: <strong>${fileItem.noInvoice}</strong> | Nominal: <strong>${fileItem.nominal}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB` : 
+                                    `Error: ${fileItem.error}`
+                                }
+                            </div>
                         </div>
                     </div>
-                    <span class="status-indicator" data-filename="${f.name}">⏳ Siap upload</span>
+                    <button class="btn-delete-file" data-index="${fileItem.index}" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        <i class="fas fa-times"></i> Hapus
+                    </button>
                 </li>
             `).join('');
             
+            // Add delete handlers
+            document.querySelectorAll('.btn-delete-file').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.currentTarget.dataset.index);
+                    fakturPajakFilesToUpload.splice(idx, 1);
+                    handleFakturPajakFileSelect({ files: fakturPajakFilesToUpload });
+                });
+            });
+            
             container.style.display = 'block';
-            uploadBtn.disabled = false;
+            uploadBtn.disabled = validFiles.length === 0;
+        }
+
+        function scanFakturPajakFile(file) {
+            // Format: tax-REFERENSI NAMA NOMINAL.pdf
+            // Example: tax-835100310232 SEMESTA GEMILANG CILEGON 2.393.000.pdf
+            const filenamePattern = /^tax-(.+)\.pdf$/i;
+            const match = file.name.match(filenamePattern);
+
+            if (!match) {
+                return {
+                    file,
+                    isValid: false,
+                    error: 'Format: tax-NOMOR NAMA NOMINAL.pdf (contoh: tax-835100310232 SEMESTA GEMILANG 2.393.000.pdf)'
+                };
+            }
+
+            const filenameParts = match[1];
+            const invoiceMatch = filenameParts.match(/^(\d+)\s+(.+)\s+([\d.]+)$/);
+
+            if (!invoiceMatch) {
+                return {
+                    file,
+                    isValid: false,
+                    error: 'Format nama tidak valid. Harus: tax-NOMOR NAMA NOMINAL.pdf'
+                };
+            }
+
+            const [, noInvoice, nama, nominal] = invoiceMatch;
+
+            return {
+                file,
+                isValid: true,
+                noInvoice,
+                nama,
+                nominal
+            };
         }
 
         uploadBtn.addEventListener('click', uploadFakturPajakPDFs);
 
         async function uploadFakturPajakPDFs() {
-            if (fakturPajakFilesToUpload.length === 0) {
-                if (window.Toast) Toast.error('Pilih file PDF terlebih dahulu');
+            // Filter only valid files
+            const validFilesToUpload = fakturPajakFilesToUpload.filter(f => {
+                const info = scanFakturPajakFile(f);
+                return info.isValid;
+            });
+
+            if (validFilesToUpload.length === 0) {
+                if (window.Toast) Toast.error('Tidak ada file valid untuk diupload');
                 return;
             }
 
@@ -395,16 +471,13 @@
             let failCount = 0;
 
             try {
-                for (const file of fakturPajakFilesToUpload) {
+                for (const file of validFilesToUpload) {
                     try {
-                        const statusEl = document.querySelector(`[data-filename="${file.name}"]`);
-                        if (statusEl) {
-                            statusEl.innerHTML = '<i class="fas fa-spinner fa-spin status-scanning"></i> Validating...';
-                        }
-
                         const formData = new FormData();
                         formData.append('file', file);
                         formData.append('type', 'faktur_pajak');
+
+                        console.log(`[Upload Faktur Pajak] Uploading: ${file.name}`);
 
                         const response = await fetch('/api/invoice/upload-faktur-pajak', {
                             method: 'POST',
@@ -416,28 +489,18 @@
 
                         if (response.ok) {
                             successCount++;
-                            if (statusEl) {
-                                statusEl.className = 'status-indicator status-success';
-                                statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Uploaded';
-                            }
+                            const data = await response.json();
+                            console.log(`[Upload Faktur Pajak] Success:`, data);
                             if (window.Toast) Toast.success(`${file.name} berhasil diupload`);
                         } else {
                             failCount++;
                             const err = await response.json();
-                            if (statusEl) {
-                                statusEl.className = 'status-indicator status-error';
-                                statusEl.innerHTML = '<i class="fas fa-times-circle"></i> Error';
-                                statusEl.title = err.error;
-                            }
-                            if (window.Toast) Toast.error(`${file.name}: ${err.error}`);
+                            console.error(`[Upload Faktur Pajak] Error:`, err);
+                            if (window.Toast) Toast.error(`${file.name}: ${err.error || err.message}`);
                         }
                     } catch (err) {
                         failCount++;
-                        const statusEl = document.querySelector(`[data-filename="${file.name}"]`);
-                        if (statusEl) {
-                            statusEl.className = 'status-indicator status-error';
-                            statusEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error';
-                        }
+                        console.error(`[Upload Faktur Pajak] Exception:`, err);
                         if (window.Toast) Toast.error(`Error: ${err.message}`);
                     }
                 }

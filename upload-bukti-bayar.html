@@ -342,27 +342,90 @@
             const container = document.getElementById('bukti-bayar-files-selected');
             const listEl = document.getElementById('bukti-bayar-files-list');
             
-            listEl.innerHTML = buktiBayarFilesToUpload.map(f => `
-                <li class="file-item">
+            // Scan files and extract info
+            let validFiles = [];
+            let invalidFiles = [];
+            
+            buktiBayarFilesToUpload.forEach((f, idx) => {
+                const fileItem = scanBuktiBayarFile(f);
+                fileItem.index = idx;
+                
+                if (fileItem.isValid) {
+                    validFiles.push(fileItem);
+                } else {
+                    invalidFiles.push(fileItem);
+                }
+            });
+
+            // Render file list with status
+            listEl.innerHTML = [...validFiles, ...invalidFiles].map(fileItem => `
+                <li class="file-item ${!fileItem.isValid ? 'opacity-50' : ''}">
                     <div class="file-item-left">
                         <i class="fas fa-file-pdf"></i>
                         <div class="file-info">
-                            <div class="file-name">${f.name}</div>
-                            <div class="file-size">${(f.size / 1024 / 1024).toFixed(2)} MB</div>
+                            <div class="file-name">
+                                ${fileItem.isValid ? '✅' : '❌'} ${fileItem.file.name}
+                            </div>
+                            <div class="file-size">
+                                ${fileItem.isValid ? 
+                                    `NO FAKTUR: <strong>${fileItem.noFaktur}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB` : 
+                                    `Error: ${fileItem.error}`
+                                }
+                            </div>
                         </div>
                     </div>
+                    <button class="btn-delete-file" data-index="${fileItem.index}" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        <i class="fas fa-times"></i> Hapus
+                    </button>
                 </li>
             `).join('');
             
+            // Add delete handlers
+            document.querySelectorAll('.btn-delete-file').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.currentTarget.dataset.index);
+                    buktiBayarFilesToUpload.splice(idx, 1);
+                    handleBuktiBayarFileSelect({ files: buktiBayarFilesToUpload });
+                });
+            });
+            
             container.style.display = 'block';
-            uploadBtn.disabled = false;
+            uploadBtn.disabled = validFiles.length === 0;
+        }
+
+        function scanBuktiBayarFile(file) {
+            // Extract NO FAKTUR from filename (format: NO_FAKTUR.pdf)
+            const nameWithoutExt = file.name.replace(/\.pdf$/i, '').trim();
+            
+            // Validate: should be numeric (nomor faktur)
+            const isValid = /^\d+$/.test(nameWithoutExt);
+            
+            if (!isValid) {
+                return {
+                    file,
+                    isValid: false,
+                    error: 'Nama file harus berupa nomor faktur (contoh: 835100310.pdf)'
+                };
+            }
+            
+            return {
+                file,
+                isValid: true,
+                noFaktur: nameWithoutExt
+            };
         }
 
         uploadBtn.addEventListener('click', uploadBuktiBayarPDFs);
 
         async function uploadBuktiBayarPDFs() {
-            if (buktiBayarFilesToUpload.length === 0) {
-                if (window.Toast) Toast.error('Pilih file PDF terlebih dahulu');
+            // Filter only valid files
+            const validFilesToUpload = buktiBayarFilesToUpload.filter(f => {
+                const info = scanBuktiBayarFile(f);
+                return info.isValid;
+            });
+
+            if (validFilesToUpload.length === 0) {
+                if (window.Toast) Toast.error('Tidak ada file valid untuk diupload');
                 return;
             }
 
@@ -374,11 +437,13 @@
             let failCount = 0;
 
             try {
-                for (const file of buktiBayarFilesToUpload) {
+                for (const file of validFilesToUpload) {
                     try {
                         const formData = new FormData();
                         formData.append('file', file);
                         formData.append('type', 'bukti_bayar');
+
+                        console.log(`[Upload Bukti Bayar] Uploading: ${file.name}`);
 
                         const response = await fetch('/api/invoice/upload-document', {
                             method: 'POST',
@@ -390,14 +455,18 @@
 
                         if (response.ok) {
                             successCount++;
+                            const data = await response.json();
+                            console.log(`[Upload Bukti Bayar] Success:`, data);
                             if (window.Toast) Toast.success(`${file.name} berhasil diupload`);
                         } else {
                             failCount++;
                             const err = await response.json();
-                            if (window.Toast) Toast.error(`${file.name}: ${err.error}`);
+                            console.error(`[Upload Bukti Bayar] Error:`, err);
+                            if (window.Toast) Toast.error(`${file.name}: ${err.error || err.message}`);
                         }
                     } catch (err) {
                         failCount++;
+                        console.error(`[Upload Bukti Bayar] Exception:`, err);
                         if (window.Toast) Toast.error(`Error: ${err.message}`);
                     }
                 }
