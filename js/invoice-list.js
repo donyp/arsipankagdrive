@@ -399,8 +399,26 @@ function renderInvoiceTable(invoices = null) {
     const pageData = data.slice(start, end);
     
     tbody.innerHTML = pageData.map(inv => {
-        const statusClass = inv.status === 'UPLOADED' ? 'uploaded' : inv.status === 'MISSING' ? 'missing' : 'pending';
-        const statusText = inv.status === 'UPLOADED' ? 'Lunas' : inv.status === 'MISSING' ? 'MISSING' : 'Belum Lunas';
+        // New status format: X/Y (e.g., 0/3, 1/3, 2/3, 3/3)
+        const filesUploaded = inv.files_uploaded_count || 0;
+        // PPN requires 3 files, NON PPN and GUNGGUNG require 2 files
+        const isPPN = inv.keterangan && inv.keterangan.toUpperCase() === 'PPN';
+        const filesRequired = inv.files_required_count || (isPPN ? 3 : 2);
+        const statusDisplay = `${filesUploaded}/${filesRequired}`;
+        const isComplete = filesUploaded >= filesRequired;
+        
+        // Status color based on progress
+        let statusBgColor, statusClass;
+        if (isComplete) {
+            statusBgColor = '#d4edda'; // Green - complete
+            statusClass = 'uploaded';
+        } else if (filesUploaded > 0) {
+            statusBgColor = '#fff3cd'; // Yellow - partial
+            statusClass = 'partial';
+        } else {
+            statusBgColor = '#f8d7da'; // Red - pending
+            statusClass = 'pending';
+        }
         
         // Format tanggal: 2026-09-02 -> 02/09/2026
         const formattedDate = formatDate(inv.tanggal);
@@ -413,11 +431,46 @@ function renderInvoiceTable(invoices = null) {
         const konsumenText = inv.konsumen || '-';
         const tokoText = inv.toko || '-';
         
+        // Build action buttons HTML
+        let actionButtons = '';
+        
+        // Download buttons for uploaded files
+        const downloadButtons = [];
+        if (inv.invoice_pdf_path) {
+            downloadButtons.push(`<button class="btn-download-small" onclick="downloadInvoiceFile('${inv.faktur}', 'invoice')" title="Download Invoice">📄 INV</button>`);
+        }
+        if (inv.bukti_bayar_path) {
+            downloadButtons.push(`<button class="btn-download-small" onclick="downloadInvoiceFile('${inv.faktur}', 'bukti_bayar')" title="Download Bukti Bayar">💰 BB</button>`);
+        }
+        if (inv.faktur_pajak_path) {
+            downloadButtons.push(`<button class="btn-download-small" onclick="downloadInvoiceFile('${inv.faktur}', 'faktur_pajak')" title="Download Faktur Pajak">📋 FP</button>`);
+        }
+        
+        // Combine button if complete
+        if (isComplete) {
+            actionButtons = `
+                <div style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: center;">
+                    ${downloadButtons.join('')}
+                    <button class="btn-combine" onclick="combinePDF('${inv.faktur}')" title="Combine & Download All">📦 Combine</button>
+                </div>
+            `;
+        } else if (downloadButtons.length > 0) {
+            // Show download buttons only
+            actionButtons = `
+                <div style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: center;">
+                    ${downloadButtons.join('')}
+                </div>
+            `;
+        } else {
+            // Show upload button
+            actionButtons = `<button class="btn-upload-pdf" onclick="openPdfUploadModal('${inv.faktur}')">Upload PDF</button>`;
+        }
+        
         return `
         <tr>
             <td style="font-size: 15px !important; font-weight: 900 !important;">
-                <span style="color: #000000 !important; background-color: ${statusClass === 'uploaded' ? '#d4edda' : statusClass === 'missing' ? '#f8d7da' : '#fff3cd'} !important; padding: 6px 12px !important; border-radius: 4px !important; display: inline-block !important; margin: 0 !important;">
-                    ${statusText}
+                <span style="color: #000000 !important; background-color: ${statusBgColor} !important; padding: 6px 12px !important; border-radius: 4px !important; display: inline-block !important; margin: 0 !important;">
+                    ${statusDisplay}
                 </span>
             </td>
             <td>${formattedDate}</td>
@@ -429,10 +482,7 @@ function renderInvoiceTable(invoices = null) {
             <td>${formatCurrency(inv.total_jumlah_jual)}</td>
             <td>${inv.keterangan || '-'}</td>
             <td>
-                ${inv.status === 'PENDING' ? 
-                    `<button class="btn-upload-pdf" onclick="openPdfUploadModal('${inv.faktur}')">Upload PDF</button>` :
-                    `<span style="color: #27ae60; font-weight: 600;">✓ Uploaded</span>`
-                }
+                ${actionButtons}
             </td>
         </tr>
     `}).join('');
@@ -1425,4 +1475,118 @@ const originalRenderInvoiceTable = window.renderInvoiceTable;
 window.renderInvoiceTable = function(...args) {
     originalRenderInvoiceTable.apply(this, args);
     setTimeout(autoScrollTableForTruncation, 300);
+};
+
+
+// ============================================
+// NEW: Download and Combine Functions
+// ============================================
+
+/**
+ * Download individual file (invoice, bukti_bayar, or faktur_pajak)
+ */
+window.downloadInvoiceFile = async function(faktur, fileType) {
+    try {
+        console.log(`[Download] Downloading ${fileType} for faktur: ${faktur}`);
+        
+        const response = await fetch(`/api/invoice/download-file/${faktur}/${fileType}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${API.getToken()}`
+            }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Download failed');
+        }
+        
+        // Get filename from Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `${faktur}_${fileType}.pdf`;
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+            if (filenameMatch) {
+                filename = filenameMatch[1];
+            }
+        }
+        
+        // Download file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        if (window.Toast) {
+            Toast.success(`File ${filename} berhasil didownload`);
+        }
+        
+        console.log(`[Download] ✅ Downloaded: ${filename}`);
+        
+    } catch (error) {
+        console.error('[Download] Error:', error);
+        if (window.Toast) {
+            Toast.error(`Download failed: ${error.message}`);
+        } else {
+            alert(`Download failed: ${error.message}`);
+        }
+    }
+};
+
+/**
+ * Combine all uploaded PDFs into one and download
+ */
+window.combinePDF = async function(faktur) {
+    try {
+        console.log(`[Combine] Combining PDFs for faktur: ${faktur}`);
+        
+        if (window.Toast) {
+            Toast.info('Combining PDFs... Please wait...');
+        }
+        
+        const response = await fetch(`/api/invoice/combine-pdf/${faktur}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${API.getToken()}`
+            }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Combine failed');
+        }
+        
+        // Get filename from response (should be {faktur}.pdf)
+        const filename = `${faktur}.pdf`;
+        
+        // Download combined file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        if (window.Toast) {
+            Toast.success(`Combined PDF ${filename} berhasil didownload`);
+        }
+        
+        console.log(`[Combine] ✅ Combined and downloaded: ${filename}`);
+        
+    } catch (error) {
+        console.error('[Combine] Error:', error);
+        if (window.Toast) {
+            Toast.error(`Combine failed: ${error.message}`);
+        } else {
+            alert(`Combine failed: ${error.message}`);
+        }
+    }
 };

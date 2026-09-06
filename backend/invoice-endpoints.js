@@ -1132,12 +1132,13 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     remotePath = null;
                 }
                 
-                // Update invoice status in database
+                // Update invoice status in database - use new file tracking columns
                 const { error: updateError } = await supabase
                     .from('invoice_file_list')
                     .update({
-                        status: 'UPLOADED',
-                        uploaded_file_path: remotePath,
+                        invoice_pdf_path: remotePath,
+                        invoice_uploaded_at: new Date().toISOString(),
+                        uploaded_file_path: remotePath, // Keep for backward compatibility
                         uploaded_at: new Date().toISOString(),
                         uploaded_by: req.user.id
                     })
@@ -1231,6 +1232,28 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     });
                 }
 
+                // Update database - track bukti bayar path
+                try {
+                    const { error: updateError } = await supabase
+                        .from('invoice_file_list')
+                        .update({
+                            bukti_bayar_path: uploadResult.path,
+                            bukti_bayar_uploaded_at: new Date().toISOString(),
+                            uploaded_by: req.user.id
+                        })
+                        .eq('faktur', nomorFaktur);
+
+                    if (updateError) {
+                        console.warn(`[Invoice Document] DB update warning for ${nomorFaktur}:`, updateError.message);
+                        // Don't fail if DB update fails - file is uploaded successfully
+                    } else {
+                        console.log(`[Invoice Document] ✅ DB updated for faktur: ${nomorFaktur}`);
+                    }
+                } catch (dbErr) {
+                    console.warn(`[Invoice Document] DB error:`, dbErr.message);
+                    // Continue - file uploaded successfully
+                }
+
                 res.json({
                     success: true,
                     message: 'Dokumen berhasil diupload',
@@ -1284,6 +1307,13 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 }
 
                 const filenameParts = match[1]; // Everything between "tax-" and ".pdf"
+                
+                // Extract faktur/referensi number (first part before space)
+                // Example: "835100310232 SEMESTA GEMILANG 2.393.000" -> "835100310232"
+                const fakturMatch = filenameParts.match(/^(\d+)/);
+                const fakturNumber = fakturMatch ? fakturMatch[1] : null;
+
+                console.log(`[Invoice Faktur Pajak] Extracted faktur: ${fakturNumber}`);
 
                 // Get current date for folder structure
                 const today = new Date();
@@ -1327,12 +1357,39 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     });
                 }
 
+                // Update database - track faktur pajak path
+                if (fakturNumber) {
+                    try {
+                        const { error: updateError } = await supabase
+                            .from('invoice_file_list')
+                            .update({
+                                faktur_pajak_path: uploadResult.path,
+                                faktur_pajak_uploaded_at: new Date().toISOString(),
+                                uploaded_by: req.user.id
+                            })
+                            .eq('faktur', fakturNumber);
+
+                        if (updateError) {
+                            console.warn(`[Invoice Faktur Pajak] DB update warning for ${fakturNumber}:`, updateError.message);
+                            // Don't fail if DB update fails - file is uploaded successfully
+                        } else {
+                            console.log(`[Invoice Faktur Pajak] ✅ DB updated for faktur: ${fakturNumber}`);
+                        }
+                    } catch (dbErr) {
+                        console.warn(`[Invoice Faktur Pajak] DB error:`, dbErr.message);
+                        // Continue - file uploaded successfully
+                    }
+                } else {
+                    console.warn(`[Invoice Faktur Pajak] Could not extract faktur number from filename, DB not updated`);
+                }
+
                 res.json({
                     success: true,
                     message: 'Faktur pajak berhasil diupload',
                     originalName: filename,
                     remotePath: uploadResult.path,
-                    filenameParts: filenameParts
+                    filenameParts: filenameParts,
+                    faktur: fakturNumber
                 });
 
             } catch (error) {
@@ -1340,6 +1397,228 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 res.status(500).json({
                     success: false,
                     error: 'Server error: ' + error.message
+                });
+            }
+        }
+    );
+    
+    // ============================================
+    // GET /api/invoice/download-file/:faktur/:fileType
+    // Download individual file (invoice, bukti_bayar, or faktur_pajak)
+    // ============================================
+    app.get('/api/invoice/download-file/:faktur/:fileType',
+        ...createAuth(['super_admin', 'moderator', 'user']),
+        async (req, res) => {
+            try {
+                const { faktur, fileType } = req.params;
+                
+                console.log(`[Invoice Download] Request for ${fileType} of faktur: ${faktur}`);
+                
+                // Validate fileType
+                const validTypes = ['invoice', 'bukti_bayar', 'faktur_pajak'];
+                if (!validTypes.includes(fileType)) {
+                    return res.status(400).json({ 
+                        error: 'Invalid file type',
+                        validTypes: validTypes
+                    });
+                }
+                
+                // Get invoice data
+                const { data: invoice, error: queryError } = await supabase
+                    .from('invoice_file_list')
+                    .select('*')
+                    .eq('faktur', faktur)
+                    .single();
+                
+                if (queryError || !invoice) {
+                    return res.status(404).json({ error: `Invoice not found: ${faktur}` });
+                }
+                
+                // Get file path based on type
+                let filePath = null;
+                let columnName = null;
+                
+                switch (fileType) {
+                    case 'invoice':
+                        filePath = invoice.invoice_pdf_path;
+                        columnName = 'invoice_pdf_path';
+                        break;
+                    case 'bukti_bayar':
+                        filePath = invoice.bukti_bayar_path;
+                        columnName = 'bukti_bayar_path';
+                        break;
+                    case 'faktur_pajak':
+                        filePath = invoice.faktur_pajak_path;
+                        columnName = 'faktur_pajak_path';
+                        break;
+                }
+                
+                if (!filePath) {
+                    return res.status(404).json({ 
+                        error: `File not uploaded yet`,
+                        fileType: fileType,
+                        faktur: faktur
+                    });
+                }
+                
+                console.log(`[Invoice Download] File path: ${filePath}`);
+                
+                // Download file from Google Drive via rclone
+                try {
+                    const fileBuffer = await RcloneStorage.downloadFile(filePath);
+                    
+                    // Extract filename from path
+                    const filename = filePath.split('/').pop();
+                    
+                    // Set headers for PDF download
+                    res.setHeader('Content-Type', 'application/pdf');
+                    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+                    res.setHeader('Content-Length', fileBuffer.length);
+                    
+                    console.log(`[Invoice Download] ✅ Sending file: ${filename} (${fileBuffer.length} bytes)`);
+                    res.send(fileBuffer);
+                    
+                } catch (downloadErr) {
+                    console.error(`[Invoice Download] Download error:`, downloadErr.message);
+                    return res.status(500).json({
+                        error: 'Failed to download file from storage',
+                        details: downloadErr.message
+                    });
+                }
+                
+            } catch (error) {
+                console.error('[Invoice Download] Error:', error);
+                res.status(500).json({ 
+                    error: 'Server error',
+                    details: error.message
+                });
+            }
+        }
+    );
+    
+    // ============================================
+    // GET /api/invoice/combine-pdf/:faktur
+    // Combine all uploaded files into single PDF
+    // Order: BUKTI BAYAR + INVOICE + FAKTUR PAJAK (for PPN)
+    // Order: BUKTI BAYAR + INVOICE (for NON PPN)
+    // Output filename: {faktur}.pdf
+    // ============================================
+    app.get('/api/invoice/combine-pdf/:faktur',
+        ...createAuth(['super_admin', 'moderator', 'user']),
+        async (req, res) => {
+            try {
+                const { faktur } = req.params;
+                
+                console.log(`[Invoice Combine] Request for faktur: ${faktur}`);
+                
+                // Get invoice data
+                const { data: invoice, error: queryError } = await supabase
+                    .from('invoice_file_list')
+                    .select('*')
+                    .eq('faktur', faktur)
+                    .single();
+                
+                if (queryError || !invoice) {
+                    return res.status(404).json({ error: `Invoice not found: ${faktur}` });
+                }
+                
+                // Check if all required files are uploaded
+                // PPN requires 3 files, NON PPN and GUNGGUNG require 2 files
+                const isPPN = invoice.keterangan && invoice.keterangan.toUpperCase() === 'PPN';
+                const requiredCount = isPPN ? 3 : 2;
+                
+                if (invoice.files_uploaded_count < requiredCount) {
+                    return res.status(400).json({
+                        error: 'Not all required files uploaded',
+                        status: `${invoice.files_uploaded_count}/${requiredCount}`,
+                        missing: []
+                            .concat(!invoice.invoice_pdf_path ? ['invoice'] : [])
+                            .concat(!invoice.bukti_bayar_path ? ['bukti_bayar'] : [])
+                            .concat(isPPN && !invoice.faktur_pajak_path ? ['faktur_pajak'] : [])
+                    });
+                }
+                
+                console.log(`[Invoice Combine] Combining ${requiredCount} files for ${isPPN ? 'PPN' : 'NON PPN'} invoice`);
+                
+                // Download all required files
+                const filesToCombine = [];
+                
+                try {
+                    // Order: BUKTI BAYAR first
+                    if (invoice.bukti_bayar_path) {
+                        console.log(`[Invoice Combine] Downloading bukti bayar...`);
+                        const buffer = await RcloneStorage.downloadFile(invoice.bukti_bayar_path);
+                        filesToCombine.push({ name: 'bukti_bayar', buffer });
+                    }
+                    
+                    // Then INVOICE
+                    if (invoice.invoice_pdf_path) {
+                        console.log(`[Invoice Combine] Downloading invoice...`);
+                        const buffer = await RcloneStorage.downloadFile(invoice.invoice_pdf_path);
+                        filesToCombine.push({ name: 'invoice', buffer });
+                    }
+                    
+                    // Then FAKTUR PAJAK (only for PPN)
+                    if (isPPN && invoice.faktur_pajak_path) {
+                        console.log(`[Invoice Combine] Downloading faktur pajak...`);
+                        const buffer = await RcloneStorage.downloadFile(invoice.faktur_pajak_path);
+                        filesToCombine.push({ name: 'faktur_pajak', buffer });
+                    }
+                    
+                } catch (downloadErr) {
+                    console.error(`[Invoice Combine] Download error:`, downloadErr.message);
+                    return res.status(500).json({
+                        error: 'Failed to download files',
+                        details: downloadErr.message
+                    });
+                }
+                
+                // Combine PDFs using pdf-lib
+                try {
+                    const { PDFDocument } = require('pdf-lib');
+                    
+                    console.log(`[Invoice Combine] Merging ${filesToCombine.length} PDFs...`);
+                    
+                    // Create new PDF document
+                    const mergedPdf = await PDFDocument.create();
+                    
+                    // Add pages from each PDF in order
+                    for (const file of filesToCombine) {
+                        const pdfDoc = await PDFDocument.load(file.buffer);
+                        const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+                        copiedPages.forEach((page) => {
+                            mergedPdf.addPage(page);
+                        });
+                        console.log(`[Invoice Combine] Added ${copiedPages.length} pages from ${file.name}`);
+                    }
+                    
+                    // Save merged PDF
+                    const mergedPdfBytes = await mergedPdf.save();
+                    const mergedBuffer = Buffer.from(mergedPdfBytes);
+                    
+                    console.log(`[Invoice Combine] ✅ Combined PDF created: ${mergedBuffer.length} bytes`);
+                    
+                    // Set headers for download
+                    const outputFilename = `${faktur}.pdf`;
+                    res.setHeader('Content-Type', 'application/pdf');
+                    res.setHeader('Content-Disposition', `attachment; filename="${outputFilename}"`);
+                    res.setHeader('Content-Length', mergedBuffer.length);
+                    
+                    res.send(mergedBuffer);
+                    
+                } catch (combineErr) {
+                    console.error(`[Invoice Combine] Combine error:`, combineErr.message);
+                    return res.status(500).json({
+                        error: 'Failed to combine PDFs',
+                        details: combineErr.message
+                    });
+                }
+                
+            } catch (error) {
+                console.error('[Invoice Combine] Error:', error);
+                res.status(500).json({ 
+                    error: 'Server error',
+                    details: error.message
                 });
             }
         }

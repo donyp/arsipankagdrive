@@ -1724,6 +1724,65 @@ const RcloneStorage = {
                 error: err.message
             };
         }
+    },
+
+    /**
+     * Download file from Google Drive
+     * @param {string} remotePath - Full remote path (e.g., /ARSIPINVOICE/2026/JANUARI/01/PPN/12345.pdf)
+     * @returns {Promise<Buffer>} - File content as buffer
+     */
+    async downloadFile(remotePath) {
+        logOperation('downloadFile', {
+            action: 'Downloading file from Google Drive',
+            operation_type: 'download',
+            remotePath: remotePath
+        });
+
+        try {
+            const remoteFilePath = `${PRIMARY_REMOTE}:${remotePath}`;
+            console.log(`[downloadFile] Downloading: ${remoteFilePath}`);
+
+            // Create temp file to download to
+            const tempFilePath = path.join(TEMP_DIR, `download_${Date.now()}_${path.basename(remotePath)}`);
+
+            try {
+                // Download file using rclone copyto
+                await rcloneExec(['copyto', remoteFilePath, tempFilePath]);
+
+                // Read file into buffer
+                const fileBuffer = fs.readFileSync(tempFilePath);
+                
+                console.log(`[downloadFile] ✅ Downloaded ${fileBuffer.length} bytes`);
+
+                logOperation('downloadFile', {
+                    status: '✅ Download successful',
+                    path: remotePath,
+                    size: fileBuffer.length
+                });
+
+                return fileBuffer;
+
+            } finally {
+                // Clean up temp file
+                try {
+                    if (fs.existsSync(tempFilePath)) {
+                        fs.unlinkSync(tempFilePath);
+                    }
+                } catch (e) {
+                    console.warn(`[downloadFile] Temp file cleanup warning:`, e.message);
+                }
+            }
+
+        } catch (err) {
+            logOperation('downloadFile', {
+                status: '❌ Download failed',
+                error: err.message,
+                path: remotePath
+            });
+            console.error('[RcloneStorage] Download failed:', err);
+
+            throw new Error(`Download failed: ${err.message}`);
+        }
     }
 };
 
