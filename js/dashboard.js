@@ -2665,7 +2665,7 @@ async function loadInvoicesInDashboard(page = 1) {
     }
 }
 
-function renderInvoiceTable(invoices) {
+async function renderInvoiceTable(invoices) {
     const tbody = document.getElementById('invoiceTableBody');
     if (!tbody) {
         console.warn('[RenderTable] invoiceTableBody not found - available elements:');
@@ -2683,14 +2683,103 @@ function renderInvoiceTable(invoices) {
         return;
     }
     
-    // Render skeleton first, then check files async
+    // Show loading overlay while checking files
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2rem; height: 2rem; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d;">Memeriksa ketersediaan file...</span></div></td></tr>';
+    
     const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
     
-    // Render rows with placeholder status
-    tbody.innerHTML = invoices.map(inv => {
+    // Check ALL files FIRST before rendering
+    const invoicesWithFileStatus = await Promise.all(invoices.map(async (inv) => {
+        let actualUploadedCount = 0;
         const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
-        const statusText = `0/${requiredCount}`;
-        const statusStyle = 'background: #f8d7da; color: #000000;'; // Red placeholder
+        const buttons = [];
+        
+        // Check invoice file
+        let invoiceExists = false;
+        if (inv.invoice_pdf_path) {
+            try {
+                const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.exists) {
+                        actualUploadedCount++;
+                        invoiceExists = true;
+                        buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄</button>`);
+                    }
+                }
+            } catch (e) {
+                console.error('[CheckButtons] Error checking invoice:', e);
+            }
+        }
+        
+        // Check bukti bayar
+        let buktiExists = false;
+        if (inv.bukti_bayar_path) {
+            try {
+                const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.exists) {
+                        actualUploadedCount++;
+                        buktiExists = true;
+                        buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰</button>`);
+                    }
+                }
+            } catch (e) {
+                console.error('[CheckButtons] Error checking bukti bayar:', e);
+            }
+        }
+        
+        // Check faktur pajak (if PPN)
+        let fakturExists = false;
+        if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
+            try {
+                const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.exists) {
+                        actualUploadedCount++;
+                        fakturExists = true;
+                        buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋</button>`);
+                    }
+                }
+            } catch (e) {
+                console.error('[CheckButtons] Error checking faktur pajak:', e);
+            }
+        }
+        
+        return {
+            ...inv,
+            actualUploadedCount,
+            requiredCount,
+            buttons,
+            isComplete: actualUploadedCount === requiredCount
+        };
+    }));
+    
+    console.log('[RenderTable] File checks complete, rendering final table...');
+    
+    // Render rows with placeholder status
+    tbody.innerHTML = invoicesWithFileStatus.map(inv => {
+        const requiredCount = inv.requiredCount;
+        const actualUploadedCount = inv.actualUploadedCount;
+        const statusText = `${actualUploadedCount}/${requiredCount}`;
+        
+        // Color based on actual file count
+        let statusStyle = 'background: #fff3cd; color: #000000;'; // Yellow
+        if (actualUploadedCount === requiredCount) {
+            statusStyle = 'background: #d4edda; color: #000000;'; // Green
+        } else if (actualUploadedCount === 0) {
+            statusStyle = 'background: #f8d7da; color: #000000;'; // Red
+        } else if (actualUploadedCount === requiredCount - 1) {
+            statusStyle = 'background: #ffe8cc; color: #000000;'; // Orange
+        }
         
         // Format date dd/mm/yy
         let formattedDate = inv.tanggal || '-';
@@ -2713,13 +2802,13 @@ function renderInvoiceTable(invoices) {
         return `
             <tr style="transition: background 0.2s; border-bottom: 2px solid #34495e;" data-faktur="${inv.faktur}">
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">
-                    <span style="display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}" data-status="${inv.faktur}">
+                    <span style="display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
                         ${statusText}
                     </span>
-                    <div style="margin-top: 4px; display: flex; gap: 3px; flex-wrap: wrap; justify-content: center;" data-buttons="${inv.faktur}">
+                    <div style="margin-top: 4px; display: flex; gap: 3px; flex-wrap: wrap; justify-content: center;">
+                        ${inv.buttons.join('')}
                     </div>
-                    <div style="margin-top: 4px;" data-combine="${inv.faktur}">
-                    </div>
+                    ${inv.isComplete ? `<div style="margin-top: 4px;"><button onclick="combinePDF('${inv.faktur}')" style="background: #e67e22; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s; width: 100%;" title="Combine PDF">📦 Combine</button></div>` : ''}
                 </td>
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${formattedDate}</td>
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur || '-'}</strong></td>
@@ -2744,112 +2833,10 @@ function renderInvoiceTable(invoices) {
             </tr>
         `}).join('');
         
-        console.log('[RenderTable] Skeleton rendered, checking files async...');
-        
-        // Now check files asynchronously for each invoice
-        invoices.forEach(inv => {
-            checkAndUpdateInvoiceButtons(inv, token);
-        });
-        
-        console.log('[RenderTable] ✅ Rendered successfully');
+        console.log('[RenderTable] ✅ Rendered successfully with file checks complete');
 }
 
-// Check file existence and update buttons dynamically
-async function checkAndUpdateInvoiceButtons(inv, token) {
-    let actualUploadedCount = 0;
-    const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
-    const buttons = [];
-    
-    // Check invoice file
-    if (inv.invoice_pdf_path) {
-        try {
-            const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                console.log(`[CheckButtons] ${inv.faktur} - invoice exists: ${data.exists}`);
-                if (data.exists) {
-                    actualUploadedCount++;
-                    buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄</button>`);
-                }
-            }
-        } catch (e) {
-            console.error('[CheckButtons] Error checking invoice:', e);
-        }
-    }
-    
-    // Check bukti bayar
-    if (inv.bukti_bayar_path) {
-        try {
-            const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                console.log(`[CheckButtons] ${inv.faktur} - bukti bayar exists: ${data.exists}`);
-                if (data.exists) {
-                    actualUploadedCount++;
-                    buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰</button>`);
-                }
-            }
-        } catch (e) {
-            console.error('[CheckButtons] Error checking bukti bayar:', e);
-        }
-    }
-    
-    // Check faktur pajak (if PPN)
-    if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
-        try {
-            const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                console.log(`[CheckButtons] ${inv.faktur} - faktur pajak exists: ${data.exists}`);
-                if (data.exists) {
-                    actualUploadedCount++;
-                    buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋</button>`);
-                }
-            }
-        } catch (e) {
-            console.error('[CheckButtons] Error checking faktur pajak:', e);
-        }
-    }
-    
-    console.log(`[CheckButtons] ${inv.faktur} - Final count: ${actualUploadedCount}/${requiredCount}`);
-    
-    // Update buttons container
-    const buttonsContainer = document.querySelector(`[data-buttons="${inv.faktur}"]`);
-    if (buttonsContainer) {
-        buttonsContainer.innerHTML = buttons.join(''); // Empty if no buttons
-    }
-    
-    // Update combine button
-    const combineContainer = document.querySelector(`[data-combine="${inv.faktur}"]`);
-    if (combineContainer && actualUploadedCount === requiredCount) {
-        combineContainer.innerHTML = `<button onclick="combinePDF('${inv.faktur}')" style="background: #e67e22; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s; width: 100%;" title="Combine PDF">📦 Combine</button>`;
-    }
-    
-    // Update status badge
-    const statusBadge = document.querySelector(`[data-status="${inv.faktur}"]`);
-    if (statusBadge) {
-        const statusText = `${actualUploadedCount}/${requiredCount}`;
-        const isComplete = actualUploadedCount === requiredCount;
-        
-        let statusStyle = 'background: #fff3cd; color: #000000;'; // Default yellow
-        if (isComplete) {
-            statusStyle = 'background: #d4edda; color: #000000;'; // Green
-        } else if (actualUploadedCount === 0) {
-            statusStyle = 'background: #f8d7da; color: #000000;'; // Red
-        } else if (actualUploadedCount === requiredCount - 1) {
-            statusStyle = 'background: #ffe8cc; color: #000000;'; // Orange
-        }
-        
-        statusBadge.textContent = statusText;
-        statusBadge.style.cssText = `display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}`;
-    }
-}
+// Removed checkAndUpdateInvoiceButtons - now checking happens before render
 
 function formatCurrency(value) {
     if (!value) return 'Rp 0';
