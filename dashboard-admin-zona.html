@@ -713,20 +713,96 @@
                 return;
             }
 
+            // Show loading overlay while checking files
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2rem; height: 2rem; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d;">Memeriksa ketersediaan file...</span></div></td></tr>';
+
             const token = API.getToken() || localStorage.getItem('jwt_token');
             
-            // Render rows with file checks inline
-            tbody.innerHTML = invoices.map(inv => {
+            // Check ALL files FIRST before rendering
+            const invoicesWithFileStatus = await Promise.all(invoices.map(async (inv) => {
+                let actualUploadedCount = 0;
                 const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
-                const statusDisplay = `0/${requiredCount}`;
-                const statusColor = 'bg-red-100 text-red-800';
+                const buttons = [];
+                
+                // Check invoice file
+                if (inv.invoice_pdf_path) {
+                    try {
+                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const data = await res.json();
+                        if (data.exists) {
+                            actualUploadedCount++;
+                            buttons.push('<button onclick="downloadInvoiceFile(this, \'' + inv.faktur + '\', \'invoice\')" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄 INV</button>');
+                        }
+                    } catch (e) {
+                        console.error('[CheckButtons] Error checking invoice:', e);
+                    }
+                }
+                
+                // Check bukti bayar
+                if (inv.bukti_bayar_path) {
+                    try {
+                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const data = await res.json();
+                        if (data.exists) {
+                            actualUploadedCount++;
+                            buttons.push('<button onclick="downloadInvoiceFile(this, \'' + inv.faktur + '\', \'bukti_bayar\')" style="background: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰 BB</button>');
+                        }
+                    } catch (e) {
+                        console.error('[CheckButtons] Error checking bukti bayar:', e);
+                    }
+                }
+                
+                // Check faktur pajak (if PPN)
+                if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
+                    try {
+                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const data = await res.json();
+                        if (data.exists) {
+                            actualUploadedCount++;
+                            buttons.push('<button onclick="downloadInvoiceFile(this, \'' + inv.faktur + '\', \'faktur_pajak\')" style="background: #9b59b6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋 FP</button>');
+                        }
+                    } catch (e) {
+                        console.error('[CheckButtons] Error checking faktur pajak:', e);
+                    }
+                }
+                
+                return {
+                    ...inv,
+                    actualUploadedCount,
+                    requiredCount,
+                    buttons,
+                    isComplete: actualUploadedCount === requiredCount
+                };
+            }));
+            
+            console.log('[RenderInvoices] File checks complete, rendering final table...');
+            
+            // Render rows with final button state
+            tbody.innerHTML = invoicesWithFileStatus.map(inv => {
+                const statusDisplay = `${inv.actualUploadedCount}/${inv.requiredCount}`;
+                
+                // Color based on actual file count
+                let statusColor = 'bg-yellow-100 text-yellow-800';
+                if (inv.actualUploadedCount === inv.requiredCount) {
+                    statusColor = 'bg-green-100 text-green-800';
+                } else if (inv.actualUploadedCount === 0) {
+                    statusColor = 'bg-red-100 text-red-800';
+                } else if (inv.actualUploadedCount === inv.requiredCount - 1) {
+                    statusColor = 'bg-orange-100 text-orange-800';
+                }
                 
                 return `
-                <tr style="border-bottom: 2px solid #34495e;" data-faktur="${inv.faktur}" data-ppn="${inv.keterangan === 'PPN'}">
+                <tr style="border-bottom: 2px solid #34495e;">
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${new Date(inv.tanggal).toLocaleDateString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur}</strong></td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColor}" data-status-badge="${inv.faktur}">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColor}">
                             ${statusDisplay}
                         </span>
                     </td>
@@ -735,16 +811,15 @@
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
-                        <div style="display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap;" data-buttons-container="${inv.faktur}">
+                        <div style="display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                            ${inv.buttons.join('')}
                         </div>
+                        ${inv.isComplete ? '<div style="margin-top: 4px;"><button onclick="combinePDF(\'' + inv.faktur + '\')" style="background: #e67e22; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s; width: 100%;" title="Combine PDF">📦 Combine</button></div>' : ''}
                     </td>
                 </tr>
             `; }).join('');
             
-            // Now check files asynchronously and update buttons dynamically
-            for (const inv of invoices) {
-                checkAndRenderButtons(inv, token);
-            }
+            console.log('[RenderInvoices] ✅ Rendered successfully with file checks complete');
         }
 
         async function checkAndRenderButtons(inv, token) {
@@ -881,11 +956,27 @@
         // Download individual invoice files
         async function downloadInvoiceFile(btn, faktur, fileType) {
             try {
-                // Show loading state on button
-                const originalHTML = btn.innerHTML;
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-                btn.style.opacity = '0.7';
+                // Define colors for each file type
+                const fileTypeColors = {
+                    'invoice': { bg: '#3498db', icon: '📄', text: 'Invoice' },
+                    'bukti_bayar': { bg: '#27ae60', icon: '💰', text: 'Bukti Bayar' },
+                    'faktur_pajak': { bg: '#9b59b6', icon: '📋', text: 'Faktur Pajak' }
+                };
+                
+                const colorConfig = fileTypeColors[fileType] || { bg: '#95a5a6', icon: '📁', text: 'File' };
+                
+                // Show colorful popup loading
+                Swal.fire({
+                    title: `${colorConfig.icon} Mengunduh ${colorConfig.text}`,
+                    html: '<div style="margin: 20px 0;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i></div><p style="color: #7f8c8d; margin-top: 10px;">Mohon tunggu...</p>',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    background: colorConfig.bg,
+                    color: '#ffffff',
+                    customClass: {
+                        popup: 'colored-download-popup'
+                    }
+                });
                 
                 const token = localStorage.getItem('access_token');
                 
@@ -895,13 +986,19 @@
                 });
                 
                 if (!checkRes.ok) {
+                    Swal.close();
                     throw new Error('File not found or unable to check');
                 }
                 
                 const checkData = await checkRes.json();
                 
                 if (!checkData.exists) {
-                    alert(`File ${fileType} tidak ditemukan di server. File mungkin telah dihapus.`);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'File Tidak Ditemukan',
+                        text: `File ${colorConfig.text} tidak ditemukan di server. File mungkin telah dihapus.`,
+                        confirmButtonColor: '#e74c3c'
+                    });
                     // Refresh the table to hide the button
                     loadInvoices();
                     return;
@@ -912,6 +1009,7 @@
                 });
                 
                 if (!response.ok) {
+                    Swal.close();
                     const error = await response.json();
                     throw new Error(error.error || 'Download failed');
                 }
@@ -935,18 +1033,22 @@
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
                 
-                // Restore button state
-                btn.disabled = false;
-                btn.innerHTML = originalHTML;
-                btn.style.opacity = '1';
+                // Close loading and show success
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: `${colorConfig.text} berhasil diunduh`,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
             } catch (error) {
                 console.error('Download error:', error);
-                alert(`Error downloading file: ${error.message}`);
-                
-                // Restore button state on error
-                btn.disabled = false;
-                btn.innerHTML = originalHTML;
-                btn.style.opacity = '1';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Mengunduh',
+                    text: error.message,
+                    confirmButtonColor: '#e74c3c'
+                });
             }
         }
 
