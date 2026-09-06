@@ -2834,6 +2834,9 @@ async function renderInvoiceTable(invoices) {
         `}).join('');
         
         console.log('[RenderTable] ✅ Rendered successfully with file checks complete');
+        
+        // Update stats based on actual file existence
+        updateInvoiceStatsFromData(invoicesWithFileStatus, invoiceTotalCount);
 }
 
 // Removed checkAndUpdateInvoiceButtons - now checking happens before render
@@ -3117,16 +3120,16 @@ function updateInvoiceStatsFromData(invoices, totalCount) {
     console.log('[StatsFromData] ===== UPDATING STATS =====');
     console.log('[StatsFromData] Invoices:', invoices.length, 'Total count:', totalCount);
     
-    // Count statuses from loaded data
-    // Map status to payment status for display
-    // Let's use tipe_ppn or status to determine lunas/belum lunas
+    // Count statuses based on ACTUAL file existence (isComplete flag)
+    // isComplete is set after checking if all required files exist on remote storage
     const lunasCount = invoices.filter(r => {
-        // Lunas = UPLOADED or paid status
-        return r.status === 'UPLOADED' || r.payment_status === 'LUNAS';
+        // Lunas = all required files exist (isComplete = true)
+        return r.isComplete === true;
     }).length;
+    
     const belumLunasCount = invoices.filter(r => {
-        // Belum Lunas = PENDING or unpaid status
-        return r.status === 'PENDING' || r.payment_status === 'BELUM_LUNAS';
+        // Belum Lunas = not all files exist yet
+        return r.isComplete !== true;
     }).length;
     
     let finalLunasCount = lunasCount;
