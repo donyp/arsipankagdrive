@@ -96,6 +96,22 @@
     <script src="js/auth.js"></script>
     <script src="js/sidebar.js?v=ULTRACLEAN_2026"></script>
     <script>
+        // Initialize page on load
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Check auth and require moderator/super_admin role
+                const user = await initAuth(['super_admin', 'moderator']);
+                if (!user) {
+                    console.error('[Upload Faktur Pajak] User not authenticated or lacking permissions');
+                    return;
+                }
+                console.log('[Upload Faktur Pajak] User authenticated:', user.username);
+            } catch (error) {
+                console.error('[Upload Faktur Pajak] Init error:', error);
+            }
+        });
+    </script>
+    <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobile-overlay');
