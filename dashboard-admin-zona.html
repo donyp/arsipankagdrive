@@ -736,7 +736,6 @@
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
                         <div style="display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap;" data-buttons-container="${inv.faktur}">
-                            <span style="color: #95a5a6; font-size: 12px;">Checking...</span>
                         </div>
                     </td>
                 </tr>
@@ -815,7 +814,7 @@
             // Update buttons container
             const container = document.querySelector(`[data-buttons-container="${inv.faktur}"]`);
             if (container) {
-                container.innerHTML = buttons.length > 0 ? buttons.join('') : '<span style="color: #95a5a6; font-size: 12px;">No files</span>';
+                container.innerHTML = buttons.join(''); // Empty if no buttons
             }
             
             // Update status badge

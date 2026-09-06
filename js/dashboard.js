@@ -2717,7 +2717,6 @@ function renderInvoiceTable(invoices) {
                         ${statusText}
                     </span>
                     <div style="margin-top: 4px; display: flex; gap: 3px; flex-wrap: wrap; justify-content: center;" data-buttons="${inv.faktur}">
-                        <span style="color: #95a5a6; font-size: 10px;">Checking...</span>
                     </div>
                     <div style="margin-top: 4px;" data-combine="${inv.faktur}">
                     </div>
@@ -2823,7 +2822,7 @@ async function checkAndUpdateInvoiceButtons(inv, token) {
     // Update buttons container
     const buttonsContainer = document.querySelector(`[data-buttons="${inv.faktur}"]`);
     if (buttonsContainer) {
-        buttonsContainer.innerHTML = buttons.length > 0 ? buttons.join('') : '<span style="color: #95a5a6; font-size: 10px;">No files</span>';
+        buttonsContainer.innerHTML = buttons.join(''); // Empty if no buttons
     }
     
     // Update combine button
