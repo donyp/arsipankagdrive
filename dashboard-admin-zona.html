@@ -805,6 +805,25 @@
         async function downloadInvoiceFile(faktur, fileType) {
             try {
                 const token = localStorage.getItem('access_token');
+                
+                // Check if file exists first
+                const checkRes = await fetch(`${API_BASE}/api/invoice/check-file/${faktur}/${fileType}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!checkRes.ok) {
+                    throw new Error('File not found or unable to check');
+                }
+                
+                const checkData = await checkRes.json();
+                
+                if (!checkData.exists) {
+                    alert(`File ${fileType} tidak ditemukan di server. File mungkin telah dihapus.`);
+                    // Refresh the table to hide the button
+                    loadInvoices();
+                    return;
+                }
+                
                 const response = await fetch(`${API_BASE}/api/invoice/download-file/${faktur}/${fileType}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });

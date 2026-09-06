@@ -1000,6 +1000,82 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     );
 
     // ============================================
+    // GET /api/invoice/check-file/:faktur/:fileType
+    // Check if file exists on remote storage
+    // fileType: 'invoice', 'bukti_bayar', or 'faktur_pajak'
+    // ============================================
+    app.get('/api/invoice/check-file/:faktur/:fileType',
+        createAuth(['super_admin', 'moderator', 'user']),
+        async (req, res) => {
+            try {
+                const { faktur, fileType } = req.params;
+                
+                if (!faktur || !fileType) {
+                    return res.status(400).json({ error: 'Faktur and fileType are required' });
+                }
+                
+                // Validate fileType
+                const validTypes = ['invoice', 'bukti_bayar', 'faktur_pajak'];
+                if (!validTypes.includes(fileType)) {
+                    return res.status(400).json({ 
+                        error: 'Invalid file type',
+                        validTypes: validTypes
+                    });
+                }
+                
+                // Get invoice data
+                const { data: invoice, error: queryError } = await supabase
+                    .from('invoice_file_list')
+                    .select('invoice_pdf_path, bukti_bayar_path, faktur_pajak_path')
+                    .eq('faktur', faktur)
+                    .single();
+                
+                if (queryError || !invoice) {
+                    return res.status(404).json({ error: `Invoice not found: ${faktur}` });
+                }
+                
+                // Get file path based on type
+                let filePath = null;
+                
+                switch (fileType) {
+                    case 'invoice':
+                        filePath = invoice.invoice_pdf_path;
+                        break;
+                    case 'bukti_bayar':
+                        filePath = invoice.bukti_bayar_path;
+                        break;
+                    case 'faktur_pajak':
+                        filePath = invoice.faktur_pajak_path;
+                        break;
+                }
+                
+                // Check if file exists
+                let fileExists = false;
+                if (filePath) {
+                    try {
+                        fileExists = await RcloneStorage.checkFileExists(filePath);
+                        console.log(`[Invoice Check File] File ${fileType} for ${faktur}: ${fileExists ? 'EXISTS' : 'NOT FOUND'}`);
+                    } catch (checkErr) {
+                        console.warn(`[Invoice Check File] Error checking file:`, checkErr.message);
+                        fileExists = false;
+                    }
+                }
+                
+                res.json({
+                    exists: fileExists,
+                    faktur: faktur,
+                    fileType: fileType,
+                    filePath: filePath
+                });
+                
+            } catch (error) {
+                console.error('[Invoice API] Check file error:', error);
+                res.status(500).json({ error: 'Server error' });
+            }
+        }
+    );
+
+    // ============================================
     // DELETE /api/invoice/clear-test-data
     // Clear all test invoice data (for development/testing only)
     // ============================================
