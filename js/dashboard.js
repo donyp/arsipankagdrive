@@ -2684,11 +2684,12 @@ function renderInvoiceTable(invoices) {
     }
     
     tbody.innerHTML = invoices.map(inv => {
-        const statusClass = inv.status === 'UPLOADED' ? 'uploaded' : inv.status === 'MISSING' ? 'missing' : 'pending';
-        const statusText = inv.status === 'UPLOADED' ? 'Lunas' : inv.status === 'MISSING' ? 'MISSING' : 'Belum Lunas';
-        const statusStyle = statusClass === 'uploaded' ? 'background: #d4edda; color: #000000;' : 
-                           statusClass === 'pending' ? 'background: #fff3cd; color: #000000;' : 
-                           'background: #f8d7da; color: #000000;';
+        // Display X/Y status format instead of Lunas/Belum Lunas
+        const uploadedCount = inv.files_uploaded_count || 0;
+        const requiredCount = inv.files_required_count || (inv.keterangan === 'PPN' ? 3 : 2);
+        const statusText = `${uploadedCount}/${requiredCount}`;
+        const isComplete = uploadedCount === requiredCount;
+        const statusStyle = isComplete ? 'background: #d4edda; color: #000000;' : 'background: #fff3cd; color: #000000;';
         
         // Format date dd/mm/yy
         let formattedDate = inv.tanggal || '-';
@@ -2714,6 +2715,12 @@ function renderInvoiceTable(invoices) {
                 <span style="display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
                     ${statusText}
                 </span>
+                <div style="margin-top: 4px; display: flex; gap: 3px; flex-wrap: wrap; justify-content: center;">
+                    ${inv.invoice_pdf_path ? `<button onclick="downloadInvoiceFile('${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap;" title="Download Invoice">📄</button>` : ''}
+                    ${inv.bukti_bayar_path ? `<button onclick="downloadInvoiceFile('${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap;" title="Download Bukti Bayar">💰</button>` : ''}
+                    ${inv.faktur_pajak_path && inv.keterangan === 'PPN' ? `<button onclick="downloadInvoiceFile('${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap;" title="Download Faktur Pajak">📋</button>` : ''}
+                    ${isComplete ? `<button onclick="combinePDF('${inv.faktur}')" style="background: #e67e22; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap;" title="Combine PDF">📦</button>` : ''}
+                </div>
             </td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${formattedDate}</td>
             <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur || '-'}</strong></td>
@@ -2744,6 +2751,71 @@ function renderInvoiceTable(invoices) {
 function formatCurrency(value) {
     if (!value) return 'Rp 0';
     return 'Rp ' + parseInt(value).toLocaleString('id-ID');
+}
+
+// Download individual invoice files
+async function downloadInvoiceFile(faktur, fileType) {
+    try {
+        const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+        const response = await fetch(`${API_BASE}/api/invoice/download-file/${faktur}/${fileType}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Download failed');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        // Get filename from Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `${faktur}_${fileType}.pdf`;
+        if (contentDisposition) {
+            const matches = /filename="([^"]*)"/.exec(contentDisposition);
+            if (matches) filename = matches[1];
+        }
+        
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Download error:', error);
+        alert(`Error downloading file: ${error.message}`);
+    }
+}
+
+// Combine PDFs into single file
+async function combinePDF(faktur) {
+    try {
+        const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+        const response = await fetch(`${API_BASE}/api/invoice/combine-pdf/${faktur}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Combine failed');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${faktur}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Combine error:', error);
+        alert(`Error combining PDFs: ${error.message}`);
+    }
 }
 
 // Load unique filter values from database
