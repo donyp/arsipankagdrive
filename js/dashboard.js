@@ -2683,83 +2683,136 @@ function renderInvoiceTable(invoices) {
         return;
     }
     
-    tbody.innerHTML = invoices.map(inv => {
-        // Display X/Y status format instead of Lunas/Belum Lunas
-        const uploadedCount = inv.files_uploaded_count || 0;
-        const requiredCount = inv.files_required_count || (inv.keterangan === 'PPN' ? 3 : 2);
-        const statusText = `${uploadedCount}/${requiredCount}`;
-        const isComplete = uploadedCount === requiredCount;
-        
-        // Different color for each status
-        let statusStyle = 'background: #fff3cd; color: #000000;'; // Default yellow for incomplete
-        
-        if (isComplete) {
-            // Complete: Green
-            statusStyle = 'background: #d4edda; color: #000000;';
-        } else if (uploadedCount === 0) {
-            // 0/2 or 0/3: Red
-            statusStyle = 'background: #f8d7da; color: #000000;';
-        } else if (uploadedCount === requiredCount - 1) {
-            // Almost complete (1/2 or 2/3): Orange/Amber
-            statusStyle = 'background: #ffe8cc; color: #000000;';
-        }
-        // else: Yellow (partial upload) - default
-        
-        // Format date dd/mm/yy
-        let formattedDate = inv.tanggal || '-';
-        if (inv.tanggal && inv.tanggal.includes('-')) {
-            const parts = inv.tanggal.split('-');
-            if (parts.length === 3) {
-                formattedDate = `${parts[2]}/${parts[1]}/${parts[0].slice(-2)}`;
-            }
-        }
-        
-        // Capitalize first letter of tipe
-        const tipe = inv.jenis_transaksi ? inv.jenis_transaksi.charAt(0).toUpperCase() + inv.jenis_transaksi.slice(1).toLowerCase() : '-';
-        
-        // Auto-adjust font size for long text
-        const konsumenText = inv.konsumen || '-';
-        const tokoText = inv.toko || '-';
-        const konsumenFontSize = konsumenText.length > 25 ? '11px' : '14px';
-        const tokoFontSize = tokoText.length > 20 ? '11px' : '14px';
-        
-        return `
-        <tr style="transition: background 0.2s; border-bottom: 2px solid #34495e;">
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">
-                <span style="display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
-                    ${statusText}
-                </span>
-                <div style="margin-top: 4px; display: flex; gap: 3px; flex-wrap: wrap; justify-content: center;">
-                    ${inv.invoice_pdf_path ? `<button onclick="downloadInvoiceFile('${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap;" title="Download Invoice">📄</button>` : ''}
-                    ${inv.bukti_bayar_path ? `<button onclick="downloadInvoiceFile('${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap;" title="Download Bukti Bayar">💰</button>` : ''}
-                    ${inv.faktur_pajak_path && inv.keterangan === 'PPN' ? `<button onclick="downloadInvoiceFile('${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap;" title="Download Faktur Pajak">📋</button>` : ''}
-                    ${isComplete ? `<button onclick="combinePDF('${inv.faktur}')" style="background: #e67e22; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap;" title="Combine PDF">📦</button>` : ''}
-                </div>
-            </td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${formattedDate}</td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur || '-'}</strong></td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.metode_bayar || '-'}</td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${tipe}</td>
-            <td style="padding: 15px 12px; font-size: ${konsumenFontSize}; color: #2c3e50; vertical-align: middle;">${konsumenText}</td>
-            <td style="padding: 15px 12px; font-size: ${tokoFontSize}; color: #2c3e50; vertical-align: middle;">${tokoText}</td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${formatCurrency(inv.total_jumlah_jual)}</td>
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
-            ${(currentUser?.role === 'super_admin' || currentUser?.role === 'moderator') ? `
-            <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
-                <button onclick="toggleActionMenu(event, '${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 18px; padding: 0;" title="Aksi">
-                    ⋮
-                </button>
-                <div id="menu-${inv.id}" class="action-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100; min-width: 120px;">
-                    <button onclick="deleteInvoice('${inv.faktur}', '${inv.id}')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #e74c3c; font-size: 13px; hover:background: #f5f5f5;">
-                        <i class="fas fa-trash"></i> Hapus
-                    </button>
-                </div>
-            </td>
-            ` : ''}
-        </tr>
-    `}).join('');
+    // Check file existence for each invoice
+    const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
     
-    console.log('[RenderTable] ✅ Rendered successfully');
+    Promise.all(invoices.map(async (inv) => {
+        let actualUploadedCount = 0;
+        let requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
+        
+        // Check invoice file
+        if (inv.invoice_pdf_path) {
+            try {
+                const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.exists) actualUploadedCount++;
+                }
+            } catch (e) {}
+        }
+        
+        // Check bukti bayar
+        if (inv.bukti_bayar_path) {
+            try {
+                const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.exists) actualUploadedCount++;
+                }
+            } catch (e) {}
+        }
+        
+        // Check faktur pajak (if PPN)
+        if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
+            try {
+                const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.exists) actualUploadedCount++;
+                }
+            } catch (e) {}
+        }
+        
+        return {
+            ...inv,
+            actualUploadedCount,
+            requiredCount
+        };
+    })).then(invoicesWithFileCheck => {
+        tbody.innerHTML = invoicesWithFileCheck.map(inv => {
+            // Display X/Y status format based on actual file existence
+            const uploadedCount = inv.actualUploadedCount;
+            const requiredCount = inv.requiredCount;
+            const statusText = `${uploadedCount}/${requiredCount}`;
+            const isComplete = uploadedCount === requiredCount;
+            
+            // Different color for each status
+            let statusStyle = 'background: #fff3cd; color: #000000;'; // Default yellow for incomplete
+            
+            if (isComplete) {
+                // Complete: Green
+                statusStyle = 'background: #d4edda; color: #000000;';
+            } else if (uploadedCount === 0) {
+                // 0/2 or 0/3: Red
+                statusStyle = 'background: #f8d7da; color: #000000;';
+            } else if (uploadedCount === requiredCount - 1) {
+                // Almost complete (1/2 or 2/3): Orange/Amber
+                statusStyle = 'background: #ffe8cc; color: #000000;';
+            }
+            // else: Yellow (partial upload) - default
+            
+            // Format date dd/mm/yy
+            let formattedDate = inv.tanggal || '-';
+            if (inv.tanggal && inv.tanggal.includes('-')) {
+                const parts = inv.tanggal.split('-');
+                if (parts.length === 3) {
+                    formattedDate = `${parts[2]}/${parts[1]}/${parts[0].slice(-2)}`;
+                }
+            }
+            
+            // Capitalize first letter of tipe
+            const tipe = inv.jenis_transaksi ? inv.jenis_transaksi.charAt(0).toUpperCase() + inv.jenis_transaksi.slice(1).toLowerCase() : '-';
+            
+            // Auto-adjust font size for long text
+            const konsumenText = inv.konsumen || '-';
+            const tokoText = inv.toko || '-';
+            const konsumenFontSize = konsumenText.length > 25 ? '11px' : '14px';
+            const tokoFontSize = tokoText.length > 20 ? '11px' : '14px';
+            
+            return `
+            <tr style="transition: background 0.2s; border-bottom: 2px solid #34495e;">
+                <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">
+                    <span style="display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
+                        ${statusText}
+                    </span>
+                    <div style="margin-top: 4px; display: flex; gap: 3px; flex-wrap: wrap; justify-content: center;">
+                        ${inv.invoice_pdf_path ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄</button>` : ''}
+                        ${inv.bukti_bayar_path ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰</button>` : ''}
+                        ${inv.faktur_pajak_path && inv.keterangan === 'PPN' ? `<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋</button>` : ''}
+                        ${isComplete ? `<button onclick="combinePDF('${inv.faktur}')" style="background: #e67e22; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Combine PDF">📦</button>` : ''}
+                    </div>
+                </td>
+                <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${formattedDate}</td>
+                <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur || '-'}</strong></td>
+                <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.metode_bayar || '-'}</td>
+                <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${tipe}</td>
+                <td style="padding: 15px 12px; font-size: ${konsumenFontSize}; color: #2c3e50; vertical-align: middle;">${konsumenText}</td>
+                <td style="padding: 15px 12px; font-size: ${tokoFontSize}; color: #2c3e50; vertical-align: middle;">${tokoText}</td>
+                <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${formatCurrency(inv.total_jumlah_jual)}</td>
+                <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
+                ${(currentUser?.role === 'super_admin' || currentUser?.role === 'moderator') ? `
+                <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
+                    <button onclick="toggleActionMenu(event, '${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 18px; padding: 0;" title="Aksi">
+                        ⋮
+                    </button>
+                    <div id="menu-${inv.id}" class="action-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100; min-width: 120px;">
+                        <button onclick="deleteInvoice('${inv.faktur}', '${inv.id}')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #e74c3c; font-size: 13px; hover:background: #f5f5f5;">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                </td>
+                ` : ''}
+            </tr>
+        `}).join('');
+        
+        console.log('[RenderTable] ✅ Rendered successfully');
+    });
 }
 
 function formatCurrency(value) {
@@ -2768,9 +2821,34 @@ function formatCurrency(value) {
 }
 
 // Download individual invoice files
-async function downloadInvoiceFile(faktur, fileType) {
+async function downloadInvoiceFile(btn, faktur, fileType) {
     try {
+        // Show loading state on button
+        const originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.style.opacity = '0.7';
+        
         const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+        
+        // Check if file exists first
+        const checkRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/${fileType}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!checkRes.ok) {
+            throw new Error('File not found or unable to check');
+        }
+        
+        const checkData = await checkRes.json();
+        
+        if (!checkData.exists) {
+            alert(`File ${fileType} tidak ditemukan di server. File mungkin telah dihapus.`);
+            // Refresh table
+            await loadInvoicesInDashboard();
+            return;
+        }
+        
         const response = await fetch(`${CONFIG.API_URL}/api/invoice/download-file/${faktur}/${fileType}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -2798,9 +2876,19 @@ async function downloadInvoiceFile(faktur, fileType) {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+        
+        // Restore button state
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        btn.style.opacity = '1';
     } catch (error) {
         console.error('Download error:', error);
         alert(`Error downloading file: ${error.message}`);
+        
+        // Restore button state on error
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        btn.style.opacity = '1';
     }
 }
 
