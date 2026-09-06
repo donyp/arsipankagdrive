@@ -2846,11 +2846,27 @@ function formatCurrency(value) {
 // Download individual invoice files
 async function downloadInvoiceFile(btn, faktur, fileType) {
     try {
-        // Show loading state on button
-        const originalHTML = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-        btn.style.opacity = '0.7';
+        // Define colors for each file type
+        const fileTypeColors = {
+            'invoice': { bg: '#3498db', icon: '📄', text: 'Invoice' },
+            'bukti_bayar': { bg: '#27ae60', icon: '💰', text: 'Bukti Bayar' },
+            'faktur_pajak': { bg: '#9b59b6', icon: '📋', text: 'Faktur Pajak' }
+        };
+        
+        const colorConfig = fileTypeColors[fileType] || { bg: '#95a5a6', icon: '📁', text: 'File' };
+        
+        // Show colorful popup loading
+        Swal.fire({
+            title: `${colorConfig.icon} Mengunduh ${colorConfig.text}`,
+            html: '<div style="margin: 20px 0;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i></div><p style="color: #7f8c8d; margin-top: 10px;">Mohon tunggu...</p>',
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            background: colorConfig.bg,
+            color: '#ffffff',
+            customClass: {
+                popup: 'colored-download-popup'
+            }
+        });
         
         const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
         
@@ -2860,13 +2876,19 @@ async function downloadInvoiceFile(btn, faktur, fileType) {
         });
         
         if (!checkRes.ok) {
+            Swal.close();
             throw new Error('File not found or unable to check');
         }
         
         const checkData = await checkRes.json();
         
         if (!checkData.exists) {
-            alert(`File ${fileType} tidak ditemukan di server. File mungkin telah dihapus.`);
+            Swal.fire({
+                icon: 'error',
+                title: 'File Tidak Ditemukan',
+                text: `File ${colorConfig.text} tidak ditemukan di server. File mungkin telah dihapus.`,
+                confirmButtonColor: '#e74c3c'
+            });
             // Refresh table
             await loadInvoicesInDashboard();
             return;
@@ -2877,6 +2899,7 @@ async function downloadInvoiceFile(btn, faktur, fileType) {
         });
         
         if (!response.ok) {
+            Swal.close();
             const error = await response.json();
             throw new Error(error.error || 'Download failed');
         }
@@ -2900,18 +2923,22 @@ async function downloadInvoiceFile(btn, faktur, fileType) {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
         
-        // Restore button state
-        btn.disabled = false;
-        btn.innerHTML = originalHTML;
-        btn.style.opacity = '1';
+        // Close loading and show success
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: `${colorConfig.text} berhasil diunduh`,
+            timer: 1500,
+            showConfirmButton: false
+        });
     } catch (error) {
         console.error('Download error:', error);
-        alert(`Error downloading file: ${error.message}`);
-        
-        // Restore button state on error
-        btn.disabled = false;
-        btn.innerHTML = originalHTML;
-        btn.style.opacity = '1';
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal Mengunduh',
+            text: error.message,
+            confirmButtonColor: '#e74c3c'
+        });
     }
 }
 
