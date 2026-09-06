@@ -727,49 +727,58 @@
                 // Check invoice file
                 if (inv.invoice_pdf_path) {
                     try {
-                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/invoice`, {
+                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
                         if (res.ok) {
                             const data = await res.json();
+                            console.log(`[RenderInvoices] Invoice file check: exists=${data.exists}`);
                             if (data.exists) {
                                 actualUploadedCount++;
                                 invoiceExists = true;
                             }
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error('[RenderInvoices] Error checking invoice file:', e);
+                    }
                 }
                 
                 // Check bukti bayar
                 if (inv.bukti_bayar_path) {
                     try {
-                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/bukti_bayar`, {
+                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
                         if (res.ok) {
                             const data = await res.json();
+                            console.log(`[RenderInvoices] Bukti bayar file check: exists=${data.exists}`);
                             if (data.exists) {
                                 actualUploadedCount++;
                                 buktiExists = true;
                             }
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error('[RenderInvoices] Error checking bukti bayar file:', e);
+                    }
                 }
                 
                 // Check faktur pajak (if PPN)
                 if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
                     try {
-                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/faktur_pajak`, {
+                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
                         if (res.ok) {
                             const data = await res.json();
+                            console.log(`[RenderInvoices] Faktur pajak file check: exists=${data.exists}`);
                             if (data.exists) {
                                 actualUploadedCount++;
                                 fakturExists = true;
                             }
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error('[RenderInvoices] Error checking faktur pajak file:', e);
+                    }
                 }
                 
                 return {
@@ -782,10 +791,14 @@
                 };
             }));
 
+            console.log('[RenderInvoices] File checks complete, rendering table');
+
             tbody.innerHTML = invoicesWithFileCheck.map(inv => {
                 const uploadedCount = inv.actualUploadedCount;
                 const requiredCount = inv.requiredCount;
                 const statusDisplay = `${uploadedCount}/${requiredCount}`;
+                
+                console.log(`[RenderInvoices] ${inv.faktur}: invoice=${inv.invoiceExists}, bukti=${inv.buktiExists}, faktur=${inv.fakturExists}, count=${uploadedCount}/${requiredCount}`);
                 
                 // Different color for each status
                 let statusColor = 'bg-yellow-100 text-yellow-800'; // Default yellow for partial
@@ -825,6 +838,8 @@
                     </td>
                 </tr>
             `; }).join('');
+            
+            console.log('[RenderInvoices] ✅ Table rendered successfully');
         }
 
         function updatePagination() {
