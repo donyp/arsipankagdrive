@@ -714,9 +714,11 @@
             }
 
             tbody.innerHTML = invoices.map(inv => {
-                // Map status values
-                const statusDisplay = inv.status === 'Lunas' ? 'Lunas' : 'Belum Lunas';
-                const statusColor = inv.status === 'Lunas' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                // Display X/Y status format
+                const uploadedCount = inv.files_uploaded_count || 0;
+                const requiredCount = inv.files_required_count || (inv.keterangan === 'PPN' ? 3 : 2);
+                const statusDisplay = `${uploadedCount}/${requiredCount}`;
+                const statusColor = (uploadedCount === requiredCount) ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
                 
                 return `
                 <tr style="border-bottom: 2px solid #34495e;">
@@ -732,13 +734,11 @@
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
-                        <button onclick="toggleActionMenu(event, '${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 18px; padding: 0;" title="Aksi">
-                            ⋮
-                        </button>
-                        <div id="menu-${inv.id}" class="action-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100; min-width: 120px;">
-                            <button onclick="deleteInvoice('${inv.faktur}', '${inv.id}')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #e74c3c; font-size: 13px;">
-                                <i class="fas fa-trash"></i> Hapus
-                            </button>
+                        <div style="display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                            ${inv.invoice_pdf_path ? `<button onclick="downloadInvoiceFile('${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;" title="Download Invoice">📄 INV</button>` : ''}
+                            ${inv.bukti_bayar_path ? `<button onclick="downloadInvoiceFile('${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;" title="Download Bukti Bayar">💰 BB</button>` : ''}
+                            ${inv.faktur_pajak_path && inv.keterangan === 'PPN' ? `<button onclick="downloadInvoiceFile('${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;" title="Download Faktur Pajak">📋 FP</button>` : ''}
+                            ${uploadedCount === requiredCount ? `<button onclick="combinePDF('${inv.faktur}')" style="background: #e67e22; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;" title="Combine PDF">📦 Combine</button>` : ''}
                         </div>
                     </td>
                 </tr>
@@ -784,6 +784,71 @@
             if (currentPage < totalPages) {
                 currentPage++;
                 loadInvoices();
+            }
+        }
+
+        // Download individual invoice files
+        async function downloadInvoiceFile(faktur, fileType) {
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`${API_BASE}/api/invoice/download-file/${faktur}/${fileType}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Download failed');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // Get filename from Content-Disposition header
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = `${faktur}_${fileType}.pdf`;
+                if (contentDisposition) {
+                    const matches = /filename="([^"]*)"/.exec(contentDisposition);
+                    if (matches) filename = matches[1];
+                }
+                
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Download error:', error);
+                alert(`Error downloading file: ${error.message}`);
+            }
+        }
+
+        // Combine PDFs into single file
+        async function combinePDF(faktur) {
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`${API_BASE}/api/invoice/combine-pdf/${faktur}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Combine failed');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${faktur}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Combine error:', error);
+                alert(`Error combining PDFs: ${error.message}`);
             }
         }
 
