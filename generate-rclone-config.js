@@ -76,26 +76,58 @@ if (process.env.GDRIVE_CONFIG_JSON) {
         const gdriveConfig = JSON.parse(process.env.GDRIVE_CONFIG_JSON);
         rcloneConfig += '\n[gdrive]\n';
         Object.entries(gdriveConfig).forEach(([key, value]) => {
-            rcloneConfig += `${key} = ${value}\n`;
+            if (key === 'token') {
+                // Don't log full token, just confirm it exists
+                rcloneConfig += `token = ${JSON.stringify(value)}\n`;
+                console.log('[RcloneConfig] ✅ Token field added');
+            } else {
+                rcloneConfig += `${key} = ${typeof value === 'string' ? value : JSON.stringify(value)}\n`;
+                console.log(`[RcloneConfig] ✅ Config field: ${key} = ${typeof value === 'string' ? value : '[object]'}`);
+            }
         });
         console.log('[RcloneConfig] ✅ Google Drive configuration added from GDRIVE_CONFIG_JSON');
+        console.log('[RcloneConfig] use_team_drive present:', gdriveConfig.use_team_drive === true);
+        console.log('[RcloneConfig] team_drive ID:', gdriveConfig.team_drive);
     } catch (err) {
         console.warn('[RcloneConfig] ⚠️  Failed to parse GDRIVE_CONFIG_JSON:', err.message);
     }
+} else {
+    console.warn('[RcloneConfig] ⚠️  GDRIVE_CONFIG_JSON not set - Google Drive upload will fail!');
 }
 
-// Write to file - Railway default location
-// Ensure directory exists
-const configDir = path.join(process.env.HOME || '/root', '.config', 'rclone');
+// Write to file
+// In Railway: write to /app/rclone.conf (as expected by rclone_wrapper.js)
+// In local dev: write to ~/.config/rclone/rclone.conf
+const configPath = process.env.RCLONE_CONFIG 
+    || (process.env.RAILWAY_ENVIRONMENT ? '/app/rclone.conf' : path.join(process.env.HOME || '/root', '.config', 'rclone', 'rclone.conf'));
+
+const configDir = path.dirname(configPath);
 if (!fs.existsSync(configDir)) {
     fs.mkdirSync(configDir, { recursive: true });
 }
 
-const configPath = path.join(configDir, 'rclone.conf');
 fs.writeFileSync(configPath, rcloneConfig, 'utf8');
 
 console.log('[RcloneConfig] Generated rclone.conf from environment variables');
 console.log(`[RcloneConfig] Config written to: ${configPath}`);
+console.log(`[RcloneConfig] Railway environment: ${process.env.RAILWAY_ENVIRONMENT || 'no'}`);
+console.log(`[RcloneConfig] HOME: ${process.env.HOME || '/root'}`);
+// Write to file
+// In Railway: write to /app/rclone.conf (as expected by rclone_wrapper.js)
+// In local dev: write to ~/.config/rclone/rclone.conf
+const configPath = process.env.RCLONE_CONFIG 
+    || (process.env.RAILWAY_ENVIRONMENT ? '/app/rclone.conf' : path.join(process.env.HOME || '/root', '.config', 'rclone', 'rclone.conf'));
+
+const configDir = path.dirname(configPath);
+if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+}
+
+fs.writeFileSync(configPath, rcloneConfig, 'utf8');
+
+console.log('[RcloneConfig] Generated rclone.conf from environment variables');
+console.log(`[RcloneConfig] Config written to: ${configPath}`);
+console.log(`[RcloneConfig] Railway environment: ${process.env.RAILWAY_ENVIRONMENT || 'no'}`);
 console.log(`[RcloneConfig] HOME: ${process.env.HOME || '/root'}`);
 if (process.env.GDRIVE_CONFIG_JSON) {
     console.log('[RcloneConfig] ✅ GDRIVE_CONFIG_JSON found and processed');
@@ -106,3 +138,57 @@ console.log(`[RcloneConfig] Terabox (Alist) URL: ${config.terabox_url}`);
 console.log(`[RcloneConfig] Terabox Direct URL: ${config.terabox_direct_url}`);
 console.log(`[RcloneConfig] Terabox Direct User: ${config.terabox_direct_user}`);
 console.log(`[RcloneConfig] Storj Endpoint: ${config.storj_endpoint}`);
+
+// Export functions for use in server.js
+function generateRcloneConfig() {
+    // Already done above - this function is called by server.js to initialize config
+    console.log('[RcloneConfig] generateRcloneConfig called - config already generated on module load');
+}
+
+function verifyRcloneConfig() {
+    const configPath = process.env.RCLONE_CONFIG 
+        || (process.env.RAILWAY_ENVIRONMENT ? '/app/rclone.conf' : path.join(process.env.HOME || '/root', '.config', 'rclone', 'rclone.conf'));
+    
+    try {
+        if (!fs.existsSync(configPath)) {
+            console.error(`[RcloneConfig] ❌ Config file not found: ${configPath}`);
+            return false;
+        }
+        
+        const configContent = fs.readFileSync(configPath, 'utf8');
+        
+        // Check for gdrive section
+        if (!configContent.includes('[gdrive]')) {
+            console.error('[RcloneConfig] ❌ Google Drive section [gdrive] not found in config');
+            return false;
+        }
+        
+        // Check for token
+        if (!configContent.includes('token')) {
+            console.error('[RcloneConfig] ❌ Token not found in gdrive section');
+            return false;
+        }
+        
+        // Check for use_team_drive setting (required for shared drive uploads)
+        if (!configContent.includes('use_team_drive')) {
+            console.warn('[RcloneConfig] ⚠️  use_team_drive not set in config - uploads may go to My Drive instead of Shared Drive');
+        } else if (configContent.includes('use_team_drive = true')) {
+            console.log('[RcloneConfig] ✅ use_team_drive = true found in config');
+        }
+        
+        // Check for team_drive setting (for explicit shared drive ID)
+        if (!configContent.includes('team_drive')) {
+            console.warn('[RcloneConfig] ⚠️  team_drive ID not set - may not upload to correct shared drive');
+        } else {
+            console.log('[RcloneConfig] ✅ team_drive ID found in config');
+        }
+        
+        console.log('[RcloneConfig] ✅ Config verification passed');
+        return true;
+    } catch (err) {
+        console.error('[RcloneConfig] ❌ Config verification failed:', err.message);
+        return false;
+    }
+}
+
+module.exports = { generateRcloneConfig, verifyRcloneConfig };
