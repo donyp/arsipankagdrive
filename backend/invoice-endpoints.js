@@ -1183,7 +1183,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // ============================================
     // POST /api/invoice/upload-document
     // Upload Bukti Bayar with filename format: NO_FAKTUR.pdf
-    // Path: /ARSIPINVOICE/TAHUN/BULAN/TANGGAL/BUKTIBAYAR/
+    // Path: /ARSIPINVOICE/ARSIPINVOICE/TAHUN/BULAN/TANGGAL/BUKTIBAYAR/
     // ============================================
     app.post('/api/invoice/upload-document',
         ...createAuth(['super_admin', 'moderator']),
@@ -1218,7 +1218,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 // For bukti_bayar: filename stays as nomor faktur
                 const finalFilename = `${nomorFaktur}.pdf`;
 
-                console.log(`[Invoice Document] Path: /ARSIPINVOICE/${year}/${monthName}/${day}/BUKTIBAYAR/${finalFilename}`);
+                console.log(`[Invoice Document] Path: /ARSIPINVOICE/ARSIPINVOICE/${year}/${monthName}/${day}/BUKTIBAYAR/${finalFilename}`);
 
                 // Upload to Google Drive
                 let uploadResult = null;
@@ -1291,7 +1291,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // Upload Faktur Pajak - filename detection only
     // Filename must match format: tax-REFERENSI NAMA NOMINAL.pdf
     // Example: tax-835100310232 SEMESTA GEMILANG CILEGON 2.393.000.pdf
-    // Path: /ARSIPINVOICE/TAHUN/BULAN/TANGGAL/FAKTURPAJAK/
+    // Path: /ARSIPINVOICE/ARSIPINVOICE/TAHUN/BULAN/TANGGAL/FAKTURPAJAK/
     // ============================================
     app.post('/api/invoice/upload-faktur-pajak',
         ...createAuth(['super_admin', 'moderator']),
@@ -1343,7 +1343,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 // Keep filename as-is (already in correct format)
                 const finalFilename = filename;
 
-                console.log(`[Invoice Faktur Pajak] Path: /ARSIPINVOICE/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`);
+                console.log(`[Invoice Faktur Pajak] Path: /ARSIPINVOICE/ARSIPINVOICE/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`);
 
                 // Upload to Google Drive
                 let uploadResult = null;
