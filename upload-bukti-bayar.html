@@ -388,7 +388,7 @@
                     }
                     
                     return `
-                        <li class="file-item ${!fileItem.isValid ? 'opacity-50' : ''}">
+                        <li class="file-item">
                             <div class="file-item-left">
                                 <i class="fas fa-file-pdf"></i>
                                 <div class="file-info">
@@ -492,9 +492,9 @@
                             if (window.Toast) Toast.success(`${file.name} berhasil diupload`);
                         } else {
                             failCount++;
-                            const err = await response.json();
-                            console.error(`[Upload Bukti Bayar] Error:`, err);
-                            if (window.Toast) Toast.error(`${file.name}: ${err.error || err.message}`);
+                            const err = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+                            console.error(`[Upload Bukti Bayar] Error (${response.status}):`, err);
+                            if (window.Toast) Toast.error(`${file.name}: ${err.error || err.message || 'Upload gagal'}`);
                         }
                     } catch (err) {
                         failCount++;

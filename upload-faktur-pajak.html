@@ -379,7 +379,7 @@
 
             // Render file list with status
             listEl.innerHTML = [...validFiles, ...invalidFiles].map(fileItem => `
-                <li class="file-item ${!fileItem.isValid ? 'opacity-50' : ''}">
+                <li class="file-item">
                     <div class="file-item-left">
                         <i class="fas fa-file-pdf"></i>
                         <div class="file-info">
@@ -423,7 +423,7 @@
                 return {
                     file,
                     isValid: false,
-                    error: 'Format: tax-NOMOR NAMA NOMINAL.pdf'
+                    error: 'ERROR: Format Nama File Tidak Sesuai - Gunakan format: tax-NOMOR NAMA NOMINAL.pdf'
                 };
             }
 
@@ -435,7 +435,7 @@
                 return {
                     file,
                     isValid: false,
-                    error: 'Format nama tidak valid. Harus: tax-NOMOR NAMA NOMINAL.pdf'
+                    error: 'ERROR: Format Nama File Tidak Sesuai - Harus: tax-NOMOR NAMA NOMINAL.pdf'
                 };
             }
 
