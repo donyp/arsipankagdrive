@@ -10,7 +10,8 @@
     <link rel="stylesheet" href="css/style.css">
     <script src="js/zoom-reset.js"></script>
     <script>
-        document.documentElement.style.opacity = '0';
+        // Set initial state - show content while loading
+        document.documentElement.style.opacity = '1';
         document.documentElement.classList.add('auth-loading');
     </script>
 </head>
@@ -88,11 +89,11 @@
         </div>
     </main>
 
-    <script src="js/sidebar.js?v=ULTRACLEAN_2026"></script>
     <script src="js/config.js"></script>
     <script src="js/supabase.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/sidebar.js?v=ULTRACLEAN_2026"></script>
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
