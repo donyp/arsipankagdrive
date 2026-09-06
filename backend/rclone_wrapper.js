@@ -1631,7 +1631,7 @@ const RcloneStorage = {
                 error: err.message
             };
         }
-    }
+    },
 
     /**
      * Upload document file (Bukti Bayar atau Faktur Pajak)
