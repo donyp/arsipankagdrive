@@ -2851,7 +2851,6 @@ async function checkAndUpdateInvoiceButtons(inv, token) {
         statusBadge.style.cssText = `display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}`;
     }
 }
-}
 
 function formatCurrency(value) {
     if (!value) return 'Rp 0';
