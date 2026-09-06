@@ -389,7 +389,7 @@
                             <div class="file-size">
                                 ${fileItem.isValid ? 
                                     `NO: <strong>${fileItem.noInvoice}</strong> | NAMA: <strong>${fileItem.nama}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB` : 
-                                    `Error: ${fileItem.error}`
+                                    `${fileItem.error}`
                                 }
                             </div>
                         </div>
@@ -400,10 +400,11 @@
                 </li>
             `).join('');
             
-            // Add delete handlers
-            document.querySelectorAll('.btn-delete-file').forEach(btn => {
+            // Add delete handlers to this list specifically
+            listEl.querySelectorAll('.btn-delete-file').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const idx = parseInt(e.currentTarget.dataset.index);
+                    e.preventDefault();
+                    const idx = parseInt(btn.dataset.index);
                     fakturPajakFilesToUpload.splice(idx, 1);
                     handleFakturPajakFileSelect({ files: fakturPajakFilesToUpload });
                 });

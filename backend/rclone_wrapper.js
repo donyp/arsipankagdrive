@@ -36,6 +36,7 @@ const errorLogger = new StorageErrorLogger({
 const createdDirsCache = new Set();
 const syncQueuePath = process.env.SYNC_QUEUE_PATH || path.resolve(__dirname, '..', 'data', 'storage-sync-queue.json');
 const syncStatusPath = process.env.SYNC_STATUS_PATH || path.resolve(__dirname, '..', 'data', 'storage-sync-status.json');
+const TEMP_DIR = process.env.TMPDIR || process.env.TEMP || '/tmp';
 let syncQueueWorkerStarted = false;
 let syncQueueWorkerRunning = false;
 

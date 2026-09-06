@@ -409,10 +409,11 @@
                 
                 listEl.innerHTML = renderedItems.join('');
                 
-                // Add delete handlers
-                document.querySelectorAll('.btn-delete-file').forEach(btn => {
+                // Add delete handlers to this list specifically
+                listEl.querySelectorAll('.btn-delete-file').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        const idx = parseInt(e.currentTarget.dataset.index);
+                        e.preventDefault();
+                        const idx = parseInt(btn.dataset.index);
                         buktiBayarFilesToUpload.splice(idx, 1);
                         handleBuktiBayarFileSelect({ files: buktiBayarFilesToUpload });
                     });
@@ -492,9 +493,15 @@
                             if (window.Toast) Toast.success(`${file.name} berhasil diupload`);
                         } else {
                             failCount++;
-                            const err = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
-                            console.error(`[Upload Bukti Bayar] Error (${response.status}):`, err);
-                            if (window.Toast) Toast.error(`${file.name}: ${err.error || err.message || 'Upload gagal'}`);
+                            let errorMsg = `HTTP ${response.status}`;
+                            try {
+                                const err = await response.json();
+                                errorMsg = err.error || err.message || errorMsg;
+                            } catch (parseErr) {
+                                console.log('[Upload Bukti Bayar] Could not parse error response');
+                            }
+                            console.error(`[Upload Bukti Bayar] Error (${response.status}):`, errorMsg);
+                            if (window.Toast) Toast.error(`${file.name}: ${errorMsg}`);
                         }
                     } catch (err) {
                         failCount++;
