@@ -247,10 +247,18 @@ body {
     width: 100% !important;
 }
 
+#sidebar {
+    height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
 .sidebar {
     transition: width 0.3s ease, transform 0.3s ease;
     background: var(--surface-2);
     border-right: 1px solid var(--border);
+    height: 100vh !important;
+    overflow-y: auto !important;
 }
 
 .sidebar-link {

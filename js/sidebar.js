@@ -176,7 +176,7 @@
                 </div>
             </div>
 
-            <nav class="flex-1 py-4 space-y-0.5 overflow-y-auto custom-scrollbar" style="overflow-y: auto; overflow-x: hidden;">
+            <nav class="flex-1 py-4 space-y-0.5 overflow-y-auto custom-scrollbar" style="flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0;">
                 ${navHTML}
             </nav>
         `;
