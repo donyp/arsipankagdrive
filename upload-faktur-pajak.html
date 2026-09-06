@@ -145,9 +145,9 @@
 
         .drop-zone {
             border: 2px dashed #a855f7;
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 80px 40px;
-            min-height: 320px;
+            min-height: 300px;
             text-align: center;
             cursor: pointer;
             background: #faf5ff;
@@ -161,11 +161,7 @@
             box-sizing: border-box;
         }
 
-        .drop-zone:hover {
-            border-color: #9333ea;
-            background: #f3e8ff;
-        }
-
+        .drop-zone:hover,
         .drop-zone.dragover {
             border-color: #9333ea;
             background: #f3e8ff;
@@ -175,19 +171,19 @@
             font-size: 64px;
             color: #a855f7;
             margin-bottom: 15px;
-        }
+            display: block;
         }
 
         .drop-zone p {
-            margin: 15px 0;
-            font-weight: bold;
+            margin: 0 0 15px 0;
+            font-weight: 600;
             color: #1f2937;
-            font-size: 16px;
+            font-size: 18px;
         }
 
         .drop-zone small {
+            font-size: 14px;
             color: #6b7280;
-            font-size: 13px;
         }
 
         .file-list {
