@@ -28,9 +28,11 @@ COPY *.md ./
 COPY backend ./backend
 COPY start.sh ./
 COPY generate-rclone-config.js ./
+COPY rclone.conf ./
 
-# Rclone config will be generated at runtime from environment variables
-# No need to copy rclone.conf (it's in .gitignore anyway)
+# Rclone config file (token will be set via environment variables at runtime)
+# Ensure rclone config is readable
+RUN chmod 600 /app/rclone.conf 2>/dev/null || true
 
 # Ensure scripts are executable
 RUN chmod +x /app/start.sh

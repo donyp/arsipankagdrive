@@ -20,8 +20,12 @@ chmod -R 777 /app/data /app/backend/tmp
 export PORT=${PORT:-7860}
 export NODE_ENV=production
 
+# Set RCLONE_CONFIG to point to /app/rclone.conf for Railway and Cloud Run
+export RCLONE_CONFIG=${RCLONE_CONFIG:-/app/rclone.conf}
+
 echo "[INIT] PORT is set to: $PORT"
 echo "[INIT] NODE_ENV is set to: $NODE_ENV"
+echo "[INIT] RCLONE_CONFIG is set to: $RCLONE_CONFIG"
 
 # Generate rclone.conf from environment variables
 echo "[INIT] Generating rclone.conf from environment variables..."

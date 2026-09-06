@@ -266,14 +266,22 @@ const configPath = process.env.RCLONE_CONFIG || path.resolve(__dirname, '..', 'r
  */
 function rcloneExec(args, timeoutMs = 30000) {
     return new Promise((resolve, reject) => {
-        // In Railway: use default rclone config location (~/.config/rclone/rclone.conf)
+        // In Railway: use explicit config path from env var
         // In local dev: use ./rclone.conf if it has token, otherwise use system config
         let finalArgs = args;
         
         if (process.env.NODE_ENV === 'production' && process.env.RAILWAY_ENVIRONMENT) {
-            // Railway: use default rclone config (already authenticated)
-            console.log('[Rclone Exec] Railway environment - using system rclone config');
-            finalArgs = args;
+            // Railway: use explicit config path from environment
+            // Rclone config should be set via RCLONE_CONFIG env var in Railway
+            const railwayConfigPath = process.env.RCLONE_CONFIG || configPath;
+            console.log('[Rclone Exec] Railway environment - using config:', railwayConfigPath);
+            
+            // Always pass --config for Railway to ensure it uses the right config
+            if (railwayConfigPath && !args.includes('--config')) {
+                finalArgs = ['--config', railwayConfigPath, ...args];
+            } else {
+                finalArgs = args;
+            }
         } else {
             // Local dev: try to use ./rclone.conf if it has token
             try {
@@ -320,11 +328,16 @@ function rcloneExec(args, timeoutMs = 30000) {
 }
 
 function rcloneSpawn(args) {
-    // In Railway: use default config, in local: try to use ./rclone.conf if it has token
+    // In Railway: use explicit config path, in local: try to use ./rclone.conf if it has token
     let finalArgs = args;
     
     if (process.env.NODE_ENV === 'production' && process.env.RAILWAY_ENVIRONMENT) {
-        finalArgs = args;
+        const railwayConfigPath = process.env.RCLONE_CONFIG || configPath;
+        if (railwayConfigPath && !args.includes('--config')) {
+            finalArgs = ['--config', railwayConfigPath, ...args];
+        } else {
+            finalArgs = args;
+        }
     } else {
         try {
             const configContent = require('fs').readFileSync(configPath, 'utf8');
