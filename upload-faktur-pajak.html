@@ -388,7 +388,7 @@
                             </div>
                             <div class="file-size">
                                 ${fileItem.isValid ? 
-                                    `NO: <strong>${fileItem.noInvoice}</strong> | Nominal: <strong>${fileItem.nominal}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB` : 
+                                    `NO: <strong>${fileItem.noInvoice}</strong> | NAMA: <strong>${fileItem.nama}</strong> | ${(fileItem.file.size / 1024 / 1024).toFixed(2)} MB` : 
                                     `Error: ${fileItem.error}`
                                 }
                             </div>
@@ -423,12 +423,13 @@
                 return {
                     file,
                     isValid: false,
-                    error: 'Format: tax-NOMOR NAMA NOMINAL.pdf (contoh: tax-835100310232 SEMESTA GEMILANG 2.393.000.pdf)'
+                    error: 'Format: tax-NOMOR NAMA NOMINAL.pdf'
                 };
             }
 
             const filenameParts = match[1];
-            const invoiceMatch = filenameParts.match(/^(\d+)\s+(.+)\s+([\d.]+)$/);
+            // More lenient regex: just check if it starts with digits
+            const invoiceMatch = filenameParts.match(/^(\d+)\s+(.+)$/);
 
             if (!invoiceMatch) {
                 return {
@@ -438,14 +439,14 @@
                 };
             }
 
-            const [, noInvoice, nama, nominal] = invoiceMatch;
+            const noInvoice = invoiceMatch[1];
+            const rest = invoiceMatch[2];
 
             return {
                 file,
                 isValid: true,
                 noInvoice,
-                nama,
-                nominal
+                nama: rest
             };
         }
 
