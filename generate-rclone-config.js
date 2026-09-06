@@ -82,17 +82,20 @@ if (process.env.GDRIVE_CONFIG_JSON) {
             
             if (key === 'token') {
                 // Token must be written as a single-line JSON object
-                // JSON.stringify() produces proper JSON without embedded newlines
                 configValue = JSON.stringify(value);
                 console.log('[RcloneConfig] ✅ Token JSON object written');
             } else if (typeof value === 'boolean') {
                 // Rclone uses 'true'/'false' for booleans
                 configValue = value ? 'true' : 'false';
                 console.log(`[RcloneConfig] ✅ ${key} = ${configValue}`);
-            } else if (typeof value === 'string') {
-                // String values written as-is
+            } else if (typeof value === 'string' && value.length > 0) {
+                // String values written as-is (skip empty strings)
                 configValue = value;
                 console.log(`[RcloneConfig] ✅ ${key} = ${value}`);
+            } else if (typeof value === 'string' && value.length === 0) {
+                // Skip empty strings - don't write them
+                console.log(`[RcloneConfig] ⚠️  Skipping empty value for: ${key}`);
+                return; // Skip this iteration
             } else {
                 // Fallback for other types
                 configValue = String(value);
@@ -105,7 +108,15 @@ if (process.env.GDRIVE_CONFIG_JSON) {
         
         console.log('[RcloneConfig] ✅ Google Drive configuration added from GDRIVE_CONFIG_JSON');
         console.log('[RcloneConfig] use_team_drive:', gdriveConfig.use_team_drive === true ? '✓ true' : '✗ not set');
-        console.log('[RcloneConfig] team_drive ID:', gdriveConfig.team_drive || '(not set)');
+        console.log('[RcloneConfig] team_drive ID:', gdriveConfig.team_drive || '⚠️  (EMPTY - will upload to My Drive!)');
+        
+        // IMPORTANT: Verify critical settings
+        if (!gdriveConfig.use_team_drive || gdriveConfig.use_team_drive !== true) {
+            console.error('[RcloneConfig] ❌ ERROR: use_team_drive must be true!');
+        }
+        if (!gdriveConfig.team_drive || gdriveConfig.team_drive.length === 0) {
+            console.error('[RcloneConfig] ❌ ERROR: team_drive ID is empty! Files will upload to My Drive, not Shared Drive!');
+        }
     } catch (err) {
         console.warn('[RcloneConfig] ⚠️  Failed to parse GDRIVE_CONFIG_JSON:', err.message);
     }
