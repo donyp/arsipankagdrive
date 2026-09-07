@@ -537,14 +537,9 @@
                     console.error('[AdminZona] Error loading all invoices:', err);
                 }
                 
-                // Load filtered data
-                console.log('[AdminZona] Starting loadInvoices...');
-                try {
-                    await loadInvoices();
-                    console.log('[AdminZona] loadInvoices completed');
-                } catch (err) {
-                    console.error('[AdminZona] Error loading invoices:', err);
-                }
+                // DO NOT auto-load filtered data here - wait for user to filter tahun/bulan first
+                // Data will be loaded when user clicks "Terapkan Filter" button
+                console.log('[AdminZona] ✅ Filters populated (waiting for user to filter)');
             } catch (err) {
                 console.error('[AdminZona] Init error:', err);
                 // Still show the page even if there's an error
