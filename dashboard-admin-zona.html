@@ -457,10 +457,28 @@
             }
             
             invoiceBackgroundScanStarted = true;
-            console.log('[AdminZonaBackgroundScan] ⏳ Starting background scan of all invoices...');
+            console.log('[AdminZonaBackgroundScan] ⏳ Starting filtered scan based on user selection...');
             
             try {
-                const response = await fetch('/api/invoice/list?limit=10000&offset=0', {
+                const year = document.getElementById('filterYear')?.value || '';
+                const month = document.getElementById('filterMonth')?.value || '';
+                
+                const params = new URLSearchParams();
+                if (year && month) {
+                    const dateFromValue = `${year}-${String(month).padStart(2, '0')}-01`;
+                    const dateToObj = new Date(parseInt(year), parseInt(month), 0);
+                    const dateToValue = `${year}-${String(month).padStart(2, '0')}-${dateToObj.getDate()}`;
+                    params.append('date_from', dateFromValue);
+                    params.append('date_to', dateToValue);
+                } else if (year) {
+                    params.append('date_from', `${year}-01-01`);
+                    params.append('date_to', `${year}-12-31`);
+                }
+                
+                params.append('limit', 10000);
+                params.append('offset', 0);
+                
+                const response = await fetch(`/api/invoice/list?${params.toString()}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${API.getToken() || localStorage.getItem('jwt_token')}`
@@ -472,7 +490,7 @@
                 }
                 
                 const result = await response.json();
-                console.log('[AdminZonaBackgroundScan] ✅ Scanning complete - found', result.count || 0, 'invoices');
+                console.log('[AdminZonaBackgroundScan] ✅ Scanning complete - found', result.count || 0, 'invoices matching filter');
                 
             } catch (error) {
                 console.warn('[AdminZonaBackgroundScan] Error during scan:', error);
@@ -490,9 +508,8 @@
                 showAdminZonaEmptyState();
                 console.log('[AdminZonaInit] ✅ Empty state displayed');
                 
-                // Start background scanning (async, don't wait)
-                startAdminZonaBackgroundScan();
-                console.log('[AdminZonaInit] ✅ Background scan started (not blocking)');
+                // DO NOT start background scan here - wait for user to filter first
+                // Background scan will be triggered when user clicks "Terapkan Filter"
                 
                 await initAuth();
                 
@@ -1042,6 +1059,11 @@
             invoiceFilterState.month = month;
             saveAdminZonaFilterState();
             console.log('[AdminZonaFilter] ✅ Filter state saved to localStorage:', invoiceFilterState);
+            
+            // Start filtered background scan (async, don't wait)
+            invoiceBackgroundScanStarted = false; // Reset so scan runs
+            startAdminZonaBackgroundScan();
+            console.log('[AdminZonaFilter] ✅ Filtered background scan started (not blocking)');
             
             currentPage = 1;
             await loadInvoices();

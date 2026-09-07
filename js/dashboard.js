@@ -3339,6 +3339,11 @@ async function applyInvoiceFilters() {
         saveInvoiceFilterState();
         console.log('[Filter] ✅ Filter state saved to localStorage:', invoiceFilterState);
         
+        // Start filtered background scan (async, don't wait)
+        invoiceBackgroundScanStarted = false; // Reset so scan runs
+        startInvoiceBackgroundScan();
+        console.log('[Filter] ✅ Filtered background scan started (not blocking)');
+        
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
         
@@ -3598,17 +3603,36 @@ async function startInvoiceBackgroundScan() {
     }
     
     invoiceBackgroundScanStarted = true;
-    console.log('[BackgroundScan] ⏳ Starting background scan of all invoices...');
+    console.log('[BackgroundScan] ⏳ Starting filtered scan based on user selection...');
     
     try {
+        const year = document.getElementById('filterYear')?.value || '';
+        const month = document.getElementById('filterMonth')?.value || '';
+        
         const token = API.getToken() || localStorage.getItem('jwt_token');
         const headers = {};
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
         
-        // Fetch all data (with high limit to get all records)
-        const response = await fetch('/api/invoice/list?limit=10000&offset=0', {
+        // Build query string based on selected year/month
+        const params = new URLSearchParams();
+        if (year && month) {
+            const dateFromValue = `${year}-${String(month).padStart(2, '0')}-01`;
+            const dateToObj = new Date(parseInt(year), parseInt(month), 0);
+            const dateToValue = `${year}-${String(month).padStart(2, '0')}-${dateToObj.getDate()}`;
+            params.append('date_from', dateFromValue);
+            params.append('date_to', dateToValue);
+        } else if (year) {
+            params.append('date_from', `${year}-01-01`);
+            params.append('date_to', `${year}-12-31`);
+        }
+        
+        params.append('limit', 10000);
+        params.append('offset', 0);
+        
+        // Fetch filtered data
+        const response = await fetch(`/api/invoice/list?${params.toString()}`, {
             method: 'GET',
             headers: headers
         });
@@ -3618,8 +3642,7 @@ async function startInvoiceBackgroundScan() {
         }
         
         const result = await response.json();
-        console.log('[BackgroundScan] ✅ Scanning complete - found', result.count || 0, 'invoices');
-        console.log('[BackgroundScan] Background data is now cached by browser');
+        console.log('[BackgroundScan] ✅ Scanning complete - found', result.count || 0, 'invoices matching filter');
         
     } catch (error) {
         console.warn('[BackgroundScan] Error during scan:', error);
@@ -3647,9 +3670,8 @@ async function initInvoiceSystem() {
     await loadFilterOptions();
     console.log('[InvoiceInit] ✅ Filter options loaded');
     
-    // Start background scanning (async, don't wait)
-    startInvoiceBackgroundScan();
-    console.log('[InvoiceInit] ✅ Background scan started (not blocking)');
+    // DO NOT start background scan here - wait for user to filter first
+    // Background scan will be triggered when user clicks "Terapkan Filter"
     
     // Setup admin zona specific filters or regular filters based on role
     if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin_zona') {
