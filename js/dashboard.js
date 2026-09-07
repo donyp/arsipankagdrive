@@ -3390,20 +3390,24 @@ function resetInvoiceFilters() {
     const filterSearch = document.getElementById('filterSearch');
     
     // IMPORTANT: Do NOT reset year and month - keep them sticky
-    // const filterYear = document.getElementById('filterYear');
-    // const filterMonth = document.getElementById('filterMonth');
+    const filterYear = document.getElementById('filterYear');
+    const filterMonth = document.getElementById('filterMonth');
     
     if (filterStatus) filterStatus.value = '';
     if (filterToko) filterToko.value = '';
     if (filterKeterangan) filterKeterangan.value = '';
     if (filterSearch) filterSearch.value = '';
     
-    // Clear table and show empty state
+    // Keep year and month values - save them again to ensure persistence
+    if (filterYear) invoiceFilterState.year = filterYear.value;
+    if (filterMonth) invoiceFilterState.month = filterMonth.value;
+    
+    // Clear filter state flag but KEEP year/month in localStorage
     invoiceFilterState.hasFiltered = false;
     saveInvoiceFilterState();
     showInvoiceEmptyState();
     
-    console.log('[Filter] ✅ Filters reset (year/month preserved), showing empty state');
+    console.log('[Filter] ✅ Filters reset (year/month preserved:', invoiceFilterState.year, invoiceFilterState.month, ')');
 }
 
 // Setup admin zona specific filters - hide stats

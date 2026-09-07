@@ -1074,15 +1074,19 @@
             document.getElementById('filterSupplier').value = '';
             document.getElementById('filterKeterangan').value = '';
             // Do NOT reset year and month - keep them sticky
-            // document.getElementById('filterYear').value = '';
-            // document.getElementById('filterMonth').value = '';
+            const filterYear = document.getElementById('filterYear');
+            const filterMonth = document.getElementById('filterMonth');
+            
+            // Keep year and month values - save them again to ensure persistence
+            if (filterYear) invoiceFilterState.year = filterYear.value;
+            if (filterMonth) invoiceFilterState.month = filterMonth.value;
             
             // Clear filter state flag but keep year/month
             invoiceFilterState.hasFiltered = false;
             saveAdminZonaFilterState();
             showAdminZonaEmptyState();
             
-            console.log('[AdminZonaFilter] ✅ Filters reset (year/month preserved), showing empty state');
+            console.log('[AdminZonaFilter] ✅ Filters reset (year/month preserved:', invoiceFilterState.year, invoiceFilterState.month, ')');
         }
 
         function previousPage() {
