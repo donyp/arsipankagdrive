@@ -816,10 +816,46 @@
 
         // Delete invoice with custom confirmation
         async function deleteInvoice(faktur, invoiceId) {
-            showConfirmation(
-                `Hapus Invoice ${faktur}?`,
-                `Apakah Anda yakin ingin menghapus invoice ${faktur}?\n\nTindakan ini akan menghapus:\n• Data faktur dari daftar\n• File Invoice PDF\n• File Bukti Bayar\n• File Faktur Pajak\n\nTindakan ini TIDAK DAPAT DIBATALKAN.`,
-                async () => {
+            // Show cleaner confirmation modal
+            Swal.fire({
+                title: '🗑️ Hapus Invoice?',
+                html: `
+                    <div style="text-align: left; margin: 20px 0;">
+                        <p style="font-size: 15px; color: #2c3e50; margin-bottom: 15px;">
+                            Apakah Anda yakin ingin menghapus invoice <strong style="color: #e74c3c;">${faktur}</strong>?
+                        </p>
+                        <div style="background: #fff3cd; border-left: 4px solid #ff9800; padding: 12px 15px; border-radius: 3px; margin-bottom: 15px;">
+                            <p style="font-size: 13px; color: #856404; margin: 0;">
+                                <i class="fas fa-exclamation-triangle"></i> <strong>Tindakan ini akan menghapus:</strong>
+                            </p>
+                            <ul style="font-size: 12px; color: #856404; margin: 8px 0 0 0; padding-left: 25px;">
+                                <li>Data faktur dari daftar</li>
+                                <li>File Invoice PDF (jika ada)</li>
+                                <li>File Bukti Bayar (jika ada)</li>
+                                <li>File Faktur Pajak (jika ada)</li>
+                            </ul>
+                        </div>
+                        <div style="background: #f8d7da; border-left: 4px solid #e74c3c; padding: 12px 15px; border-radius: 3px;">
+                            <p style="font-size: 12px; color: #721c24; margin: 0;">
+                                <i class="fas fa-ban"></i> <strong>Tindakan ini TIDAK DAPAT DIBATALKAN</strong>
+                            </p>
+                        </div>
+                    </div>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74c3c',
+                cancelButtonColor: '#95a5a6',
+                confirmButtonText: '❌ Ya, Hapus Sekarang',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                allowOutsideClick: false,
+                didOpen: async () => {
+                    const confirmBtn = Swal.getConfirmButton();
+                    confirmBtn.style.minWidth = '140px';
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
                     try {
                         const token = API.getToken() || localStorage.getItem('jwt_token');
                         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -834,26 +870,26 @@
                                     <div style="position: relative; width: 60px; height: 60px;">
                                         <i class="fas fa-spinner fa-spin" style="
                                             font-size: 3rem;
-                                            color: rgba(255,255,255,0.8);
+                                            color: rgba(0,0,0,0.6);
                                             animation: spin 2s linear infinite;
                                         "></i>
                                     </div>
                                     <div style="
                                         width: 120px;
                                         height: 4px;
-                                        background: rgba(255,255,255,0.3);
+                                        background: rgba(0,0,0,0.1);
                                         border-radius: 2px;
                                         overflow: hidden;
                                     ">
                                         <div style="
                                             width: 100%;
                                             height: 100%;
-                                            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+                                            background: linear-gradient(90deg, transparent, rgba(0,0,0,0.4), transparent);
                                             animation: slide 1.5s infinite;
                                         "></div>
                                     </div>
                                 </div>
-                                <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">Menghapus data dan file...</p>
+                                <p style="color: #7f8c8d; margin-top: 15px; font-size: 14px;">Menghapus data dan file dari Google Drive...</p>
                                 <style>
                                     @keyframes spin {
                                         0% { transform: rotate(0deg); }
@@ -868,10 +904,10 @@
                             `,
                             showConfirmButton: false,
                             allowOutsideClick: false,
-                            background: '#e74c3c',
-                            color: '#ffffff',
+                            background: '#f8f9fa',
+                            color: '#2c3e50',
                             customClass: {
-                                popup: 'colored-download-popup'
+                                popup: 'delete-loading-popup'
                             }
                         });
                         
@@ -881,7 +917,8 @@
                         });
                         
                         if (!response.ok) {
-                            throw new Error('Gagal menghapus invoice');
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || 'Gagal menghapus invoice');
                         }
                         
                         const result = await response.json();
@@ -891,15 +928,21 @@
                         // Show success with details
                         Swal.fire({
                             icon: 'success',
-                            title: 'Berhasil Dihapus!',
+                            title: '✅ Berhasil Dihapus!',
                             html: `
-                                <p>Invoice <strong>${faktur}</strong> berhasil dihapus</p>
-                                <p style="font-size: 13px; color: #7f8c8d; margin-top: 10px;">
-                                    ${result.filesDeleted} file dihapus dari Google Drive
-                                </p>
+                                <div style="text-align: left; margin: 15px 0;">
+                                    <p style="font-size: 14px; color: #27ae60; margin-bottom: 10px;">
+                                        Invoice <strong>${faktur}</strong> berhasil dihapus
+                                    </p>
+                                    <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 12px; border-radius: 3px;">
+                                        <p style="font-size: 12px; color: #155724; margin: 0;">
+                                            <i class="fas fa-check-circle"></i> ${result.filesDeleted} file dihapus dari Google Drive
+                                        </p>
+                                    </div>
+                                </div>
                             `,
-                            timer: 2000,
-                            showConfirmButton: false
+                            confirmButtonColor: '#27ae60',
+                            confirmButtonText: 'OK'
                         });
                         
                         // Reload the data
@@ -909,13 +952,23 @@
                         console.error('[DeleteInvoice] Error:', error);
                         Swal.fire({
                             icon: 'error',
-                            title: 'Gagal Menghapus',
-                            text: error.message,
-                            confirmButtonColor: '#e74c3c'
+                            title: '❌ Gagal Menghapus',
+                            html: `
+                                <div style="text-align: left; margin: 15px 0;">
+                                    <p style="font-size: 13px; color: #721c24;">
+                                        ${error.message}
+                                    </p>
+                                    <p style="font-size: 11px; color: #7f8c8d; margin-top: 10px;">
+                                        Invoice: <strong>${faktur}</strong>
+                                    </p>
+                                </div>
+                            `,
+                            confirmButtonColor: '#e74c3c',
+                            confirmButtonText: 'OK'
                         });
                     }
                 }
-            );
+            });
         }
 
         async function renderInvoices(invoices) {

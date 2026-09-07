@@ -820,7 +820,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // Delete invoice from list
     // ============================================
     app.delete('/api/invoice/:faktur', 
-        ...createAuth(['super_admin']),
+        ...createAuth(['super_admin', 'moderator']),
         async (req, res) => {
             try {
                 const { faktur } = req.params;
