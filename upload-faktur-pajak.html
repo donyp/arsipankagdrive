@@ -579,9 +579,28 @@
                                 
                                 // Check if Faktur Pajak already uploaded
                                 if (result.data.faktur_pajak_path) {
-                                    info.isValid = false;
-                                    info.errorMsg = 'Faktur Pajak sudah diupload (Duplicate)';
-                                    console.log('[Faktur Pajak] Duplicate detected:', info.noFaktur);
+                                    // File path exists in database, but verify it still exists on Google Drive
+                                    try {
+                                        console.log('[Faktur Pajak Debug] Verifying file exists on Google Drive:', result.data.faktur_pajak_path);
+                                        const checkRes = await fetch(`/api/invoice/check-file/${info.noFaktur}/faktur_pajak`, {
+                                            headers: { 'Authorization': `Bearer ${API.getToken()}` }
+                                        });
+                                        const checkData = await checkRes.json();
+                                        console.log('[Faktur Pajak Debug] File check result:', checkData);
+                                        
+                                        if (checkData.exists) {
+                                            // File still exists on Google Drive - mark as duplicate
+                                            info.isValid = false;
+                                            info.errorMsg = 'Faktur Pajak sudah diupload (Duplicate)';
+                                            console.log('[Faktur Pajak] ❌ Duplicate detected:', info.noFaktur);
+                                        } else {
+                                            // File was deleted from Google Drive - allow re-upload
+                                            console.log('[Faktur Pajak] ✅ File was deleted from Google Drive, allowing re-upload');
+                                        }
+                                    } catch (verifyErr) {
+                                        console.warn('[Faktur Pajak] Error verifying file on Google Drive:', verifyErr);
+                                        // If verification fails, assume file is gone and allow re-upload
+                                    }
                                 }
                             }
                         }

@@ -570,9 +570,28 @@
                                 // Check if Bukti Bayar already uploaded
                                 console.log('[Bukti Bayar Debug] Checking bukti_bayar_path:', result.data.bukti_bayar_path);
                                 if (result.data.bukti_bayar_path) {
-                                    info.isValid = false;
-                                    info.errorMsg = 'Bukti Bayar sudah diupload (Duplicate)';
-                                    console.log('[Bukti Bayar] ❌ Duplicate detected for:', noFaktur, 'Path:', result.data.bukti_bayar_path);
+                                    // File path exists in database, but verify it still exists on Google Drive
+                                    try {
+                                        console.log('[Bukti Bayar Debug] Verifying file exists on Google Drive:', result.data.bukti_bayar_path);
+                                        const checkRes = await fetch(`/api/invoice/check-file/${noFaktur}/bukti_bayar`, {
+                                            headers: { 'Authorization': `Bearer ${API.getToken()}` }
+                                        });
+                                        const checkData = await checkRes.json();
+                                        console.log('[Bukti Bayar Debug] File check result:', checkData);
+                                        
+                                        if (checkData.exists) {
+                                            // File still exists on Google Drive - mark as duplicate
+                                            info.isValid = false;
+                                            info.errorMsg = 'Bukti Bayar sudah diupload (Duplicate)';
+                                            console.log('[Bukti Bayar] ❌ Duplicate detected for:', noFaktur, 'Path:', result.data.bukti_bayar_path);
+                                        } else {
+                                            // File was deleted from Google Drive - allow re-upload
+                                            console.log('[Bukti Bayar] ✅ File was deleted from Google Drive, allowing re-upload');
+                                        }
+                                    } catch (verifyErr) {
+                                        console.warn('[Bukti Bayar] Error verifying file on Google Drive:', verifyErr);
+                                        // If verification fails, assume file is gone and allow re-upload
+                                    }
                                 } else {
                                     console.log('[Bukti Bayar] ✅ Not uploaded yet, valid for upload');
                                 }

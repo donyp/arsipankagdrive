@@ -310,14 +310,47 @@ async function validateAllFiles() {
                 if (response.ok && result.data) {
                     // Check if PDF has already been uploaded
                     if (result.data.invoice_pdf_path) {
-                        validationResults.push({
-                            file: file,
-                            faktur: faktur,
-                            valid: false,
-                            error: 'PDF sudah diupload sebelumnya (Duplicate)',
-                            invoice: result.data
-                        });
-                        console.log('[PDF Bulk] ✗ Invalid (Duplicate):', faktur, '- Already uploaded at:', result.data.invoice_pdf_path);
+                        // File path exists in database, but verify it still exists on Google Drive
+                        try {
+                            console.log('[PDF Bulk Debug] Verifying file exists on Google Drive:', result.data.invoice_pdf_path);
+                            const checkRes = await fetch(`/api/invoice/check-file/${faktur}/invoice`, {
+                                method: 'GET',
+                                headers: headers
+                            });
+                            const checkData = await checkRes.json();
+                            console.log('[PDF Bulk Debug] File check result:', checkData);
+                            
+                            if (checkData.exists) {
+                                // File still exists on Google Drive - mark as duplicate
+                                validationResults.push({
+                                    file: file,
+                                    faktur: faktur,
+                                    valid: false,
+                                    error: 'PDF sudah diupload sebelumnya (Duplicate)',
+                                    invoice: result.data
+                                });
+                                console.log('[PDF Bulk] ✗ Invalid (Duplicate):', faktur, '- Already uploaded at:', result.data.invoice_pdf_path);
+                            } else {
+                                // File was deleted from Google Drive - allow re-upload
+                                validationResults.push({
+                                    file: file,
+                                    faktur: faktur,
+                                    valid: true,
+                                    invoice: result.data
+                                });
+                                console.log('[PDF Bulk] ✅ File was deleted from Google Drive, allowing re-upload:', faktur);
+                            }
+                        } catch (verifyErr) {
+                            console.warn('[PDF Bulk] Error verifying file on Google Drive:', verifyErr);
+                            // If verification fails, assume file is gone and allow re-upload
+                            validationResults.push({
+                                file: file,
+                                faktur: faktur,
+                                valid: true,
+                                invoice: result.data
+                            });
+                            console.log('[PDF Bulk] ✅ File verification failed, allowing re-upload:', faktur);
+                        }
                     } else {
                         validationResults.push({
                             file: file,
