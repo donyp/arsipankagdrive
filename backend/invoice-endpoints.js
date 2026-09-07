@@ -825,28 +825,85 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
             try {
                 const { faktur } = req.params;
                 
-                const { error } = await supabase
+                console.log(`[Invoice API] Delete request for faktur: ${faktur}`);
+                
+                // Get invoice data to get file paths
+                const { data: invoice, error: fetchError } = await supabase
+                    .from('invoice_file_list')
+                    .select('invoice_pdf_path, bukti_bayar_path, faktur_pajak_path')
+                    .eq('faktur', faktur)
+                    .single();
+                
+                if (fetchError) {
+                    console.warn(`[Invoice API] Invoice not found: ${faktur}`);
+                    return res.status(404).json({ error: 'Invoice not found' });
+                }
+                
+                // Delete files from Google Drive if they exist
+                const filesToDelete = [];
+                
+                if (invoice.invoice_pdf_path) {
+                    filesToDelete.push({
+                        name: 'Invoice PDF',
+                        path: invoice.invoice_pdf_path
+                    });
+                }
+                
+                if (invoice.bukti_bayar_path) {
+                    filesToDelete.push({
+                        name: 'Bukti Bayar',
+                        path: invoice.bukti_bayar_path
+                    });
+                }
+                
+                if (invoice.faktur_pajak_path) {
+                    filesToDelete.push({
+                        name: 'Faktur Pajak',
+                        path: invoice.faktur_pajak_path
+                    });
+                }
+                
+                // Delete each file from Google Drive
+                for (const file of filesToDelete) {
+                    try {
+                        console.log(`[Invoice API] Deleting ${file.name}: ${file.path}`);
+                        await RcloneStorage.deleteFile(file.path);
+                        console.log(`[Invoice API] ✅ Deleted ${file.name}`);
+                    } catch (deleteErr) {
+                        console.warn(`[Invoice API] Warning: Failed to delete ${file.name}:`, deleteErr.message);
+                        // Continue deleting other files even if one fails
+                    }
+                }
+                
+                // Now delete invoice from database
+                const { error: dbError } = await supabase
                     .from('invoice_file_list')
                     .delete()
                     .eq('faktur', faktur);
                 
-                if (error) {
-                    console.error('[Invoice API] Delete error:', error);
-                    return res.status(500).json({ error: 'Failed to delete invoice' });
+                if (dbError) {
+                    console.error('[Invoice API] Delete error:', dbError);
+                    return res.status(500).json({ error: 'Failed to delete invoice from database' });
                 }
+                
+                console.log(`[Invoice API] ✅ Invoice ${faktur} deleted successfully`);
                 
                 // Log to audit
                 await supabase.from('audit_logs').insert({
                     user_id: req.user.id,
                     action: 'delete_invoice',
-                    context: `Deleted invoice ${faktur}`
+                    context: `Deleted invoice ${faktur} with ${filesToDelete.length} files from Google Drive`
                 });
                 
-                res.json({ success: true });
+                res.json({ 
+                    success: true,
+                    message: `Invoice ${faktur} and ${filesToDelete.length} files deleted`,
+                    filesDeleted: filesToDelete.length
+                });
                 
             } catch (error) {
                 console.error('[Invoice API] Delete error:', error);
-                res.status(500).json({ error: 'Server error' });
+                res.status(500).json({ error: 'Server error: ' + error.message });
             }
         }
     );

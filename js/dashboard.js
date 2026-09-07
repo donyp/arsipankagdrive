@@ -3358,13 +3358,62 @@ async function deleteInvoice(faktur, invoiceId) {
     // Show custom confirmation modal instead of browser confirm
     showConfirmation(
         `Hapus Invoice ${faktur}?`,
-        `Apakah Anda yakin ingin menghapus invoice ${faktur}? Tindakan ini tidak dapat dibatalkan.`,
+        `Apakah Anda yakin ingin menghapus invoice ${faktur}?\n\nTindakan ini akan menghapus:\n• Data faktur dari daftar\n• File Invoice PDF\n• File Bukti Bayar\n• File Faktur Pajak\n\nTindakan ini TIDAK DAPAT DIBATALKAN.`,
         async () => {
             try {
                 const token = API.getToken() || localStorage.getItem('jwt_token');
                 const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
                 
                 console.log('[DeleteInvoice] Deleting invoice:', faktur, 'ID:', invoiceId);
+                
+                // Show loading animation
+                Swal.fire({
+                    title: '🗑️ Menghapus Invoice',
+                    html: `
+                        <div style="margin: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                            <div style="position: relative; width: 60px; height: 60px;">
+                                <i class="fas fa-spinner fa-spin" style="
+                                    font-size: 3rem;
+                                    color: rgba(255,255,255,0.8);
+                                    animation: spin 2s linear infinite;
+                                "></i>
+                            </div>
+                            <div style="
+                                width: 120px;
+                                height: 4px;
+                                background: rgba(255,255,255,0.3);
+                                border-radius: 2px;
+                                overflow: hidden;
+                            ">
+                                <div style="
+                                    width: 100%;
+                                    height: 100%;
+                                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+                                    animation: slide 1.5s infinite;
+                                "></div>
+                            </div>
+                        </div>
+                        <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">Menghapus data dan file...</p>
+                        <style>
+                            @keyframes spin {
+                                0% { transform: rotate(0deg); }
+                                100% { transform: rotate(360deg); }
+                            }
+                            @keyframes slide {
+                                0% { transform: translateX(-100%); }
+                                50% { transform: translateX(100%); }
+                                100% { transform: translateX(100%); }
+                            }
+                        </style>
+                    `,
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    background: '#e74c3c',
+                    color: '#ffffff',
+                    customClass: {
+                        popup: 'colored-download-popup'
+                    }
+                });
                 
                 const response = await fetch(`/api/invoice/${faktur}`, {
                     method: 'DELETE',
@@ -3375,8 +3424,23 @@ async function deleteInvoice(faktur, invoiceId) {
                     throw new Error('Gagal menghapus invoice');
                 }
                 
+                const result = await response.json();
                 console.log('[DeleteInvoice] ✅ Invoice deleted successfully');
-                Toast.success(`Invoice ${faktur} berhasil dihapus`);
+                console.log('[DeleteInvoice] Files deleted:', result.filesDeleted);
+                
+                // Show success with details
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil Dihapus!',
+                    html: `
+                        <p>Invoice <strong>${faktur}</strong> berhasil dihapus</p>
+                        <p style="font-size: 13px; color: #7f8c8d; margin-top: 10px;">
+                            ${result.filesDeleted} file dihapus dari Google Drive
+                        </p>
+                    `,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
                 
                 // Reload the data
                 await loadInvoicesInDashboard(1);
@@ -3384,7 +3448,12 @@ async function deleteInvoice(faktur, invoiceId) {
                 
             } catch (error) {
                 console.error('[DeleteInvoice] Error:', error);
-                Toast.error('Gagal menghapus invoice: ' + error.message);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Menghapus',
+                    text: error.message,
+                    confirmButtonColor: '#e74c3c'
+                });
             }
         }
     );
