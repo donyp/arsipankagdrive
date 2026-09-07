@@ -3682,7 +3682,7 @@ function initInvoiceSystem() {
     
     if (btnReset) {
         btnReset.onclick = resetInvoiceFilters;
-        console.log('[InvoiceInit'] ✅ Reset filter button event listener attached');
+        console.log('[InvoiceInit] ✅ Reset filter button event listener attached');
     } else {
         console.warn('[InvoiceInit] ⚠️ btnResetFilter not found');
     }
