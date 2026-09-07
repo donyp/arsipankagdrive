@@ -1178,6 +1178,17 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
                 console.log(`[Invoice PDF] Found invoice: ${invoice.konsumen} (${invoice.toko})`);
                 
+                // Check if PDF has already been uploaded (check database)
+                if (invoice.invoice_pdf_path) {
+                    console.warn(`[Invoice PDF] Invoice PDF already uploaded for faktur: ${faktur}`);
+                    return res.status(409).json({ 
+                        error: 'File sudah ada (Duplicate)',
+                        message: `Invoice PDF sudah diupload sebelumnya untuk faktur ini: ${invoice.invoice_pdf_path}`,
+                        existing_path: invoice.invoice_pdf_path,
+                        faktur: faktur,
+                        type: 'invoice'
+                    });
+                }
                 // Determine path based on keterangan (PPN/NON PPN)
                 const year = invoice.tanggal.split('-')[0];
                 const monthNum = String(invoice.tanggal.split('-')[1]).padStart(2, '0');
@@ -1343,12 +1354,25 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     // Fetch invoice data to get the correct date
                     const { data: invoice, error: invoiceError } = await supabase
                         .from('invoice_file_list')
-                        .select('tanggal')
+                        .select('tanggal, faktur_pajak_path')
                         .eq('faktur', fakturNumber)
                         .single();
 
                     if (invoiceError || !invoice) {
                         console.warn(`[Invoice Document] Invoice not found for faktur: ${fakturNumber}, using today's date`);
+                    }
+                    
+                    // Check if Faktur Pajak has already been uploaded (check database)
+                    if (invoice && invoice.faktur_pajak_path) {
+                        console.warn(`[Invoice Document] Faktur Pajak already uploaded for faktur: ${fakturNumber}`);
+                        return res.status(409).json({
+                            success: false,
+                            error: 'File sudah ada (Duplicate)',
+                            message: `Faktur Pajak sudah diupload sebelumnya untuk faktur ini: ${invoice.faktur_pajak_path}`,
+                            existing_path: invoice.faktur_pajak_path,
+                            type: 'faktur_pajak',
+                            faktur: fakturNumber
+                        });
                     }
 
                     const invoiceDate = invoice?.tanggal ? new Date(invoice.tanggal) : new Date();
@@ -1461,12 +1485,25 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     // Fetch invoice data to get the correct date
                     const { data: invoice, error: invoiceError } = await supabase
                         .from('invoice_file_list')
-                        .select('tanggal')
+                        .select('tanggal, bukti_bayar_path')
                         .eq('faktur', nomorFaktur)
                         .single();
 
                     if (invoiceError || !invoice) {
                         console.warn(`[Invoice Document] Invoice not found for faktur: ${nomorFaktur}, using today's date`);
+                    }
+                    
+                    // Check if Bukti Bayar has already been uploaded (check database)
+                    if (invoice && invoice.bukti_bayar_path) {
+                        console.warn(`[Invoice Document] Bukti Bayar already uploaded for faktur: ${nomorFaktur}`);
+                        return res.status(409).json({
+                            success: false,
+                            error: 'File sudah ada (Duplicate)',
+                            message: `Bukti Bayar sudah diupload sebelumnya untuk faktur ini: ${invoice.bukti_bayar_path}`,
+                            existing_path: invoice.bukti_bayar_path,
+                            faktur: nomorFaktur,
+                            type: 'bukti_bayar'
+                        });
                     }
 
                     const invoiceDate = invoice?.tanggal ? new Date(invoice.tanggal) : new Date();
@@ -1616,12 +1653,24 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 // Fetch invoice data to get the correct date
                 const { data: invoice, error: invoiceError } = await supabase
                     .from('invoice_file_list')
-                    .select('tanggal')
+                    .select('tanggal, faktur_pajak_path')
                     .eq('faktur', fakturNumber)
                     .single();
 
                 if (invoiceError || !invoice) {
                     console.warn(`[Invoice Faktur Pajak] Invoice not found for faktur: ${fakturNumber}, using today's date`);
+                }
+                
+                // Check if Faktur Pajak has already been uploaded (check database)
+                if (invoice && invoice.faktur_pajak_path) {
+                    console.warn(`[Invoice Faktur Pajak] Faktur Pajak already uploaded for faktur: ${fakturNumber}`);
+                    return res.status(409).json({
+                        success: false,
+                        error: 'File sudah ada (Duplicate)',
+                        message: `Faktur Pajak sudah diupload sebelumnya untuk faktur ini: ${invoice.faktur_pajak_path}`,
+                        existing_path: invoice.faktur_pajak_path,
+                        faktur: fakturNumber
+                    });
                 }
 
                 // Use invoice date if available, otherwise use today's date
