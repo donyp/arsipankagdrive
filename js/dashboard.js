@@ -3197,12 +3197,12 @@ function updateInvoiceStatsFromData(invoices, totalCount) {
     console.log('[StatsFromData] ===== STATS UPDATE COMPLETE =====');
 }
 
-// Load invoices when dashboard loads
+// Initialize dashboard stats and empty state (but DON'T auto-load data)
 document.addEventListener('DOMContentLoaded', async () => {
     // Wait for auth to complete
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    console.log('[Dashboard] Loading invoices...');
+    console.log('[Dashboard] Initializing dashboard (stats only, no auto-load)...');
     
     // Wait for DOM to be fully ready (invoice table injected)
     let retries = 0;
@@ -3212,13 +3212,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     if (document.getElementById('invoiceTableBody')) {
-        console.log('[Dashboard] Invoice table found, loading data...');
-        // Load invoices first
-        await loadInvoicesInDashboard(1);
-        // Then populate filters from loaded invoices
-        await loadFilterOptions();
-        // Initialize event listeners for pagination and filters
-        initInvoiceSystem();
+        console.log('[Dashboard] Invoice table found');
+        
+        // Initialize stats to 0 (empty state)
+        invoiceTotalCount = 0;
+        updatePaginationInfo();
+        updateInvoiceStatsFromData([], 0);
+        console.log('[Dashboard] ✅ Stats initialized to 0');
+        
+        // IMPORTANT: Do NOT call loadInvoicesInDashboard here
+        // Do NOT call loadFilterOptions here
+        // Do NOT call initInvoiceSystem here (it's called from dashboard.html)
+        // Data will only load when user clicks "Terapkan Filter" button
+        
     } else {
         console.warn('[Dashboard] Invoice table not found after 5 seconds');
     }
