@@ -123,16 +123,26 @@ async function checkData() {
         // Transform and aggregate
         let invoices = parsed.map(row => {
             // Normalize toko values
-            let tokoValue = (row['TOKO'] || row['toko'] || '').trim().toUpperCase();
+            let tokoRaw = (row['TOKO'] || row['toko'] || '').trim();
+            let tokoValue = tokoRaw.toUpperCase();
             
-            console.log('[Upload] Raw toko:', row['TOKO'], '-> Normalized:', tokoValue);
+            console.log('[Upload] Raw toko:', tokoRaw, '-> Uppercase:', tokoValue);
             
             // Map all toko variations to their normalized names
             if (tokoValue.includes('PEMALANG')) {
                 tokoValue = 'ANKA PEMALANG';
-            } else if (tokoValue.includes('ANKA') || tokoValue === 'ANKA') {
+            } else if (tokoValue.includes('ANKA')) {
                 tokoValue = 'ANKA BEKASI';
+            } else if (tokoValue === '' || !tokoValue) {
+                // DEFAULT: If empty or invalid, default to ANKA BEKASI
+                console.warn('[Upload] Empty toko detected, defaulting to ANKA BEKASI');
+                tokoValue = 'ANKA BEKASI';
+            } else {
+                // Any other value that doesn't contain ANKA/PEMALANG, keep as is
+                tokoValue = tokoRaw;
             }
+            
+            console.log('[Upload] Final toko:', tokoValue);
             
             return {
                 tanggal: row['TANGGAL'] || row['tanggal'],

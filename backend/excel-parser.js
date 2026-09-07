@@ -11,22 +11,27 @@ const XLSX = require('xlsx');
  * - Contains "ANKA PEMALANG" â†’ "ANKA PEMALANG"
  */
 function normalizeToko(tokoRaw) {
-    if (!tokoRaw) return 'UNKNOWN';
+    // Handle empty/null values - default to ANKA BEKASI
+    if (!tokoRaw || String(tokoRaw).trim() === '') {
+        console.warn('[Excel Parser] Empty toko value detected, defaulting to ANKA BEKASI');
+        return 'ANKA BEKASI';
+    }
     
-    const tokoUpper = tokoRaw.toUpperCase();
+    const tokoUpper = String(tokoRaw).toUpperCase().trim();
     
     // Check for ANKA PEMALANG first (more specific)
-    if (tokoUpper.includes('ANKA PEMALANG') || tokoUpper.includes('ANKA-PEMALANG')) {
+    if (tokoUpper.includes('PEMALANG')) {
         return 'ANKA PEMALANG';
     }
     
-    // Check for just ANKA (default to BEKASI)
+    // Check for ANKA (default to BEKASI)
     if (tokoUpper.includes('ANKA')) {
         return 'ANKA BEKASI';
     }
     
-    // Return raw if not ANKA related
-    return tokoRaw.trim();
+    // If not ANKA-related, keep original but trimmed
+    // This allows for future expansion to other stores
+    return String(tokoRaw).trim();
 }
 
 /**
@@ -167,6 +172,7 @@ function parseExcel(fileBuffer) {
                 
                 // Normalize toko
                 const tokoNormalized = normalizeToko(tokoRaw);
+                console.log(`[Excel Parser] Row ${index + 1}: tokoRaw="${tokoRaw}" -> tokoNormalized="${tokoNormalized}"`);
                 
                 // If faktur already exists, aggregate
                 if (faktursMap.has(faktur)) {

@@ -219,7 +219,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 // DEBUG: Log first few rows to check data structure
                 console.log('[Invoice API] Raw data sample (first 3):');
                 data.slice(0, 3).forEach((row, idx) => {
-                    console.log(`  Row ${idx}:`, row);
+                    console.log(`  Row ${idx}: faktur=${row.faktur}, toko="${row.toko}", konsumen="${row.konsumen}"`);
                 });
                 
                 // BULK CHECK: Get all existing fakturs in one query
@@ -281,7 +281,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         }
                     }
                     
-                    return {
+                    const invoiceRecord = {
                         tanggal: tanggalDate || new Date().toISOString().split('T')[0], // Fallback to today if parse fails
                         toko: item.toko,
                         zona_id: zona_id,  // ADD ZONA_ID!
@@ -297,6 +297,13 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         excel_uploaded_at: new Date().toISOString(),
                         excel_uploaded_by: req.user.id
                     };
+                    
+                    // Log toko value for debugging
+                    if (!item.toko || item.toko === '' || item.toko === '-') {
+                        console.warn(`[Invoice API] ⚠️  Faktur ${item.faktur}: toko is EMPTY or INVALID: "${item.toko}"`);
+                    }
+                    
+                    return invoiceRecord;
                 }));
                 
                 let processedCount = 0;
@@ -307,6 +314,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 // BULK INSERT - one shot, let DB handle duplicates via constraint
                 if (invoicesToInsert.length > 0) {
                     console.log('[Invoice API] Bulk inserting', invoicesToInsert.length, 'invoices...');
+                    console.log('[Invoice API] Sample toko values:', invoicesToInsert.slice(0, 3).map(i => `"${i.toko}"`).join(', '));
                     
                     const { data: inserted, error: insertError } = await supabase
                         .from('invoice_file_list')
