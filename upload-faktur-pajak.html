@@ -576,6 +576,13 @@
                             if (result.exists && result.data) {
                                 info.tokoName = result.data.konsumen || info.namaFromFile;
                                 info.nominal = result.data.total_jumlah_jual || 0;
+                                
+                                // Check if Faktur Pajak already uploaded
+                                if (result.data.faktur_pajak_path) {
+                                    info.isValid = false;
+                                    info.errorMsg = 'Faktur Pajak sudah diupload (Duplicate)';
+                                    console.log('[Faktur Pajak] Duplicate detected:', info.noFaktur);
+                                }
                             }
                         }
                     } catch (e) {
@@ -608,7 +615,7 @@
                         <div class="file-item-info">
                             ${item.isValid ? 
                                 `NO : <strong>${item.noFaktur}</strong> | NAMA : <strong>${item.tokoName || item.namaFromFile || '?'}</strong> | NOMINAL : <strong>${item.nominal ? 'Rp' + item.nominal.toLocaleString('id-ID') : item.nominalFromFile || '?'}</strong> | ${(item.file.size / 1024 / 1024).toFixed(2)} MB` :
-                                `ERROR : Format Nama File Tidak Sesuai`
+                                `${item.errorMsg || 'ERROR : Format Nama File Tidak Sesuai'}`
                             }
                         </div>
                     </div>

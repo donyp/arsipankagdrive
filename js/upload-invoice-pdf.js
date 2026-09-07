@@ -308,13 +308,25 @@ async function validateAllFiles() {
                 const result = await response.json();
                 
                 if (response.ok && result.data) {
-                    validationResults.push({
-                        file: file,
-                        faktur: faktur,
-                        valid: true,
-                        invoice: result.data
-                    });
-                    console.log('[PDF Bulk] ✓ Valid:', faktur);
+                    // Check if PDF has already been uploaded
+                    if (result.data.invoice_pdf_path) {
+                        validationResults.push({
+                            file: file,
+                            faktur: faktur,
+                            valid: false,
+                            error: 'PDF sudah diupload sebelumnya (Duplicate)',
+                            invoice: result.data
+                        });
+                        console.log('[PDF Bulk] ✗ Invalid (Duplicate):', faktur, '- Already uploaded at:', result.data.invoice_pdf_path);
+                    } else {
+                        validationResults.push({
+                            file: file,
+                            faktur: faktur,
+                            valid: true,
+                            invoice: result.data
+                        });
+                        console.log('[PDF Bulk] ✓ Valid:', faktur);
+                    }
                 } else {
                     validationResults.push({
                         file: file,

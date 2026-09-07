@@ -565,6 +565,13 @@
                             if (result.exists && result.data) {
                                 info.tokoName = result.data.konsumen || '?';
                                 info.nominal = result.data.total_jumlah_jual || 0;
+                                
+                                // Check if Bukti Bayar already uploaded
+                                if (result.data.bukti_bayar_path) {
+                                    isValid = false;
+                                    info.errorMsg = 'Bukti Bayar sudah diupload (Duplicate)';
+                                    console.log('[Bukti Bayar] Duplicate detected:', noFaktur);
+                                }
                             }
                         }
                     } catch (e) {
@@ -597,7 +604,7 @@
                         <div class="file-item-info">
                             ${item.isValid ? 
                                 `NO FAKTUR: <strong>${item.noFaktur}</strong> | TOKO: <strong>${item.tokoName || '?'}</strong> | NOMINAL: <strong>${item.nominal ? 'Rp' + item.nominal.toLocaleString('id-ID') : '?'}</strong> | ${(item.file.size / 1024 / 1024).toFixed(2)} MB` :
-                                `Format tidak sesuai - gunakan format: NOFAKTUR.pdf`
+                                `${item.errorMsg || 'Format tidak sesuai - gunakan format: NOFAKTUR.pdf'}`
                             }
                         </div>
                     </div>
