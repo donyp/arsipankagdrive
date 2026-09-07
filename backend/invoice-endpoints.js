@@ -1180,14 +1180,30 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
                 // Check if PDF has already been uploaded (check database)
                 if (invoice.invoice_pdf_path) {
-                    console.warn(`[Invoice PDF] Invoice PDF already uploaded for faktur: ${faktur}`);
-                    return res.status(409).json({ 
-                        error: 'File sudah ada (Duplicate)',
-                        message: `Invoice PDF sudah diupload sebelumnya untuk faktur ini: ${invoice.invoice_pdf_path}`,
-                        existing_path: invoice.invoice_pdf_path,
-                        faktur: faktur,
-                        type: 'invoice'
-                    });
+                    // File path exists in database, but verify it still exists on Google Drive
+                    try {
+                        console.log(`[Invoice PDF] Verifying if Invoice PDF still exists on Google Drive: ${invoice.invoice_pdf_path}`);
+                        const fileExists = await RcloneStorage.checkFileExists(invoice.invoice_pdf_path);
+                        
+                        if (fileExists) {
+                            // File still exists on Google Drive - reject as duplicate
+                            console.warn(`[Invoice PDF] Invoice PDF already uploaded for faktur: ${faktur}`);
+                            return res.status(409).json({ 
+                                error: 'File sudah ada (Duplicate)',
+                                message: `Invoice PDF sudah diupload sebelumnya untuk faktur ini: ${invoice.invoice_pdf_path}`,
+                                existing_path: invoice.invoice_pdf_path,
+                                faktur: faktur,
+                                type: 'invoice'
+                            });
+                        } else {
+                            // File was deleted from Google Drive - allow re-upload
+                            console.log(`[Invoice PDF] ✅ Invoice PDF file was deleted from Google Drive, allowing re-upload`);
+                        }
+                    } catch (verifyErr) {
+                        console.warn(`[Invoice PDF] Error verifying Invoice PDF on Google Drive:`, verifyErr.message);
+                        // If verification fails, allow re-upload (graceful fallback)
+                        console.log(`[Invoice PDF] ✅ Verification failed, allowing re-upload as fallback`);
+                    }
                 }
                 // Determine path based on keterangan (PPN/NON PPN)
                 const year = invoice.tanggal.split('-')[0];
@@ -1364,15 +1380,31 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     
                     // Check if Faktur Pajak has already been uploaded (check database)
                     if (invoice && invoice.faktur_pajak_path) {
-                        console.warn(`[Invoice Document] Faktur Pajak already uploaded for faktur: ${fakturNumber}`);
-                        return res.status(409).json({
-                            success: false,
-                            error: 'File sudah ada (Duplicate)',
-                            message: `Faktur Pajak sudah diupload sebelumnya untuk faktur ini: ${invoice.faktur_pajak_path}`,
-                            existing_path: invoice.faktur_pajak_path,
-                            type: 'faktur_pajak',
-                            faktur: fakturNumber
-                        });
+                        // File path exists in database, but verify it still exists on Google Drive
+                        try {
+                            console.log(`[Invoice Document] Verifying if Faktur Pajak still exists on Google Drive: ${invoice.faktur_pajak_path}`);
+                            const fileExists = await RcloneStorage.checkFileExists(invoice.faktur_pajak_path);
+                            
+                            if (fileExists) {
+                                // File still exists on Google Drive - reject as duplicate
+                                console.warn(`[Invoice Document] Faktur Pajak already uploaded for faktur: ${fakturNumber}`);
+                                return res.status(409).json({
+                                    success: false,
+                                    error: 'File sudah ada (Duplicate)',
+                                    message: `Faktur Pajak sudah diupload sebelumnya untuk faktur ini: ${invoice.faktur_pajak_path}`,
+                                    existing_path: invoice.faktur_pajak_path,
+                                    type: 'faktur_pajak',
+                                    faktur: fakturNumber
+                                });
+                            } else {
+                                // File was deleted from Google Drive - allow re-upload
+                                console.log(`[Invoice Document] ✅ Faktur Pajak file was deleted from Google Drive, allowing re-upload`);
+                            }
+                        } catch (verifyErr) {
+                            console.warn(`[Invoice Document] Error verifying Faktur Pajak on Google Drive:`, verifyErr.message);
+                            // If verification fails, allow re-upload (graceful fallback)
+                            console.log(`[Invoice Document] ✅ Verification failed, allowing re-upload as fallback`);
+                        }
                     }
 
                     const invoiceDate = invoice?.tanggal ? new Date(invoice.tanggal) : new Date();
@@ -1495,15 +1527,31 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     
                     // Check if Bukti Bayar has already been uploaded (check database)
                     if (invoice && invoice.bukti_bayar_path) {
-                        console.warn(`[Invoice Document] Bukti Bayar already uploaded for faktur: ${nomorFaktur}`);
-                        return res.status(409).json({
-                            success: false,
-                            error: 'File sudah ada (Duplicate)',
-                            message: `Bukti Bayar sudah diupload sebelumnya untuk faktur ini: ${invoice.bukti_bayar_path}`,
-                            existing_path: invoice.bukti_bayar_path,
-                            faktur: nomorFaktur,
-                            type: 'bukti_bayar'
-                        });
+                        // File path exists in database, but verify it still exists on Google Drive
+                        try {
+                            console.log(`[Invoice Document] Verifying if Bukti Bayar still exists on Google Drive: ${invoice.bukti_bayar_path}`);
+                            const fileExists = await RcloneStorage.checkFileExists(invoice.bukti_bayar_path);
+                            
+                            if (fileExists) {
+                                // File still exists on Google Drive - reject as duplicate
+                                console.warn(`[Invoice Document] Bukti Bayar already uploaded for faktur: ${nomorFaktur}`);
+                                return res.status(409).json({
+                                    success: false,
+                                    error: 'File sudah ada (Duplicate)',
+                                    message: `Bukti Bayar sudah diupload sebelumnya untuk faktur ini: ${invoice.bukti_bayar_path}`,
+                                    existing_path: invoice.bukti_bayar_path,
+                                    faktur: nomorFaktur,
+                                    type: 'bukti_bayar'
+                                });
+                            } else {
+                                // File was deleted from Google Drive - allow re-upload
+                                console.log(`[Invoice Document] ✅ Bukti Bayar file was deleted from Google Drive, allowing re-upload`);
+                            }
+                        } catch (verifyErr) {
+                            console.warn(`[Invoice Document] Error verifying Bukti Bayar on Google Drive:`, verifyErr.message);
+                            // If verification fails, allow re-upload (graceful fallback)
+                            console.log(`[Invoice Document] ✅ Verification failed, allowing re-upload as fallback`);
+                        }
                     }
 
                     const invoiceDate = invoice?.tanggal ? new Date(invoice.tanggal) : new Date();
