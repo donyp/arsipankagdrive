@@ -1160,10 +1160,46 @@
                 
                 const colorConfig = fileTypeColors[fileType] || { bg: '#95a5a6', icon: '📁', text: 'File' };
                 
-                // Show colorful popup loading
+                // Show colorful popup loading with animated spinner
                 Swal.fire({
                     title: `${colorConfig.icon} Mengunduh ${colorConfig.text}`,
-                    html: '<div style="margin: 20px 0;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i></div><p style="color: #7f8c8d; margin-top: 10px;">Mohon tunggu...</p>',
+                    html: `
+                        <div style="margin: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                            <div style="position: relative; width: 60px; height: 60px;">
+                                <i class="fas fa-spinner fa-spin" style="
+                                    font-size: 3rem;
+                                    color: rgba(255,255,255,0.8);
+                                    animation: spin 2s linear infinite;
+                                "></i>
+                            </div>
+                            <div style="
+                                width: 120px;
+                                height: 4px;
+                                background: rgba(255,255,255,0.3);
+                                border-radius: 2px;
+                                overflow: hidden;
+                            ">
+                                <div style="
+                                    width: 100%;
+                                    height: 100%;
+                                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+                                    animation: slide 1.5s infinite;
+                                "></div>
+                            </div>
+                        </div>
+                        <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">Mohon tunggu...</p>
+                        <style>
+                            @keyframes spin {
+                                0% { transform: rotate(0deg); }
+                                100% { transform: rotate(360deg); }
+                            }
+                            @keyframes slide {
+                                0% { transform: translateX(-100%); }
+                                50% { transform: translateX(100%); }
+                                100% { transform: translateX(100%); }
+                            }
+                        </style>
+                    `,
                     showConfirmButton: false,
                     allowOutsideClick: false,
                     background: colorConfig.bg,
@@ -1250,12 +1286,62 @@
         // Combine PDFs into single file
         async function combinePDF(faktur) {
             try {
+                // Show colorful popup loading with animated spinner
+                Swal.fire({
+                    title: '📄 Menggabungkan PDF',
+                    html: `
+                        <div style="margin: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                            <div style="position: relative; width: 60px; height: 60px;">
+                                <i class="fas fa-spinner fa-spin" style="
+                                    font-size: 3rem;
+                                    color: rgba(255,255,255,0.8);
+                                    animation: spin 2s linear infinite;
+                                "></i>
+                            </div>
+                            <div style="
+                                width: 120px;
+                                height: 4px;
+                                background: rgba(255,255,255,0.3);
+                                border-radius: 2px;
+                                overflow: hidden;
+                            ">
+                                <div style="
+                                    width: 100%;
+                                    height: 100%;
+                                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+                                    animation: slide 1.5s infinite;
+                                "></div>
+                            </div>
+                        </div>
+                        <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">Mohon tunggu...</p>
+                        <style>
+                            @keyframes spin {
+                                0% { transform: rotate(0deg); }
+                                100% { transform: rotate(360deg); }
+                            }
+                            @keyframes slide {
+                                0% { transform: translateX(-100%); }
+                                50% { transform: translateX(100%); }
+                                100% { transform: translateX(100%); }
+                            }
+                        </style>
+                    `,
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    background: '#3498db',
+                    color: '#ffffff',
+                    customClass: {
+                        popup: 'colored-download-popup'
+                    }
+                });
+
                 const token = localStorage.getItem('access_token');
                 const response = await fetch(`${API_BASE}/api/invoice/combine-pdf/${faktur}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
                 if (!response.ok) {
+                    Swal.close();
                     const error = await response.json();
                     throw new Error(error.error || 'Combine failed');
                 }
@@ -1269,9 +1355,23 @@
                 a.click();
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
+
+                // Show success
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'PDF berhasil digabungkan dan diunduh',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
             } catch (error) {
                 console.error('Combine error:', error);
-                alert(`Error combining PDFs: ${error.message}`);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Menggabungkan',
+                    text: error.message,
+                    confirmButtonColor: '#e74c3c'
+                });
             }
         }
 
