@@ -933,6 +933,38 @@
             
             // Render rows with final button state
             tbody.innerHTML = invoicesWithFileStatus.map(inv => {
+                // Build dropdown menu items dari buttons yang ada
+                let downloadMenuItems = '';
+                if (inv.buttons && inv.buttons.length > 0) {
+                    inv.buttons.forEach(btnHTML => {
+                        const faktur = inv.faktur;
+                        const isInvoice = btnHTML.includes("'invoice'");
+                        const isBuktiBayar = btnHTML.includes("'bukti_bayar'");
+                        const isFakturPajak = btnHTML.includes("'faktur_pajak'");
+                        
+                        if (isInvoice) {
+                            downloadMenuItems += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #3498db; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+                                📄 Download Invoice
+                            </button>`;
+                        } else if (isBuktiBayar) {
+                            downloadMenuItems += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #27ae60; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+                                💰 Download Bukti Bayar
+                            </button>`;
+                        } else if (isFakturPajak) {
+                            downloadMenuItems += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #9b59b6; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+                                📋 Download Faktur Pajak
+                            </button>`;
+                        }
+                    });
+                }
+                
+                // Add combine button if complete
+                if (inv.isComplete) {
+                    downloadMenuItems += `<button onclick="combinePDF('${inv.faktur}')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #e67e22; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+                        📦 Combine PDF
+                    </button>`;
+                }
+                
                 return `
                 <tr style="border-bottom: 2px solid #34495e;">
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${new Date(inv.tanggal).toLocaleDateString('id-ID')}</td>
@@ -943,10 +975,12 @@
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
-                        <div style="display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap;">
-                            ${inv.buttons.join('')}
+                        <button onclick="toggleActionMenu(event, '${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 18px; padding: 0;" title="Aksi">
+                            ⋮
+                        </button>
+                        <div id="menu-${inv.id}" class="action-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100; min-width: 180px;">
+                            ${downloadMenuItems}
                         </div>
-                        ${inv.isComplete ? '<div style="margin-top: 4px;"><button onclick="combinePDF(\'' + inv.faktur + '\')" style="background: #e67e22; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s; width: 100%;" title="Combine PDF">📦 Combine</button></div>' : ''}
                     </td>
                 </tr>
             `; }).join('');

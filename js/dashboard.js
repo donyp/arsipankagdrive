@@ -2840,16 +2840,45 @@ async function renderInvoiceTable(invoices) {
         const konsumenFontSize = konsumenText.length > 25 ? '11px' : '14px';
         const tokoFontSize = tokoText.length > 20 ? '11px' : '14px';
         
+        // Build dropdown menu items dari buttons yang ada
+        let downloadMenuItems = '';
+        if (inv.buttons && inv.buttons.length > 0) {
+            inv.buttons.forEach(btnHTML => {
+                // Extract info from button HTML
+                const faktur = inv.faktur;
+                const isInvoice = btnHTML.includes("'invoice'");
+                const isBuktiBayar = btnHTML.includes("'bukti_bayar'");
+                const isFakturPajak = btnHTML.includes("'faktur_pajak'");
+                
+                if (isInvoice) {
+                    downloadMenuItems += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #3498db; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+                        📄 Download Invoice
+                    </button>`;
+                } else if (isBuktiBayar) {
+                    downloadMenuItems += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #27ae60; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+                        💰 Download Bukti Bayar
+                    </button>`;
+                } else if (isFakturPajak) {
+                    downloadMenuItems += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #9b59b6; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+                        📋 Download Faktur Pajak
+                    </button>`;
+                }
+            });
+        }
+        
+        // Add combine button if complete
+        if (inv.isComplete) {
+            downloadMenuItems += `<button onclick="combinePDF('${inv.faktur}')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #e67e22; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+                📦 Combine PDF
+            </button>`;
+        }
+        
         return `
             <tr style="transition: background 0.2s; border-bottom: 2px solid #34495e;" data-faktur="${inv.faktur}">
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">
                     <span style="display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
                         ${statusText}
                     </span>
-                    <div style="margin-top: 4px; display: flex; gap: 3px; flex-wrap: wrap; justify-content: center;">
-                        ${inv.buttons.join('')}
-                    </div>
-                    ${inv.isComplete ? `<div style="margin-top: 4px;"><button onclick="combinePDF('${inv.faktur}')" style="background: #e67e22; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s; width: 100%;" title="Combine PDF">📦 Combine</button></div>` : ''}
                 </td>
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${formattedDate}</td>
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur || '-'}</strong></td>
@@ -2864,8 +2893,10 @@ async function renderInvoiceTable(invoices) {
                     <button onclick="toggleActionMenu(event, '${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 18px; padding: 0;" title="Aksi">
                         ⋮
                     </button>
-                    <div id="menu-${inv.id}" class="action-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100; min-width: 120px;">
-                        <button onclick="deleteInvoice('${inv.faktur}', '${inv.id}')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #e74c3c; font-size: 13px; hover:background: #f5f5f5;">
+                    <div id="menu-${inv.id}" class="action-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100; min-width: 180px;">
+                        ${downloadMenuItems}
+                        ${downloadMenuItems ? '<div style="border-top: 1px solid #eee; margin: 5px 0;"></div>' : ''}
+                        <button onclick="deleteInvoice('${inv.faktur}', '${inv.id}')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #e74c3c; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
                             <i class="fas fa-trash"></i> Hapus
                         </button>
                     </div>
