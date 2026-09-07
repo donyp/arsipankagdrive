@@ -383,10 +383,117 @@
         let currentFilters = {};
         let totalCount = 0;
         let pageSize = 20;
+        
+        // ============================================
+        // NEW FLOW: Filter State & Background Scanning
+        // ============================================
+        let invoiceFilterState = {
+            hasFiltered: false,
+            year: '',
+            month: ''
+        };
+        let invoiceBackgroundScanStarted = false;
+        
+        /**
+         * Load invoice filter state from localStorage
+         */
+        function loadAdminZonaFilterState() {
+            try {
+                const saved = localStorage.getItem('adminZonaFilterState');
+                if (saved) {
+                    const state = JSON.parse(saved);
+                    console.log('[AdminZonaFilter] Loaded from localStorage:', state);
+                    invoiceFilterState = state;
+                    return state;
+                }
+            } catch (e) {
+                console.warn('[AdminZonaFilter] Error loading from localStorage:', e);
+            }
+            return invoiceFilterState;
+        }
+        
+        /**
+         * Save invoice filter state to localStorage
+         */
+        function saveAdminZonaFilterState() {
+            try {
+                localStorage.setItem('adminZonaFilterState', JSON.stringify(invoiceFilterState));
+                console.log('[AdminZonaFilter] Saved to localStorage:', invoiceFilterState);
+            } catch (e) {
+                console.warn('[AdminZonaFilter] Error saving to localStorage:', e);
+            }
+        }
+        
+        /**
+         * Display EMPTY STATE message in invoice table
+         */
+        function showAdminZonaEmptyState() {
+            const tableBody = document.getElementById('invoiceTableBody');
+            if (!tableBody) {
+                console.warn('[AdminZonaEmptyState] invoiceTableBody not found');
+                return;
+            }
+            
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 60px 20px; color: #7f8c8d;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
+                        <div style="font-size: 18px; font-weight: 600; color: #2c3e50; margin-bottom: 8px;">Silahkan pilih tahun dan bulan terlebih dahulu</div>
+                        <div style="font-size: 14px; color: #95a5a6;">Gunakan filter di atas untuk memilih periode data yang ingin Anda lihat</div>
+                    </td>
+                </tr>
+            `;
+            
+            console.log('[AdminZonaEmptyState] Empty state displayed in table');
+        }
+        
+        /**
+         * Start background scanning of all invoice data
+         */
+        async function startAdminZonaBackgroundScan() {
+            if (invoiceBackgroundScanStarted) {
+                console.log('[AdminZonaBackgroundScan] Already started, skipping');
+                return;
+            }
+            
+            invoiceBackgroundScanStarted = true;
+            console.log('[AdminZonaBackgroundScan] ⏳ Starting background scan of all invoices...');
+            
+            try {
+                const response = await fetch('/api/invoice/list?limit=10000&offset=0', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${API.getToken() || localStorage.getItem('jwt_token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to scan invoices');
+                }
+                
+                const result = await response.json();
+                console.log('[AdminZonaBackgroundScan] ✅ Scanning complete - found', result.count || 0, 'invoices');
+                
+            } catch (error) {
+                console.warn('[AdminZonaBackgroundScan] Error during scan:', error);
+            }
+        }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             try {
+                // Load filter state from localStorage
+                loadAdminZonaFilterState();
+                console.log('[AdminZonaInit] Filter state loaded:', invoiceFilterState);
+                
+                // Show EMPTY STATE message (no data yet)
+                showAdminZonaEmptyState();
+                console.log('[AdminZonaInit] ✅ Empty state displayed');
+                
+                // Start background scanning (async, don't wait)
+                startAdminZonaBackgroundScan();
+                console.log('[AdminZonaInit] ✅ Background scan started (not blocking)');
+                
                 await initAuth();
                 
                 // Wait for window.currentUser to be set by initAuth
@@ -528,6 +635,23 @@
                 });
                 
                 console.log('[AdminZona] Loaded', invoices.length, 'invoices - Years:', years.length, 'Months:', months.length, 'Suppliers:', suppliers.length, 'Keterangans:', keterangans.length);
+                
+                // Restore saved filters from localStorage
+                if (invoiceFilterState.year) {
+                    const yearSelect = document.getElementById('filterYear');
+                    if (yearSelect) {
+                        yearSelect.value = invoiceFilterState.year;
+                        console.log('[AdminZonaFilter] ✅ Restored saved year:', invoiceFilterState.year);
+                    }
+                }
+                
+                if (invoiceFilterState.month) {
+                    const monthSelect = document.getElementById('filterMonth');
+                    if (monthSelect) {
+                        monthSelect.value = invoiceFilterState.month;
+                        console.log('[AdminZonaFilter] ✅ Restored saved month:', invoiceFilterState.month);
+                    }
+                }
             } catch (err) {
                 console.error('[AdminZona] Error loading all invoices:', err);
             }
@@ -912,6 +1036,18 @@
         }
 
         async function applyFilters() {
+            const year = document.getElementById('filterYear')?.value || '';
+            const month = document.getElementById('filterMonth')?.value || '';
+            
+            console.log('[AdminZonaFilter] Applying filters:', { year, month });
+            
+            // Save filter state to localStorage (year and month are sticky)
+            invoiceFilterState.hasFiltered = true;
+            invoiceFilterState.year = year;
+            invoiceFilterState.month = month;
+            saveAdminZonaFilterState();
+            console.log('[AdminZonaFilter] ✅ Filter state saved to localStorage:', invoiceFilterState);
+            
             currentPage = 1;
             await loadInvoices();
         }
@@ -920,10 +1056,16 @@
             document.getElementById('filterSearch').value = '';
             document.getElementById('filterSupplier').value = '';
             document.getElementById('filterKeterangan').value = '';
-            document.getElementById('filterYear').value = '';
-            document.getElementById('filterMonth').value = '';
-            currentPage = 1;
-            loadInvoices();
+            // Do NOT reset year and month - keep them sticky
+            // document.getElementById('filterYear').value = '';
+            // document.getElementById('filterMonth').value = '';
+            
+            // Clear filter state flag but keep year/month
+            invoiceFilterState.hasFiltered = false;
+            saveAdminZonaFilterState();
+            showAdminZonaEmptyState();
+            
+            console.log('[AdminZonaFilter] ✅ Filters reset (year/month preserved), showing empty state');
         }
 
         function previousPage() {
