@@ -1962,10 +1962,10 @@ app.post('/api/files/upload', authenticateToken, requireUploadPermission, upload
         }
 
         // --- Duplicate Detection (Nama File + Zona) ---
-        // Only block if file exists AND is NOT deleted (deleted_at is null)
-        const { data: existingFile } = await supabase
+        // Check if file exists AND verify it on Google Drive
+        const { data: existingFile, error: existingError } = await supabase
             .from('files')
-            .select('id')
+            .select('id, storage_path')
             .eq('nama_file', req.file.originalname)
             .eq('zona_id', parseInt(zona_id))
             .is('deleted_at', null)  // Only check active files
@@ -1973,7 +1973,23 @@ app.post('/api/files/upload', authenticateToken, requireUploadPermission, upload
             .maybeSingle();
 
         if (existingFile) {
-            return res.status(409).json({ error: 'File dengan nama yang sama sudah ada di zona ini.' });
+            // File exists in database, verify it still exists on Google Drive
+            try {
+                console.log(`[Upload] Verifying if file still exists on Google Drive: ${existingFile.storage_path}`);
+                const fileExists = await RcloneStorage.checkFileExists(existingFile.storage_path);
+                
+                if (fileExists) {
+                    // File still exists on Google Drive - reject as duplicate
+                    return res.status(409).json({ error: 'File dengan nama yang sama sudah ada di zona ini.' });
+                } else {
+                    // File was deleted from Google Drive - allow re-upload
+                    console.log(`[Upload] ✅ File was deleted from Google Drive, allowing re-upload`);
+                }
+            } catch (verifyErr) {
+                console.warn(`[Upload] Error verifying file on Google Drive:`, verifyErr.message);
+                // If verification fails, allow re-upload (graceful fallback)
+                console.log(`[Upload] ✅ Verification failed, allowing re-upload as fallback`);
+            }
         }
 
         // Map category from filename extraction to valid folder names
@@ -2245,10 +2261,10 @@ app.post('/api/files/upload-piutang', authenticateToken, requireUploadPermission
         const size = req.file.buffer.length;
         console.log(`[PIUTANG] File size: ${size} bytes`);
 
-        // Duplicate Detection - only block if file exists AND is NOT deleted
+        // Duplicate Detection - check database AND Google Drive
         const { data: existingFile } = await supabase
             .from('files')
-            .select('id')
+            .select('id, storage_path')
             .eq('nama_file', req.file.originalname)
             .eq('category', 'PIUTANG')
             .is('deleted_at', null)
@@ -2256,7 +2272,23 @@ app.post('/api/files/upload-piutang', authenticateToken, requireUploadPermission
             .maybeSingle();
 
         if (existingFile) {
-            return res.status(409).json({ error: 'File dengan nama yang sama sudah ada di Bukti Piutang.' });
+            // File exists in database, but verify it still exists on Google Drive
+            try {
+                console.log(`[PIUTANG] Verifying if file still exists on Google Drive: ${existingFile.storage_path}`);
+                const fileExists = await RcloneStorage.checkFileExists(existingFile.storage_path);
+                
+                if (fileExists) {
+                    // File still exists on Google Drive - reject as duplicate
+                    return res.status(409).json({ error: 'File dengan nama yang sama sudah ada di Bukti Piutang.' });
+                } else {
+                    // File was deleted from Google Drive - allow re-upload
+                    console.log(`[PIUTANG] ✅ File was deleted from Google Drive, allowing re-upload`);
+                }
+            } catch (verifyErr) {
+                console.warn(`[PIUTANG] Error verifying file on Google Drive:`, verifyErr.message);
+                // If verification fails, allow re-upload (graceful fallback)
+                console.log(`[PIUTANG] ✅ Verification failed, allowing re-upload as fallback`);
+            }
         }
 
         // Validate Date (tanggal_dokumen)

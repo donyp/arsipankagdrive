@@ -1711,14 +1711,30 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
                 // Check if Faktur Pajak has already been uploaded (check database)
                 if (invoice && invoice.faktur_pajak_path) {
-                    console.warn(`[Invoice Faktur Pajak] Faktur Pajak already uploaded for faktur: ${fakturNumber}`);
-                    return res.status(409).json({
-                        success: false,
-                        error: 'File sudah ada (Duplicate)',
-                        message: `Faktur Pajak sudah diupload sebelumnya untuk faktur ini: ${invoice.faktur_pajak_path}`,
-                        existing_path: invoice.faktur_pajak_path,
-                        faktur: fakturNumber
-                    });
+                    // File path exists in database, but verify it still exists on Google Drive
+                    try {
+                        console.log(`[Invoice Faktur Pajak] Verifying if file still exists on Google Drive: ${invoice.faktur_pajak_path}`);
+                        const fileExists = await RcloneStorage.checkFileExists(invoice.faktur_pajak_path);
+                        
+                        if (fileExists) {
+                            // File still exists on Google Drive - reject as duplicate
+                            console.warn(`[Invoice Faktur Pajak] Faktur Pajak already uploaded for faktur: ${fakturNumber}`);
+                            return res.status(409).json({
+                                success: false,
+                                error: 'File sudah ada (Duplicate)',
+                                message: `Faktur Pajak sudah diupload sebelumnya untuk faktur ini: ${invoice.faktur_pajak_path}`,
+                                existing_path: invoice.faktur_pajak_path,
+                                faktur: fakturNumber
+                            });
+                        } else {
+                            // File was deleted from Google Drive - allow re-upload
+                            console.log(`[Invoice Faktur Pajak] ✅ File was deleted from Google Drive, allowing re-upload`);
+                        }
+                    } catch (verifyErr) {
+                        console.warn(`[Invoice Faktur Pajak] Error verifying file on Google Drive:`, verifyErr.message);
+                        // If verification fails, allow re-upload (graceful fallback)
+                        console.log(`[Invoice Faktur Pajak] ✅ Verification failed, allowing re-upload as fallback`);
+                    }
                 }
 
                 // Use invoice date if available, otherwise use today's date
