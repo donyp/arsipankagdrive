@@ -1083,6 +1083,16 @@
                     </button>`;
                 }
                 
+                // Add delete button only for super_admin and moderator
+                if (window.currentUser && (window.currentUser.role === 'super_admin' || window.currentUser.role === 'moderator')) {
+                    if (downloadMenuItems) {
+                        downloadMenuItems += '<div style="border-top: 1px solid #eee; margin: 5px 0;"></div>';
+                    }
+                    downloadMenuItems += `<button onclick="deleteInvoice('${inv.faktur}', '${inv.id}')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #e74c3c; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>`;
+                }
+                
                 return `
                 <tr style="border-bottom: 2px solid #34495e;">
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${new Date(inv.tanggal).toLocaleDateString('id-ID')}</td>
