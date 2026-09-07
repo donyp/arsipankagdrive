@@ -3628,7 +3628,7 @@ async function startInvoiceBackgroundScan() {
 }
 
 // Initialize invoice system after content is loaded
-function initInvoiceSystem() {
+async function initInvoiceSystem() {
     console.log('[InvoiceInit] ===== INITIALIZING INVOICE SYSTEM =====');
     console.log('[InvoiceInit] currentUser:', currentUser);
     console.log('[InvoiceInit] currentUser?.role:', currentUser?.role);
@@ -3642,6 +3642,10 @@ function initInvoiceSystem() {
     // Show EMPTY STATE message (no data yet)
     showInvoiceEmptyState();
     console.log('[InvoiceInit] ✅ Empty state displayed');
+    
+    // Load filter options from data (populate year/month/etc dropdowns)
+    await loadFilterOptions();
+    console.log('[InvoiceInit] ✅ Filter options loaded');
     
     // Start background scanning (async, don't wait)
     startInvoiceBackgroundScan();
