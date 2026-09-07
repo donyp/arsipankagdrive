@@ -504,6 +504,13 @@
                 loadAdminZonaFilterState();
                 console.log('[AdminZonaInit] Filter state loaded:', invoiceFilterState);
                 
+                // RESET: Clear filter state to force default "Semua" on refresh
+                invoiceFilterState.year = '';
+                invoiceFilterState.month = '';
+                invoiceFilterState.hasFiltered = false;
+                saveAdminZonaFilterState();
+                console.log('[AdminZonaInit] Filter state cleared for fresh start');
+                
                 // Show EMPTY STATE message (no data yet)
                 showAdminZonaEmptyState();
                 console.log('[AdminZonaInit] ✅ Empty state displayed');
@@ -1070,23 +1077,25 @@
         }
 
         function resetFilters() {
+            console.log('[AdminZonaFilter] Resetting all filters to default');
             document.getElementById('filterSearch').value = '';
             document.getElementById('filterSupplier').value = '';
             document.getElementById('filterKeterangan').value = '';
-            // Do NOT reset year and month - keep them sticky
+            
+            // Reset year and month to default/empty
             const filterYear = document.getElementById('filterYear');
             const filterMonth = document.getElementById('filterMonth');
+            if (filterYear) filterYear.value = '';
+            if (filterMonth) filterMonth.value = '';
             
-            // Keep year and month values - save them again to ensure persistence
-            if (filterYear) invoiceFilterState.year = filterYear.value;
-            if (filterMonth) invoiceFilterState.month = filterMonth.value;
-            
-            // Clear filter state flag but keep year/month
+            // Clear filter state completely
+            invoiceFilterState.year = '';
+            invoiceFilterState.month = '';
             invoiceFilterState.hasFiltered = false;
             saveAdminZonaFilterState();
             showAdminZonaEmptyState();
             
-            console.log('[AdminZonaFilter] ✅ Filters reset (year/month preserved:', invoiceFilterState.year, invoiceFilterState.month, ')');
+            console.log('[AdminZonaFilter] ✅ All filters reset to default');
         }
 
         function previousPage() {

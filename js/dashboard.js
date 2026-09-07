@@ -3383,31 +3383,30 @@ async function applyInvoiceFilters() {
 }
 
 function resetInvoiceFilters() {
-    console.log('[Filter] Resetting filters (keeping year/month sticky)');
+    console.log('[Filter] Resetting all filters to default');
     const filterStatus = document.getElementById('filterStatus');
     const filterToko = document.getElementById('filterToko');
     const filterKeterangan = document.getElementById('filterKeterangan');
     const filterSearch = document.getElementById('filterSearch');
-    
-    // IMPORTANT: Do NOT reset year and month - keep them sticky
     const filterYear = document.getElementById('filterYear');
     const filterMonth = document.getElementById('filterMonth');
     
+    // Reset ALL filters to default/empty
     if (filterStatus) filterStatus.value = '';
     if (filterToko) filterToko.value = '';
     if (filterKeterangan) filterKeterangan.value = '';
     if (filterSearch) filterSearch.value = '';
+    if (filterYear) filterYear.value = '';
+    if (filterMonth) filterMonth.value = '';
     
-    // Keep year and month values - save them again to ensure persistence
-    if (filterYear) invoiceFilterState.year = filterYear.value;
-    if (filterMonth) invoiceFilterState.month = filterMonth.value;
-    
-    // Clear filter state flag but KEEP year/month in localStorage
+    // Clear filter state completely
+    invoiceFilterState.year = '';
+    invoiceFilterState.month = '';
     invoiceFilterState.hasFiltered = false;
     saveInvoiceFilterState();
     showInvoiceEmptyState();
     
-    console.log('[Filter] ✅ Filters reset (year/month preserved:', invoiceFilterState.year, invoiceFilterState.month, ')');
+    console.log('[Filter] ✅ All filters reset to default');
 }
 
 // Setup admin zona specific filters - hide stats
@@ -3632,6 +3631,13 @@ async function initInvoiceSystem() {
     // Load filter state from localStorage
     loadInvoiceFilterState();
     console.log('[InvoiceInit] Filter state loaded:', invoiceFilterState);
+    
+    // RESET: Clear filter state to force default "Semua" on refresh
+    invoiceFilterState.year = '';
+    invoiceFilterState.month = '';
+    invoiceFilterState.hasFiltered = false;
+    saveInvoiceFilterState();
+    console.log('[InvoiceInit] Filter state cleared for fresh start');
     
     // Show EMPTY STATE message (no data yet)
     showInvoiceEmptyState();
