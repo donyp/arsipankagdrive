@@ -3197,6 +3197,34 @@ function updateInvoiceStatsFromData(invoices, totalCount) {
     console.log('[StatsFromData] ===== STATS UPDATE COMPLETE =====');
 }
 
+// Load invoices when dashboard loads
+document.addEventListener('DOMContentLoaded', async () => {
+    // Wait for auth to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    console.log('[Dashboard] Loading invoices...');
+    
+    // Wait for DOM to be fully ready (invoice table injected)
+    let retries = 0;
+    while (!document.getElementById('invoiceTableBody') && retries < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        retries++;
+    }
+    
+    if (document.getElementById('invoiceTableBody')) {
+        console.log('[Dashboard] Invoice table found, loading data...');
+        // Load invoices first
+        await loadInvoicesInDashboard(1);
+        // Then populate filters from loaded invoices
+        await loadFilterOptions();
+        // Initialize event listeners for pagination and filters
+        initInvoiceSystem();
+    } else {
+        console.warn('[Dashboard] Invoice table not found after 5 seconds');
+    }
+});
+
+
 // ============================================
 // DELETE INVOICE
 // ============================================
