@@ -562,15 +562,20 @@
                         });
                         if (res.ok) {
                             const result = await res.json();
+                            console.log('[Bukti Bayar Debug] API Response for', noFaktur, ':', result);
                             if (result.exists && result.data) {
                                 info.tokoName = result.data.konsumen || '?';
                                 info.nominal = result.data.total_jumlah_jual || 0;
                                 
                                 // Check if Bukti Bayar already uploaded
+                                console.log('[Bukti Bayar Debug] Checking bukti_bayar_path:', result.data.bukti_bayar_path);
                                 if (result.data.bukti_bayar_path) {
                                     isValid = false;
+                                    info.isValid = false;
                                     info.errorMsg = 'Bukti Bayar sudah diupload (Duplicate)';
-                                    console.log('[Bukti Bayar] Duplicate detected:', noFaktur);
+                                    console.log('[Bukti Bayar] ❌ Duplicate detected for:', noFaktur, 'Path:', result.data.bukti_bayar_path);
+                                } else {
+                                    console.log('[Bukti Bayar] ✅ Not uploaded yet, valid for upload');
                                 }
                             }
                         }
