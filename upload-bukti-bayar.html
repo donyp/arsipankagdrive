@@ -570,7 +570,6 @@
                                 // Check if Bukti Bayar already uploaded
                                 console.log('[Bukti Bayar Debug] Checking bukti_bayar_path:', result.data.bukti_bayar_path);
                                 if (result.data.bukti_bayar_path) {
-                                    isValid = false;
                                     info.isValid = false;
                                     info.errorMsg = 'Bukti Bayar sudah diupload (Duplicate)';
                                     console.log('[Bukti Bayar] ❌ Duplicate detected for:', noFaktur, 'Path:', result.data.bukti_bayar_path);
