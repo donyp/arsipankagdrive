@@ -908,28 +908,28 @@
     <script>
         // REDIRECT admin_zona users to their dedicated dashboard
         document.addEventListener('DOMContentLoaded', async () => {
-            // Wait for auth
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            if (user.role === 'admin_zona') {
-                console.log('[Dashboard] Admin_zona user detected, redirecting to dashboard-admin-zona.html');
-                window.location.href = 'dashboard-admin-zona.html';
-                return;
-            }
-        });
             try {
                 // Wait for auth
-                const user = await initAuth();
-                console.log('[Dashboard] User loaded:', user?.role, user?.zona_id);
-                if (!user) return;
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                if (user.role === 'admin_zona') {
+                    console.log('[Dashboard] Admin_zona user detected, redirecting to dashboard-admin-zona.html');
+                    window.location.href = 'dashboard-admin-zona.html';
+                    return;
+                }
+                
+                // Wait for auth
+                const userAuth = await initAuth();
+                console.log('[Dashboard] User loaded:', userAuth?.role, userAuth?.zona_id);
+                if (!userAuth) return;
 
                 // Set current date/time greeting
                 setCurrentDate();
 
                 // Determine which invoice list file to load based on user role
-                const invoiceFile = (user.role === 'admin_zona') ? 'invoice-list.html' : 'invoice-list-admin.html';
-                console.log('[Dashboard] Loading invoice file:', invoiceFile, 'for role:', user.role);
+                const invoiceFile = (userAuth.role === 'admin_zona') ? 'invoice-list.html' : 'invoice-list-admin.html';
+                console.log('[Dashboard] Loading invoice file:', invoiceFile, 'for role:', userAuth.role);
 
                 // Try to load invoice list HTML content if it exists
                 try {
@@ -1007,7 +1007,6 @@
                     // Data will be loaded when user clicks "Terapkan Filter" button
                     console.log('[Dashboard] ✅ Invoice system initialized (waiting for user to filter)');
                 }, 500);
-                
             } catch (error) {
                 console.error('Error loading invoice content:', error);
             }
