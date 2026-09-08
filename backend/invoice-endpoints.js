@@ -1293,28 +1293,38 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 const category = invoice.keterangan === 'PPN' ? 'PPN' : 'NON';
                 const location = extractLocationFromToko(invoice.toko);
                 
-                // Path structure: /ARSIPINVOICE/ARSIPINVOICE/LOCATION/TAHUN/BULAN/TANGGAL/CATEGORY/
+                // Path structure: /ARSIPINVOICE/LOCATION/TAHUN/BULAN/TANGGAL/CATEGORY/
                 // LOCATION: BEKASI or PEMALANG (extracted from TOKO column)
                 console.log(`[Invoice PDF] Path components - Location: ${location}, Year: ${year}, Month: ${monthName}, Day: ${day}, Category: ${category}`);
                 
-                // Check if file already exists in Google Drive (duplicate detection)
-                const uploadPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${category}/${filename}`;
-                console.log(`[Invoice PDF] Checking for duplicate at: ${uploadPath}`);
+                // Build expected new path with location
+                const expectedNewPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${category}/${filename}`;
+                console.log(`[Invoice PDF] Expected new path: ${expectedNewPath}`);
                 
-                try {
-                    const fileExists = await RcloneStorage.checkFileExists(uploadPath);
-                    if (fileExists) {
-                        console.warn(`[Invoice PDF] Duplicate file detected: ${uploadPath}`);
-                        return res.status(409).json({ 
-                            error: 'File sudah ada di folder ini (Duplicate)',
-                            message: `File dengan nama "${filename}" sudah diupload sebelumnya`,
-                            existing_path: uploadPath,
-                            faktur: faktur
-                        });
+                // Check if this is a re-upload of same file (path already matches new structure)
+                const isReuploadWithNewPath = invoice.invoice_pdf_path === expectedNewPath;
+                if (isReuploadWithNewPath) {
+                    console.log(`[Invoice PDF] ℹ️  File already uploaded with new location-based path, allowing re-upload`);
+                } else {
+                    // Check if file already exists in Google Drive (duplicate detection) - only for new uploads
+                    const uploadPath = expectedNewPath;
+                    console.log(`[Invoice PDF] Checking for duplicate at: ${uploadPath}`);
+                    
+                    try {
+                        const fileExists = await RcloneStorage.checkFileExists(uploadPath);
+                        if (fileExists && !isReuploadWithNewPath) {
+                            console.warn(`[Invoice PDF] Duplicate file detected: ${uploadPath}`);
+                            return res.status(409).json({ 
+                                error: 'File sudah ada di folder ini (Duplicate)',
+                                message: `File dengan nama "${filename}" sudah diupload sebelumnya`,
+                                existing_path: uploadPath,
+                                faktur: faktur
+                            });
+                        }
+                    } catch (checkErr) {
+                        console.warn(`[Invoice PDF] Warning checking duplicate: ${checkErr.message}`);
+                        // Continue anyway - don't block upload if check fails
                     }
-                } catch (checkErr) {
-                    console.warn(`[Invoice PDF] Warning checking duplicate: ${checkErr.message}`);
-                    // Continue anyway - don't block upload if check fails
                 }
                 
                 // Upload to Google Drive via RcloneStorage
@@ -1496,26 +1506,35 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     const location = extractLocationFromToko(invoice?.toko);
                     console.log(`[Invoice Document] Path: /ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`);
 
-                    // Check if file already exists (duplicate detection)
-                    const fakturDocUploadPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`;
-                    console.log(`[Invoice Document] Checking for duplicate faktur pajak at: ${fakturDocUploadPath}`);
+                    // Build expected new path with location
+                    const expectedNewPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`;
                     
-                    try {
-                        const fileExists = await RcloneStorage.checkFileExists(fakturDocUploadPath);
-                        if (fileExists) {
-                            console.warn(`[Invoice Document] Duplicate faktur pajak detected: ${fakturDocUploadPath}`);
-                            return res.status(409).json({
-                                success: false,
-                                error: 'File sudah ada di folder ini (Duplicate)',
-                                message: `Faktur Pajak dengan nama "${finalFilename}" sudah diupload sebelumnya`,
-                                existing_path: fakturDocUploadPath,
-                                type: 'faktur_pajak',
-                                faktur: fakturNumber
-                            });
+                    // Check if this is a re-upload of same file (path already matches new structure)
+                    const isReuploadWithNewPath = invoice?.faktur_pajak_path === expectedNewPath;
+                    if (isReuploadWithNewPath) {
+                        console.log(`[Invoice Document] ℹ️  Faktur Pajak already uploaded with new location-based path, allowing re-upload`);
+                    } else {
+                        // Check if file already exists (duplicate detection) - only for new uploads
+                        const fakturDocUploadPath = expectedNewPath;
+                        console.log(`[Invoice Document] Checking for duplicate faktur pajak at: ${fakturDocUploadPath}`);
+                        
+                        try {
+                            const fileExists = await RcloneStorage.checkFileExists(fakturDocUploadPath);
+                            if (fileExists && !isReuploadWithNewPath) {
+                                console.warn(`[Invoice Document] Duplicate faktur pajak detected: ${fakturDocUploadPath}`);
+                                return res.status(409).json({
+                                    success: false,
+                                    error: 'File sudah ada di folder ini (Duplicate)',
+                                    message: `Faktur Pajak dengan nama "${finalFilename}" sudah diupload sebelumnya`,
+                                    existing_path: fakturDocUploadPath,
+                                    type: 'faktur_pajak',
+                                    faktur: fakturNumber
+                                });
+                            }
+                        } catch (checkErr) {
+                            console.warn(`[Invoice Document] Warning checking duplicate: ${checkErr.message}`);
+                            // Continue anyway
                         }
-                    } catch (checkErr) {
-                        console.warn(`[Invoice Document] Warning checking duplicate: ${checkErr.message}`);
-                        // Continue anyway
                     }
 
                     // Upload to Google Drive
@@ -1646,25 +1665,34 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
 
                     console.log(`[Invoice Document] Path: /ARSIPINVOICE/${location}/${year}/${monthName}/${day}/BUKTIBAYAR/${finalFilename}`);
 
-                    // Check if file already exists (duplicate detection)
-                    const buktiUploadPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/BUKTIBAYAR/${finalFilename}`;
-                    console.log(`[Invoice Document] Checking for duplicate bukti bayar at: ${buktiUploadPath}`);
+                    // Build expected new path with location
+                    const expectedNewPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/BUKTIBAYAR/${finalFilename}`;
                     
-                    try {
-                        const fileExists = await RcloneStorage.checkFileExists(buktiUploadPath);
-                        if (fileExists) {
-                            console.warn(`[Invoice Document] Duplicate bukti bayar detected: ${buktiUploadPath}`);
-                            return res.status(409).json({
-                                success: false,
-                                error: 'File sudah ada di folder ini (Duplicate)',
-                                message: `Bukti Bayar dengan nomor faktur "${nomorFaktur}" sudah diupload sebelumnya`,
-                                existing_path: buktiUploadPath,
-                                faktur: nomorFaktur
-                            });
+                    // Check if this is a re-upload of same file (path already matches new structure)
+                    const isReuploadWithNewPath = invoice?.bukti_bayar_path === expectedNewPath;
+                    if (isReuploadWithNewPath) {
+                        console.log(`[Invoice Document] ℹ️  Bukti Bayar already uploaded with new location-based path, allowing re-upload`);
+                    } else {
+                        // Check if file already exists (duplicate detection) - only for new uploads
+                        const buktiUploadPath = expectedNewPath;
+                        console.log(`[Invoice Document] Checking for duplicate bukti bayar at: ${buktiUploadPath}`);
+                        
+                        try {
+                            const fileExists = await RcloneStorage.checkFileExists(buktiUploadPath);
+                            if (fileExists && !isReuploadWithNewPath) {
+                                console.warn(`[Invoice Document] Duplicate bukti bayar detected: ${buktiUploadPath}`);
+                                return res.status(409).json({
+                                    success: false,
+                                    error: 'File sudah ada di folder ini (Duplicate)',
+                                    message: `Bukti Bayar dengan nomor faktur "${nomorFaktur}" sudah diupload sebelumnya`,
+                                    existing_path: buktiUploadPath,
+                                    faktur: nomorFaktur
+                                });
+                            }
+                        } catch (checkErr) {
+                            console.warn(`[Invoice Document] Warning checking duplicate: ${checkErr.message}`);
+                            // Continue anyway
                         }
-                    } catch (checkErr) {
-                        console.warn(`[Invoice Document] Warning checking duplicate: ${checkErr.message}`);
-                        // Continue anyway
                     }
 
                     // Upload to Google Drive
@@ -1833,25 +1861,34 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
 
                 console.log(`[Invoice Faktur Pajak] Path: /ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`);
 
-                // Check if file already exists (duplicate detection)
-                const fakturUploadPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`;
-                console.log(`[Invoice Faktur Pajak] Checking for duplicate at: ${fakturUploadPath}`);
+                // Build expected new path with location
+                const expectedNewPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`;
                 
-                try {
-                    const fileExists = await RcloneStorage.checkFileExists(fakturUploadPath);
-                    if (fileExists) {
-                        console.warn(`[Invoice Faktur Pajak] Duplicate file detected: ${fakturUploadPath}`);
-                        return res.status(409).json({
-                            success: false,
-                            error: 'File sudah ada di folder ini (Duplicate)',
-                            message: `Faktur Pajak dengan nama "${finalFilename}" sudah diupload sebelumnya`,
-                            existing_path: fakturUploadPath,
-                            faktur: fakturNumber
-                        });
+                // Check if this is a re-upload of same file (path already matches new structure)
+                const isReuploadWithNewPath = invoice?.faktur_pajak_path === expectedNewPath;
+                if (isReuploadWithNewPath) {
+                    console.log(`[Invoice Faktur Pajak] ℹ️  File already uploaded with new location-based path, allowing re-upload`);
+                } else {
+                    // Check if file already exists (duplicate detection) - only for new uploads
+                    const fakturUploadPath = expectedNewPath;
+                    console.log(`[Invoice Faktur Pajak] Checking for duplicate at: ${fakturUploadPath}`);
+                    
+                    try {
+                        const fileExists = await RcloneStorage.checkFileExists(fakturUploadPath);
+                        if (fileExists && !isReuploadWithNewPath) {
+                            console.warn(`[Invoice Faktur Pajak] Duplicate file detected: ${fakturUploadPath}`);
+                            return res.status(409).json({
+                                success: false,
+                                error: 'File sudah ada di folder ini (Duplicate)',
+                                message: `Faktur Pajak dengan nama "${finalFilename}" sudah diupload sebelumnya`,
+                                existing_path: fakturUploadPath,
+                                faktur: fakturNumber
+                            });
+                        }
+                    } catch (checkErr) {
+                        console.warn(`[Invoice Faktur Pajak] Warning checking duplicate: ${checkErr.message}`);
+                        // Continue anyway
                     }
-                } catch (checkErr) {
-                    console.warn(`[Invoice Faktur Pajak] Warning checking duplicate: ${checkErr.message}`);
-                    // Continue anyway
                 }
 
                 // Upload to Google Drive
