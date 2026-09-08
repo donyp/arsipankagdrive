@@ -382,6 +382,54 @@ const uploadMediaMulter = multer({
     limits: { fileSize: 500 * 1024 * 1024 }, // 500MB limit for media
 });
 
+// ============================================================
+// Chunked Upload Configuration (Feature-Flagged)
+// ============================================================
+const ENABLE_CHUNKED_UPLOAD = process.env.ENABLE_CHUNKED_UPLOAD === 'true';
+
+// Multer for chunked upload (chunks only, small size)
+const chunkUploadMulter = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max per chunk
+});
+
+// Initialize chunked upload modules (if enabled)
+let uploadSessionManager = null;
+let chunkHandler = null;
+let fileAssembler = null;
+
+if (ENABLE_CHUNKED_UPLOAD) {
+    const UploadSessionManager = require('./upload-session-manager');
+    const ChunkHandler = require('./chunk-handler');
+    const FileAssembler = require('./file-assembler');
+    
+    const tempDir = path.join(__dirname, '..', 'temp', 'uploads');
+    const sessionDir = path.join(__dirname, '..', 'data', 'upload-sessions');
+    
+    uploadSessionManager = new UploadSessionManager({
+        sessionDir,
+        sessionTTL: 24 * 60 * 60 * 1000,  // 24 hours
+        cleanupInterval: 60 * 60 * 1000,  // 1 hour
+        logger: console
+    });
+    
+    chunkHandler = new ChunkHandler({
+        tempDir,
+        maxChunkSize: 10 * 1024 * 1024,
+        logger: console
+    });
+    
+    fileAssembler = new FileAssembler({
+        chunkHandler,
+        rcloneWrapper: RcloneStorage,
+        logger: console
+    });
+    
+    console.log('[ChunkedUpload] ✅ Modules initialized (feature flag: ON)');
+} else {
+    console.log('[ChunkedUpload] ⏸️  Disabled (set ENABLE_CHUNKED_UPLOAD=true to enable)');
+}
+
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-to-a-very-long-random-string';
 const JWT_EXPIRES_IN = '8h';
@@ -5657,6 +5705,24 @@ const HOST = '0.0.0.0';
         // Mock files initialization DISABLED - using Google Drive only
         // Previous: LocalStorage.initializeMockFiles();
         console.log('[Express] âœ… Storage: Google Drive (rclone) - No mock files');
+        
+        // ================================================================
+        // Register Chunked Upload Endpoints (Feature-Flagged)
+        // ================================================================
+        if (ENABLE_CHUNKED_UPLOAD && uploadSessionManager && chunkHandler && fileAssembler) {
+            const { createChunkedUploadEndpoints } = require('./chunked-upload-endpoints');
+            const chunkedRouter = createChunkedUploadEndpoints({
+                sessionManager: uploadSessionManager,
+                chunkHandler,
+                fileAssembler,
+                rcloneWrapper: RcloneStorage,
+                logger: console,
+                tempDir: path.join(__dirname, '..', 'temp')
+            });
+            
+            app.use('/api/files', chunkUploadMulter.single('chunk'), chunkedRouter);
+            console.log('[ChunkedUpload] âœ… Routes registered: /api/files/{init,chunk,status,complete,abort,metrics}');
+        }
         
         const HOST = process.env.HOST || '0.0.0.0';
         const server = app.listen(PORT, HOST, () => {
