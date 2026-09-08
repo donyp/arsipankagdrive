@@ -557,9 +557,20 @@
                 
                 // Display user info
                 const userEmail = currentUser.email || currentUser.username || currentUser.name || 'Admin Zona';
-                const zonaName = currentUser.zonas?.nama || currentUser.zonas?.kode || currentUser.zona_kode || 'Unknown';
+                let zonaName = 'Unknown';
                 
-                // Extract just the number from zona name if it's like "Zona 01"
+                // Try multiple ways to get zona name
+                if (currentUser.zonas?.nama) {
+                    zonaName = currentUser.zonas.nama;
+                } else if (currentUser.zonas?.kode) {
+                    zonaName = currentUser.zonas.kode;
+                } else if (currentUser.zona_kode) {
+                    zonaName = currentUser.zona_kode;
+                } else if (currentUser.zonas && typeof currentUser.zonas === 'string') {
+                    zonaName = currentUser.zonas;
+                }
+                
+                // Extract just the number from zona name if it's like "Zona 01" or "01"
                 const zonaNumber = zonaName.toString().replace(/[^\d]/g, '') || zonaName;
                 
                 console.log('[AdminZona] User:', userEmail, 'Zona:', zonaName, 'Zona Number:', zonaNumber, 'Full user:', currentUser);
