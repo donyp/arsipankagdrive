@@ -3334,17 +3334,113 @@ function updateInvoiceStatsFromData(invoices, totalCount) {
 // ============================================
 function toggleActionMenu(event, faktur, invoiceId) {
     event.stopPropagation();
-    const menu = document.getElementById(`menu-${invoiceId}`);
     
-    // Close all other menus
-    document.querySelectorAll('.action-menu').forEach(m => {
-        if (m.id !== `menu-${invoiceId}`) {
-            m.style.display = 'none';
+    // Show SweetAlert2 popup instead of dropdown menu
+    showInvoiceActionMenu(faktur, invoiceId);
+}
+
+// Show invoice action menu as SweetAlert2 popup
+async function showInvoiceActionMenu(faktur, invoiceId) {
+    try {
+        // Get current user role
+        const isModerator = currentUser && (currentUser.role === 'moderator' || currentUser.role === 'super_admin');
+        
+        // Build menu HTML
+        let menuHTML = `<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">`;
+        
+        // Get token for file checks
+        const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+        
+        // Check and add download buttons
+        try {
+            // Check invoice file
+            const invoiceRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/invoice`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (invoiceRes.ok) {
+                const data = await invoiceRes.json();
+                if (data.exists) {
+                    menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
+                        📄 Download Invoice
+                    </button>`;
+                }
+            }
+            
+            // Check bukti bayar
+            const buktiRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/bukti_bayar`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (buktiRes.ok) {
+                const data = await buktiRes.json();
+                if (data.exists) {
+                    menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
+                        💰 Download Bukti Bayar
+                    </button>`;
+                }
+            }
+            
+            // Check faktur pajak
+            const fakturRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/faktur_pajak`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (fakturRes.ok) {
+                const data = await fakturRes.json();
+                if (data.exists) {
+                    menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
+                        📋 Download Faktur Pajak
+                    </button>`;
+                }
+            }
+            
+            // Check combine (if all files exist)
+            if (invoiceRes.ok && buktiRes.ok && fakturRes.ok) {
+                const invoiceData = await invoiceRes.json();
+                const buktiData = await buktiRes.json();
+                const fakturData = await fakturRes.json();
+                
+                if (invoiceData.exists && buktiData.exists && fakturData.exists) {
+                    menuHTML += `<button onclick="combinePDF('${faktur}'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
+                        📦 Combine PDF (3/3)
+                    </button>`;
+                }
+            }
+        } catch (err) {
+            console.error('[ActionMenu] Error checking files:', err);
         }
-    });
-    
-    // Toggle current menu
-    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        
+        // Add delete button only for moderators
+        if (isModerator) {
+            menuHTML += `<div style="border-top: 1px solid #ddd; margin-top: 10px; padding-top: 10px;"></div>`;
+            menuHTML += `<button onclick="deleteInvoice('${faktur}', '${invoiceId}'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
+                🗑️ Hapus Invoice
+            </button>`;
+        }
+        
+        menuHTML += `</div>`;
+        
+        // Show SweetAlert2 popup
+        Swal.fire({
+            title: '📥 Download Files',
+            html: menuHTML,
+            icon: 'info',
+            showConfirmButton: false,
+            background: '#f8f9fa',
+            customClass: {
+                popup: 'download-menu-popup'
+            },
+            allowOutsideClick: true,
+            allowEscapeKey: true
+        });
+        
+    } catch (error) {
+        console.error('[ActionMenu] Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Gagal memuat menu aksi',
+            confirmButtonColor: '#e74c3c'
+        });
+    }
 }
 
 // Close menu when clicking outside
