@@ -1070,7 +1070,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // fileType: 'invoice', 'bukti_bayar', or 'faktur_pajak'
     // ============================================
     app.get('/api/invoice/check-file/:faktur/:fileType',
-        createAuth(['super_admin', 'moderator', 'user']),
+        createAuth(['super_admin', 'moderator', 'user', 'admin_zona']),
         async (req, res) => {
             try {
                 const { faktur, fileType } = req.params;
