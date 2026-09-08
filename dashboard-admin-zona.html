@@ -824,34 +824,125 @@
         // Toggle action menu dropdown - position fixed to avoid clipping
         // Show download menu as popup modal
         function showDownloadMenu(faktur, invoiceId) {
-            // Build the menu with all 4 download options
-            let menuHTML = `<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
-                <button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice'); Swal.close();" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
-                    📄 Download Invoice
-                </button>
-                <button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar'); Swal.close();" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
-                    💰 Download Bukti Bayar
-                </button>
-                <button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak'); Swal.close();" style="width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
-                    📋 Download Faktur Pajak
-                </button>
-                <button onclick="combinePDF('${faktur}'); Swal.close();" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
-                    📦 Combine PDF
-                </button>
-            </div>`;
+            // Find the row to get file status info
+            const token = localStorage.getItem('jwt_token');
             
-            Swal.fire({
-                title: '📥 Download Files',
-                html: menuHTML,
-                icon: 'info',
-                showConfirmButton: false,
-                background: '#f8f9fa',
-                customClass: {
-                    popup: 'download-menu-popup'
-                },
-                allowOutsideClick: true,
-                allowEscapeKey: true
-            });
+            // Check which files exist by making quick requests
+            async function checkAndShowMenu() {
+                try {
+                    let menuHTML = `<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">`;
+                    let hasAnyFile = false;
+                    let fileCount = 0;
+                    let requiredCount = 0;
+                    let isPPN = false;
+                    
+                    // First, get invoice info to determine PPN status
+                    const tableRow = document.querySelector(`button[onclick*="showDownloadMenu('${faktur}']`)?.closest('tr');
+                    if (tableRow) {
+                        // Get keterangan from the row (check which column it is)
+                        const cells = tableRow.querySelectorAll('td');
+                        if (cells.length >= 7) {
+                            isPPN = cells[6].textContent.includes('PPN');
+                            requiredCount = isPPN ? 3 : 2;
+                        }
+                    }
+                    
+                    // Check invoice file
+                    try {
+                        const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/invoice?t=${Date.now()}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const data = await res.json();
+                        if (data.exists) {
+                            hasAnyFile = true;
+                            fileCount++;
+                            menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice'); Swal.close();" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
+                                📄 Download Invoice
+                            </button>`;
+                        }
+                    } catch (e) {
+                        console.error('Error checking invoice file:', e);
+                    }
+                    
+                    // Check bukti bayar file
+                    try {
+                        const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/bukti_bayar?t=${Date.now()}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const data = await res.json();
+                        if (data.exists) {
+                            hasAnyFile = true;
+                            fileCount++;
+                            menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar'); Swal.close();" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
+                                💰 Download Bukti Bayar
+                            </button>`;
+                        }
+                    } catch (e) {
+                        console.error('Error checking bukti bayar file:', e);
+                    }
+                    
+                    // Check faktur pajak file (only for PPN)
+                    if (isPPN) {
+                        try {
+                            const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/faktur_pajak?t=${Date.now()}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            const data = await res.json();
+                            if (data.exists) {
+                                hasAnyFile = true;
+                                fileCount++;
+                                menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak'); Swal.close();" style="width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
+                                    📋 Download Faktur Pajak
+                                </button>`;
+                            }
+                        } catch (e) {
+                            console.error('Error checking faktur pajak file:', e);
+                        }
+                    }
+                    
+                    // Add combine button ONLY if all files are complete
+                    if (fileCount === requiredCount && fileCount > 0) {
+                        menuHTML += `<button onclick="combinePDF('${faktur}'); Swal.close();" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
+                            📦 Combine PDF
+                        </button>`;
+                    }
+                    
+                    menuHTML += `</div>`;
+                    
+                    if (!hasAnyFile) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Tidak Ada File',
+                            text: 'Tidak ada file yang tersedia untuk diunduh.',
+                            confirmButtonColor: '#95a5a6'
+                        });
+                        return;
+                    }
+                    
+                    Swal.fire({
+                        title: '📥 Download Files',
+                        html: menuHTML,
+                        icon: 'info',
+                        showConfirmButton: false,
+                        background: '#f8f9fa',
+                        customClass: {
+                            popup: 'download-menu-popup'
+                        },
+                        allowOutsideClick: true,
+                        allowEscapeKey: true
+                    });
+                } catch (error) {
+                    console.error('Menu error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Gagal memuat menu download',
+                        confirmButtonColor: '#e74c3c'
+                    });
+                }
+            }
+            
+            checkAndShowMenu();
         }
 
         // Delete invoice with custom confirmation
