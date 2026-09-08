@@ -1023,7 +1023,7 @@
                 // Check invoice file
                 if (inv.invoice_pdf_path) {
                     try {
-                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
+                        const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
                         const data = await res.json();
@@ -1039,7 +1039,7 @@
                 // Check bukti bayar
                 if (inv.bukti_bayar_path) {
                     try {
-                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
+                        const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
                         const data = await res.json();
@@ -1055,7 +1055,7 @@
                 // Check faktur pajak (if PPN)
                 if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
                     try {
-                        const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
+                        const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
                         const data = await res.json();
