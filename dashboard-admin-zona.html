@@ -244,7 +244,7 @@
                         <div class="flex items-center gap-3">
                             <div class="text-3xl">🏢</div>
                             <div>
-                                <h1 class="text-3xl font-bold text-gray-900">Dashboard Admin Zona</h1>
+                                <h1 class="text-3xl font-bold text-gray-900">Dashboard Admin Zona <span id="zona-number">-</span></h1>
                             </div>
                         </div>
                     </div>
@@ -563,6 +563,7 @@
                 
                 document.getElementById('user-name').textContent = userEmail;
                 document.getElementById('user-zona').textContent = `Zona: ${zonaName}`;
+                document.getElementById('zona-number').textContent = zonaName;
 
                 // Show sidebar and main content now that initialization is complete
                 document.getElementById('sidebar').style.display = 'block';
