@@ -3385,28 +3385,28 @@ async function showInvoiceActionMenu(faktur, invoiceId) {
         
         // Show invoice download button if file exists
         if (fileStatus.hasInvoice) {
-            menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
+            menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice');" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
                 📄 Download Invoice
             </button>`;
         }
         
         // Show bukti bayar download button if file exists
         if (fileStatus.hasBuktiBayar) {
-            menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
+            menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar');" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
                 💰 Download Bukti Bayar
             </button>`;
         }
         
         // Show faktur pajak download button if file exists
         if (fileStatus.hasFakturPajak && fileStatus.isPPN) {
-            menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
+            menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak');" style="width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
                 📋 Download Faktur Pajak
             </button>`;
         }
         
         // Show combine button if all files are complete
         if (fileStatus.isComplete) {
-            menuHTML += `<button onclick="combinePDF('${faktur}'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
+            menuHTML += `<button onclick="combinePDF('${faktur}');" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
                 📦 Combine PDF (${fileStatus.actualCount}/${fileStatus.requiredCount})
             </button>`;
         }
@@ -3414,7 +3414,7 @@ async function showInvoiceActionMenu(faktur, invoiceId) {
         // Add delete button only for moderators
         if (isModerator) {
             menuHTML += `<div style="border-top: 1px solid #ddd; margin-top: 10px; padding-top: 10px;"></div>`;
-            menuHTML += `<button onclick="deleteInvoice('${faktur}', '${invoiceId}'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
+            menuHTML += `<button onclick="deleteInvoice('${faktur}', '${invoiceId}');" style="width: 100%; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
                 🗑️ Hapus Invoice
             </button>`;
         }
