@@ -38,7 +38,7 @@
         }
 
         .invoice-container {
-            padding: 80px;
+            padding: 50px;
             width: 100%;
             margin: 0;
         }
@@ -244,7 +244,7 @@
                         <div class="flex items-center gap-3">
                             <div class="text-3xl">🏢</div>
                             <div>
-                                <h1 class="text-3xl font-bold text-gray-900">Dashboard Admin Zona <span id="zona-number">-</span></h1>
+                                <h1 class="text-3xl font-bold text-gray-900"><span style="display: inline;">Dashboard Admin Zona <span id="zona-number">-</span></span></h1>
                             </div>
                         </div>
                     </div>
@@ -558,6 +558,7 @@
                 // Display user info
                 const userEmail = currentUser.email || currentUser.username || currentUser.name || 'Admin Zona';
                 let zonaName = 'Unknown';
+                let zonaNumber = '1'; // Default fallback
                 
                 // Try multiple ways to get zona name
                 if (currentUser.zonas?.nama) {
@@ -571,7 +572,12 @@
                 }
                 
                 // Extract just the number from zona name if it's like "Zona 01" or "01"
-                const zonaNumber = zonaName.toString().replace(/[^\d]/g, '') || zonaName;
+                const extracted = zonaName.toString().replace(/[^\d]/g, '');
+                if (extracted) {
+                    zonaNumber = extracted;
+                } else if (currentUser.zona_id) {
+                    zonaNumber = currentUser.zona_id.toString();
+                }
                 
                 console.log('[AdminZona] User:', userEmail, 'Zona:', zonaName, 'Zona Number:', zonaNumber, 'Full user:', currentUser);
                 
