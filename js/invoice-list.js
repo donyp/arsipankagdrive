@@ -1597,6 +1597,7 @@ window.combinePDF = async function(faktur) {
 /**
  * Show download menu popup for invoice
  * Displays SweetAlert2 modal with download options
+ * Includes delete button for moderators only
  */
 window.showInvoiceDownloadMenu = function(faktur, invoiceId) {
     try {
@@ -1616,6 +1617,10 @@ window.showInvoiceDownloadMenu = function(faktur, invoiceId) {
             }
             return;
         }
+        
+        // Get current user role to check if moderator
+        const currentUser = typeof window.currentUser !== 'undefined' ? window.currentUser : null;
+        const isModerator = currentUser && (currentUser.role === 'moderator' || currentUser.role === 'super_admin');
         
         // Build popup menu HTML
         let menuHTML = `<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">`;
@@ -1649,6 +1654,14 @@ window.showInvoiceDownloadMenu = function(faktur, invoiceId) {
         if (filesUploaded >= filesRequired) {
             menuHTML += `<button onclick="combinePDF('${faktur}'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
                 📦 Combine PDF (${filesUploaded}/${filesRequired})
+            </button>`;
+        }
+        
+        // Show delete button only for moderators
+        if (isModerator) {
+            menuHTML += `<div style="border-top: 1px solid #ddd; margin-top: 10px; padding-top: 10px;"></div>`;
+            menuHTML += `<button onclick="deleteInvoice('${faktur}', '${invoiceId}'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
+                🗑️ Hapus Invoice
             </button>`;
         }
         
