@@ -1327,64 +1327,70 @@
                 
                 const colorConfig = fileTypeColors[fileType] || { bg: '#95a5a6', icon: '📁', text: 'File' };
                 
-                // Helper to show loading modal
-                const showLoadingModal = (message = 'Mohon tunggu...') => {
-                    Swal.fire({
-                        title: `${colorConfig.icon} Mengunduh ${colorConfig.text}`,
-                        html: `
-                            <div style="margin: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px;">
-                                <div style="position: relative; width: 60px; height: 60px;">
-                                    <i class="fas fa-spinner fa-spin" style="
-                                        font-size: 3rem;
-                                        color: rgba(255,255,255,0.8);
-                                        animation: spin 2s linear infinite;
-                                    "></i>
-                                </div>
-                                <div style="
-                                    width: 120px;
-                                    height: 4px;
-                                    background: rgba(255,255,255,0.3);
-                                    border-radius: 2px;
-                                    overflow: hidden;
-                                ">
-                                    <div style="
-                                        width: 100%;
-                                        height: 100%;
-                                        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
-                                        animation: slide 1.5s infinite;
-                                    "></div>
-                                </div>
-                            </div>
-                            <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">${message}</p>
-                            <style>
-                                @keyframes spin {
-                                    0% { transform: rotate(0deg); }
-                                    100% { transform: rotate(360deg); }
-                                }
-                                @keyframes slide {
-                                    0% { transform: translateX(-100%); }
-                                    50% { transform: translateX(100%); }
-                                    100% { transform: translateX(100%); }
-                                }
-                            </style>
-                        `,
-                        showConfirmButton: false,
-                        allowOutsideClick: false,
-                        background: colorConfig.bg,
-                        color: '#ffffff',
-                        customClass: {
-                            popup: 'colored-download-popup'
+                // Helper to update loading modal with new message
+                const updateLoadingModal = (message = 'Mohon tunggu...') => {
+                    const modalContent = document.querySelector('.swal2-html-container');
+                    if (modalContent) {
+                        const msgElement = modalContent.querySelector('p');
+                        if (msgElement) {
+                            msgElement.textContent = message;
                         }
-                    });
+                    }
                 };
                 
-                // Show initial loading
-                showLoadingModal('Menyiapkan file untuk diunduh...');
+                // SHOW LOADING IMMEDIATELY on button click
+                Swal.fire({
+                    title: `${colorConfig.icon} Mengunduh ${colorConfig.text}`,
+                    html: `
+                        <div style="margin: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                            <div style="position: relative; width: 60px; height: 60px;">
+                                <i class="fas fa-spinner fa-spin" style="
+                                    font-size: 3rem;
+                                    color: rgba(255,255,255,0.8);
+                                    animation: spin 2s linear infinite;
+                                "></i>
+                            </div>
+                            <div style="
+                                width: 120px;
+                                height: 4px;
+                                background: rgba(255,255,255,0.3);
+                                border-radius: 2px;
+                                overflow: hidden;
+                            ">
+                                <div style="
+                                    width: 100%;
+                                    height: 100%;
+                                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+                                    animation: slide 1.5s infinite;
+                                "></div>
+                            </div>
+                        </div>
+                        <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">Menyiapkan file untuk diunduh...</p>
+                        <style>
+                            @keyframes spin {
+                                0% { transform: rotate(0deg); }
+                                100% { transform: rotate(360deg); }
+                            }
+                            @keyframes slide {
+                                0% { transform: translateX(-100%); }
+                                50% { transform: translateX(100%); }
+                                100% { transform: translateX(100%); }
+                            }
+                        </style>
+                    `,
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    background: colorConfig.bg,
+                    color: '#ffffff',
+                    customClass: {
+                        popup: 'colored-download-popup'
+                    }
+                });
                 
                 const token = localStorage.getItem('jwt_token');
                 
                 // Check if file exists first
-                showLoadingModal('Memeriksa ketersediaan file...');
+                updateLoadingModal('Memeriksa ketersediaan file...');
                 const checkRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/${fileType}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -1410,7 +1416,7 @@
                 }
                 
                 // Update loading message
-                showLoadingModal('Mengunduh file dari server...');
+                updateLoadingModal('Mengunduh file dari server...');
                 const response = await fetch(`${CONFIG.API_URL}/api/invoice/download-file/${faktur}/${fileType}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -1422,7 +1428,7 @@
                 }
                 
                 // Update loading message - now processing
-                showLoadingModal('Memproses file untuk disimpan...');
+                updateLoadingModal('Memproses file untuk disimpan...');
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -1440,7 +1446,7 @@
                 document.body.appendChild(a);
                 
                 // Final update - starting download
-                showLoadingModal('Memulai unduhan file...');
+                updateLoadingModal('Memulai unduhan file...');
                 a.click();
                 
                 // Small delay to ensure download starts
