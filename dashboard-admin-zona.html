@@ -583,7 +583,15 @@
                 
                 document.getElementById('user-name').textContent = userEmail;
                 document.getElementById('user-zona').textContent = `Zona: ${zonaName}`;
-                document.getElementById('zona-number').textContent = zonaNumber;
+                
+                // Update zona number - ensure element exists
+                const zonaNumberEl = document.getElementById('zona-number');
+                if (zonaNumberEl) {
+                    zonaNumberEl.textContent = zonaNumber;
+                    console.log('[AdminZona] Updated zona-number to:', zonaNumber);
+                } else {
+                    console.error('[AdminZona] zona-number element not found!');
+                }
 
                 // Show sidebar and main content now that initialization is complete
                 document.getElementById('sidebar').style.display = 'block';
