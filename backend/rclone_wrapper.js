@@ -40,6 +40,42 @@ const TEMP_DIR = process.env.TMPDIR || process.env.TEMP || '/tmp';
 let syncQueueWorkerStarted = false;
 let syncQueueWorkerRunning = false;
 
+// OPTIMIZATION: File existence cache with TTL
+// Reduces redundant rclone ls calls by caching results for 5 minutes
+// Expected benefit: 80% reduction on cached checks (5ms vs 5-10s per call)
+const FILE_EXISTENCE_CACHE = new Map();
+const FILE_EXISTENCE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+function getCachedFileExistence(storagePath) {
+    const cached = FILE_EXISTENCE_CACHE.get(storagePath);
+    if (!cached) return null;
+    
+    const now = Date.now();
+    if (now - cached.timestamp > FILE_EXISTENCE_CACHE_TTL) {
+        // Cache expired - remove and return null
+        FILE_EXISTENCE_CACHE.delete(storagePath);
+        console.log(`[Cache] Expired: ${storagePath}`);
+        return null;
+    }
+    
+    // Cache hit - return cached value
+    console.log(`[Cache] HIT (${(now - cached.timestamp) / 1000}s old): ${storagePath} = ${cached.exists}`);
+    return cached.exists;
+}
+
+function setCachedFileExistence(storagePath, exists) {
+    FILE_EXISTENCE_CACHE.set(storagePath, {
+        exists,
+        timestamp: Date.now()
+    });
+    console.log(`[Cache] SET: ${storagePath} = ${exists}`);
+}
+
+function invalidateFileExistenceCache(storagePath) {
+    FILE_EXISTENCE_CACHE.delete(storagePath);
+    console.log(`[Cache] INVALIDATED: ${storagePath}`);
+}
+
 function readSyncQueue() {
     try {
         if (!fs.existsSync(syncQueuePath)) return [];
@@ -178,13 +214,23 @@ async function backupLocalFile(storagePath) {
 }
 
 async function remoteFileExists(storagePath) {
+    // OPTIMIZATION: Check cache first
+    const cached = getCachedFileExistence(storagePath);
+    if (cached !== null) {
+        return cached; // Cache hit - return immediately
+    }
+    
     const remotePath = `${PRIMARY_REMOTE}:${storagePath}`;
     try {
         await rcloneExec(['ls', remotePath]);
-        return true;
+        const result = true;
+        setCachedFileExistence(storagePath, result);
+        return result;
     } catch (err) {
         if (/not found|error 404/i.test(err.message)) {
-            return false;
+            const result = false;
+            setCachedFileExistence(storagePath, result);
+            return result;
         }
         throw err;
     }
@@ -1903,8 +1949,17 @@ module.exports = RcloneStorage;
 module.exports.initializeRcloneCredentials = initializeRcloneCredentials;
 
 /**
+ * Cache management functions (for optimization)
+ */
+module.exports.invalidateFileExistenceCache = invalidateFileExistenceCache;
+module.exports.getCachedFileExistence = getCachedFileExistence;
+module.exports.setCachedFileExistence = setCachedFileExistence;
+
+/**
  * Reset cache for testing purposes
  */
 module.exports.__resetCache = function() {
     createdDirsCache.clear();
+    FILE_EXISTENCE_CACHE.clear();
+    console.log('[Cache] All caches cleared for testing');
 };
