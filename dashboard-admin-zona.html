@@ -1082,63 +1082,76 @@
             }
 
             // Show loading overlay while checking files
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d; font-size: 14px;">Memeriksa ketersediaan file...</span></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d; font-size: 14px;">Memeriksa ketersediaan file... (Batch 1/${Math.ceil(invoices.length / 50)})</span></div></td></tr>';
 
             const token = API.getToken() || localStorage.getItem('jwt_token');
             
-            // Check ALL files FIRST before rendering
-            const invoicesWithFileStatus = await Promise.all(invoices.map(async (inv) => {
-                let actualUploadedCount = 0;
-                const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
-                const buttons = [];
+            // PAGINATION: Process in batches of 50 to avoid timeout on large datasets
+            const PAGE_SIZE = 50;
+            const allInvoicesWithStatus = [];
+            
+            for (let batch = 0; batch < invoices.length; batch += PAGE_SIZE) {
+                const batchInvoices = invoices.slice(batch, batch + PAGE_SIZE);
+                const batchProgress = Math.floor(batch / PAGE_SIZE) + 1;
+                const totalBatches = Math.ceil(invoices.length / PAGE_SIZE);
                 
-                // Check invoice file
-                if (inv.invoice_pdf_path) {
-                    try {
-                        const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        const data = await res.json();
-                        if (data.exists) {
-                            actualUploadedCount++;
-                            buttons.push('<button onclick="downloadInvoiceFile(this, \'' + inv.faktur + '\', \'invoice\')" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄 INV</button>');
-                        }
-                    } catch (e) {
-                        console.error('[CheckButtons] Error checking invoice:', e);
-                    }
+                // Update loading message
+                if (batch > 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d; font-size: 14px;">Memeriksa ketersediaan file... (Batch ${batchProgress}/${totalBatches})</span></div></td></tr>`;
                 }
-                
-                // Check bukti bayar
-                if (inv.bukti_bayar_path) {
-                    try {
-                        const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        const data = await res.json();
-                        if (data.exists) {
-                            actualUploadedCount++;
-                            buttons.push('<button onclick="downloadInvoiceFile(this, \'' + inv.faktur + '\', \'bukti_bayar\')" style="background: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰 BB</button>');
-                        }
-                    } catch (e) {
-                        console.error('[CheckButtons] Error checking bukti bayar:', e);
+            
+                // Check ALL files in batch FIRST before rendering - PARALLEL BATCH
+                const batchWithFileStatus = await Promise.all(batchInvoices.map(async (inv) => {
+                    let actualUploadedCount = 0;
+                    const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
+                    const buttons = [];
+                    
+                    // Run ALL 3 checks IN PARALLEL (not sequential)
+                    const checkPromises = [];
+                    
+                    if (inv.invoice_pdf_path) {
+                        checkPromises.push(
+                            fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                                .then(d => ({ type: 'invoice', exists: d.exists }))
+                        );
                     }
-                }
-                
-                // Check faktur pajak (if PPN)
-                if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
-                    try {
-                        const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        const data = await res.json();
-                        if (data.exists) {
-                            actualUploadedCount++;
-                            buttons.push('<button onclick="downloadInvoiceFile(this, \'' + inv.faktur + '\', \'faktur_pajak\')" style="background: #9b59b6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋 FP</button>');
-                        }
-                    } catch (e) {
-                        console.error('[CheckButtons] Error checking faktur pajak:', e);
+                    
+                    if (inv.bukti_bayar_path) {
+                        checkPromises.push(
+                            fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                                .then(d => ({ type: 'bukti_bayar', exists: d.exists }))
+                        );
                     }
-                }
+                    
+                    if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
+                        checkPromises.push(
+                            fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                                .then(d => ({ type: 'faktur_pajak', exists: d.exists }))
+                        );
+                    }
+                    
+                    // Wait for ALL parallel checks
+                    const results = await Promise.all(checkPromises);
+                    
+                    // Process results
+                    results.forEach(res => {
+                        if (res.exists) {
+                            actualUploadedCount++;
+                            if (res.type === 'invoice') {
+                                buttons.push('<button onclick="downloadInvoiceFile(this, \'' + inv.faktur + '\', \'invoice\')" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄 INV</button>');
+                            } else if (res.type === 'bukti_bayar') {
+                                buttons.push('<button onclick="downloadInvoiceFile(this, \'' + inv.faktur + '\', \'bukti_bayar\')" style="background: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰 BB</button>');
+                            } else if (res.type === 'faktur_pajak') {
+                                buttons.push('<button onclick="downloadInvoiceFile(this, \'' + inv.faktur + '\', \'faktur_pajak\')" style="background: #9b59b6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋 FP</button>');
+                            }
+                        }
+                    });
                 
                 return {
                     ...inv,
@@ -1147,7 +1160,14 @@
                     buttons,
                     isComplete: actualUploadedCount === requiredCount
                 };
-            }));
+                }));
+                
+                // Collect all batch results
+                allInvoicesWithStatus.push(...batchWithFileStatus);
+            }
+            
+            // Use collected results instead
+            const invoicesWithFileStatus = allInvoicesWithStatus;
             
             console.log('[RenderInvoices] File checks complete, rendering final table...');
             
