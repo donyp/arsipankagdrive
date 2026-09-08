@@ -1376,7 +1376,7 @@
                     }
                 });
                 
-                const token = localStorage.getItem('access_token');
+                const token = localStorage.getItem('jwt_token');
                 
                 // Check if file exists first
                 const checkRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/${fileType}`, {
@@ -1502,7 +1502,7 @@
                     }
                 });
 
-                const token = localStorage.getItem('access_token');
+                const token = localStorage.getItem('jwt_token');
                 const response = await fetch(`${CONFIG.API_URL}/api/invoice/combine-pdf/${faktur}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
