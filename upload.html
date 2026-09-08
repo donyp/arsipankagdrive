@@ -283,28 +283,25 @@
     <script src="js/invoice-list.js"></script>
     <script>
         // ============================================
-        // TOAST NOTIFICATION CONFIGURATION
+        // TOASTR CONFIGURATION FOR UPLOAD PAGE
         // ============================================
-        toastr.options = {
-            closeButton: true,
-            newestOnTop: true,
-            progressBar: true,
-            positionClass: 'toast-top-right',
-            timeOut: '5000',
-            extendedTimeOut: '1000',
-            showEasing: 'swing',
-            hideEasing: 'linear',
-            showMethod: 'fadeIn',
-            hideMethod: 'fadeOut'
-        };
-
-        const Toast = {
-            success: (msg, title = 'Sukses') => toastr.success(msg, title),
-            error: (msg, title = 'Error') => toastr.error(msg, title),
-            warning: (msg, title = 'Peringatan') => toastr.warning(msg, title),
-            info: (msg, title = 'Informasi') => toastr.info(msg, title)
-        };
-        window.Toast = Toast;
+        // Toast is already declared in js/utils.js
+        // Just configure toastr options here
+        
+        if (typeof toastr !== 'undefined') {
+            toastr.options = {
+                closeButton: true,
+                newestOnTop: true,
+                progressBar: true,
+                positionClass: 'toast-top-right',
+                timeOut: '5000',
+                extendedTimeOut: '1000',
+                showEasing: 'swing',
+                hideEasing: 'linear',
+                showMethod: 'fadeIn',
+                hideMethod: 'fadeOut'
+            };
+        }
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
