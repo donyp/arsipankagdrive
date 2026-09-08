@@ -1,5 +1,6 @@
 ﻿// Invoice Excel Upload Modal
 let invoiceCurrentPage = 0;
+let allInvoices = [];  // Global array to store all invoices for popup access
 
 window.openUploadExcelModal = function() {
     const modal = document.getElementById('uploadExcelModal');
@@ -1302,7 +1303,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Update data
             invoiceCurrentPage = 0;
-            allInvoices = data || [];
+            window.allInvoices = data || [];
+            allInvoices = window.allInvoices;
             
             // Render with fade in
             if (table) {
