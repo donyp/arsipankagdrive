@@ -237,14 +237,14 @@
     <!-- Main Content -->
     <main id="main-content" class="min-h-screen transition-all duration-300">
         <!-- Top Bar -->
-        <header class="bg-white border-b border-gray-200 p-4 shadow-sm">
+        <header class="bg-white border-b border-gray-200 p-6 shadow-sm">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div>
                         <div class="flex items-center gap-3">
                             <div class="text-3xl">🏢</div>
                             <div>
-                                <h1 class="text-3xl font-bold text-gray-900" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dashboard Admin Zona <span id="zona-number">-</span></h1>
+                                <h1 class="text-3xl font-bold text-gray-900">Dashboard Admin Zona <span id="zona-number">-</span></h1>
                             </div>
                         </div>
                     </div>
@@ -559,11 +559,14 @@
                 const userEmail = currentUser.email || currentUser.username || currentUser.name || 'Admin Zona';
                 const zonaName = currentUser.zonas?.nama || currentUser.zonas?.kode || currentUser.zona_kode || 'Unknown';
                 
-                console.log('[AdminZona] User:', userEmail, 'Zona:', zonaName, 'Full user:', currentUser);
+                // Extract just the number from zona name if it's like "Zona 01"
+                const zonaNumber = zonaName.toString().replace(/[^\d]/g, '') || zonaName;
+                
+                console.log('[AdminZona] User:', userEmail, 'Zona:', zonaName, 'Zona Number:', zonaNumber, 'Full user:', currentUser);
                 
                 document.getElementById('user-name').textContent = userEmail;
                 document.getElementById('user-zona').textContent = `Zona: ${zonaName}`;
-                document.getElementById('zona-number').textContent = zonaName;
+                document.getElementById('zona-number').textContent = zonaNumber;
 
                 // Show sidebar and main content now that initialization is complete
                 document.getElementById('sidebar').style.display = 'block';
