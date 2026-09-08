@@ -240,17 +240,21 @@
         <header class="bg-white border-b border-gray-200 p-4 shadow-sm">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-lg">
-                        <i class="fas fa-bars text-gray-600"></i>
-                    </button>
-                    <h1 class="text-2xl font-bold text-gray-900">Dashboard Admin Zona</h1>
-                </div>
-                <div id="user-info" class="flex items-center gap-4">
-                    <div class="text-right">
-                        <p id="user-name" class="font-semibold text-gray-900">Loading...</p>
-                        <p id="user-zona" class="text-sm text-gray-500">Zona: -</p>
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-3xl">🏢</div>
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900">Dashboard Admin Zona</h1>
+                                <p class="text-sm text-blue-600 font-medium mt-1">Kelola Invoice Zona</p>
+                            </div>
+                        </div>
                     </div>
-                    <button onclick="logout()" class="btn" style="background: #e74c3c; padding: 8px 12px; font-size: 12px;">
+                <div id="user-info" class="flex items-center gap-4 bg-gradient-to-r from-blue-50 to-indigo-50 px-5 py-3 rounded-lg border border-blue-200">
+                    <div class="text-right">
+                        <p id="user-name" class="font-bold text-gray-900 text-base">Loading...</p>
+                        <p id="user-zona" class="text-sm text-blue-600 font-medium">Zona: -</p>
+                    </div>
+                    <button onclick="logout()" class="btn ml-4" style="background: #e74c3c; padding: 8px 14px; font-size: 12px; font-weight: 600;">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </button>
                 </div>
@@ -260,13 +264,18 @@
         <!-- Page Content -->
         <div class="invoice-container">
             <!-- Header -->
-            <div class="invoice-header">
+            <div class="invoice-header" style="border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 24px;">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-900">Invoice Zona Anda</h2>
-                    <p class="text-sm text-gray-500">Kelola invoice berdasarkan supplier, keterangan, tahun, dan bulan</p>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="text-3xl">📋</div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Invoice Zona Anda</h2>
+                            <p class="text-base text-gray-600 mt-1">Kelola invoice berdasarkan supplier, keterangan, tahun, dan bulan</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="header-actions">
-                    <button class="btn-refresh" onclick="location.reload()">
+                    <button class="btn-refresh" onclick="location.reload()" style="padding: 10px 16px; font-weight: 600;">
                         <i class="fas fa-sync"></i> Refresh
                     </button>
                 </div>

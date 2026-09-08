@@ -633,18 +633,25 @@
             <div class="w-full space-y-6">
 
                 <!-- Header -->
-                <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center justify-between mb-8 pb-6 border-b-2 border-gray-100">
                     <div>
-                        <h1 class="text-3xl font-black text-gray-900">
-                            Dashboard
-                        </h1>
-                        <p class="text-sm text-gray-500 mt-1">Selamat <span id="time-greeting">datang</span>, <span data-user-name>User</span>!</p>
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="text-4xl">📊</div>
+                            <div>
+                                <h1 class="text-4xl font-bold text-gray-900">Dashboard</h1>
+                                <p class="text-base text-blue-600 font-medium mt-1">Kelola Invoice Anda</p>
+                            </div>
+                        </div>
+                        <p class="text-lg text-gray-700 mt-3 font-medium">Selamat <span id="time-greeting">datang</span>, <span data-user-name>User</span>!</p>
                     </div>
-                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 rounded-xl border border-blue-200">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <span id="banner-date">...</span>
+                        <div>
+                            <span class="text-sm text-gray-600 block">Hari ini</span>
+                            <span id="banner-date" class="font-bold text-gray-900">...</span>
+                        </div>
                     </div>
                 </div>
 

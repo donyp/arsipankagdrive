@@ -1947,6 +1947,36 @@ function setupEventListeners() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closePreview();
     });
+    
+    // Invoice filters - Enter key support for regular dashboard (moderator/super_admin)
+    const invoiceFilterInputs = ['filterStatus', 'filterKeterangan', 'filterYear', 'filterMonth', 'filterSearch'];
+    const handleInvoiceFilterEnter = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyInvoiceFilters();
+        }
+    };
+    invoiceFilterInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('keydown', handleInvoiceFilterEnter);
+        }
+    });
+    
+    // Admin zona filters - Enter key support
+    const adminZonaFilterInputs = ['filterSupplier', 'filterAdminZonaKeterangan', 'filterAdminZonaMonth'];
+    const handleAdminZonaFilterEnter = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyAdminZonaFilters();
+        }
+    };
+    adminZonaFilterInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('keydown', handleAdminZonaFilterEnter);
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', setupEventListeners);
