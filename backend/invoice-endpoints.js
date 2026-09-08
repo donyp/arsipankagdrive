@@ -70,6 +70,22 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     
     const { v4: uuidv4 } = uuid;
     
+    // ============================================
+    // Helper: Extract location from TOKO column
+    // Returns: 'BEKASI' or 'PEMALANG' based on TOKO name
+    // ============================================
+    function extractLocationFromToko(tokoName) {
+        if (!tokoName) return 'BEKASI'; // Default
+        
+        // Check if TOKO contains 'PEMALANG'
+        if (tokoName.includes('PEMALANG')) {
+            return 'PEMALANG';
+        }
+        
+        // Default to BEKASI for all others
+        return 'BEKASI';
+    }
+    
     // createAuth is already a factory from server.js that returns [authenticateToken, authorizeRole(...roles)]
     // Use it directly - no need to wrap again
     
@@ -1275,13 +1291,14 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 const monthName = monthNames[parseInt(monthNum) - 1] || monthNum;
                 
                 const category = invoice.keterangan === 'PPN' ? 'PPN' : 'NON';
+                const location = extractLocationFromToko(invoice.toko);
                 
-                // Path structure: /ARSIPINVOICE/ARSIPINVOICE/TAHUN/BULAN/TANGGAL/CATEGORY/
-                // (Note: Double ARSIPINVOICE because there's a subfolder with same name)
-                console.log(`[Invoice PDF] Path components - Year: ${year}, Month: ${monthName}, Day: ${day}, Category: ${category}`);
+                // Path structure: /ARSIPINVOICE/ARSIPINVOICE/LOCATION/TAHUN/BULAN/TANGGAL/CATEGORY/
+                // LOCATION: BEKASI or PEMALANG (extracted from TOKO column)
+                console.log(`[Invoice PDF] Path components - Location: ${location}, Year: ${year}, Month: ${monthName}, Day: ${day}, Category: ${category}`);
                 
                 // Check if file already exists in Google Drive (duplicate detection)
-                const uploadPath = `ARSIPINVOICE/${year}/${monthName}/${day}/${category}/${filename}`;
+                const uploadPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${category}/${filename}`;
                 console.log(`[Invoice PDF] Checking for duplicate at: ${uploadPath}`);
                 
                 try {
@@ -1306,7 +1323,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 try {
                     console.log(`[Invoice PDF] Uploading file buffer (${fileBuffer.length} bytes)`);
                     
-                    uploadResult = await RcloneStorage.uploadInvoicePDF(fileBuffer, filename, year, monthName, day, category);
+                    uploadResult = await RcloneStorage.uploadInvoicePDF(fileBuffer, filename, year, monthName, day, category, location);
                     
                     if (!uploadResult.success) {
                         throw new Error(uploadResult.error || 'Upload failed');
@@ -1476,10 +1493,11 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     const monthName = monthNames[parseInt(month) - 1];
 
                     const finalFilename = cleanFilename;
-                    console.log(`[Invoice Document] Path: /ARSIPINVOICE/ARSIPINVOICE/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`);
+                    const location = extractLocationFromToko(invoice?.toko);
+                    console.log(`[Invoice Document] Path: /ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`);
 
                     // Check if file already exists (duplicate detection)
-                    const fakturDocUploadPath = `ARSIPINVOICE/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`;
+                    const fakturDocUploadPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`;
                     console.log(`[Invoice Document] Checking for duplicate faktur pajak at: ${fakturDocUploadPath}`);
                     
                     try {
@@ -1509,7 +1527,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                             year,
                             monthName,
                             day,
-                            'FAKTURPAJAK'
+                            'FAKTURPAJAK',
+                            location
                         );
 
                         if (!uploadResult.success) {
@@ -1623,11 +1642,12 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     const monthName = monthNames[parseInt(month) - 1];
 
                     const finalFilename = `${nomorFaktur}.pdf`;
+                    const location = extractLocationFromToko(invoice?.toko);
 
-                    console.log(`[Invoice Document] Path: /ARSIPINVOICE/ARSIPINVOICE/${year}/${monthName}/${day}/BUKTIBAYAR/${finalFilename}`);
+                    console.log(`[Invoice Document] Path: /ARSIPINVOICE/${location}/${year}/${monthName}/${day}/BUKTIBAYAR/${finalFilename}`);
 
                     // Check if file already exists (duplicate detection)
-                    const buktiUploadPath = `ARSIPINVOICE/${year}/${monthName}/${day}/BUKTIBAYAR/${finalFilename}`;
+                    const buktiUploadPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/BUKTIBAYAR/${finalFilename}`;
                     console.log(`[Invoice Document] Checking for duplicate bukti bayar at: ${buktiUploadPath}`);
                     
                     try {
@@ -1656,7 +1676,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                             year,
                             monthName,
                             day,
-                            'BUKTIBAYAR'
+                            'BUKTIBAYAR',
+                            location
                         );
 
                         if (!uploadResult.success) {
@@ -1808,11 +1829,12 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
 
                 // Keep filename as-is (already in correct format)
                 const finalFilename = filename;
+                const location = extractLocationFromToko(invoice?.toko);
 
-                console.log(`[Invoice Faktur Pajak] Path: /ARSIPINVOICE/ARSIPINVOICE/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`);
+                console.log(`[Invoice Faktur Pajak] Path: /ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`);
 
                 // Check if file already exists (duplicate detection)
-                const fakturUploadPath = `ARSIPINVOICE/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`;
+                const fakturUploadPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK/${finalFilename}`;
                 console.log(`[Invoice Faktur Pajak] Checking for duplicate at: ${fakturUploadPath}`);
                 
                 try {
@@ -1841,7 +1863,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         year,
                         monthName,
                         day,
-                        'FAKTURPAJAK'
+                        'FAKTURPAJAK',
+                        location
                     );
 
                     if (!uploadResult.success) {

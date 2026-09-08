@@ -1588,11 +1588,12 @@ const RcloneStorage = {
      * @param {string} category - "PPN" or "NON"
      * @returns {Promise<Object>} - { success, path, message }
      */
-    async uploadInvoicePDF(buffer, filename, year, month, day, category) {
+    async uploadInvoicePDF(buffer, filename, year, month, day, category, location = 'BEKASI') {
         // HARDCODED PATH: Upload directly to Shared Drive
-        // Path format: gdrive:ARSIPINVOICE/YEAR/MONTH/DAY/CATEGORY/filename (single ARSIPINVOICE folder at root)
-        const storagePath = `ARSIPINVOICE/${year}/${month}/${day}/${category}/${filename}`;
-        const dirPath = `ARSIPINVOICE/${year}/${month}/${day}/${category}`;
+        // Path format: gdrive:ARSIPINVOICE/LOCATION/YEAR/MONTH/DAY/CATEGORY/filename
+        // LOCATION: BEKASI or PEMALANG
+        const storagePath = `ARSIPINVOICE/${location}/${year}/${month}/${day}/${category}/${filename}`;
+        const dirPath = `ARSIPINVOICE/${location}/${year}/${month}/${day}/${category}`;
         
         logOperation('uploadInvoicePDF', {
             action: 'Uploading invoice PDF',
@@ -1689,11 +1690,12 @@ const RcloneStorage = {
      * @param {string} folderType - Folder type (BUKTIBAYAR or FAKTURPAJAK)
      * @returns {Promise<Object>} - { success, path, message }
      */
-    async uploadDocumentFile(buffer, filename, year, month, day, folderType) {
+    async uploadDocumentFile(buffer, filename, year, month, day, folderType, location = 'BEKASI') {
         // HARDCODED PATH: Upload directly to Shared Drive
-        // Path format: gdrive:ARSIPINVOICE/YEAR/MONTH/DAY/FOLDERTYPE/filename (single ARSIPINVOICE folder at root)
-        const storagePath = `ARSIPINVOICE/${year}/${month}/${day}/${folderType}/${filename}`;
-        const dirPath = `ARSIPINVOICE/${year}/${month}/${day}/${folderType}`;
+        // Path format: gdrive:ARSIPINVOICE/LOCATION/YEAR/MONTH/DAY/FOLDERTYPE/filename
+        // LOCATION: BEKASI or PEMALANG
+        const storagePath = `ARSIPINVOICE/${location}/${year}/${month}/${day}/${folderType}/${filename}`;
+        const dirPath = `ARSIPINVOICE/${location}/${year}/${month}/${day}/${folderType}`;
         
         logOperation('uploadDocumentFile', {
             filename,
