@@ -452,16 +452,16 @@ function renderInvoiceTable(invoices = null) {
         // Combine button if complete
         if (isComplete) {
             actionButtons = `
-                <div style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: center;">
-                    ${downloadButtons.join('')}
+                <div style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                    ${downloadButtons.length > 0 ? `<button onclick="showInvoiceDownloadMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">⋮</button>` : ''}
                     <button class="btn-combine" onclick="combinePDF('${inv.faktur}')" title="Combine & Download All">📦 Combine</button>
                 </div>
             `;
         } else if (downloadButtons.length > 0) {
-            // Show download buttons only
+            // Show three-dots menu for download buttons
             actionButtons = `
                 <div style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: center;">
-                    ${downloadButtons.join('')}
+                    <button onclick="showInvoiceDownloadMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">⋮</button>
                 </div>
             `;
         } else {
@@ -1590,6 +1590,99 @@ window.combinePDF = async function(faktur) {
             Toast.error(`Combine failed: ${error.message}`);
         } else {
             alert(`Combine failed: ${error.message}`);
+        }
+    }
+};
+
+/**
+ * Show download menu popup for invoice
+ * Displays SweetAlert2 modal with download options
+ */
+window.showInvoiceDownloadMenu = function(faktur, invoiceId) {
+    try {
+        // Find invoice in global allInvoices array
+        const invoice = allInvoices?.find(inv => inv.faktur === faktur);
+        
+        if (!invoice) {
+            if (window.Swal) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Data invoice tidak ditemukan',
+                    confirmButtonColor: '#e74c3c'
+                });
+            } else {
+                alert('Invoice data not found');
+            }
+            return;
+        }
+        
+        // Build popup menu HTML
+        let menuHTML = `<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">`;
+        
+        // Show invoice download button if file exists
+        if (invoice.invoice_pdf_path) {
+            menuHTML += `<button onclick="downloadInvoiceFile('${faktur}', 'invoice'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
+                📄 Download Invoice
+            </button>`;
+        }
+        
+        // Show bukti bayar download button if file exists
+        if (invoice.bukti_bayar_path) {
+            menuHTML += `<button onclick="downloadInvoiceFile('${faktur}', 'bukti_bayar'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
+                💰 Download Bukti Bayar
+            </button>`;
+        }
+        
+        // Show faktur pajak download button if file exists
+        if (invoice.faktur_pajak_path) {
+            menuHTML += `<button onclick="downloadInvoiceFile('${faktur}', 'faktur_pajak'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
+                📋 Download Faktur Pajak
+            </button>`;
+        }
+        
+        // Show combine button if all files are uploaded
+        const isPPN = invoice.keterangan && invoice.keterangan.toUpperCase() === 'PPN';
+        const filesRequired = isPPN ? 3 : 2;
+        const filesUploaded = (invoice.invoice_pdf_path ? 1 : 0) + (invoice.bukti_bayar_path ? 1 : 0) + (invoice.faktur_pajak_path ? 1 : 0);
+        
+        if (filesUploaded >= filesRequired) {
+            menuHTML += `<button onclick="combinePDF('${faktur}'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
+                📦 Combine PDF (${filesUploaded}/${filesRequired})
+            </button>`;
+        }
+        
+        menuHTML += `</div>`;
+        
+        // Show SweetAlert2 popup if available
+        if (window.Swal) {
+            Swal.fire({
+                title: '📥 Download Files',
+                html: menuHTML,
+                icon: 'info',
+                showConfirmButton: false,
+                background: '#f8f9fa',
+                customClass: {
+                    popup: 'download-menu-popup'
+                },
+                allowOutsideClick: true,
+                allowEscapeKey: true
+            });
+        } else {
+            alert('SweetAlert2 not available');
+        }
+        
+    } catch (error) {
+        console.error('[Menu] Error:', error);
+        if (window.Swal) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Gagal memuat menu download',
+                confirmButtonColor: '#e74c3c'
+            });
+        } else {
+            alert(`Error: ${error.message}`);
         }
     }
 };

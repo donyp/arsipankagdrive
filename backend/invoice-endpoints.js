@@ -656,7 +656,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
             }
             
             if (search) {
-                query = query.or(`faktur.ilike.%${search}%,konsumen.ilike.%${search}%`);
+                const trimmedSearch = search.trim();
+                query = query.or(`faktur.ilike.%${trimmedSearch}%,konsumen.ilike.%${trimmedSearch}%`);
             }
             
             // Order by date desc
