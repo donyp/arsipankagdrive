@@ -10,6 +10,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="css/style.css?t=1735689600">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Toastr for Toast Notifications -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <style>
         html, body {
             zoom: 0.8;
@@ -133,7 +136,7 @@
 
         td {
             padding: 12px 15px;
-            border-bottom: 1px solid #ecf0f1;
+            border-bottom: 2px solid #ecf0f1;
             font-size: 13px;
         }
 
@@ -379,6 +382,52 @@
     <script src="js/sidebar.js?t=1735862400"></script>
 
     <script>
+        // ============================================
+        // TOAST NOTIFICATION CONFIGURATION & UTILITY
+        // ============================================
+        
+        // Configure Toastr
+        toastr.options = {
+            closeButton: true,
+            debug: false,
+            newestOnTop: true,
+            progressBar: true,
+            positionClass: 'toast-top-right',
+            preventDuplicates: false,
+            onclick: null,
+            showDuration: '300',
+            hideDuration: '1000',
+            timeOut: '5000',
+            extendedTimeOut: '1000',
+            showEasing: 'swing',
+            hideEasing: 'linear',
+            showMethod: 'fadeIn',
+            hideMethod: 'fadeOut',
+            rtl: false
+        };
+
+        /**
+         * Standardized Toast Notifications
+         * Replaces all alert() calls
+         */
+        const Toast = {
+            success: (message, title = 'Sukses') => {
+                toastr.success(message, title);
+            },
+            error: (message, title = 'Error') => {
+                toastr.error(message, title);
+            },
+            warning: (message, title = 'Peringatan') => {
+                toastr.warning(message, title);
+            },
+            info: (message, title = 'Informasi') => {
+                toastr.info(message, title);
+            }
+        };
+
+        // Make Toast global so it's accessible from anywhere
+        window.Toast = Toast;
+
         let currentPage = 1;
         let currentFilters = {};
         let totalCount = 0;
@@ -1064,11 +1113,13 @@
                             downloadMenuItems += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #3498db; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
                                 📄 Download Invoice
                             </button>`;
-                        } else if (isBuktiBayar) {
+                        }
+                        if (isBuktiBayar) {
                             downloadMenuItems += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #27ae60; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
                                 💰 Download Bukti Bayar
                             </button>`;
-                        } else if (isFakturPajak) {
+                        }
+                        if (isFakturPajak) {
                             downloadMenuItems += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #9b59b6; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
                                 📋 Download Faktur Pajak
                             </button>`;
@@ -1094,7 +1145,7 @@
                 }
                 
                 return `
-                <tr style="border-bottom: 2px solid #34495e;">
+                <tr style="border-bottom: 3px solid #34495e;">
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${new Date(inv.tanggal).toLocaleDateString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur}</strong></td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.metode_bayar || '-'}</td>
@@ -1504,7 +1555,7 @@
         }
 
         function viewDetail(id) {
-            alert('Detail invoice: ' + id);
+            Toast.info('Detail invoice: ' + id);
         }
 
         function toggleSidebar() {

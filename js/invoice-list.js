@@ -171,7 +171,7 @@ window.uploadExcelFile = async function() {
     const uploadBtn = document.getElementById('uploadBtn');
     
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        alert('Pilih file terlebih dahulu');
+        Toast.error('Pilih file terlebih dahulu', '❌ Error');
         return;
     }
 
@@ -221,7 +221,7 @@ window.uploadExcelFile = async function() {
         }
         
         if (headerRowIndex === -1) {
-            alert('❌ File Excel kosong atau format tidak valid\n\nTidak dapat menemukan header row dengan kolom TANGGAL');
+            Toast.error('File Excel kosong atau format tidak valid - Tidak dapat menemukan header row dengan kolom TANGGAL', '❌ Validation Error');
             return;
         }
         
@@ -237,7 +237,7 @@ window.uploadExcelFile = async function() {
         console.log('[Upload] First row keys:', parsedData[0] ? Object.keys(parsedData[0]) : 'NO DATA');
         
         if (parsedData.length === 0) {
-            alert('❌ File Excel kosong atau format tidak valid\n\nPastikan file memiliki header row dengan kolom:\nTANGGAL, TOKO, FAKTUR, METODE BAYAR, JENIS TRANSAKSI, KONSUMEN, JUMLAH JUAL, KET 2');
+            Toast.error('File Excel kosong atau format tidak valid - Pastikan file memiliki header row dengan kolom: TANGGAL, TOKO, FAKTUR, METODE BAYAR, JENIS TRANSAKSI, KONSUMEN, JUMLAH JUAL, KET 2', '❌ Validation Error');
             return;
         }
         
@@ -304,7 +304,7 @@ window.uploadExcelFile = async function() {
         } catch (parseErr) {
             console.error('[Upload] JSON parse error:', parseErr.message);
             console.error('[Upload] Raw response was:', responseText.substring(0, 500));
-            return alert('❌ Error: Server returned invalid response\n\n' + responseText.substring(0, 200));
+            return Toast.error('Server returned invalid response: ' + responseText.substring(0, 200), '❌ Response Error');
         }
 
         console.log('[Upload] Parsed result:', result);
@@ -329,11 +329,11 @@ window.uploadExcelFile = async function() {
         } else {
             const errMsg = result.error || 'Upload failed';
             console.log('[Upload] FAILED:', errMsg);
-            alert('❌ Error: ' + errMsg);
+            Toast.error(errMsg, '❌ Upload Failed');
         }
     } catch (error) {
         console.error('[Upload] Exception:', error);
-        alert('❌ Error: ' + error.message);
+        Toast.error(error.message, '❌ Upload Exception');
     } finally {
         uploadBtn.disabled = false;
         uploadBtn.textContent = originalText;

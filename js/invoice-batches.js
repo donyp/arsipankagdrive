@@ -20,7 +20,11 @@ async function init() {
     // Check role (super_admin or moderator only)
     const user = getUserData();
     if (!user || (user.role !== 'super_admin' && user.role !== 'moderator')) {
-        alert('Akses ditolak. Hanya Super Admin dan Moderator yang dapat mengelola batch.');
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Akses ditolak. Hanya Super Admin dan Moderator yang dapat mengelola batch.');
+        } else {
+            alert('Akses ditolak. Hanya Super Admin dan Moderator yang dapat mengelola batch.');
+        }
         window.location.href = '/invoice-list';
         return;
     }
@@ -48,7 +52,11 @@ async function loadBatches() {
 
     } catch (error) {
         console.error('Error loading batches:', error);
-        alert('Gagal memuat riwayat upload');
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Gagal memuat riwayat upload', '❌ Error');
+        } else {
+            alert('Gagal memuat riwayat upload');
+        }
     } finally {
         hideLoading();
     }

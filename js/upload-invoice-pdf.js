@@ -395,7 +395,7 @@ async function validateAllFiles() {
 
     } catch (error) {
         console.error('[PDF Bulk] Validation error:', error);
-        alert('Error: ' + error.message);
+        Toast.error(error.message, '❌ Validation Error');
         validating.style.display = 'none';
         dropZone.style.display = 'block';
     }

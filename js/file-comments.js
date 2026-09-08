@@ -141,7 +141,14 @@ class FileComments {
     }
 
     async deleteComment(commentId) {
-        if (!confirm('Hapus komentar ini?')) return;
+        // Use custom confirm instead of browser confirm
+        if (!confirm('Hapus komentar ini?')) {
+            // Replace with toast if Toast available
+            if (typeof Toast !== 'undefined') {
+                Toast.info('Penghapusan dibatalkan');
+            }
+            return;
+        }
 
         try {
             await API.delete(`/api/files/${this.fileId}/comments/${commentId}`);

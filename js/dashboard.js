@@ -3630,7 +3630,7 @@ async function applyInvoiceFilters() {
         
     } catch (error) {
         console.error('[Filter] Error:', error);
-        alert('Error applying filters: ' + error.message);
+        Toast.error('Error applying filters: ' + error.message, '❌ Error');
     }
 }
 
@@ -3764,10 +3764,10 @@ async function applyAdminZonaFilters() {
         console.log('[AdminZonaFilter] Response:', response);
         
         // Display results - for now just log
-        alert(`Found ${response.count || 0} invoices matching filters`);
+        Toast.info(`Found ${response.count || 0} invoices matching filters`, 'ℹ️ Result');
     } catch (err) {
         console.error('[AdminZonaFilter] Error:', err);
-        alert('Gagal memuat data: ' + err.message);
+        Toast.error('Gagal memuat data: ' + err.message, '❌ Error');
     }
 }
 

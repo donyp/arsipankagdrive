@@ -56,7 +56,7 @@ function handleFileSelected(file) {
     console.log('[Upload] File selected:', file.name);
     
     if (!file.name.toLowerCase().endsWith('.xls') && !file.name.toLowerCase().endsWith('.xlsx')) {
-        alert('❌ Hanya file Excel (.xls, .xlsx) yang diizinkan');
+        Toast.error('Hanya file Excel (.xls, .xlsx) yang diizinkan', '❌ File Type Error');
         return;
     }
 
@@ -178,7 +178,7 @@ async function checkData() {
 
     } catch (error) {
         console.error('[Upload] Error:', error);
-        alert('❌ Error: ' + error.message);
+        Toast.error(error.message, '❌ Upload Error');
         resetUpload();
     }
 }
@@ -254,13 +254,13 @@ async function uploadData() {
 
             console.log('[Upload] ✅ Success!');
         } else {
-            alert('❌ Error: ' + (result.error || 'Upload failed'));
+            Toast.error(result.error || 'Upload failed', '❌ Upload Error');
             btnUpload.disabled = false;
             btnUpload.textContent = originalText;
         }
     } catch (error) {
         console.error('[Upload] Exception:', error);
-        alert('❌ Error: ' + error.message);
+        Toast.error(error.message, '❌ Upload Error');
         btnUpload.disabled = false;
         btnUpload.textContent = originalText;
     }

@@ -10,6 +10,9 @@
         rel="stylesheet">
     <link rel="stylesheet" href="css/tailwind.generated.css">
     <link rel="stylesheet" href="css/style.css">
+    <!-- Toastr for Toast Notifications -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="js/zoom-reset.js"></script>
     <script>
         // Cloak the page until Auth and UI checks are done
@@ -279,6 +282,30 @@
     <script src="js/upload.js?v=20260827235100"></script>
     <script src="js/invoice-list.js"></script>
     <script>
+        // ============================================
+        // TOAST NOTIFICATION CONFIGURATION
+        // ============================================
+        toastr.options = {
+            closeButton: true,
+            newestOnTop: true,
+            progressBar: true,
+            positionClass: 'toast-top-right',
+            timeOut: '5000',
+            extendedTimeOut: '1000',
+            showEasing: 'swing',
+            hideEasing: 'linear',
+            showMethod: 'fadeIn',
+            hideMethod: 'fadeOut'
+        };
+
+        const Toast = {
+            success: (msg, title = 'Sukses') => toastr.success(msg, title),
+            error: (msg, title = 'Error') => toastr.error(msg, title),
+            warning: (msg, title = 'Peringatan') => toastr.warning(msg, title),
+            info: (msg, title = 'Informasi') => toastr.info(msg, title)
+        };
+        window.Toast = Toast;
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobile-overlay');
@@ -308,7 +335,7 @@
             invoiceFilesToUpload = Array.from(input.files).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
             
             if (invoiceFilesToUpload.length === 0) {
-                alert('❌ Hanya file PDF yang diterima');
+                Toast.error('Hanya file PDF yang diterima', '❌ Error');
                 return;
             }
 
@@ -376,7 +403,7 @@
 
         async function uploadInvoicePDFs() {
             if (invoiceFilesToUpload.length === 0) {
-                alert('❌ Pilih file PDF terlebih dahulu');
+                Toast.error('Pilih file PDF terlebih dahulu', '❌ Error');
                 return;
             }
 
@@ -423,7 +450,7 @@
                 if (errors.length > 0) {
                     msg += `\n\nErrors:\n${errors.slice(0, 5).join('\n')}`;
                 }
-                alert(msg);
+                Toast.warning(msg, '⚠️ Upload Selesai');
 
                 // Reset
                 invoiceFilesToUpload = [];
@@ -433,7 +460,7 @@
                 btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Upload Invoice PDF';
 
             } catch (err) {
-                alert('❌ Error: ' + err.message);
+                Toast.error(err.message, '❌ Error Upload');
                 btn.disabled = false;
                 btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Upload Invoice PDF';
             }
