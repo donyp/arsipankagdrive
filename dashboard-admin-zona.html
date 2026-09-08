@@ -1477,9 +1477,20 @@
         // Combine PDFs into single file
         async function combinePDF(faktur) {
             try {
-                // Show colorful popup loading with animated spinner
+                // Helper to update loading modal with new message
+                const updateLoadingModal = (message = 'Mohon tunggu...') => {
+                    const modalContent = document.querySelector('.swal2-html-container');
+                    if (modalContent) {
+                        const msgElement = modalContent.querySelector('p');
+                        if (msgElement) {
+                            msgElement.textContent = message;
+                        }
+                    }
+                };
+                
+                // SHOW LOADING IMMEDIATELY
                 Swal.fire({
-                    title: '📄 Menggabungkan PDF',
+                    title: '📦 Menggabungkan PDF',
                     html: `
                         <div style="margin: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px;">
                             <div style="position: relative; width: 60px; height: 60px;">
@@ -1504,7 +1515,7 @@
                                 "></div>
                             </div>
                         </div>
-                        <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">Mohon tunggu...</p>
+                        <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">Menyiapkan file untuk digabungkan...</p>
                         <style>
                             @keyframes spin {
                                 0% { transform: rotate(0deg); }
@@ -1519,7 +1530,7 @@
                     `,
                     showConfirmButton: false,
                     allowOutsideClick: false,
-                    background: '#3498db',
+                    background: '#e67e22',
                     color: '#ffffff',
                     customClass: {
                         popup: 'colored-download-popup'
@@ -1527,23 +1538,35 @@
                 });
 
                 const token = localStorage.getItem('jwt_token');
+                
+                // Update loading message
+                updateLoadingModal('Menggabungkan file dari server...');
                 const response = await fetch(`${CONFIG.API_URL}/api/invoice/combine-pdf/${faktur}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
                 if (!response.ok) {
                     Swal.close();
-                    const error = await response.json();
+                    const error = await response.json().catch(() => ({}));
                     throw new Error(error.error || 'Combine failed');
                 }
                 
+                // Update loading message - now processing
+                updateLoadingModal('Memproses file untuk disimpan...');
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `${faktur}.pdf`;
                 document.body.appendChild(a);
+                
+                // Final update - starting download
+                updateLoadingModal('Memulai unduhan file...');
                 a.click();
+                
+                // Small delay to ensure download starts
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
 
