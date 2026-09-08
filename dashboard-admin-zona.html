@@ -822,38 +822,36 @@
         }
 
         // Toggle action menu dropdown - position fixed to avoid clipping
-        function toggleActionMenu(event, faktur, invoiceId) {
-            event.stopPropagation();
-            const menu = document.getElementById(`menu-${invoiceId}`);
-            const button = event.currentTarget;
+        // Show download menu as popup modal
+        function showDownloadMenu(faktur, invoiceId) {
+            let menuHTML = `
+                <div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
+                    <button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice'); Swal.closeModal();" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
+                        📄 Download Invoice
+                    </button>
+                    <button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar'); Swal.closeModal();" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
+                        💰 Download Bukti Bayar
+                    </button>
+                    <button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak'); Swal.closeModal();" style="width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
+                        📋 Download Faktur Pajak
+                    </button>
+                    <button onclick="combinePDF('${faktur}'); Swal.closeModal();" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
+                        📦 Combine PDF
+                    </button>
+                </div>
+            `;
             
-            // Close all other menus
-            document.querySelectorAll('.action-menu').forEach(m => {
-                if (m.id !== `menu-${invoiceId}`) {
-                    m.style.display = 'none';
+            Swal.fire({
+                title: '📥 Download Files',
+                html: menuHTML,
+                icon: 'info',
+                showConfirmButton: false,
+                background: '#f8f9fa',
+                customClass: {
+                    popup: 'download-menu-popup'
                 }
             });
-            
-            // Toggle current menu with positioning
-            if (menu.style.display === 'none') {
-                // Get button position
-                const rect = button.getBoundingClientRect();
-                
-                // Position menu below button, right-aligned
-                menu.style.top = (rect.bottom + 4) + 'px';
-                menu.style.left = (rect.right - 220) + 'px'; // 220px is min-width of menu
-                menu.style.display = 'block';
-            } else {
-                menu.style.display = 'none';
-            }
         }
-
-        // Close menu when clicking outside
-        document.addEventListener('click', () => {
-            document.querySelectorAll('.action-menu').forEach(m => {
-                m.style.display = 'none';
-            });
-        });
 
         // Delete invoice with custom confirmation
         async function deleteInvoice(faktur, invoiceId) {
@@ -1146,12 +1144,9 @@
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center;">
-                        <button onclick="toggleActionMenu(event, '${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">
+                        <button onclick="showDownloadMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">
                             ⋮
                         </button>
-                        <div id="menu-${inv.id}" class="action-menu" style="display: none; position: fixed; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; min-width: 220px; padding: 4px 0;">
-                            ${downloadMenuItems}
-                        </div>
                     </td>
                 </tr>
             `; }).join('');
@@ -1383,7 +1378,7 @@
                 const token = localStorage.getItem('access_token');
                 
                 // Check if file exists first
-                const checkRes = await fetch(`${API_BASE}/api/invoice/check-file/${faktur}/${fileType}`, {
+                const checkRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/${fileType}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
@@ -1406,7 +1401,7 @@
                     return;
                 }
                 
-                const response = await fetch(`${API_BASE}/api/invoice/download-file/${faktur}/${fileType}`, {
+                const response = await fetch(`${CONFIG.API_URL}/api/invoice/download-file/${faktur}/${fileType}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
@@ -1507,7 +1502,7 @@
                 });
 
                 const token = localStorage.getItem('access_token');
-                const response = await fetch(`${API_BASE}/api/invoice/combine-pdf/${faktur}`, {
+                const response = await fetch(`${CONFIG.API_URL}/api/invoice/combine-pdf/${faktur}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
