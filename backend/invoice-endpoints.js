@@ -1907,7 +1907,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // Download individual file (invoice, bukti_bayar, or faktur_pajak)
     // ============================================
     app.get('/api/invoice/download-file/:faktur/:fileType',
-        ...createAuth(['super_admin', 'moderator', 'user']),
+        ...createAuth(['super_admin', 'moderator', 'user', 'admin_zona']),
         async (req, res) => {
             try {
                 const { faktur, fileType } = req.params;
@@ -2004,7 +2004,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // Output filename: {faktur}.pdf
     // ============================================
     app.get('/api/invoice/combine-pdf/:faktur',
-        ...createAuth(['super_admin', 'moderator', 'user']),
+        ...createAuth(['super_admin', 'moderator', 'user', 'admin_zona']),
         async (req, res) => {
             try {
                 const { faktur } = req.params;

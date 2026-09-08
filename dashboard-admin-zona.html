@@ -1327,65 +1327,72 @@
                 
                 const colorConfig = fileTypeColors[fileType] || { bg: '#95a5a6', icon: '📁', text: 'File' };
                 
-                // Show colorful popup loading with animated spinner
-                Swal.fire({
-                    title: `${colorConfig.icon} Mengunduh ${colorConfig.text}`,
-                    html: `
-                        <div style="margin: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px;">
-                            <div style="position: relative; width: 60px; height: 60px;">
-                                <i class="fas fa-spinner fa-spin" style="
-                                    font-size: 3rem;
-                                    color: rgba(255,255,255,0.8);
-                                    animation: spin 2s linear infinite;
-                                "></i>
-                            </div>
-                            <div style="
-                                width: 120px;
-                                height: 4px;
-                                background: rgba(255,255,255,0.3);
-                                border-radius: 2px;
-                                overflow: hidden;
-                            ">
+                // Helper to show loading modal
+                const showLoadingModal = (message = 'Mohon tunggu...') => {
+                    Swal.fire({
+                        title: `${colorConfig.icon} Mengunduh ${colorConfig.text}`,
+                        html: `
+                            <div style="margin: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                                <div style="position: relative; width: 60px; height: 60px;">
+                                    <i class="fas fa-spinner fa-spin" style="
+                                        font-size: 3rem;
+                                        color: rgba(255,255,255,0.8);
+                                        animation: spin 2s linear infinite;
+                                    "></i>
+                                </div>
                                 <div style="
-                                    width: 100%;
-                                    height: 100%;
-                                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
-                                    animation: slide 1.5s infinite;
-                                "></div>
+                                    width: 120px;
+                                    height: 4px;
+                                    background: rgba(255,255,255,0.3);
+                                    border-radius: 2px;
+                                    overflow: hidden;
+                                ">
+                                    <div style="
+                                        width: 100%;
+                                        height: 100%;
+                                        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+                                        animation: slide 1.5s infinite;
+                                    "></div>
+                                </div>
                             </div>
-                        </div>
-                        <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">Mohon tunggu...</p>
-                        <style>
-                            @keyframes spin {
-                                0% { transform: rotate(0deg); }
-                                100% { transform: rotate(360deg); }
-                            }
-                            @keyframes slide {
-                                0% { transform: translateX(-100%); }
-                                50% { transform: translateX(100%); }
-                                100% { transform: translateX(100%); }
-                            }
-                        </style>
-                    `,
-                    showConfirmButton: false,
-                    allowOutsideClick: false,
-                    background: colorConfig.bg,
-                    color: '#ffffff',
-                    customClass: {
-                        popup: 'colored-download-popup'
-                    }
-                });
+                            <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">${message}</p>
+                            <style>
+                                @keyframes spin {
+                                    0% { transform: rotate(0deg); }
+                                    100% { transform: rotate(360deg); }
+                                }
+                                @keyframes slide {
+                                    0% { transform: translateX(-100%); }
+                                    50% { transform: translateX(100%); }
+                                    100% { transform: translateX(100%); }
+                                }
+                            </style>
+                        `,
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        background: colorConfig.bg,
+                        color: '#ffffff',
+                        customClass: {
+                            popup: 'colored-download-popup'
+                        }
+                    });
+                };
+                
+                // Show initial loading
+                showLoadingModal('Menyiapkan file untuk diunduh...');
                 
                 const token = localStorage.getItem('jwt_token');
                 
                 // Check if file exists first
+                showLoadingModal('Memeriksa ketersediaan file...');
                 const checkRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/${fileType}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
                 if (!checkRes.ok) {
                     Swal.close();
-                    throw new Error('File not found or unable to check');
+                    const errorData = await checkRes.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'File not found or unable to check');
                 }
                 
                 const checkData = await checkRes.json();
@@ -1402,16 +1409,20 @@
                     return;
                 }
                 
+                // Update loading message
+                showLoadingModal('Mengunduh file dari server...');
                 const response = await fetch(`${CONFIG.API_URL}/api/invoice/download-file/${faktur}/${fileType}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
                 if (!response.ok) {
                     Swal.close();
-                    const error = await response.json();
+                    const error = await response.json().catch(() => ({}));
                     throw new Error(error.error || 'Download failed');
                 }
                 
+                // Update loading message - now processing
+                showLoadingModal('Memproses file untuk disimpan...');
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -1427,7 +1438,14 @@
                 
                 a.download = filename;
                 document.body.appendChild(a);
+                
+                // Final update - starting download
+                showLoadingModal('Memulai unduhan file...');
                 a.click();
+                
+                // Small delay to ensure download starts
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
                 
