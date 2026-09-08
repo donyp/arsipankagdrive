@@ -267,9 +267,8 @@
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px;">
                 <div>
                     <h2 class="text-2xl font-bold text-gray-900 mb-1">Kelola Invoice Zona</h2>
-                    <p class="text-sm text-gray-500">Zona: <span id="user-zona-label" class="font-semibold text-gray-700">-</span></p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <div id="user-card" class="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 rounded-lg border border-blue-200 flex items-center gap-3">
                         <div class="text-right">
                             <p id="user-name" class="font-bold text-gray-900 text-sm">Loading...</p>
@@ -278,6 +277,9 @@
                     </div>
                     <button class="btn-refresh" onclick="location.reload()" style="padding: 10px 16px; font-weight: 600; white-space: nowrap;">
                         <i class="fas fa-sync"></i> Refresh
+                    </button>
+                    <button onclick="logout()" style="padding: 10px 16px; font-weight: 600; white-space: nowrap; background-color: #f87171; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        Logout
                     </button>
                 </div>
             </div>
@@ -574,7 +576,6 @@
                     console.error('[AdminZona] currentUser still not available after retries');
                     document.getElementById('user-name').textContent = 'Unknown';
                     document.getElementById('user-zona').textContent = 'Zona: -';
-                    document.getElementById('user-zona-label').textContent = '-';
                     // Still show the page even without user
                     document.getElementById('sidebar').style.display = 'block';
                     document.getElementById('main-content').classList.add('with-sidebar');
@@ -589,7 +590,6 @@
                 
                 document.getElementById('user-name').textContent = userEmail;
                 document.getElementById('user-zona').textContent = `Zona: ${zonaName}`;
-                document.getElementById('user-zona-label').textContent = zonaName;
 
                 // Show sidebar and main content now that initialization is complete
                 document.getElementById('sidebar').style.display = 'block';
