@@ -824,22 +824,8 @@
         // Toggle action menu dropdown - position fixed to avoid clipping
         // Show download menu as popup modal
         function showDownloadMenu(faktur, invoiceId) {
-            // Get the invoice data from the table to know which files exist
-            // We'll build the menu dynamically based on what files are available
-            const row = document.querySelector(`button[onclick*="showDownloadMenu('${faktur}']")?.closest('tr');
-            
-            // Find which buttons exist by checking the renderInvoices data
-            // For now, we'll check file existence and build menu accordingly
-            const token = localStorage.getItem('access_token');
-            
-            // Build the menu based on which files exist
-            let menuHTML = `<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">`;
-            let hasFiles = false;
-            
-            // We'll add buttons for files that are likely to exist based on the invoice data
-            // This is determined by the renderInvoices function which already checked
-            
-            menuHTML += `
+            // Build the menu with all 4 download options
+            let menuHTML = `<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
                 <button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice'); Swal.close();" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
                     📄 Download Invoice
                 </button>
@@ -852,9 +838,7 @@
                 <button onclick="combinePDF('${faktur}'); Swal.close();" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
                     📦 Combine PDF
                 </button>
-            `;
-            
-            menuHTML += `</div>`;
+            </div>`;
             
             Swal.fire({
                 title: '📥 Download Files',
