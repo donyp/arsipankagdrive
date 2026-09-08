@@ -2795,12 +2795,24 @@ async function renderInvoiceTable(invoices) {
             }
         }
         
+        // Store file status for popup usage later
+        const fileStatus = {
+            hasInvoice: invoiceExists,
+            hasBuktiBayar: buktiExists,
+            hasFakturPajak: fakturExists,
+            isPPN: inv.keterangan === 'PPN',
+            isComplete: actualUploadedCount === requiredCount,
+            actualCount: actualUploadedCount,
+            requiredCount: requiredCount
+        };
+        
         return {
             ...inv,
             actualUploadedCount,
             requiredCount,
             buttons,
-            isComplete: actualUploadedCount === requiredCount
+            isComplete: actualUploadedCount === requiredCount,
+            fileStatus  // Store for popup
         };
     }));
     
@@ -2874,7 +2886,7 @@ async function renderInvoiceTable(invoices) {
         }
         
         return `
-            <tr style="transition: background 0.2s; border-bottom: 2px solid #34495e;" data-faktur="${inv.faktur}">
+            <tr style="transition: background 0.2s; border-bottom: 2px solid #34495e;" data-faktur="${inv.faktur}" data-file-status='${JSON.stringify(inv.fileStatus)}'>
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">
                     <span style="display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; ${statusStyle}">
                         ${statusText}
@@ -3345,67 +3357,58 @@ async function showInvoiceActionMenu(faktur, invoiceId) {
         // Get current user role
         const isModerator = currentUser && (currentUser.role === 'moderator' || currentUser.role === 'super_admin');
         
-        // Build menu HTML
+        // Get file status from cached data attribute
+        const row = document.querySelector(`tr[data-faktur="${faktur}"]`);
+        let fileStatus = null;
+        
+        if (row && row.getAttribute('data-file-status')) {
+            try {
+                fileStatus = JSON.parse(row.getAttribute('data-file-status'));
+            } catch (e) {
+                console.error('[ActionMenu] Error parsing file status:', e);
+            }
+        }
+        
+        // If no cached file status, show error
+        if (!fileStatus) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Data file status tidak ditemukan',
+                confirmButtonColor: '#e74c3c'
+            });
+            return;
+        }
+        
+        // Build menu HTML using cached file status
         let menuHTML = `<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">`;
         
-        // Get token for file checks
-        const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+        // Show invoice download button if file exists
+        if (fileStatus.hasInvoice) {
+            menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
+                📄 Download Invoice
+            </button>`;
+        }
         
-        // Check and add download buttons
-        try {
-            // Check invoice file
-            const invoiceRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/invoice`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (invoiceRes.ok) {
-                const data = await invoiceRes.json();
-                if (data.exists) {
-                    menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
-                        📄 Download Invoice
-                    </button>`;
-                }
-            }
-            
-            // Check bukti bayar
-            const buktiRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/bukti_bayar`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (buktiRes.ok) {
-                const data = await buktiRes.json();
-                if (data.exists) {
-                    menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
-                        💰 Download Bukti Bayar
-                    </button>`;
-                }
-            }
-            
-            // Check faktur pajak
-            const fakturRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/faktur_pajak`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (fakturRes.ok) {
-                const data = await fakturRes.json();
-                if (data.exists) {
-                    menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
-                        📋 Download Faktur Pajak
-                    </button>`;
-                }
-            }
-            
-            // Check combine (if all files exist)
-            if (invoiceRes.ok && buktiRes.ok && fakturRes.ok) {
-                const invoiceData = await invoiceRes.json();
-                const buktiData = await buktiRes.json();
-                const fakturData = await fakturRes.json();
-                
-                if (invoiceData.exists && buktiData.exists && fakturData.exists) {
-                    menuHTML += `<button onclick="combinePDF('${faktur}'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
-                        📦 Combine PDF (3/3)
-                    </button>`;
-                }
-            }
-        } catch (err) {
-            console.error('[ActionMenu] Error checking files:', err);
+        // Show bukti bayar download button if file exists
+        if (fileStatus.hasBuktiBayar) {
+            menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
+                💰 Download Bukti Bayar
+            </button>`;
+        }
+        
+        // Show faktur pajak download button if file exists
+        if (fileStatus.hasFakturPajak && fileStatus.isPPN) {
+            menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
+                📋 Download Faktur Pajak
+            </button>`;
+        }
+        
+        // Show combine button if all files are complete
+        if (fileStatus.isComplete) {
+            menuHTML += `<button onclick="combinePDF('${faktur}'); if(window.Swal) Swal.close();" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
+                📦 Combine PDF (${fileStatus.actualCount}/${fileStatus.requiredCount})
+            </button>`;
         }
         
         // Add delete button only for moderators
