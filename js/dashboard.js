@@ -2759,71 +2759,62 @@ async function renderInvoiceTable(invoices) {
     
     const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
     
-    // Check ALL files FIRST before rendering
+    // Check ALL files FIRST before rendering - PARALLEL BATCH
     const invoicesWithFileStatus = await Promise.all(invoices.map(async (inv) => {
         let actualUploadedCount = 0;
         const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
         const buttons = [];
         
-        // Check invoice file
-        let invoiceExists = false;
+        // Run ALL 3 checks IN PARALLEL (not sequential)
+        const checkPromises = [];
+        
         if (inv.invoice_pdf_path) {
-            try {
-                const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
+            checkPromises.push(
+                fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.exists) {
-                        actualUploadedCount++;
-                        invoiceExists = true;
-                        buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄</button>`);
-                    }
-                }
-            } catch (e) {
-                console.error('[CheckButtons] Error checking invoice:', e);
-            }
+                }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                    .then(d => ({ type: 'invoice', exists: d.exists }))
+            );
         }
         
-        // Check bukti bayar
-        let buktiExists = false;
         if (inv.bukti_bayar_path) {
-            try {
-                const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
+            checkPromises.push(
+                fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.exists) {
-                        actualUploadedCount++;
-                        buktiExists = true;
-                        buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰</button>`);
-                    }
-                }
-            } catch (e) {
-                console.error('[CheckButtons] Error checking bukti bayar:', e);
-            }
+                }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                    .then(d => ({ type: 'bukti_bayar', exists: d.exists }))
+            );
         }
         
-        // Check faktur pajak (if PPN)
-        let fakturExists = false;
         if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
-            try {
-                const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
+            checkPromises.push(
+                fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.exists) {
-                        actualUploadedCount++;
-                        fakturExists = true;
-                        buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋</button>`);
-                    }
-                }
-            } catch (e) {
-                console.error('[CheckButtons] Error checking faktur pajak:', e);
-            }
+                }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                    .then(d => ({ type: 'faktur_pajak', exists: d.exists }))
+            );
         }
+        
+        // Wait for ALL parallel checks
+        const results = await Promise.all(checkPromises);
+        
+        // Process results
+        let invoiceExists = false, buktiExists = false, fakturExists = false;
+        results.forEach(res => {
+            if (res.exists) {
+                actualUploadedCount++;
+                if (res.type === 'invoice') {
+                    invoiceExists = true;
+                    buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'invoice')" style="background: #3498db; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄</button>`);
+                } else if (res.type === 'bukti_bayar') {
+                    buktiExists = true;
+                    buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'bukti_bayar')" style="background: #27ae60; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰</button>`);
+                } else if (res.type === 'faktur_pajak') {
+                    fakturExists = true;
+                    buttons.push(`<button onclick="downloadInvoiceFile(this, '${inv.faktur}', 'faktur_pajak')" style="background: #9b59b6; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋</button>`);
+                }
+            }
+        });
         
         // Store file status for popup usage later
         const fileStatus = {
