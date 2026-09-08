@@ -2755,18 +2755,32 @@ async function renderInvoiceTable(invoices) {
     }
     
     // Show loading overlay while checking files
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2rem; height: 2rem; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d;">Memeriksa ketersediaan file...</span></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2rem; height: 2rem; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d;">Memeriksa ketersediaan file... (Batch 1/${Math.ceil(invoices.length / 50)})</span></div></td></tr>';
     
     const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
     
-    // Check ALL files FIRST before rendering - PARALLEL BATCH
-    const invoicesWithFileStatus = await Promise.all(invoices.map(async (inv) => {
-        let actualUploadedCount = 0;
-        const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
-        const buttons = [];
+    // PAGINATION: Process in batches of 50 to avoid timeout on large datasets
+    const PAGE_SIZE = 50;
+    const allInvoicesWithStatus = [];
+    
+    for (let batch = 0; batch < invoices.length; batch += PAGE_SIZE) {
+        const batchInvoices = invoices.slice(batch, batch + PAGE_SIZE);
+        const batchProgress = Math.floor(batch / PAGE_SIZE) + 1;
+        const totalBatches = Math.ceil(invoices.length / PAGE_SIZE);
         
-        // Run ALL 3 checks IN PARALLEL (not sequential)
-        const checkPromises = [];
+        // Update loading message
+        if (batch > 0) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2rem; height: 2rem; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d;">Memeriksa ketersediaan file... (Batch ${batchProgress}/${totalBatches})</span></div></td></tr>`;
+        }
+    
+        // Check ALL files in batch FIRST before rendering - PARALLEL BATCH
+        const batchWithFileStatus = await Promise.all(batchInvoices.map(async (inv) => {
+            let actualUploadedCount = 0;
+            const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
+            const buttons = [];
+            
+            // Run ALL 3 checks IN PARALLEL (not sequential)
+            const checkPromises = [];
         
         if (inv.invoice_pdf_path) {
             checkPromises.push(
@@ -2835,7 +2849,14 @@ async function renderInvoiceTable(invoices) {
             isComplete: actualUploadedCount === requiredCount,
             fileStatus  // Store for popup
         };
-    }));
+        }));
+        
+        // Collect all batch results
+        allInvoicesWithStatus.push(...batchWithFileStatus);
+    }
+    
+    // Use collected results instead
+    const invoicesWithFileStatus = allInvoicesWithStatus;
     
     console.log('[RenderTable] File checks complete, rendering final table...');
     
