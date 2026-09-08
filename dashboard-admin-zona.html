@@ -824,22 +824,37 @@
         // Toggle action menu dropdown - position fixed to avoid clipping
         // Show download menu as popup modal
         function showDownloadMenu(faktur, invoiceId) {
-            let menuHTML = `
-                <div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
-                    <button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice'); Swal.closeModal();" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
-                        📄 Download Invoice
-                    </button>
-                    <button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar'); Swal.closeModal();" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
-                        💰 Download Bukti Bayar
-                    </button>
-                    <button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak'); Swal.closeModal();" style="width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
-                        📋 Download Faktur Pajak
-                    </button>
-                    <button onclick="combinePDF('${faktur}'); Swal.closeModal();" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
-                        📦 Combine PDF
-                    </button>
-                </div>
+            // Get the invoice data from the table to know which files exist
+            // We'll build the menu dynamically based on what files are available
+            const row = document.querySelector(`button[onclick*="showDownloadMenu('${faktur}']")?.closest('tr');
+            
+            // Find which buttons exist by checking the renderInvoices data
+            // For now, we'll check file existence and build menu accordingly
+            const token = localStorage.getItem('access_token');
+            
+            // Build the menu based on which files exist
+            let menuHTML = `<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">`;
+            let hasFiles = false;
+            
+            // We'll add buttons for files that are likely to exist based on the invoice data
+            // This is determined by the renderInvoices function which already checked
+            
+            menuHTML += `
+                <button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice'); Swal.close();" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
+                    📄 Download Invoice
+                </button>
+                <button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar'); Swal.close();" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
+                    💰 Download Bukti Bayar
+                </button>
+                <button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak'); Swal.close();" style="width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
+                    📋 Download Faktur Pajak
+                </button>
+                <button onclick="combinePDF('${faktur}'); Swal.close();" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
+                    📦 Combine PDF
+                </button>
             `;
+            
+            menuHTML += `</div>`;
             
             Swal.fire({
                 title: '📥 Download Files',
@@ -849,7 +864,9 @@
                 background: '#f8f9fa',
                 customClass: {
                     popup: 'download-menu-popup'
-                }
+                },
+                allowOutsideClick: true,
+                allowEscapeKey: true
             });
         }
 
@@ -1144,9 +1161,9 @@
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center;">
-                        <button onclick="showDownloadMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">
+                        ${inv.buttons && inv.buttons.length > 0 ? `<button onclick="showDownloadMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">
                             ⋮
-                        </button>
+                        </button>` : ''}
                     </td>
                 </tr>
             `; }).join('');
@@ -1163,7 +1180,7 @@
             // Check invoice file
             if (inv.invoice_pdf_path) {
                 try {
-                    const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
+                    const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     const data = await res.json();
@@ -1180,7 +1197,7 @@
             // Check bukti bayar
             if (inv.bukti_bayar_path) {
                 try {
-                    const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
+                    const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     const data = await res.json();
@@ -1197,7 +1214,7 @@
             // Check faktur pajak (if PPN)
             if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
                 try {
-                    const res = await fetch(`${API_BASE}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
+                    const res = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     const data = await res.json();
