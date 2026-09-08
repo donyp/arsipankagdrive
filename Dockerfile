@@ -38,10 +38,10 @@ RUN chmod +x /app/start.sh
 # Create data directories
 RUN mkdir -p /app/data/log /app/data/temp /app/backend/data/log /app/backend/data/temp
 
-# Environment variables
+# Environment variables first (define before use)
 # Cloud Run uses PORT environment variable (default 8080)
-# But we keep 7860 as default for local/Hugging Face compatibility
-ENV PORT=${PORT:-8080}
+# But we keep 8080 as default for compatibility across platforms
+ENV PORT=8080
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=512
 ENV LOG_LEVEL=warn
@@ -53,7 +53,7 @@ EXPOSE 8080
 
 # Add Health Check for Cloud Run / Kubernetes environments
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8080}/api/heartbeat || exit 1
+    CMD curl -f http://localhost:8080/api/heartbeat || exit 1
 
 # Note on Different Environments:
 # - Cloud Run: Uses PORT env var (8080), Health check enabled
