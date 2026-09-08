@@ -839,9 +839,10 @@
                 // Position menu below button using fixed positioning
                 const rect = button.getBoundingClientRect();
                 menu.style.position = 'fixed';
-                menu.style.top = (rect.bottom + 5) + 'px';
-                menu.style.left = (rect.left - 180) + 'px'; // Align right side
+                menu.style.top = (rect.bottom + 8) + 'px';  // 8px below button
+                menu.style.left = (rect.right - 220) + 'px'; // Align right edge with button right
                 menu.style.display = 'block';
+                console.log('[ToggleMenu] Positioned at:', rect.bottom + 8, rect.right - 220);
             } else {
                 menu.style.display = 'none';
             }
