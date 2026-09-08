@@ -821,11 +821,10 @@
             modal.style.display = 'flex';
         }
 
-        // Toggle action menu dropdown with fixed positioning
+        // Toggle action menu dropdown
         function toggleActionMenu(event, faktur, invoiceId) {
             event.stopPropagation();
             const menu = document.getElementById(`menu-${invoiceId}`);
-            const button = event.currentTarget;
             
             // Close all other menus
             document.querySelectorAll('.action-menu').forEach(m => {
@@ -835,17 +834,7 @@
             });
             
             // Toggle current menu
-            if (menu.style.display === 'none') {
-                // Position menu below button using fixed positioning
-                const rect = button.getBoundingClientRect();
-                menu.style.position = 'fixed';
-                menu.style.top = (rect.bottom + 8) + 'px';  // 8px below button
-                menu.style.left = (rect.right - 220) + 'px'; // Align right edge with button right
-                menu.style.display = 'block';
-                console.log('[ToggleMenu] Positioned at:', rect.bottom + 8, rect.right - 220);
-            } else {
-                menu.style.display = 'none';
-            }
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
         }
 
         // Close menu when clicking outside
@@ -1145,11 +1134,11 @@
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.toko || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
-                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center; position: relative;">
+                    <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center; position: relative; z-index: 1;">
                         <button onclick="toggleActionMenu(event, '${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">
                             ⋮
                         </button>
-                        <div id="menu-${inv.id}" class="action-menu" style="display: none; position: fixed; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; min-width: 220px;">
+                        <div id="menu-${inv.id}" class="action-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; min-width: 220px;">
                             ${downloadMenuItems}
                         </div>
                     </td>
