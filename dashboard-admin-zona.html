@@ -1415,7 +1415,7 @@
                                 "></div>
                             </div>
                         </div>
-                        <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">Menyiapkan file untuk diunduh...</p>
+                        <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">Mengunduh file dari server...</p>
                         <style>
                             @keyframes spin {
                                 0% { transform: rotate(0deg); }
@@ -1439,34 +1439,9 @@
                 
                 const token = localStorage.getItem('jwt_token');
                 
-                // Check if file exists first
-                updateLoadingModal('Memeriksa ketersediaan file...');
-                const checkRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/${fileType}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                if (!checkRes.ok) {
-                    Swal.close();
-                    const errorData = await checkRes.json().catch(() => ({}));
-                    throw new Error(errorData.error || 'File not found or unable to check');
-                }
-                
-                const checkData = await checkRes.json();
-                
-                if (!checkData.exists) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'File Tidak Ditemukan',
-                        text: `File ${colorConfig.text} tidak ditemukan di server. File mungkin telah dihapus.`,
-                        confirmButtonColor: '#e74c3c'
-                    });
-                    // Refresh the table to hide the button
-                    loadInvoices();
-                    return;
-                }
-                
+                // Skip check - file was already verified during table load
                 // Update loading message
-                updateLoadingModal('Mengunduh file dari server...');
+                updateLoadingModal('Memproses file untuk disimpan...');
                 const response = await fetch(`${CONFIG.API_URL}/api/invoice/download-file/${faktur}/${fileType}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
