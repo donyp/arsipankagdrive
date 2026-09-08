@@ -2147,6 +2147,297 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
         }
     );
     
+    // ============================================
+    // POST /api/invoice/search-existing-files/:faktur
+    // Search for existing files in Google Drive using new location-based paths
+    // This helps discover files uploaded manually or with old paths
+    // ============================================
+    app.post('/api/invoice/search-existing-files/:faktur',
+        ...createAuth(['super_admin', 'moderator']),
+        async (req, res) => {
+            try {
+                const { faktur } = req.params;
+                
+                console.log(`[Invoice Search] Searching for files with faktur: ${faktur}`);
+                
+                // Get invoice data
+                const { data: invoice, error: queryError } = await supabase
+                    .from('invoice_file_list')
+                    .select('*')
+                    .eq('faktur', faktur)
+                    .single();
+                
+                if (queryError || !invoice) {
+                    return res.status(404).json({ error: `Invoice not found: ${faktur}` });
+                }
+                
+                const location = extractLocationFromToko(invoice.toko);
+                const year = invoice.tanggal.split('-')[0];
+                const monthNum = String(invoice.tanggal.split('-')[1]).padStart(2, '0');
+                const day = String(invoice.tanggal.split('-')[2]).padStart(2, '0');
+                
+                const monthNames = [
+                    'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
+                    'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'
+                ];
+                const monthName = monthNames[parseInt(monthNum) - 1] || monthNum;
+                
+                const category = invoice.keterangan === 'PPN' ? 'PPN' : 'NON';
+                
+                console.log(`[Invoice Search] Location: ${location}, Date: ${year}/${monthName}/${day}, Category: ${category}`);
+                
+                const foundFiles = {
+                    invoice: null,
+                    bukti_bayar: null,
+                    faktur_pajak: null,
+                    updated: []
+                };
+                
+                // Search for each file type in new location-based paths
+                try {
+                    // Search for invoice PDF
+                    const invoiceSearchPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${category}`;
+                    console.log(`[Invoice Search] Searching invoice in: ${invoiceSearchPath}`);
+                    const invoiceFiles = await RcloneStorage.listFiles(invoiceSearchPath);
+                    const invoiceFile = invoiceFiles.find(f => f.name.includes(faktur) && f.name.endsWith('.pdf'));
+                    if (invoiceFile && !invoiceFile.is_dir) {
+                        const invoicePath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${category}/${invoiceFile.name}`;
+                        foundFiles.invoice = invoicePath;
+                        console.log(`[Invoice Search] Found invoice: ${invoicePath}`);
+                    }
+                } catch (err) {
+                    console.log(`[Invoice Search] No invoice found (path may not exist):`, err.message);
+                }
+                
+                try {
+                    // Search for bukti bayar
+                    const buktiSearchPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/BUKTIBAYAR`;
+                    console.log(`[Invoice Search] Searching bukti bayar in: ${buktiSearchPath}`);
+                    const buktiFiles = await RcloneStorage.listFiles(buktiSearchPath);
+                    const buktiFile = buktiFiles.find(f => f.name.includes(faktur) && f.name.endsWith('.pdf'));
+                    if (buktiFile && !buktiFile.is_dir) {
+                        const buktiPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/BUKTIBAYAR/${buktiFile.name}`;
+                        foundFiles.bukti_bayar = buktiPath;
+                        console.log(`[Invoice Search] Found bukti bayar: ${buktiPath}`);
+                    }
+                } catch (err) {
+                    console.log(`[Invoice Search] No bukti bayar found:`, err.message);
+                }
+                
+                try {
+                    // Search for faktur pajak
+                    const fakturSearchPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK`;
+                    console.log(`[Invoice Search] Searching faktur pajak in: ${fakturSearchPath}`);
+                    const fakturFiles = await RcloneStorage.listFiles(fakturSearchPath);
+                    const fakturFile = fakturFiles.find(f => f.name.includes('tax-') && f.name.includes(faktur) && f.name.endsWith('.pdf'));
+                    if (fakturFile && !fakturFile.is_dir) {
+                        const fakturPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK/${fakturFile.name}`;
+                        foundFiles.faktur_pajak = fakturPath;
+                        console.log(`[Invoice Search] Found faktur pajak: ${fakturPath}`);
+                    }
+                } catch (err) {
+                    console.log(`[Invoice Search] No faktur pajak found:`, err.message);
+                }
+                
+                // Update database if files found and paths different from database
+                if (foundFiles.invoice && foundFiles.invoice !== invoice.invoice_pdf_path) {
+                    foundFiles.updated.push('invoice');
+                }
+                if (foundFiles.bukti_bayar && foundFiles.bukti_bayar !== invoice.bukti_bayar_path) {
+                    foundFiles.updated.push('bukti_bayar');
+                }
+                if (foundFiles.faktur_pajak && foundFiles.faktur_pajak !== invoice.faktur_pajak_path) {
+                    foundFiles.updated.push('faktur_pajak');
+                }
+                
+                res.json({
+                    success: true,
+                    faktur,
+                    location,
+                    foundFiles,
+                    filesUpdatedCount: foundFiles.updated.length
+                });
+                
+            } catch (error) {
+                console.error('[Invoice Search] Error:', error);
+                res.status(500).json({ error: 'Server error', details: error.message });
+            }
+        }
+    );
+    
+    // ============================================
+    // POST /api/invoice/update-file-paths/:faktur
+    // Update database with found file paths from search
+    // ============================================
+    app.post('/api/invoice/update-file-paths/:faktur',
+        ...createAuth(['super_admin', 'moderator']),
+        async (req, res) => {
+            try {
+                const { faktur } = req.params;
+                const { foundFiles } = req.body;
+                
+                if (!foundFiles) {
+                    return res.status(400).json({ error: 'foundFiles object is required' });
+                }
+                
+                console.log(`[Invoice Update] Updating paths for faktur: ${faktur}`);
+                
+                // Prepare update object
+                const updateData = {};
+                if (foundFiles.invoice) updateData.invoice_pdf_path = foundFiles.invoice;
+                if (foundFiles.bukti_bayar) updateData.bukti_bayar_path = foundFiles.bukti_bayar;
+                if (foundFiles.faktur_pajak) updateData.faktur_pajak_path = foundFiles.faktur_pajak;
+                
+                if (Object.keys(updateData).length === 0) {
+                    return res.status(400).json({ error: 'No file paths to update' });
+                }
+                
+                // Update database
+                const { data, error } = await supabase
+                    .from('invoice_file_list')
+                    .update(updateData)
+                    .eq('faktur', faktur)
+                    .select();
+                
+                if (error) {
+                    console.error('[Invoice Update] Error updating paths:', error);
+                    return res.status(500).json({ error: 'Failed to update paths', details: error.message });
+                }
+                
+                console.log(`[Invoice Update] ✅ Updated paths for faktur: ${faktur}`, updateData);
+                
+                res.json({
+                    success: true,
+                    faktur,
+                    updated: Object.keys(updateData),
+                    data: data[0]
+                });
+                
+            } catch (error) {
+                console.error('[Invoice Update] Error:', error);
+                res.status(500).json({ error: 'Server error', details: error.message });
+            }
+        }
+    );
+    
+    // ============================================
+    // POST /api/invoice/scan-all-invoices
+    // Scan all invoices and search for existing files in Google Drive
+    // Returns summary of found files and allows bulk update
+    // ============================================
+    app.post('/api/invoice/scan-all-invoices',
+        ...createAuth(['super_admin', 'moderator']),
+        async (req, res) => {
+            try {
+                const { limit = 50, offset = 0 } = req.query;
+                
+                console.log(`[Invoice Scan] Scanning all invoices (limit: ${limit}, offset: ${offset})`);
+                
+                // Get invoices to scan
+                const { data: invoices, error: queryError, count } = await supabase
+                    .from('invoice_file_list')
+                    .select('*', { count: 'exact' })
+                    .order('tanggal', { ascending: false })
+                    .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+                
+                if (queryError) {
+                    return res.status(500).json({ error: 'Failed to fetch invoices', details: queryError.message });
+                }
+                
+                const scanResults = [];
+                
+                for (const invoice of invoices || []) {
+                    try {
+                        const location = extractLocationFromToko(invoice.toko);
+                        const year = invoice.tanggal.split('-')[0];
+                        const monthNum = String(invoice.tanggal.split('-')[1]).padStart(2, '0');
+                        const day = String(invoice.tanggal.split('-')[2]).padStart(2, '0');
+                        
+                        const monthNames = [
+                            'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
+                            'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'
+                        ];
+                        const monthName = monthNames[parseInt(monthNum) - 1] || monthNum;
+                        
+                        const category = invoice.keterangan === 'PPN' ? 'PPN' : 'NON';
+                        
+                        const result = {
+                            faktur: invoice.faktur,
+                            location,
+                            found: [],
+                            needsUpdate: false
+                        };
+                        
+                        // Search for files
+                        try {
+                            const invoiceSearchPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${category}`;
+                            const invoiceFiles = await RcloneStorage.listFiles(invoiceSearchPath);
+                            const invoiceFile = invoiceFiles.find(f => f.name.includes(invoice.faktur) && f.name.endsWith('.pdf'));
+                            if (invoiceFile && !invoiceFile.is_dir) {
+                                result.found.push('invoice');
+                            }
+                        } catch (err) {
+                            // Path doesn't exist, continue
+                        }
+                        
+                        try {
+                            const buktiSearchPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/BUKTIBAYAR`;
+                            const buktiFiles = await RcloneStorage.listFiles(buktiSearchPath);
+                            const buktiFile = buktiFiles.find(f => f.name.includes(invoice.faktur) && f.name.endsWith('.pdf'));
+                            if (buktiFile && !buktiFile.is_dir) {
+                                result.found.push('bukti_bayar');
+                            }
+                        } catch (err) {
+                            // Path doesn't exist, continue
+                        }
+                        
+                        try {
+                            const fakturSearchPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/FAKTURPAJAK`;
+                            const fakturFiles = await RcloneStorage.listFiles(fakturSearchPath);
+                            const fakturFile = fakturFiles.find(f => f.name.includes('tax-') && f.name.includes(invoice.faktur) && f.name.endsWith('.pdf'));
+                            if (fakturFile && !fakturFile.is_dir) {
+                                result.found.push('faktur_pajak');
+                            }
+                        } catch (err) {
+                            // Path doesn't exist, continue
+                        }
+                        
+                        // Check if database needs update
+                        if ((result.found.includes('invoice') && !invoice.invoice_pdf_path) ||
+                            (result.found.includes('bukti_bayar') && !invoice.bukti_bayar_path) ||
+                            (result.found.includes('faktur_pajak') && !invoice.faktur_pajak_path)) {
+                            result.needsUpdate = true;
+                        }
+                        
+                        if (result.found.length > 0) {
+                            scanResults.push(result);
+                        }
+                    } catch (err) {
+                        console.error(`[Invoice Scan] Error scanning faktur ${invoice.faktur}:`, err.message);
+                    }
+                }
+                
+                console.log(`[Invoice Scan] ✅ Scanned ${invoices?.length || 0} invoices, found ${scanResults.length} with files`);
+                
+                res.json({
+                    success: true,
+                    summary: {
+                        totalScanned: invoices?.length || 0,
+                        totalCount: count || 0,
+                        foundWithFiles: scanResults.length,
+                        needsUpdate: scanResults.filter(r => r.needsUpdate).length
+                    },
+                    results: scanResults.slice(0, 20), // Return first 20 for display
+                    hasMore: scanResults.length > 20
+                });
+                
+            } catch (error) {
+                console.error('[Invoice Scan] Error:', error);
+                res.status(500).json({ error: 'Server error', details: error.message });
+            }
+        }
+    );
+
     console.log('[Invoice API] Endpoints registered successfully');
 }
 
