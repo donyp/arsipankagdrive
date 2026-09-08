@@ -1082,7 +1082,7 @@
             }
 
             // Show loading overlay while checking files
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d; font-size: 14px;">Memeriksa ketersediaan file... (Batch 1/${Math.ceil(invoices.length / 50)})</span></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d; font-size: 14px;">Memeriksa ketersediaan file...</span></div></td></tr>';
 
             const token = API.getToken() || localStorage.getItem('jwt_token');
             
@@ -1097,7 +1097,8 @@
                 
                 // Update loading message
                 if (batch > 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d; font-size: 14px;">Memeriksa ketersediaan file... (Batch ${batchProgress}/${totalBatches})</span></div></td></tr>`;
+                    const msg = 'Memeriksa ketersediaan file... (Batch ' + batchProgress + '/' + totalBatches + ')';
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d; font-size: 14px;">' + msg + '</span></div></td></tr>';
                 }
             
                 // Check ALL files in batch FIRST before rendering - PARALLEL BATCH
