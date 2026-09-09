@@ -851,6 +851,7 @@
                 // Get file status from cached data attribute (set during renderInvoices)
                 const row = document.querySelector(`tr[data-faktur="${faktur}"]`);
                 if (!row) {
+                    console.error('[ShowDownloadMenu] Row not found for faktur:', faktur);
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
@@ -861,7 +862,25 @@
                 }
                 
                 const fileStatusStr = row.getAttribute('data-file-status');
-                const fileStatus = JSON.parse(fileStatusStr);
+                console.log('[ShowDownloadMenu] Raw data-file-status:', fileStatusStr);
+                
+                let fileStatus = null;
+                try {
+                    fileStatus = JSON.parse(fileStatusStr);
+                    console.log('[ShowDownloadMenu] Parsed fileStatus:', fileStatus);
+                } catch (parseErr) {
+                    console.error('[ShowDownloadMenu] Failed to parse file status JSON:', parseErr, 'Raw string:', fileStatusStr);
+                    // Fallback: try to extract from the string
+                    fileStatus = {
+                        hasInvoice: false,
+                        hasBuktiBayar: false,
+                        hasFakturPajak: false,
+                        isComplete: false,
+                        actualCount: 0,
+                        requiredCount: 2,
+                        isPPN: false
+                    };
+                }
                 
                 let menuHTML = `<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">`;
                 
@@ -919,11 +938,11 @@
                     allowEscapeKey: true
                 });
             } catch (error) {
-                console.error('Menu error:', error);
+                console.error('[ShowDownloadMenu] Unexpected error:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Gagal memuat menu download',
+                    text: 'Gagal memuat menu download: ' + error.message,
                     confirmButtonColor: '#e74c3c'
                 });
             }
@@ -1232,7 +1251,7 @@
                 }
                 
                 // Store file status in data attribute for later retrieval
-                const fileStatus = JSON.stringify({
+                const fileStatus = {
                     hasInvoice: inv.buttons.some(b => b.includes("'invoice'")),
                     hasBuktiBayar: inv.buttons.some(b => b.includes("'bukti_bayar'")),
                     hasFakturPajak: inv.buttons.some(b => b.includes("'faktur_pajak'")),
@@ -1240,10 +1259,10 @@
                     actualCount: inv.actualUploadedCount,
                     requiredCount: inv.requiredCount,
                     isPPN: inv.keterangan === 'PPN'
-                });
+                };
                 
                 return `
-                <tr style="border-bottom: 3px solid #34495e;" data-faktur="${inv.faktur}" data-file-status='${fileStatus}'>
+                <tr style="border-bottom: 3px solid #34495e;" data-faktur="${inv.faktur}" data-file-status="${JSON.stringify(fileStatus).replace(/"/g, '&quot;')}">
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${new Date(inv.tanggal).toLocaleDateString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur}</strong></td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.metode_bayar || '-'}</td>
