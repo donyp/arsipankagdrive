@@ -2682,6 +2682,72 @@ function saveInvoiceFilterState() {
     }
 }
 
+}
+
+// Fetch and display monitoring stats (for admins)
+async function loadMonitoringStats() {
+    try {
+        const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+        const userRole = localStorage.getItem('user_role');
+        
+        // Only show for admins
+        if (userRole !== 'super_admin' && userRole !== 'moderator') {
+            return;
+        }
+
+        const response = await fetch(`${CONFIG.API_URL}/api/invoice/sync-stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const stats = data.stats;
+
+        // Find or create stats panel
+        let statsPanel = document.getElementById('monitoring-stats-panel');
+        if (!statsPanel) {
+            const container = document.querySelector('.invoice-table-container') || document.body;
+            statsPanel = document.createElement('div');
+            statsPanel.id = 'monitoring-stats-panel';
+            statsPanel.style.cssText = `
+                background: #f8f9fa;
+                border-left: 4px solid #3498db;
+                padding: 12px 15px;
+                margin-bottom: 15px;
+                border-radius: 4px;
+                font-size: 12px;
+                color: #555;
+                display: none;
+            `;
+            container.insertBefore(statsPanel, container.firstChild);
+        }
+
+        // Update stats display
+        const lastRun = stats.lastRun ? new Date(stats.lastRun).toLocaleString() : 'Never';
+        const errorMsg = stats.errorCount > 0 ? ` | ⚠️  ${stats.errorCount} errors` : '';
+        
+        statsPanel.innerHTML = `
+            <strong>📊 Sync Status:</strong> 
+            Last: ${lastRun} | 
+            Checked: ${stats.totalChecked} | 
+            Fixed: ${stats.totalCorrected}${errorMsg}
+        `;
+        
+        // Show panel only if there's important info
+        if (stats.totalCorrected > 0 || stats.errorCount > 0) {
+            statsPanel.style.display = 'block';
+            if (stats.errorCount > 0) {
+                statsPanel.style.borderLeftColor = '#e74c3c';
+                statsPanel.style.backgroundColor = '#fadbd8';
+            }
+        }
+
+    } catch (err) {
+        console.log('[Dashboard] Monitoring stats (non-critical):', err.message);
+    }
+}
+
 async function loadInvoicesInDashboard(page = 1) {
     try {
         console.log('[LoadInvoices] ===== LOADING PAGE', page, '=====');
@@ -2729,10 +2795,13 @@ async function loadInvoicesInDashboard(page = 1) {
             invoiceTotalCount = (result.data || []).length;
             updatePaginationInfo();
             updateInvoiceStatsFromData(result.data || [], invoiceTotalCount);
+            
+            // Load and display monitoring stats (for admins only)
+            await loadMonitoringStats();
         }
         
     } catch (error) {
-        console.error('[LoadInvoices] ❌ Error:', error);
+        console.error('[LoadInvoices] Error:', error);
     }
 }
 

@@ -1250,12 +1250,31 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     }
                 }
                 
+                // Log metrics for monitoring
+                const logEntry = {
+                    timestamp: new Date().toISOString(),
+                    faktur: faktur,
+                    fileType: fileType,
+                    exists: fileExists,
+                    usedFastPath: usedFastPath,
+                    usedFallback: usedFallback,
+                    dbCount: invoice.files_uploaded_count,
+                    dbRequired: invoice.files_required_count
+                };
+
+                // Log to console with appropriate level
+                if (usedFallback && fileExists !== (invoice.files_uploaded_count > 0)) {
+                    console.warn(`[Check File] DISCREPANCY DETECTED: ${JSON.stringify(logEntry)}`);
+                } else if (usedFastPath) {
+                    console.log(`[Check File] Fast-path hit: ${faktur}/${fileType}`);
+                }
+
                 res.json({
                     exists: fileExists,
                     faktur: faktur,
                     fileType: fileType,
                     filePath: filePath,
-                    // Performance info for debugging
+                    // Performance info for monitoring
                     usedFastPath: usedFastPath,
                     usedFallback: usedFallback,
                     dbCount: invoice.files_uploaded_count,
@@ -1331,7 +1350,106 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     );
 
     // ============================================
-    // DELETE /api/invoice/clear-test-data
+    // GET /api/invoice/sync-stats
+    // Get file count sync job statistics
+    // Admin only
+    // ============================================
+    app.get('/api/invoice/sync-stats',
+        createAuth(['super_admin', 'moderator']),
+        async (req, res) => {
+            try {
+                // Get sync job statistics
+                const { getSyncStats } = require('../backend/file-count-sync-job');
+                const stats = getSyncStats();
+
+                res.json({
+                    success: true,
+                    stats: {
+                        lastRun: stats.lastRun,
+                        totalChecked: stats.totalChecked,
+                        totalCorrected: stats.totalCorrected,
+                        errorCount: stats.errors.length,
+                        recentErrors: stats.errors.slice(0, 10),
+                        lastError: stats.lastError
+                    },
+                    description: 'Background file count verification statistics'
+                });
+
+            } catch (error) {
+                console.error('[Invoice API] Sync stats error:', error);
+                res.status(500).json({ error: 'Server error' });
+            }
+        }
+    );
+
+    // ============================================
+    // GET /api/invoice/count-discrepancies
+    // List invoices with files_uploaded_count mismatches
+    // Admin only - for monitoring/debugging
+    // ============================================
+    app.get('/api/invoice/count-discrepancies',
+        createAuth(['super_admin', 'moderator']),
+        async (req, res) => {
+            try {
+                const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+
+                // Get invoices with potential mismatches
+                const { data: invoices, error: queryErr } = await supabase
+                    .from('invoice_file_list')
+                    .select('faktur, invoice_pdf_path, bukti_bayar_path, faktur_pajak_path, files_uploaded_count, files_required_count, keterangan, updated_at')
+                    .order('updated_at', { ascending: false })
+                    .limit(limit);
+
+                if (queryErr) {
+                    console.error('[Invoice API] Query error:', queryErr);
+                    return res.status(500).json({ error: 'Query failed' });
+                }
+
+                // Analyze each for discrepancies
+                const discrepancies = [];
+
+                invoices.forEach(inv => {
+                    // Count actual paths
+                    let actualCount = 0;
+                    if (inv.invoice_pdf_path) actualCount++;
+                    if (inv.bukti_bayar_path) actualCount++;
+                    if (inv.faktur_pajak_path) actualCount++;
+
+                    const dbCount = inv.files_uploaded_count || 0;
+                    const requiredCount = inv.files_required_count || (inv.keterangan === 'PPN' ? 3 : 2);
+
+                    // Flag mismatches
+                    if (dbCount !== actualCount) {
+                        discrepancies.push({
+                            faktur: inv.faktur,
+                            dbCount: dbCount,
+                            actualCount: actualCount,
+                            requiredCount: requiredCount,
+                            status: actualCount === requiredCount ? 'complete' : 'incomplete',
+                            mismatch: true,
+                            lastUpdated: inv.updated_at,
+                            missingFiles: []
+                                .concat(!inv.invoice_pdf_path ? ['invoice'] : [])
+                                .concat(!inv.bukti_bayar_path ? ['bukti_bayar'] : [])
+                                .concat(inv.keterangan === 'PPN' && !inv.faktur_pajak_path ? ['faktur_pajak'] : [])
+                        });
+                    }
+                });
+
+                res.json({
+                    success: true,
+                    totalChecked: invoices.length,
+                    discrepancyCount: discrepancies.length,
+                    discrepancies: discrepancies,
+                    description: 'Invoices with files_uploaded_count mismatches'
+                });
+
+            } catch (error) {
+                console.error('[Invoice API] Count discrepancies error:', error);
+                res.status(500).json({ error: 'Server error' });
+            }
+        }
+    );
     // Clear all test invoice data (for development/testing only)
     // ============================================
     app.delete('/api/invoice/clear-test-data',
