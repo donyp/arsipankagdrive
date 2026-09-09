@@ -1571,46 +1571,53 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 if (isReuploadWithNewPath) {
                     console.log(`[Invoice PDF] ℹ️  File already uploaded with new location-based path, allowing re-upload`);
                 } else {
-                    // OPTIMIZATION: Move file checks to background (NON-BLOCKING)
-                    // Return response immediately, validate files asynchronously
-                    // This reduces user-facing latency from 12-24s to 2-5s
-                    
-                    const performFileChecks = async () => {
+                    // QUICK CHECK: If existing path in DB, verify it still exists before rejecting
+                    if (invoice.invoice_pdf_path) {
                         try {
-                            const checkPromises = [];
-                            const checkLabels = [];
-                            
-                            // Check 1: Verify existing path (if file was previously uploaded)
-                            if (invoice.invoice_pdf_path) {
-                                console.log(`[Invoice PDF BG] Checking existing path: ${invoice.invoice_pdf_path}`);
-                                checkPromises.push(RcloneStorage.checkFileExists(invoice.invoice_pdf_path));
-                                checkLabels.push('existing');
+                            const existsInGDrive = await RcloneStorage.checkFileExists(invoice.invoice_pdf_path);
+                            if (existsInGDrive) {
+                                // File truly exists in Google Drive - reject as duplicate
+                                console.warn(`[Invoice PDF] File already exists in Google Drive: ${invoice.invoice_pdf_path}`);
+                                return res.status(409).json({
+                                    error: 'File sudah ada (Duplicate)',
+                                    message: `Invoice PDF sudah ada di Google Drive`,
+                                    existing_path: invoice.invoice_pdf_path,
+                                    faktur: faktur
+                                });
+                            } else {
+                                // Path in DB but file deleted from GDrive - allow re-upload
+                                console.log(`[Invoice PDF] ✓ File not found in Google Drive despite DB path - allowing re-upload`);
                             }
-                            
-                            // Check 2: Verify new upload path (duplicate detection)
-                            console.log(`[Invoice PDF BG] Checking new upload path: ${expectedNewPath}`);
-                            checkPromises.push(RcloneStorage.checkFileExists(expectedNewPath));
-                            checkLabels.push('duplicate');
-                            
-                            console.log(`[Invoice PDF BG] Running ${checkPromises.length} checks in parallel...`);
-                            const results = await Promise.allSettled(checkPromises);
-                            
-                            for (let i = 0; i < results.length; i++) {
-                                const result = results[i];
-                                const label = checkLabels[i];
-                                if (result.status === 'fulfilled') {
-                                    console.log(`[Invoice PDF BG] ✓ ${label}: ${result.value ? 'EXISTS' : 'NOT FOUND'}`);
-                                } else {
-                                    console.warn(`[Invoice PDF BG] Check failed for ${label}: ${result.reason?.message}`);
+                        } catch (checkErr) {
+                            // Check failed - be lenient, allow upload to proceed
+                            console.warn(`[Invoice PDF] Quick check error (allowing re-upload):`, checkErr.message);
+                        }
+                    }
+                    
+                    // Background cleanup: Run additional checks asynchronously
+                    const performBackgroundChecks = async () => {
+                        try {
+                            // Clear stale path if it still exists in DB but not in GDrive
+                            if (invoice.invoice_pdf_path) {
+                                const exists = await RcloneStorage.checkFileExists(invoice.invoice_pdf_path);
+                                if (!exists) {
+                                    console.log(`[Invoice PDF BG] Clearing stale path: ${invoice.invoice_pdf_path}`);
+                                    await supabase
+                                        .from('invoice_file_list')
+                                        .update({
+                                            invoice_pdf_path: null,
+                                            invoice_uploaded_at: null,
+                                            updated_at: new Date().toISOString()
+                                        })
+                                        .eq('faktur', faktur);
                                 }
                             }
                         } catch (bgErr) {
-                            console.error(`[Invoice PDF BG] Background check error (non-blocking):`, bgErr.message);
+                            console.warn(`[Invoice PDF BG] Background cleanup error:`, bgErr.message);
                         }
                     };
                     
-                    // Start background checks but DON'T wait for them
-                    setImmediate(() => performFileChecks());
+                    setImmediate(() => performBackgroundChecks());
                 }
                 
                 // OPTIMIZATION: Move upload to background (NON-BLOCKING)
@@ -1773,20 +1780,38 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     if (isReuploadWithNewPath) {
                         console.log(`[Invoice Document] ℹ️  Faktur Pajak already uploaded with new location-based path, allowing re-upload`);
                     } else {
-                        // OPTIMIZATION: Move file checks to background (NON-BLOCKING)
-                        // If existing path doesn't exist in Google Drive, clear it from DB
+                        // QUICK CHECK: If existing path in DB, verify it still exists before rejecting
+                        if (invoice && invoice.faktur_pajak_path) {
+                            try {
+                                const existsInGDrive = await RcloneStorage.checkFileExists(invoice.faktur_pajak_path);
+                                if (existsInGDrive) {
+                                    // File truly exists in Google Drive - reject as duplicate
+                                    console.warn(`[Invoice Document] File already exists in Google Drive: ${invoice.faktur_pajak_path}`);
+                                    return res.status(409).json({
+                                        error: 'File sudah ada (Duplicate)',
+                                        message: `Faktur Pajak sudah ada di Google Drive`,
+                                        existing_path: invoice.faktur_pajak_path,
+                                        faktur: fakturNumber
+                                    });
+                                } else {
+                                    // Path in DB but file deleted from GDrive - allow re-upload
+                                    console.log(`[Invoice Document] ✓ File not found in Google Drive despite DB path - allowing re-upload`);
+                                }
+                            } catch (checkErr) {
+                                // Check failed - be lenient, allow upload to proceed
+                                console.warn(`[Invoice Document] Quick check error (allowing re-upload):`, checkErr.message);
+                            }
+                        }
+                        
+                        // Background cleanup: Run additional checks asynchronously
                         const performBackgroundChecks = async () => {
                             try {
-                                // Check if existing path still exists on Google Drive
+                                // Clear stale path if it still exists in DB but not in GDrive
                                 if (invoice && invoice.faktur_pajak_path) {
-                                    console.log(`[Invoice Document BG] Checking if existing path still exists: ${invoice.faktur_pajak_path}`);
-                                    const existsInGDrive = await RcloneStorage.checkFileExists(invoice.faktur_pajak_path);
-                                    
-                                    if (!existsInGDrive) {
-                                        console.log(`[Invoice Document BG] ⚠️  Existing file NOT found in Google Drive: ${invoice.faktur_pajak_path}`);
-                                        console.log(`[Invoice Document BG] Clearing stale path from database...`);
-                                        
-                                        const { error: clearErr } = await supabase
+                                    const exists = await RcloneStorage.checkFileExists(invoice.faktur_pajak_path);
+                                    if (!exists) {
+                                        console.log(`[Invoice Document BG] Clearing stale faktur_pajak_path: ${invoice.faktur_pajak_path}`);
+                                        await supabase
                                             .from('invoice_file_list')
                                             .update({
                                                 faktur_pajak_path: null,
@@ -1794,30 +1819,13 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                                                 updated_at: new Date().toISOString()
                                             })
                                             .eq('faktur', fakturNumber);
-                                        
-                                        if (!clearErr) {
-                                            console.log(`[Invoice Document BG] ✅ Cleared stale faktur_pajak_path for ${fakturNumber}`);
-                                            await updateFilesUploadedCount(supabase, fakturNumber);
-                                        }
-                                    } else {
-                                        console.log(`[Invoice Document BG] ✓ Existing file confirmed in Google Drive`);
                                     }
                                 }
-                                
-                                // Check if new upload path already exists (duplicate detection)
-                                console.log(`[Invoice Document BG] Checking new upload path: ${expectedNewPath}`);
-                                const newFileExists = await RcloneStorage.checkFileExists(expectedNewPath);
-                                if (newFileExists) {
-                                    console.log(`[Invoice Document BG] ⚠️  New path already exists: ${expectedNewPath}`);
-                                } else {
-                                    console.log(`[Invoice Document BG] ✓ New path available for upload`);
-                                }
                             } catch (bgErr) {
-                                console.error(`[Invoice Document BG] Background check error (non-blocking):`, bgErr.message);
+                                console.warn(`[Invoice Document BG] Background cleanup error:`, bgErr.message);
                             }
                         };
                         
-                        // Start background checks but DON'T wait for them
                         setImmediate(() => performBackgroundChecks());
                     }
 
@@ -1928,20 +1936,38 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     if (isReuploadWithNewPath) {
                         console.log(`[Invoice Document] ℹ️  Bukti Bayar already uploaded with new location-based path, allowing re-upload`);
                     } else {
-                        // OPTIMIZATION: Move file checks to background (NON-BLOCKING)
-                        // If existing path doesn't exist in Google Drive, clear it from DB
+                        // QUICK CHECK: If existing path in DB, verify it still exists before rejecting
+                        if (invoice && invoice.bukti_bayar_path) {
+                            try {
+                                const existsInGDrive = await RcloneStorage.checkFileExists(invoice.bukti_bayar_path);
+                                if (existsInGDrive) {
+                                    // File truly exists in Google Drive - reject as duplicate
+                                    console.warn(`[Invoice Document] File already exists in Google Drive: ${invoice.bukti_bayar_path}`);
+                                    return res.status(409).json({
+                                        error: 'File sudah ada (Duplicate)',
+                                        message: `Bukti Bayar sudah ada di Google Drive`,
+                                        existing_path: invoice.bukti_bayar_path,
+                                        faktur: nomorFaktur
+                                    });
+                                } else {
+                                    // Path in DB but file deleted from GDrive - allow re-upload
+                                    console.log(`[Invoice Document] ✓ File not found in Google Drive despite DB path - allowing re-upload`);
+                                }
+                            } catch (checkErr) {
+                                // Check failed - be lenient, allow upload to proceed
+                                console.warn(`[Invoice Document] Quick check error (allowing re-upload):`, checkErr.message);
+                            }
+                        }
+                        
+                        // Background cleanup: Run additional checks asynchronously
                         const performBackgroundChecks = async () => {
                             try {
-                                // Check if existing path still exists on Google Drive
+                                // Clear stale path if it still exists in DB but not in GDrive
                                 if (invoice && invoice.bukti_bayar_path) {
-                                    console.log(`[Invoice Document BG] Checking if existing path still exists: ${invoice.bukti_bayar_path}`);
-                                    const existsInGDrive = await RcloneStorage.checkFileExists(invoice.bukti_bayar_path);
-                                    
-                                    if (!existsInGDrive) {
-                                        console.log(`[Invoice Document BG] ⚠️  Existing file NOT found in Google Drive: ${invoice.bukti_bayar_path}`);
-                                        console.log(`[Invoice Document BG] Clearing stale path from database...`);
-                                        
-                                        const { error: clearErr } = await supabase
+                                    const exists = await RcloneStorage.checkFileExists(invoice.bukti_bayar_path);
+                                    if (!exists) {
+                                        console.log(`[Invoice Document BG] Clearing stale bukti_bayar_path: ${invoice.bukti_bayar_path}`);
+                                        await supabase
                                             .from('invoice_file_list')
                                             .update({
                                                 bukti_bayar_path: null,
@@ -1949,34 +1975,16 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                                                 updated_at: new Date().toISOString()
                                             })
                                             .eq('faktur', nomorFaktur);
-                                        
-                                        if (!clearErr) {
-                                            console.log(`[Invoice Document BG] ✅ Cleared stale bukti_bayar_path for ${nomorFaktur}`);
-                                            await updateFilesUploadedCount(supabase, nomorFaktur);
-                                        }
-                                    } else {
-                                        console.log(`[Invoice Document BG] ✓ Existing file confirmed in Google Drive`);
                                     }
                                 }
-                                
-                                // Check if new upload path already exists (duplicate detection)
-                                console.log(`[Invoice Document BG] Checking new upload path: ${expectedNewPath}`);
-                                const newFileExists = await RcloneStorage.checkFileExists(expectedNewPath);
-                                if (newFileExists) {
-                                    console.log(`[Invoice Document BG] ⚠️  New path already exists: ${expectedNewPath}`);
-                                } else {
-                                    console.log(`[Invoice Document BG] ✓ New path available for upload`);
-                                }
                             } catch (bgErr) {
-                                console.error(`[Invoice Document BG] Background check error (non-blocking):`, bgErr.message);
+                                console.warn(`[Invoice Document BG] Background cleanup error:`, bgErr.message);
                             }
                         };
                         
-                        // Start background checks but DON'T wait for them
                         setImmediate(() => performBackgroundChecks());
                     }
 
-                    
                     // OPTIMIZATION: Move upload to background (NON-BLOCKING)
                     const performUpload = async () => {
                         let uploadResult = null;
@@ -2155,6 +2163,29 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
                 // Check if this is a re-upload of same file (path already matches new structure)
                 const isReuploadWithNewPath = invoice?.faktur_pajak_path === expectedNewPath;
+                
+                if (!isReuploadWithNewPath && invoice?.faktur_pajak_path) {
+                    // QUICK CHECK: If existing path in DB, verify it still exists before allowing upload
+                    try {
+                        const existsInGDrive = await RcloneStorage.checkFileExists(invoice.faktur_pajak_path);
+                        if (existsInGDrive) {
+                            // File truly exists in Google Drive - reject as duplicate
+                            console.warn(`[Invoice Faktur Pajak] File already exists in Google Drive: ${invoice.faktur_pajak_path}`);
+                            return res.status(409).json({
+                                error: 'File sudah ada (Duplicate)',
+                                message: `Faktur Pajak sudah ada di Google Drive`,
+                                existing_path: invoice.faktur_pajak_path,
+                                faktur: fakturNumber
+                            });
+                        } else {
+                            // Path in DB but file deleted from GDrive - allow re-upload
+                            console.log(`[Invoice Faktur Pajak] ✓ File not found in Google Drive despite DB path - allowing re-upload`);
+                        }
+                    } catch (checkErr) {
+                        // Check failed - be lenient, allow upload to proceed
+                        console.warn(`[Invoice Faktur Pajak] Quick check error (allowing re-upload):`, checkErr.message);
+                    }
+                }
 
                 // OPTIMIZATION: Move upload to background (NON-BLOCKING)
                 const performUpload = async () => {
