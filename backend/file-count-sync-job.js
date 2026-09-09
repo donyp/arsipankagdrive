@@ -23,7 +23,7 @@ let syncStats = {
 /**
  * Verify and correct file count for a single invoice
  */
-async function verifySingleInvoice(supabase, invoice) {
+async function verifySingleInvoice(supabase, rcloneStorage, invoice) {
     try {
         // Calculate actual count from paths
         let actualCount = 0;
@@ -49,7 +49,7 @@ async function verifySingleInvoice(supabase, invoice) {
         if (invoice.invoice_pdf_path) {
             checkPromises.push(
                 Promise.race([
-                    checkFileExists(invoice.invoice_pdf_path),
+                    rcloneStorage.checkFileExists(invoice.invoice_pdf_path),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
                 ]).then(exists => ({ type: 'invoice', exists }))
                   .catch(() => ({ type: 'invoice', exists: false }))
@@ -59,7 +59,7 @@ async function verifySingleInvoice(supabase, invoice) {
         if (invoice.bukti_bayar_path) {
             checkPromises.push(
                 Promise.race([
-                    checkFileExists(invoice.bukti_bayar_path),
+                    rcloneStorage.checkFileExists(invoice.bukti_bayar_path),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
                 ]).then(exists => ({ type: 'bukti_bayar', exists }))
                   .catch(() => ({ type: 'bukti_bayar', exists: false }))
@@ -69,7 +69,7 @@ async function verifySingleInvoice(supabase, invoice) {
         if (invoice.faktur_pajak_path) {
             checkPromises.push(
                 Promise.race([
-                    checkFileExists(invoice.faktur_pajak_path),
+                    rcloneStorage.checkFileExists(invoice.faktur_pajak_path),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
                 ]).then(exists => ({ type: 'faktur_pajak', exists }))
                   .catch(() => ({ type: 'faktur_pajak', exists: false }))
@@ -84,7 +84,7 @@ async function verifySingleInvoice(supabase, invoice) {
 
         // If actual file count differs from DB count, correct DB
         if (actualFilesExist !== dbCount) {
-            console.warn(`[FileCountSync] ⚠️  Correcting ${invoice.faktur}: ${dbCount} → ${actualFilesExist}`);
+            console.warn(`[FileCountSync] Correcting ${invoice.faktur}: ${dbCount} → ${actualFilesExist}`);
             
             const { error: updateErr } = await supabase
                 .from('invoice_file_list')
@@ -117,7 +117,7 @@ async function verifySingleInvoice(supabase, invoice) {
 /**
  * Main sync job - verify all invoices
  */
-async function runFileCountSync(supabase) {
+async function runFileCountSync(supabase, rcloneStorage) {
     try {
         console.log('\n' + '='.repeat(80));
         console.log('[FileCountSync] Starting background file count verification...');
@@ -151,7 +151,7 @@ async function runFileCountSync(supabase) {
 
             // Process batch in parallel (but not too many)
             const results = await Promise.all(
-                batch.map(inv => verifySingleInvoice(supabase, inv))
+                batch.map(inv => verifySingleInvoice(supabase, rcloneStorage, inv))
             );
 
             results.forEach(result => {
@@ -201,30 +201,21 @@ async function runFileCountSync(supabase) {
  * Start the background sync job
  * Runs every 30 minutes
  */
-function startFileCountSyncJob(supabase) {
+function startFileCountSyncJob(supabase, rcloneStorage) {
     console.log('[FileCountSync] Initializing background sync job (every 30 minutes)...');
 
     // Run immediately on startup
     console.log('[FileCountSync] Running initial sync...');
-    runFileCountSync(supabase).catch(err => console.error('[FileCountSync] Initial run error:', err));
+    runFileCountSync(supabase, rcloneStorage).catch(err => console.error('[FileCountSync] Initial run error:', err));
 
     // Then run every 30 minutes
     const SYNC_INTERVAL = 30 * 60 * 1000; // 30 minutes
     const timer = setInterval(() => {
         console.log('[FileCountSync] Running periodic sync...');
-        runFileCountSync(supabase).catch(err => console.error('[FileCountSync] Periodic run error:', err));
+        runFileCountSync(supabase, rcloneStorage).catch(err => console.error('[FileCountSync] Periodic run error:', err));
     }, SYNC_INTERVAL);
 
     return { timer, stats: syncStats };
-}
-
-/**
- * Stub for file existence check (will be called from rclone_wrapper)
- * This is a placeholder - actual implementation should be imported from rclone_wrapper
- */
-async function checkFileExists(filePath) {
-    // This will be provided by the calling code
-    throw new Error('checkFileExists not implemented in this context');
 }
 
 /**

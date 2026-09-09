@@ -5749,7 +5749,7 @@ const HOST = '0.0.0.0';
 
         // Start background file count sync job
         console.log('[FileCountSync] Starting file count verification job (every 30 min)...');
-        startFileCountSyncJob(supabase);
+        startFileCountSyncJob(supabase, RcloneStorage);
 
     // Task 3.1: Error handler for port binding failures
     server.on('error', (err) => {
