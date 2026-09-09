@@ -2682,8 +2682,6 @@ function saveInvoiceFilterState() {
     }
 }
 
-}
-
 // Fetch and display monitoring stats (for admins)
 async function loadMonitoringStats() {
     try {
