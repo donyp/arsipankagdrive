@@ -1138,6 +1138,9 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // GET /api/invoice/check-file/:faktur/:fileType
     // Check if file exists on remote storage
     // fileType: 'invoice', 'bukti_bayar', or 'faktur_pajak'
+    // 
+    // OPTIMIZATION: Use database count first (fast-path)
+    // Only do actual file check if DB count mismatch detected
     // ============================================
     app.get('/api/invoice/check-file/:faktur/:fileType',
         createAuth(['super_admin', 'moderator', 'user', 'admin_zona']),
@@ -1158,10 +1161,10 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     });
                 }
                 
-                // Get invoice data
+                // Get invoice data - including files_uploaded_count for fast-path
                 const { data: invoice, error: queryError } = await supabase
                     .from('invoice_file_list')
-                    .select('invoice_pdf_path, bukti_bayar_path, faktur_pajak_path')
+                    .select('invoice_pdf_path, bukti_bayar_path, faktur_pajak_path, files_uploaded_count, files_required_count, keterangan')
                     .eq('faktur', faktur)
                     .single();
                 
@@ -1184,14 +1187,57 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         break;
                 }
                 
-                // Check if file exists
+                // OPTIMIZATION: Fast-path using database count
+                // If file path exists in DB and count matches expected, assume file exists
                 let fileExists = false;
-                if (filePath) {
+                let usedFastPath = false;
+                let usedFallback = false;
+                
+                if (filePath && invoice.files_uploaded_count > 0) {
+                    // Fast-path: Trust DB count if it's accurate
+                    // Calculate expected count based on which files have paths
+                    let actualCount = 0;
+                    if (invoice.invoice_pdf_path) actualCount++;
+                    if (invoice.bukti_bayar_path) actualCount++;
+                    if (invoice.faktur_pajak_path) actualCount++;
+                    
+                    // If DB count matches actual paths, assume file exists (NO rclone check)
+                    if (invoice.files_uploaded_count === actualCount) {
+                        fileExists = true;
+                        usedFastPath = true;
+                        console.log(`[Check File] Fast-path (DB count matches): ${faktur}/${fileType} = exists (${invoice.files_uploaded_count}/${invoice.files_required_count})`);
+                    } else {
+                        // Count mismatch: do actual file check (FALLBACK)
+                        usedFallback = true;
+                        console.log(`[Check File] Count mismatch detected: DB says ${invoice.files_uploaded_count} but paths show ${actualCount}, doing file check`);
+                        
+                        try {
+                            fileExists = await RcloneStorage.checkFileExists(filePath);
+                            console.log(`[Check File] Fallback (actual check): ${faktur}/${fileType} = ${fileExists ? 'exists' : 'missing'}`);
+                            
+                            // If mismatch found, log for monitoring
+                            if (fileExists && invoice.files_uploaded_count < actualCount) {
+                                console.warn(`[Check File] ⚠️  DISCREPANCY: DB count (${invoice.files_uploaded_count}) < actual files (${actualCount}), file DOES exist`);
+                            } else if (!fileExists && invoice.files_uploaded_count > actualCount) {
+                                console.warn(`[Check File] ⚠️  DISCREPANCY: DB count (${invoice.files_uploaded_count}) > actual files (${actualCount}), file MISSING`);
+                            }
+                        } catch (checkErr) {
+                            console.warn(`[Check File] Fallback error:`, checkErr.message);
+                            fileExists = false;
+                        }
+                    }
+                } else if (!filePath) {
+                    // No file path in DB = file not uploaded
+                    fileExists = false;
+                    console.log(`[Check File] No file path in DB: ${faktur}/${fileType} = not uploaded`);
+                } else {
+                    // DB count is 0 but has path - do actual check
+                    usedFallback = true;
                     try {
                         fileExists = await RcloneStorage.checkFileExists(filePath);
-                        console.log(`[Invoice Check File] File ${fileType} for ${faktur}: ${fileExists ? 'EXISTS' : 'NOT FOUND'}`);
+                        console.log(`[Check File] Fallback (zero count): ${faktur}/${fileType} = ${fileExists ? 'exists' : 'missing'}`);
                     } catch (checkErr) {
-                        console.warn(`[Invoice Check File] Error checking file:`, checkErr.message);
+                        console.warn(`[Check File] Error checking file:`, checkErr.message);
                         fileExists = false;
                     }
                 }
@@ -1200,7 +1246,12 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     exists: fileExists,
                     faktur: faktur,
                     fileType: fileType,
-                    filePath: filePath
+                    filePath: filePath,
+                    // Performance info for debugging
+                    usedFastPath: usedFastPath,
+                    usedFallback: usedFallback,
+                    dbCount: invoice.files_uploaded_count,
+                    dbRequired: invoice.files_required_count
                 });
                 
             } catch (error) {
