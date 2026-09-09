@@ -76,6 +76,22 @@ async function verifySingleInvoice(supabase, rcloneStorage, invoice) {
         if (actualFilesExist !== dbCount) {
             console.warn(`[FileCountSync] Correcting ${invoice.faktur}: ${dbCount} → ${actualFilesExist}`);
             
+            // IMPORTANT: Invalidate cache for missing files so next check hits GDrive fresh
+            // (prevents stale cache from showing deleted files as still existing)
+            results.forEach(result => {
+                if (!result.exists) {
+                    const filePath = 
+                        result.type === 'invoice' ? invoice.invoice_pdf_path :
+                        result.type === 'bukti_bayar' ? invoice.bukti_bayar_path :
+                        invoice.faktur_pajak_path;
+                    
+                    if (filePath) {
+                        console.log(`[FileCountSync] 🔄 Invalidating cache for deleted ${result.type}: ${filePath}`);
+                        rcloneStorage.invalidateFileExistenceCache(filePath);
+                    }
+                }
+            });
+            
             const { error: updateErr } = await supabase
                 .from('invoice_file_list')
                 .update({
