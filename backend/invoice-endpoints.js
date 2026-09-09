@@ -2928,13 +2928,11 @@ function addClearFileEndpoint(app, supabase, createAuth) {
                 
                 // Recalculate files_uploaded_count
                 let uploadedCount = 0;
-                const updated = invoice;
-                updated[pathColumn] = null;
-                updated[uploadedAtColumn] = null;
                 
-                if (updated.invoice_pdf_path) uploadedCount++;
-                if (updated.bukti_bayar_path) uploadedCount++;
-                if (updated.faktur_pajak_path) uploadedCount++;
+                // Count existing files AFTER clearing the deleted one
+                if (fileType !== 'invoice_pdf' && invoice.invoice_pdf_path) uploadedCount++;
+                if (fileType !== 'bukti_bayar' && invoice.bukti_bayar_path) uploadedCount++;
+                if (fileType !== 'faktur_pajak' && invoice.faktur_pajak_path) uploadedCount++;
                 
                 const { error: countErr } = await supabase
                     .from('invoice_file_list')
