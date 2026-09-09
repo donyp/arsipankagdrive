@@ -1116,23 +1116,59 @@
                 return;
             }
 
-            // Use files_uploaded_count directly from database (no need to check files)
-            const invoicesWithFileStatus = invoices.map(inv => {
+            const token = API.getToken() || localStorage.getItem('jwt_token');
+            
+            // Check files for EACH invoice (same logic as moderator dashboard)
+            const invoicesWithFileStatus = await Promise.all(invoices.map(async (inv) => {
                 const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
-                const actualCount = inv.files_uploaded_count || 0;
+                let actualCount = 0;
                 
-                console.log(`[RenderInvoices] ${inv.faktur}:`, {
-                    files_uploaded_count: actualCount,
-                    requiredCount: requiredCount,
-                    isComplete: actualCount >= requiredCount
+                console.log(`[RenderInvoices] Checking ${inv.faktur}`);
+                
+                // Check each file type
+                const checkPromises = [];
+                
+                // Check invoice PDF
+                checkPromises.push(
+                    fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                        .then(d => ({ type: 'invoice', exists: d.exists }))
+                );
+                
+                // Check bukti bayar
+                checkPromises.push(
+                    fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                        .then(d => ({ type: 'bukti_bayar', exists: d.exists }))
+                );
+                
+                // Check faktur pajak (if PPN)
+                if (inv.keterangan === 'PPN') {
+                    checkPromises.push(
+                        fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                            .then(d => ({ type: 'faktur_pajak', exists: d.exists }))
+                    );
+                }
+                
+                // Wait for all checks
+                const results = await Promise.all(checkPromises);
+                
+                // Count files that exist
+                let hasInvoice = false, hasBuktiBayar = false, hasFakturPajak = false;
+                results.forEach(res => {
+                    if (res.exists) {
+                        actualCount++;
+                        if (res.type === 'invoice') hasInvoice = true;
+                        if (res.type === 'bukti_bayar') hasBuktiBayar = true;
+                        if (res.type === 'faktur_pajak') hasFakturPajak = true;
+                    }
                 });
                 
-                // Determine which files are available based on the count
-                let hasInvoice = false, hasBuktiBayar = false, hasFakturPajak = false;
-                
-                if (actualCount >= 1) hasInvoice = true;
-                if (actualCount >= 2) hasBuktiBayar = true;
-                if (actualCount >= 3 && inv.keterangan === 'PPN') hasFakturPajak = true;
+                console.log(`[RenderInvoices] ${inv.faktur}: ${actualCount}/${requiredCount} files found`);
                 
                 const fileStatus = {
                     hasInvoice: hasInvoice,
@@ -1154,11 +1190,11 @@
                     hasBuktiBayar,
                     hasFakturPajak
                 };
-            });
+            }));
             
-            console.log('[RenderInvoices] File status from database counts, rendering final table...');
+            console.log('[RenderInvoices] File checks complete, rendering table...');
             
-            // Render rows with file status
+            // Render rows
             tbody.innerHTML = invoicesWithFileStatus.map(inv => {
                 const fileStatus = inv.fileStatus;
                 
@@ -1181,7 +1217,7 @@
                 </tr>
             `; }).join('');
             
-            console.log('[RenderInvoices] ✅ Rendered successfully using database file counts');
+            console.log('[RenderInvoices] ✅ Rendered successfully with file verification');
         }
 
         async function checkAndRenderButtons(inv, token) {
