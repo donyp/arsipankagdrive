@@ -1218,8 +1218,16 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                             // If mismatch found, log for monitoring
                             if (fileExists && invoice.files_uploaded_count < actualCount) {
                                 console.warn(`[Check File] ⚠️  DISCREPANCY: DB count (${invoice.files_uploaded_count}) < actual files (${actualCount}), file DOES exist`);
+                                // Auto-correct: update DB count
+                                updateFilesUploadedCount(supabase, faktur).catch(err => 
+                                    console.error(`[Check File] Auto-correct failed: ${err.message}`)
+                                );
                             } else if (!fileExists && invoice.files_uploaded_count > actualCount) {
                                 console.warn(`[Check File] ⚠️  DISCREPANCY: DB count (${invoice.files_uploaded_count}) > actual files (${actualCount}), file MISSING`);
+                                // Auto-correct: update DB count
+                                updateFilesUploadedCount(supabase, faktur).catch(err => 
+                                    console.error(`[Check File] Auto-correct failed: ${err.message}`)
+                                );
                             }
                         } catch (checkErr) {
                             console.warn(`[Check File] Fallback error:`, checkErr.message);
@@ -1256,6 +1264,67 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
             } catch (error) {
                 console.error('[Invoice API] Check file error:', error);
+                res.status(500).json({ error: 'Server error' });
+            }
+        }
+    );
+
+    // ============================================
+    // POST /api/invoice/verify-file-count/:faktur
+    // Manually verify and correct files_uploaded_count
+    // Compares DB count vs actual file paths
+    // Auto-corrects if mismatch found
+    // ============================================
+    app.post('/api/invoice/verify-file-count/:faktur',
+        createAuth(['super_admin', 'moderator']),
+        async (req, res) => {
+            try {
+                const { faktur } = req.params;
+                
+                if (!faktur) {
+                    return res.status(400).json({ error: 'Faktur is required' });
+                }
+                
+                // Get current invoice data
+                const { data: invoice, error: queryErr } = await supabase
+                    .from('invoice_file_list')
+                    .select('invoice_pdf_path, bukti_bayar_path, faktur_pajak_path, files_uploaded_count, files_required_count, keterangan')
+                    .eq('faktur', faktur)
+                    .single();
+                
+                if (queryErr || !invoice) {
+                    return res.status(404).json({ error: `Invoice not found: ${faktur}` });
+                }
+                
+                // Calculate actual count from paths
+                let actualCount = 0;
+                if (invoice.invoice_pdf_path) actualCount++;
+                if (invoice.bukti_bayar_path) actualCount++;
+                if (invoice.faktur_pajak_path) actualCount++;
+                
+                const dbCount = invoice.files_uploaded_count || 0;
+                const isMismatch = dbCount !== actualCount;
+                
+                // If mismatch, correct it
+                let correctedCount = actualCount;
+                if (isMismatch) {
+                    console.log(`[Verify Count] Correcting ${faktur}: ${dbCount} → ${actualCount}`);
+                    const corrected = await updateFilesUploadedCount(supabase, faktur);
+                    correctedCount = corrected || actualCount;
+                }
+                
+                res.json({
+                    faktur: faktur,
+                    previousCount: dbCount,
+                    actualCount: actualCount,
+                    currentCount: correctedCount,
+                    wasMismatch: isMismatch,
+                    wasCorrected: isMismatch,
+                    requiredCount: invoice.files_required_count || (invoice.keterangan === 'PPN' ? 3 : 2)
+                });
+                
+            } catch (error) {
+                console.error('[Invoice API] Verify count error:', error);
                 res.status(500).json({ error: 'Server error' });
             }
         }
