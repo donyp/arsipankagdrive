@@ -263,13 +263,13 @@
                     <!-- Search Faktur/Konsumen -->
                     <div class="filter-group">
                         <label for="filterSearch">Cari Faktur/Konsumen</label>
-                        <input type="text" id="filterSearch" placeholder="Cari faktur atau konsumen...">
+                        <input type="text" id="filterSearch" placeholder="Cari faktur atau konsumen..." onkeypress="if(event.key==='Enter') applyFilters()">
                     </div>
 
                     <!-- Supplier -->
                     <div class="filter-group">
                         <label for="filterSupplier">Supplier</label>
-                        <select id="filterSupplier">
+                        <select id="filterSupplier" onkeypress="if(event.key==='Enter') applyFilters()">
                             <option value="">Semua Supplier</option>
                         </select>
                     </div>
@@ -277,7 +277,7 @@
                     <!-- Keterangan -->
                     <div class="filter-group">
                         <label for="filterKeterangan">Keterangan</label>
-                        <select id="filterKeterangan">
+                        <select id="filterKeterangan" onkeypress="if(event.key==='Enter') applyFilters()">
                             <option value="">Semua</option>
                             <option value="PPN">PPN</option>
                             <option value="NON PPN">NON PPN</option>
@@ -288,7 +288,7 @@
                     <!-- Tahun -->
                     <div class="filter-group">
                         <label for="filterYear">Tahun</label>
-                        <select id="filterYear">
+                        <select id="filterYear" onkeypress="if(event.key==='Enter') applyFilters()">
                             <option value="">Semua Tahun</option>
                         </select>
                     </div>
@@ -296,7 +296,7 @@
                     <!-- Bulan -->
                     <div class="filter-group">
                         <label for="filterMonth">Bulan</label>
-                        <select id="filterMonth">
+                        <select id="filterMonth" onkeypress="if(event.key==='Enter') applyFilters()">
                             <option value="">Semua Bulan</option>
                         </select>
                     </div>
@@ -891,10 +891,23 @@
                     </button>`;
                 }
                 
+                // If no files exist, show a message
+                if (!fileStatus.hasInvoice && !fileStatus.hasBuktiBayar && !fileStatus.hasFakturPajak) {
+                    menuHTML += `<div style="padding: 12px; text-align: center; color: #95a5a6; font-size: 13px;">
+                        <p style="margin: 0; padding: 20px 10px;">
+                            <i class="fas fa-inbox" style="font-size: 24px; display: block; margin-bottom: 10px;"></i>
+                            Belum ada file yang diupload
+                        </p>
+                        <p style="margin: 8px 0 0 0; font-size: 12px; color: #7f8c8d;">
+                            Status: ${fileStatus.actualCount}/${fileStatus.requiredCount}
+                        </p>
+                    </div>`;
+                }
+                
                 menuHTML += `</div>`;
                 
                 Swal.fire({
-                    title: '📥 Download Files',
+                    title: '📥 Aksi Invoice',
                     html: menuHTML,
                     icon: 'info',
                     showConfirmButton: false,
@@ -1239,9 +1252,9 @@
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center;">
-                        ${inv.buttons && inv.buttons.length > 0 ? `<button onclick="showDownloadMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">
+                        <button onclick="showDownloadMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">
                             ⋮
-                        </button>` : ''}
+                        </button>
                     </td>
                 </tr>
             `; }).join('');
