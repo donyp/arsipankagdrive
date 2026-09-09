@@ -25,21 +25,11 @@ let syncStats = {
  */
 async function verifySingleInvoice(supabase, rcloneStorage, invoice) {
     try {
-        // Calculate actual count from paths
-        let actualCount = 0;
-        if (invoice.invoice_pdf_path) actualCount++;
-        if (invoice.bukti_bayar_path) actualCount++;
-        if (invoice.faktur_pajak_path) actualCount++;
-
         const dbCount = invoice.files_uploaded_count || 0;
-        
-        // If counts match, no action needed
-        if (dbCount === actualCount) {
-            return { faktur: invoice.faktur, matched: true };
-        }
 
-        // Mismatch detected - do actual file checks to be certain
-        console.log(`[FileCountSync] Verifying ${invoice.faktur}: DB=${dbCount}, Actual=${actualCount}, checking files...`);
+        // ALWAYS check actual file existence, even if DB count matches path count
+        // (files might have been deleted from Google Drive directly)
+        console.log(`[FileCountSync] Checking actual file existence for ${invoice.faktur} (DB count: ${dbCount})...`);
 
         let actualFilesExist = 0;
         
