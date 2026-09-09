@@ -1193,61 +1193,31 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 let usedFastPath = false;
                 let usedFallback = false;
                 
-                if (filePath && invoice.files_uploaded_count > 0) {
-                    // Fast-path: Trust DB count if it's accurate
-                    // Calculate expected count based on which files have paths
-                    let actualCount = 0;
-                    if (invoice.invoice_pdf_path) actualCount++;
-                    if (invoice.bukti_bayar_path) actualCount++;
-                    if (invoice.faktur_pajak_path) actualCount++;
+                if (filePath) {
+                    // After sync job fixes, ALWAYS check GDrive for the ground truth
+                    // (Don't rely on fast-path - it can be stale after deletions)
+                    // The sync job should keep counts accurate, so this is safe
                     
-                    // If DB count matches actual paths, assume file exists (NO rclone check)
-                    if (invoice.files_uploaded_count === actualCount) {
-                        fileExists = true;
-                        usedFastPath = true;
-                        console.log(`[Check File] Fast-path (DB count matches): ${faktur}/${fileType} = exists (${invoice.files_uploaded_count}/${invoice.files_required_count})`);
-                    } else {
-                        // Count mismatch: do actual file check (FALLBACK)
-                        usedFallback = true;
-                        console.log(`[Check File] Count mismatch detected: DB says ${invoice.files_uploaded_count} but paths show ${actualCount}, doing file check`);
-                        
-                        try {
-                            fileExists = await RcloneStorage.checkFileExists(filePath);
-                            console.log(`[Check File] Fallback (actual check): ${faktur}/${fileType} = ${fileExists ? 'exists' : 'missing'}`);
-                            
-                            // If mismatch found, log for monitoring
-                            if (fileExists && invoice.files_uploaded_count < actualCount) {
-                                console.warn(`[Check File] ⚠️  DISCREPANCY: DB count (${invoice.files_uploaded_count}) < actual files (${actualCount}), file DOES exist`);
-                                // Auto-correct: update DB count
-                                updateFilesUploadedCount(supabase, faktur).catch(err => 
-                                    console.error(`[Check File] Auto-correct failed: ${err.message}`)
-                                );
-                            } else if (!fileExists && invoice.files_uploaded_count > actualCount) {
-                                console.warn(`[Check File] ⚠️  DISCREPANCY: DB count (${invoice.files_uploaded_count}) > actual files (${actualCount}), file MISSING`);
-                                // Auto-correct: update DB count
-                                updateFilesUploadedCount(supabase, faktur).catch(err => 
-                                    console.error(`[Check File] Auto-correct failed: ${err.message}`)
-                                );
-                            }
-                        } catch (checkErr) {
-                            console.warn(`[Check File] Fallback error:`, checkErr.message);
-                            fileExists = false;
-                        }
-                    }
-                } else if (!filePath) {
-                    // No file path in DB = file not uploaded
-                    fileExists = false;
-                    console.log(`[Check File] No file path in DB: ${faktur}/${fileType} = not uploaded`);
-                } else {
-                    // DB count is 0 but has path - do actual check
-                    usedFallback = true;
                     try {
                         fileExists = await RcloneStorage.checkFileExists(filePath);
-                        console.log(`[Check File] Fallback (zero count): ${faktur}/${fileType} = ${fileExists ? 'exists' : 'missing'}`);
+                        usedFallback = true;
+                        console.log(`[Check File] GDrive check: ${faktur}/${fileType} = ${fileExists ? 'exists' : 'missing'}`);
+                        
+                        // If file doesn't exist but DB shows it, auto-correct
+                        if (!fileExists && invoice.files_uploaded_count > 0) {
+                            console.warn(`[Check File] ⚠️  File MISSING but DB shows ${invoice.files_uploaded_count}, auto-correcting...`);
+                            updateFilesUploadedCount(supabase, faktur).catch(err => 
+                                console.error(`[Check File] Auto-correct failed: ${err.message}`)
+                            );
+                        }
                     } catch (checkErr) {
                         console.warn(`[Check File] Error checking file:`, checkErr.message);
                         fileExists = false;
                     }
+                } else {
+                    // No file path in DB = file not uploaded
+                    fileExists = false;
+                    console.log(`[Check File] No file path in DB: ${faktur}/${fileType} = not uploaded`);
                 }
                 
                 // Log metrics for monitoring
