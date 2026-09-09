@@ -853,7 +853,7 @@
         }
 
         // Toggle action menu dropdown - position fixed to avoid clipping
-        // Show download menu as popup modal
+        // Show download menu as popup modal  
         function showDownloadMenu(faktur, invoiceId) {
             try {
                 // Get file status from cached data attribute (set during renderInvoices)
@@ -878,7 +878,7 @@
                     console.log('[ShowDownloadMenu] Parsed fileStatus:', fileStatus);
                 } catch (parseErr) {
                     console.error('[ShowDownloadMenu] Failed to parse file status JSON:', parseErr, 'Raw string:', fileStatusStr);
-                    // Fallback: try to extract from the string
+                    // Fallback
                     fileStatus = {
                         hasInvoice: false,
                         hasBuktiBayar: false,
@@ -889,6 +889,67 @@
                         isPPN: false
                     };
                 }
+                
+                // Build menu HTML using cached file status (NO DELETE BUTTON for admin_zona)
+                let menuHTML = `<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">`;
+                
+                // Show invoice download button if file exists
+                if (fileStatus.hasInvoice) {
+                    menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice');" style="width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
+                        📄 Download Invoice
+                    </button>`;
+                }
+                
+                // Show bukti bayar download button if file exists
+                if (fileStatus.hasBuktiBayar) {
+                    menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar');" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
+                        💰 Download Bukti Bayar
+                    </button>`;
+                }
+                
+                // Show faktur pajak download button if file exists
+                if (fileStatus.hasFakturPajak && fileStatus.isPPN) {
+                    menuHTML += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak');" style="width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
+                        📋 Download Faktur Pajak
+                    </button>`;
+                }
+                
+                // Show combine button if all files are complete
+                if (fileStatus.isComplete) {
+                    menuHTML += `<button onclick="combinePDF('${faktur}');" style="width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#d35400'" onmouseout="this.style.background='#e67e22'">
+                        📦 Combine PDF (${fileStatus.actualCount}/${fileStatus.requiredCount})
+                    </button>`;
+                }
+                
+                menuHTML += `</div>`;
+                
+                // Show SweetAlert2 popup (NO DELETE BUTTON)
+                Swal.fire({
+                    title: '📥 Download Files',
+                    html: menuHTML,
+                    icon: 'info',
+                    showConfirmButton: false,
+                    background: '#f8f9fa',
+                    customClass: {
+                        popup: 'download-menu-popup'
+                    },
+                    allowOutsideClick: true,
+                    allowEscapeKey: true
+                });
+                
+            } catch (error) {
+                console.error('[ShowDownloadMenu] Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Gagal memuat menu download',
+                    confirmButtonColor: '#e74c3c'
+                });
+            }
+        }
+        
+        // Alias for moderator dashboard compatibility
+        const showInvoiceActionMenu = showDownloadMenu;
                 
                 let menuHTML = `<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">`;
                 
@@ -1141,44 +1202,81 @@
                     tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d; font-size: 14px;">' + msg + '</span></div></td></tr>';
                 }
             
-                // Use DATABASE COUNT DIRECTLY (same logic as moderator dashboard)
-                // Don't check GDrive - use files_uploaded_count from DB as source of truth
-                const batchWithFileStatus = batchInvoices.map((inv) => {
-                    const actualUploadedCount = inv.files_uploaded_count || 0;
-                    const requiredCount = inv.files_required_count || (inv.keterangan === 'PPN' ? 3 : 2);
-                    const buttons = [];
+                // Check ALL files in batch FIRST before rendering - PARALLEL BATCH (SAME AS MODERATOR)
+                const batchWithFileStatus = await Promise.all(batchInvoices.map(async (inv) => {
+                    let actualUploadedCount = 0;
+                    const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
                     
-                    console.log(`[RenderInvoices] ${inv.faktur}: DB count=${actualUploadedCount}/${requiredCount}`, {
-                        keterangan: inv.keterangan,
-                        invoice_pdf_path: !!inv.invoice_pdf_path,
-                        bukti_bayar_path: !!inv.bukti_bayar_path,
-                        faktur_pajak_path: !!inv.faktur_pajak_path
-                    });
-                    
-                    // Build buttons based on which paths exist in database
+                    // Run ALL 3 checks IN PARALLEL (not sequential)
+                    const checkPromises = [];
+                
                     if (inv.invoice_pdf_path) {
-                        buttons.push('<button onclick="downloadInvoiceFile(this, \'' + inv.faktur + '\', \'invoice\')" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Invoice">📄 INV</button>');
+                        checkPromises.push(
+                            fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                                .then(d => ({ type: 'invoice', exists: d.exists }))
+                        );
                     }
                     
                     if (inv.bukti_bayar_path) {
-                        buttons.push('<button onclick="downloadInvoiceFile(this, \'' + inv.faktur + '\', \'bukti_bayar\')" style="background: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Bukti Bayar">💰 BB</button>');
+                        checkPromises.push(
+                            fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                                .then(d => ({ type: 'bukti_bayar', exists: d.exists }))
+                        );
                     }
                     
                     if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
-                        buttons.push('<button onclick="downloadInvoiceFile(this, \'' + inv.faktur + '\', \'faktur_pajak\')" style="background: #9b59b6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; transition: all 0.2s;" title="Download Faktur Pajak">📋 FP</button>');
+                        checkPromises.push(
+                            fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                                .then(d => ({ type: 'faktur_pajak', exists: d.exists }))
+                        );
                     }
+                    
+                    // Wait for ALL parallel checks
+                    const results = await Promise.all(checkPromises);
+                    
+                    // Process results
+                    let invoiceExists = false, buktiExists = false, fakturExists = false;
+                    results.forEach(res => {
+                        if (res.exists) {
+                            actualUploadedCount++;
+                            if (res.type === 'invoice') {
+                                invoiceExists = true;
+                            } else if (res.type === 'bukti_bayar') {
+                                buktiExists = true;
+                            } else if (res.type === 'faktur_pajak') {
+                                fakturExists = true;
+                            }
+                        }
+                    });
+                    
+                    // Store file status for popup usage later
+                    const fileStatus = {
+                        hasInvoice: invoiceExists,
+                        hasBuktiBayar: buktiExists,
+                        hasFakturPajak: fakturExists,
+                        isPPN: inv.keterangan === 'PPN',
+                        actualCount: actualUploadedCount,
+                        requiredCount: requiredCount,
+                        isComplete: actualUploadedCount >= requiredCount
+                    };
                     
                     return {
                         ...inv,
                         actualUploadedCount,
                         requiredCount,
-                        buttons,
-                        isComplete: actualUploadedCount === requiredCount,
-                        hasInvoice: !!inv.invoice_pdf_path,
-                        hasBuktiBayar: !!inv.bukti_bayar_path,
-                        hasFakturPajak: inv.keterangan === 'PPN' && !!inv.faktur_pajak_path
+                        fileStatus,
+                        isComplete: actualUploadedCount >= requiredCount,
+                        hasInvoice: invoiceExists,
+                        hasBuktiBayar: buktiExists,
+                        hasFakturPajak: fakturExists
                     };
-                });
+                }));
                 
                 // Collect all batch results
                 allInvoicesWithStatus.push(...batchWithFileStatus);
@@ -1189,63 +1287,10 @@
             
             console.log('[RenderInvoices] File checks complete, rendering final table...');
             
-            // Render rows with final button state
+            // Render rows with final file status
             tbody.innerHTML = invoicesWithFileStatus.map(inv => {
-                // Build dropdown menu items dari buttons yang ada
-                let downloadMenuItems = '';
-                if (inv.buttons && inv.buttons.length > 0) {
-                    inv.buttons.forEach(btnHTML => {
-                        const faktur = inv.faktur;
-                        const isInvoice = btnHTML.includes("'invoice'");
-                        const isBuktiBayar = btnHTML.includes("'bukti_bayar'");
-                        const isFakturPajak = btnHTML.includes("'faktur_pajak'");
-                        
-                        if (isInvoice) {
-                            downloadMenuItems += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'invoice')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #3498db; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
-                                📄 Download Invoice
-                            </button>`;
-                        }
-                        if (isBuktiBayar) {
-                            downloadMenuItems += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'bukti_bayar')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #27ae60; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
-                                💰 Download Bukti Bayar
-                            </button>`;
-                        }
-                        if (isFakturPajak) {
-                            downloadMenuItems += `<button onclick="downloadInvoiceFile(this, '${faktur}', 'faktur_pajak')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #9b59b6; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
-                                📋 Download Faktur Pajak
-                            </button>`;
-                        }
-                    });
-                }
-                
-                // Add combine button if complete
-                if (inv.isComplete) {
-                    downloadMenuItems += `<button onclick="combinePDF('${inv.faktur}')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #e67e22; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
-                        📦 Combine PDF
-                    </button>`;
-                }
-                
-                // Add delete button only for super_admin and moderator
-                if (window.currentUser && (window.currentUser.role === 'super_admin' || window.currentUser.role === 'moderator')) {
-                    if (downloadMenuItems) {
-                        downloadMenuItems += '<div style="border-top: 1px solid #eee; margin: 5px 0;"></div>';
-                    }
-                    downloadMenuItems += `<button onclick="deleteInvoice('${inv.faktur}', '${inv.id}')" style="display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 15px; cursor: pointer; color: #e74c3c; font-size: 13px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
-                        <i class="fas fa-trash"></i> Hapus
-                    </button>`;
-                }
-                
                 // Store file status in data attribute for later retrieval
-                // Use direct flags from results instead of checking button strings
-                const fileStatus = {
-                    hasInvoice: inv.hasInvoice || false,
-                    hasBuktiBayar: inv.hasBuktiBayar || false,
-                    hasFakturPajak: inv.hasFakturPajak || false,
-                    isComplete: inv.isComplete,
-                    actualCount: inv.actualUploadedCount,
-                    requiredCount: inv.requiredCount,
-                    isPPN: inv.keterangan === 'PPN'
-                };
+                const fileStatus = inv.fileStatus;
                 
                 console.log('[RenderRow] File status for', inv.faktur, ':', fileStatus);
                 
@@ -1259,7 +1304,7 @@
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">Rp ${(inv.total_jumlah_jual || 0).toLocaleString('id-ID')}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle;">${inv.keterangan || '-'}</td>
                     <td style="padding: 15px 12px; font-size: 14px; font-weight: 600; color: #2c3e50; vertical-align: middle; text-align: center;">
-                        <button onclick="showDownloadMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">
+                        <button onclick="showInvoiceActionMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">
                             ⋮
                         </button>
                     </td>
