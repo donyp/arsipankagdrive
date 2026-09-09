@@ -1185,14 +1185,18 @@
                             }
                         }
                     });
-                
-                return {
-                    ...inv,
-                    actualUploadedCount,
-                    requiredCount,
-                    buttons,
-                    isComplete: actualUploadedCount === requiredCount
-                };
+                    
+                    return {
+                        ...inv,
+                        actualUploadedCount,
+                        requiredCount,
+                        buttons,
+                        isComplete: actualUploadedCount === requiredCount,
+                        hasInvoice: results.some(r => r.type === 'invoice' && r.exists),
+                        hasBuktiBayar: results.some(r => r.type === 'bukti_bayar' && r.exists),
+                        hasFakturPajak: results.some(r => r.type === 'faktur_pajak' && r.exists)
+                    };
+                }));
                 }));
                 
                 // Collect all batch results
@@ -1251,15 +1255,18 @@
                 }
                 
                 // Store file status in data attribute for later retrieval
+                // Use direct flags from results instead of checking button strings
                 const fileStatus = {
-                    hasInvoice: inv.buttons.some(b => b.includes("'invoice'")),
-                    hasBuktiBayar: inv.buttons.some(b => b.includes("'bukti_bayar'")),
-                    hasFakturPajak: inv.buttons.some(b => b.includes("'faktur_pajak'")),
+                    hasInvoice: inv.hasInvoice || false,
+                    hasBuktiBayar: inv.hasBuktiBayar || false,
+                    hasFakturPajak: inv.hasFakturPajak || false,
                     isComplete: inv.isComplete,
                     actualCount: inv.actualUploadedCount,
                     requiredCount: inv.requiredCount,
                     isPPN: inv.keterangan === 'PPN'
                 };
+                
+                console.log('[RenderRow] File status for', inv.faktur, ':', fileStatus);
                 
                 return `
                 <tr style="border-bottom: 3px solid #34495e;" data-faktur="${inv.faktur}" data-file-status="${JSON.stringify(fileStatus).replace(/"/g, '&quot;')}">
