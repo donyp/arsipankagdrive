@@ -1774,34 +1774,43 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         console.log(`[Invoice Document] ℹ️  Faktur Pajak already uploaded with new location-based path, allowing re-upload`);
                     } else {
                         // OPTIMIZATION: Move file checks to background (NON-BLOCKING)
-                        const performChecksAndUpload = async () => {
+                        // If existing path doesn't exist in Google Drive, clear it from DB
+                        const performBackgroundChecks = async () => {
                             try {
-                                const checkPromises = [];
-                                const checkLabels = [];
-                                
-                                // Check 1: Verify existing path (if file was previously uploaded)
+                                // Check if existing path still exists on Google Drive
                                 if (invoice && invoice.faktur_pajak_path) {
-                                    console.log(`[Invoice Document BG] Checking existing path: ${invoice.faktur_pajak_path}`);
-                                    checkPromises.push(RcloneStorage.checkFileExists(invoice.faktur_pajak_path));
-                                    checkLabels.push('existing');
+                                    console.log(`[Invoice Document BG] Checking if existing path still exists: ${invoice.faktur_pajak_path}`);
+                                    const existsInGDrive = await RcloneStorage.checkFileExists(invoice.faktur_pajak_path);
+                                    
+                                    if (!existsInGDrive) {
+                                        console.log(`[Invoice Document BG] ⚠️  Existing file NOT found in Google Drive: ${invoice.faktur_pajak_path}`);
+                                        console.log(`[Invoice Document BG] Clearing stale path from database...`);
+                                        
+                                        const { error: clearErr } = await supabase
+                                            .from('invoice_file_list')
+                                            .update({
+                                                faktur_pajak_path: null,
+                                                faktur_pajak_uploaded_at: null,
+                                                updated_at: new Date().toISOString()
+                                            })
+                                            .eq('faktur', fakturNumber);
+                                        
+                                        if (!clearErr) {
+                                            console.log(`[Invoice Document BG] ✅ Cleared stale faktur_pajak_path for ${fakturNumber}`);
+                                            await updateFilesUploadedCount(supabase, fakturNumber);
+                                        }
+                                    } else {
+                                        console.log(`[Invoice Document BG] ✓ Existing file confirmed in Google Drive`);
+                                    }
                                 }
                                 
-                                // Check 2: Verify new upload path (duplicate detection)
+                                // Check if new upload path already exists (duplicate detection)
                                 console.log(`[Invoice Document BG] Checking new upload path: ${expectedNewPath}`);
-                                checkPromises.push(RcloneStorage.checkFileExists(expectedNewPath));
-                                checkLabels.push('duplicate');
-                                
-                                console.log(`[Invoice Document BG] Running ${checkPromises.length} checks for FAKTUR PAJAK...`);
-                                const results = await Promise.allSettled(checkPromises);
-                                
-                                for (let i = 0; i < results.length; i++) {
-                                    const result = results[i];
-                                    const label = checkLabels[i];
-                                    if (result.status === 'fulfilled') {
-                                        console.log(`[Invoice Document BG] ✓ ${label}: ${result.value ? 'EXISTS' : 'NOT FOUND'}`);
-                                    } else {
-                                        console.warn(`[Invoice Document BG] Check failed for ${label}: ${result.reason?.message}`);
-                                    }
+                                const newFileExists = await RcloneStorage.checkFileExists(expectedNewPath);
+                                if (newFileExists) {
+                                    console.log(`[Invoice Document BG] ⚠️  New path already exists: ${expectedNewPath}`);
+                                } else {
+                                    console.log(`[Invoice Document BG] ✓ New path available for upload`);
                                 }
                             } catch (bgErr) {
                                 console.error(`[Invoice Document BG] Background check error (non-blocking):`, bgErr.message);
@@ -1809,7 +1818,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         };
                         
                         // Start background checks but DON'T wait for them
-                        setImmediate(() => performChecksAndUpload());
+                        setImmediate(() => performBackgroundChecks());
                     }
 
                     // OPTIMIZATION: Move upload to background (NON-BLOCKING)
@@ -1919,46 +1928,44 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     if (isReuploadWithNewPath) {
                         console.log(`[Invoice Document] ℹ️  Bukti Bayar already uploaded with new location-based path, allowing re-upload`);
                     } else {
-                        // OPTIMIZATION: Parallelize file existence checks instead of sequential
-                        const checkPromises = [];
-                        const checkLabels = [];
-                        
-                        // Check 1: Verify existing path (if file was previously uploaded)
-                        if (invoice && invoice.bukti_bayar_path) {
-                            console.log(`[Invoice Document] Preparing check for existing path: ${invoice.bukti_bayar_path}`);
-                            checkPromises.push(RcloneStorage.checkFileExists(invoice.bukti_bayar_path));
-                            checkLabels.push('existing');
-                        }
-                        
                         // OPTIMIZATION: Move file checks to background (NON-BLOCKING)
-                        const performChecksAndUpload = async () => {
+                        // If existing path doesn't exist in Google Drive, clear it from DB
+                        const performBackgroundChecks = async () => {
                             try {
-                                const checkPromises = [];
-                                const checkLabels = [];
-                                
-                                // Check 1: Verify existing path (if file was previously uploaded)
+                                // Check if existing path still exists on Google Drive
                                 if (invoice && invoice.bukti_bayar_path) {
-                                    console.log(`[Invoice Document BG] Checking existing path: ${invoice.bukti_bayar_path}`);
-                                    checkPromises.push(RcloneStorage.checkFileExists(invoice.bukti_bayar_path));
-                                    checkLabels.push('existing');
+                                    console.log(`[Invoice Document BG] Checking if existing path still exists: ${invoice.bukti_bayar_path}`);
+                                    const existsInGDrive = await RcloneStorage.checkFileExists(invoice.bukti_bayar_path);
+                                    
+                                    if (!existsInGDrive) {
+                                        console.log(`[Invoice Document BG] ⚠️  Existing file NOT found in Google Drive: ${invoice.bukti_bayar_path}`);
+                                        console.log(`[Invoice Document BG] Clearing stale path from database...`);
+                                        
+                                        const { error: clearErr } = await supabase
+                                            .from('invoice_file_list')
+                                            .update({
+                                                bukti_bayar_path: null,
+                                                bukti_bayar_uploaded_at: null,
+                                                updated_at: new Date().toISOString()
+                                            })
+                                            .eq('faktur', nomorFaktur);
+                                        
+                                        if (!clearErr) {
+                                            console.log(`[Invoice Document BG] ✅ Cleared stale bukti_bayar_path for ${nomorFaktur}`);
+                                            await updateFilesUploadedCount(supabase, nomorFaktur);
+                                        }
+                                    } else {
+                                        console.log(`[Invoice Document BG] ✓ Existing file confirmed in Google Drive`);
+                                    }
                                 }
                                 
-                                // Check 2: Verify new upload path (duplicate detection)
+                                // Check if new upload path already exists (duplicate detection)
                                 console.log(`[Invoice Document BG] Checking new upload path: ${expectedNewPath}`);
-                                checkPromises.push(RcloneStorage.checkFileExists(expectedNewPath));
-                                checkLabels.push('duplicate');
-                                
-                                console.log(`[Invoice Document BG] Running ${checkPromises.length} checks for BUKTI BAYAR...`);
-                                const results = await Promise.allSettled(checkPromises);
-                                
-                                for (let i = 0; i < results.length; i++) {
-                                    const result = results[i];
-                                    const label = checkLabels[i];
-                                    if (result.status === 'fulfilled') {
-                                        console.log(`[Invoice Document BG] ✓ ${label}: ${result.value ? 'EXISTS' : 'NOT FOUND'}`);
-                                    } else {
-                                        console.warn(`[Invoice Document BG] Check failed for ${label}: ${result.reason?.message}`);
-                                    }
+                                const newFileExists = await RcloneStorage.checkFileExists(expectedNewPath);
+                                if (newFileExists) {
+                                    console.log(`[Invoice Document BG] ⚠️  New path already exists: ${expectedNewPath}`);
+                                } else {
+                                    console.log(`[Invoice Document BG] ✓ New path available for upload`);
                                 }
                             } catch (bgErr) {
                                 console.error(`[Invoice Document BG] Background check error (non-blocking):`, bgErr.message);
@@ -1966,7 +1973,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         };
                         
                         // Start background checks but DON'T wait for them
-                        setImmediate(() => performChecksAndUpload());
+                        setImmediate(() => performBackgroundChecks());
                     }
 
                     
