@@ -36,6 +36,10 @@ async function verifySingleInvoice(supabase, rcloneStorage, invoice) {
         // Check each file with timeout to avoid hanging
         const checkPromises = [];
         
+        // For each file type, check if it EXISTS in GDrive
+        // Don't just skip if path is NULL - we need to know actual count
+        
+        // Always check invoice PDF (all invoices need this)
         if (invoice.invoice_pdf_path) {
             checkPromises.push(
                 Promise.race([
@@ -44,8 +48,12 @@ async function verifySingleInvoice(supabase, rcloneStorage, invoice) {
                 ]).then(exists => ({ type: 'invoice', exists }))
                   .catch(() => ({ type: 'invoice', exists: false }))
             );
+        } else {
+            // Even if path is NULL, we count as "doesn't exist"
+            checkPromises.push(Promise.resolve({ type: 'invoice', exists: false }));
         }
         
+        // Always check bukti bayar (all invoices need this)
         if (invoice.bukti_bayar_path) {
             checkPromises.push(
                 Promise.race([
@@ -54,16 +62,25 @@ async function verifySingleInvoice(supabase, rcloneStorage, invoice) {
                 ]).then(exists => ({ type: 'bukti_bayar', exists }))
                   .catch(() => ({ type: 'bukti_bayar', exists: false }))
             );
+        } else {
+            // Even if path is NULL, we count as "doesn't exist"
+            checkPromises.push(Promise.resolve({ type: 'bukti_bayar', exists: false }));
         }
         
-        if (invoice.faktur_pajak_path) {
-            checkPromises.push(
-                Promise.race([
-                    rcloneStorage.checkFileExists(invoice.faktur_pajak_path),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
-                ]).then(exists => ({ type: 'faktur_pajak', exists }))
-                  .catch(() => ({ type: 'faktur_pajak', exists: false }))
-            );
+        // Check faktur pajak only if PPN or path exists
+        if (invoice.keterangan === 'PPN' || invoice.faktur_pajak_path) {
+            if (invoice.faktur_pajak_path) {
+                checkPromises.push(
+                    Promise.race([
+                        rcloneStorage.checkFileExists(invoice.faktur_pajak_path),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+                    ]).then(exists => ({ type: 'faktur_pajak', exists }))
+                      .catch(() => ({ type: 'faktur_pajak', exists: false }))
+                );
+            } else {
+                // PPN invoice but no path - count as missing
+                checkPromises.push(Promise.resolve({ type: 'faktur_pajak', exists: false }));
+            }
         }
 
         // Wait for all checks
