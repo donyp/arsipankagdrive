@@ -1585,8 +1585,22 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                                     faktur: faktur
                                 });
                             } else {
-                                // Path in DB but file deleted from GDrive - allow re-upload
-                                console.log(`[Invoice PDF] ✓ File not found in Google Drive despite DB path - allowing re-upload`);
+                                // Path in DB but file deleted from GDrive
+                                // CLEAR IMMEDIATELY to prevent false duplicate on next upload
+                                console.log(`[Invoice PDF] File not found in GDrive, clearing stale path IMMEDIATELY`);
+                                const { error: clearErr } = await supabase
+                                    .from('invoice_file_list')
+                                    .update({
+                                        invoice_pdf_path: null,
+                                        invoice_uploaded_at: null,
+                                        updated_at: new Date().toISOString()
+                                    })
+                                    .eq('faktur', faktur);
+                                
+                                if (!clearErr) {
+                                    console.log(`[Invoice PDF] ✅ Stale path cleared for ${faktur}`);
+                                    await updateFilesUploadedCount(supabase, faktur);
+                                }
                             }
                         } catch (checkErr) {
                             // Check failed - be lenient, allow upload to proceed
@@ -1594,30 +1608,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         }
                     }
                     
-                    // Background cleanup: Run additional checks asynchronously
-                    const performBackgroundChecks = async () => {
-                        try {
-                            // Clear stale path if it still exists in DB but not in GDrive
-                            if (invoice.invoice_pdf_path) {
-                                const exists = await RcloneStorage.checkFileExists(invoice.invoice_pdf_path);
-                                if (!exists) {
-                                    console.log(`[Invoice PDF BG] Clearing stale path: ${invoice.invoice_pdf_path}`);
-                                    await supabase
-                                        .from('invoice_file_list')
-                                        .update({
-                                            invoice_pdf_path: null,
-                                            invoice_uploaded_at: null,
-                                            updated_at: new Date().toISOString()
-                                        })
-                                        .eq('faktur', faktur);
-                                }
-                            }
-                        } catch (bgErr) {
-                            console.warn(`[Invoice PDF BG] Background cleanup error:`, bgErr.message);
-                        }
-                    };
-                    
-                    setImmediate(() => performBackgroundChecks());
+                    // Note: Background cleanup removed since we now clear immediately above
                 }
                 
                 // OPTIMIZATION: Move upload to background (NON-BLOCKING)
@@ -1794,8 +1785,22 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                                         faktur: fakturNumber
                                     });
                                 } else {
-                                    // Path in DB but file deleted from GDrive - allow re-upload
-                                    console.log(`[Invoice Document] ✓ File not found in Google Drive despite DB path - allowing re-upload`);
+                                    // Path in DB but file deleted from GDrive
+                                    // CLEAR IMMEDIATELY to prevent false duplicate on next upload
+                                    console.log(`[Invoice Document] File not found in GDrive, clearing stale path IMMEDIATELY`);
+                                    const { error: clearErr } = await supabase
+                                        .from('invoice_file_list')
+                                        .update({
+                                            faktur_pajak_path: null,
+                                            faktur_pajak_uploaded_at: null,
+                                            updated_at: new Date().toISOString()
+                                        })
+                                        .eq('faktur', fakturNumber);
+                                    
+                                    if (!clearErr) {
+                                        console.log(`[Invoice Document] ✅ Stale path cleared for ${fakturNumber}`);
+                                        await updateFilesUploadedCount(supabase, fakturNumber);
+                                    }
                                 }
                             } catch (checkErr) {
                                 // Check failed - be lenient, allow upload to proceed
@@ -1803,30 +1808,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                             }
                         }
                         
-                        // Background cleanup: Run additional checks asynchronously
-                        const performBackgroundChecks = async () => {
-                            try {
-                                // Clear stale path if it still exists in DB but not in GDrive
-                                if (invoice && invoice.faktur_pajak_path) {
-                                    const exists = await RcloneStorage.checkFileExists(invoice.faktur_pajak_path);
-                                    if (!exists) {
-                                        console.log(`[Invoice Document BG] Clearing stale faktur_pajak_path: ${invoice.faktur_pajak_path}`);
-                                        await supabase
-                                            .from('invoice_file_list')
-                                            .update({
-                                                faktur_pajak_path: null,
-                                                faktur_pajak_uploaded_at: null,
-                                                updated_at: new Date().toISOString()
-                                            })
-                                            .eq('faktur', fakturNumber);
-                                    }
-                                }
-                            } catch (bgErr) {
-                                console.warn(`[Invoice Document BG] Background cleanup error:`, bgErr.message);
-                            }
-                        };
-                        
-                        setImmediate(() => performBackgroundChecks());
+                        // Note: Background cleanup removed since we now clear immediately above
                     }
 
                     // OPTIMIZATION: Move upload to background (NON-BLOCKING)
@@ -1950,8 +1932,22 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                                         faktur: nomorFaktur
                                     });
                                 } else {
-                                    // Path in DB but file deleted from GDrive - allow re-upload
-                                    console.log(`[Invoice Document] ✓ File not found in Google Drive despite DB path - allowing re-upload`);
+                                    // Path in DB but file deleted from GDrive
+                                    // CLEAR IMMEDIATELY to prevent false dupli cate on next upload
+                                    console.log(`[Invoice Document] File not found in GDrive, clearing stale path IMMEDIATELY`);
+                                    const { error: clearErr } = await supabase
+                                        .from('invoice_file_list')
+                                        .update({
+                                            bukti_bayar_path: null,
+                                            bukti_bayar_uploaded_at: null,
+                                            updated_at: new Date().toISOString()
+                                        })
+                                        .eq('faktur', nomorFaktur);
+                                    
+                                    if (!clearErr) {
+                                        console.log(`[Invoice Document] ✅ Stale path cleared for ${nomorFaktur}`);
+                                        await updateFilesUploadedCount(supabase, nomorFaktur);
+                                    }
                                 }
                             } catch (checkErr) {
                                 // Check failed - be lenient, allow upload to proceed
@@ -1959,30 +1955,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                             }
                         }
                         
-                        // Background cleanup: Run additional checks asynchronously
-                        const performBackgroundChecks = async () => {
-                            try {
-                                // Clear stale path if it still exists in DB but not in GDrive
-                                if (invoice && invoice.bukti_bayar_path) {
-                                    const exists = await RcloneStorage.checkFileExists(invoice.bukti_bayar_path);
-                                    if (!exists) {
-                                        console.log(`[Invoice Document BG] Clearing stale bukti_bayar_path: ${invoice.bukti_bayar_path}`);
-                                        await supabase
-                                            .from('invoice_file_list')
-                                            .update({
-                                                bukti_bayar_path: null,
-                                                bukti_bayar_uploaded_at: null,
-                                                updated_at: new Date().toISOString()
-                                            })
-                                            .eq('faktur', nomorFaktur);
-                                    }
-                                }
-                            } catch (bgErr) {
-                                console.warn(`[Invoice Document BG] Background cleanup error:`, bgErr.message);
-                            }
-                        };
-                        
-                        setImmediate(() => performBackgroundChecks());
+                        // Note: Background cleanup removed since we now clear immediately above
                     }
 
                     // OPTIMIZATION: Move upload to background (NON-BLOCKING)
@@ -2178,8 +2151,22 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                                 faktur: fakturNumber
                             });
                         } else {
-                            // Path in DB but file deleted from GDrive - allow re-upload
-                            console.log(`[Invoice Faktur Pajak] ✓ File not found in Google Drive despite DB path - allowing re-upload`);
+                            // Path in DB but file deleted from GDrive
+                            // CLEAR IMMEDIATELY to prevent false duplicate on next upload
+                            console.log(`[Invoice Faktur Pajak] File not found in GDrive, clearing stale path IMMEDIATELY`);
+                            const { error: clearErr } = await supabase
+                                .from('invoice_file_list')
+                                .update({
+                                    faktur_pajak_path: null,
+                                    faktur_pajak_uploaded_at: null,
+                                    updated_at: new Date().toISOString()
+                                })
+                                .eq('faktur', fakturNumber);
+                            
+                            if (!clearErr) {
+                                console.log(`[Invoice Faktur Pajak] ✅ Stale path cleared for ${fakturNumber}`);
+                                await updateFilesUploadedCount(supabase, fakturNumber);
+                            }
                         }
                     } catch (checkErr) {
                         // Check failed - be lenient, allow upload to proceed
