@@ -58,6 +58,59 @@ try {
 /**
  * Register all invoice endpoints
  */
+/**
+ * Recalculate and update files_uploaded_count based on actual file paths
+ * Safe operation - counts only non-null paths
+ */
+async function updateFilesUploadedCount(supabase, faktur) {
+    try {
+        // Get current invoice data
+        const { data: invoice, error: queryErr } = await supabase
+            .from('invoice_file_list')
+            .select('invoice_pdf_path, bukti_bayar_path, faktur_pajak_path, keterangan')
+            .eq('faktur', faktur)
+            .single();
+        
+        if (queryErr || !invoice) {
+            console.warn(`[UpdateCount] Invoice not found: ${faktur}`);
+            return null;
+        }
+        
+        // Count non-null file paths
+        let uploadedCount = 0;
+        if (invoice.invoice_pdf_path) uploadedCount++;
+        if (invoice.bukti_bayar_path) uploadedCount++;
+        if (invoice.faktur_pajak_path) uploadedCount++;
+        
+        // Calculate required count
+        const requiredCount = (invoice.keterangan === 'PPN') ? 3 : 2;
+        
+        // Update count in database
+        const { data: updated, error: updateErr } = await supabase
+            .from('invoice_file_list')
+            .update({
+                files_uploaded_count: uploadedCount,
+                files_required_count: requiredCount,
+                updated_at: new Date().toISOString()
+            })
+            .eq('faktur', faktur)
+            .select('files_uploaded_count, files_required_count');
+        
+        if (updateErr) {
+            console.error(`[UpdateCount] Update error for ${faktur}:`, updateErr);
+            return null;
+        }
+        
+        const newCount = updated?.[0]?.files_uploaded_count || 0;
+        console.log(`[UpdateCount] Updated ${faktur}: ${newCount}/${requiredCount} files`);
+        
+        return newCount;
+    } catch (err) {
+        console.error(`[UpdateCount] Error:`, err.message);
+        return null;
+    }
+}
+
 function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     
     // Check if dependencies are loaded
@@ -1387,12 +1440,11 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 const { error: updateError, data: updatedData } = await supabase
                     .from('invoice_file_list')
                     .update({
-                        invoice_pdf_path: remotePath || null,  // Will be null if upload failed
+                        invoice_pdf_path: remotePath || null,
                         invoice_uploaded_at: new Date().toISOString(),
-                        uploaded_file_path: remotePath || null, // Keep for backward compatibility
+                        uploaded_file_path: remotePath || null,
                         uploaded_at: new Date().toISOString(),
                         uploaded_by: req.user.id,
-                        // Explicitly trigger recalculation by touching updated_at
                         updated_at: new Date().toISOString()
                     })
                     .eq('faktur', faktur)
@@ -1403,15 +1455,17 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     return res.status(500).json({ error: 'Failed to update invoice status' });
                 }
                 
+                // Recalculate files_uploaded_count
+                const uploadedCount = await updateFilesUploadedCount(supabase, faktur);
+                
                 console.log(`[Invoice PDF] ✅ Database updated for faktur: ${faktur}`);
-                console.log(`[Invoice PDF] Updated record - files_uploaded_count:`, updatedData?.[0]?.files_uploaded_count);
                 
                 res.json({
                     success: true,
                     message: `PDF uploaded successfully for faktur: ${faktur}`,
                     faktur,
                     remotePath: remotePath || 'upload-failed-but-recorded',
-                    filesUploadedCount: updatedData?.[0]?.files_uploaded_count,
+                    filesUploadedCount: uploadedCount,
                     filesRequiredCount: updatedData?.[0]?.files_required_count,
                     konsumen: invoice.konsumen,
                     total: invoice.total_jumlah_jual
@@ -1632,6 +1686,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                                 console.warn(`[Invoice Document] DB update warning for ${fakturNumber}:`, updateError.message);
                             } else {
                                 console.log(`[Invoice Document] ✅ DB updated for faktur: ${fakturNumber}`);
+                                // Recalculate files_uploaded_count
+                                await updateFilesUploadedCount(supabase, fakturNumber);
                             }
                         } catch (dbErr) {
                             console.warn(`[Invoice Document] DB error:`, dbErr.message);
@@ -1813,6 +1869,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                             console.warn(`[Invoice Document] DB update warning for ${nomorFaktur}:`, updateError.message);
                         } else {
                             console.log(`[Invoice Document] ✅ DB updated for faktur: ${nomorFaktur}`);
+                            // Recalculate files_uploaded_count
+                            await updateFilesUploadedCount(supabase, nomorFaktur);
                         }
                     } catch (dbErr) {
                         console.warn(`[Invoice Document] DB error:`, dbErr.message);
