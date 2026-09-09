@@ -1481,17 +1481,13 @@ const RcloneStorage = {
      * Check if a file exists on primary storage.
      */
     async checkFileExists(storagePath) {
-        // Always check remote storage first (don't rely on local cache)
-        // This ensures deleted files are detected immediately
-        try {
-            const remotePath = `${PRIMARY_REMOTE}:${storagePath}`;
-            await rcloneExec(['ls', remotePath]);
-            return true;  // File exists on remote
-        } catch (err) {
-            // File not found on remote - always return false
-            // Even if local copy exists, remote is the source of truth
-            return false;
-        }
+        // OPTIMIZATION: Use the optimized remoteFileExists() which includes:
+        // 1. Cache check (5-minute TTL) - returns 5ms vs 3-6 seconds
+        // 2. Request deduplication - shares result when multiple requests for same file
+        // 3. Smart caching - stores results to avoid redundant rclone calls
+        
+        // Call the optimized function that has all the caching/dedup logic
+        return remoteFileExists(storagePath);
     },
 
     /**
