@@ -2860,4 +2860,127 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     console.log('[Invoice API] Endpoints registered successfully');
 }
 
-module.exports = { registerInvoiceEndpoints };
+// ============================================
+// POST /api/invoice/verify-files-in-gdrive/:faktur
+// Verify files actually exist in Google Drive (not just DB paths)
+// Corrects files_uploaded_count based on actual file existence
+// ============================================
+function addFileExistenceVerificationEndpoint(app, supabase, createAuth, RcloneStorage) {
+    app.post('/api/invoice/verify-files-in-gdrive/:faktur',
+        createAuth(['super_admin', 'moderator']),
+        async (req, res) => {
+            try {
+                const { faktur } = req.params;
+                
+                if (!faktur) {
+                    return res.status(400).json({ error: 'Faktur is required' });
+                }
+                
+                // Get current invoice data
+                const { data: invoice, error: queryErr } = await supabase
+                    .from('invoice_file_list')
+                    .select('invoice_pdf_path, bukti_bayar_path, faktur_pajak_path, files_uploaded_count, keterangan')
+                    .eq('faktur', faktur)
+                    .single();
+                
+                if (queryErr || !invoice) {
+                    return res.status(404).json({ error: `Invoice not found: ${faktur}` });
+                }
+                
+                console.log(`[FileExist Verify] Checking actual file existence for faktur: ${faktur}`);
+                
+                // Check each file with timeout
+                const checkPromises = [];
+                const fileTypes = [];
+                
+                if (invoice.invoice_pdf_path) {
+                    checkPromises.push(
+                        Promise.race([
+                            RcloneStorage.checkFileExists(invoice.invoice_pdf_path),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+                        ]).catch(() => false)
+                    );
+                    fileTypes.push({ type: 'invoice_pdf', path: invoice.invoice_pdf_path });
+                }
+                
+                if (invoice.bukti_bayar_path) {
+                    checkPromises.push(
+                        Promise.race([
+                            RcloneStorage.checkFileExists(invoice.bukti_bayar_path),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+                        ]).catch(() => false)
+                    );
+                    fileTypes.push({ type: 'bukti_bayar', path: invoice.bukti_bayar_path });
+                }
+                
+                if (invoice.faktur_pajak_path) {
+                    checkPromises.push(
+                        Promise.race([
+                            RcloneStorage.checkFileExists(invoice.faktur_pajak_path),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+                        ]).catch(() => false)
+                    );
+                    fileTypes.push({ type: 'faktur_pajak', path: invoice.faktur_pajak_path });
+                }
+                
+                // Execute all checks
+                const results = await Promise.all(checkPromises);
+                
+                // Count actual files that exist
+                let actualFilesExist = 0;
+                const fileStatus = {};
+                
+                for (let i = 0; i < results.length; i++) {
+                    const exists = results[i];
+                    const fileInfo = fileTypes[i];
+                    fileStatus[fileInfo.type] = {
+                        path: fileInfo.path,
+                        exists: exists
+                    };
+                    if (exists) actualFilesExist++;
+                    console.log(`[FileExist Verify] ${fileInfo.type}: ${exists ? 'EXISTS' : 'MISSING'}`);
+                }
+                
+                const dbCount = invoice.files_uploaded_count || 0;
+                
+                // If actual count differs from DB count, correct it
+                let corrected = false;
+                if (actualFilesExist !== dbCount) {
+                    console.warn(`[FileExist Verify] Mismatch found for ${faktur}: DB=${dbCount}, Actual=${actualFilesExist}. Correcting...`);
+                    
+                    const { error: updateErr } = await supabase
+                        .from('invoice_file_list')
+                        .update({
+                            files_uploaded_count: actualFilesExist,
+                            files_required_count: invoice.keterangan === 'PPN' ? 3 : 2,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('faktur', faktur);
+                    
+                    if (updateErr) {
+                        console.error(`[FileExist Verify] Update error:`, updateErr);
+                        return res.status(500).json({ error: 'Failed to update database' });
+                    }
+                    
+                    corrected = true;
+                    console.log(`[FileExist Verify] ✅ Corrected ${faktur}: ${dbCount} → ${actualFilesExist}`);
+                }
+                
+                res.json({
+                    success: true,
+                    faktur: faktur,
+                    previousDatabaseCount: dbCount,
+                    actualFilesExistCount: actualFilesExist,
+                    wasCorrected: corrected,
+                    fileStatus: fileStatus
+                });
+                
+            } catch (error) {
+                console.error('[FileExist Verify] Error:', error);
+                res.status(500).json({ error: 'Server error', details: error.message });
+            }
+        }
+    );
+}
+
+module.exports = { registerInvoiceEndpoints, addFileExistenceVerificationEndpoint };
