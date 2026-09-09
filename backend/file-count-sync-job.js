@@ -76,8 +76,17 @@ async function verifySingleInvoice(supabase, rcloneStorage, invoice) {
         if (actualFilesExist !== dbCount) {
             console.warn(`[FileCountSync] Correcting ${invoice.faktur}: ${dbCount} → ${actualFilesExist}`);
             
-            // IMPORTANT: Invalidate cache for missing files so next check hits GDrive fresh
-            // (prevents stale cache from showing deleted files as still existing)
+            // IMPORTANT: Invalidate cache AND clear path for missing files
+            // This ensures:
+            // 1. Cache doesn't show stale "file exists" result
+            // 2. DB path is NULL so re-upload won't trigger false duplicate check
+            // 3. Next upload will set new path correctly
+            const updateData = {
+                files_uploaded_count: actualFilesExist,
+                files_required_count: invoice.keterangan === 'PPN' ? 3 : 2,
+                updated_at: new Date().toISOString()
+            };
+            
             results.forEach(result => {
                 if (!result.exists) {
                     const filePath = 
@@ -88,17 +97,25 @@ async function verifySingleInvoice(supabase, rcloneStorage, invoice) {
                     if (filePath) {
                         console.log(`[FileCountSync] 🔄 Invalidating cache for deleted ${result.type}: ${filePath}`);
                         rcloneStorage.invalidateFileExistenceCache(filePath);
+                        
+                        // Also clear the path from DB so re-upload doesn't check stale path
+                        if (result.type === 'invoice') {
+                            updateData.invoice_pdf_path = null;
+                            updateData.invoice_uploaded_at = null;
+                        } else if (result.type === 'bukti_bayar') {
+                            updateData.bukti_bayar_path = null;
+                            updateData.bukti_bayar_uploaded_at = null;
+                        } else if (result.type === 'faktur_pajak') {
+                            updateData.faktur_pajak_path = null;
+                            updateData.faktur_pajak_uploaded_at = null;
+                        }
                     }
                 }
             });
             
             const { error: updateErr } = await supabase
                 .from('invoice_file_list')
-                .update({
-                    files_uploaded_count: actualFilesExist,
-                    files_required_count: invoice.keterangan === 'PPN' ? 3 : 2,
-                    updated_at: new Date().toISOString()
-                })
+                .update(updateData)
                 .eq('faktur', invoice.faktur);
 
             if (updateErr) {
