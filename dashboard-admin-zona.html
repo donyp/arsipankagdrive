@@ -773,6 +773,14 @@
                 updatePagination();
 
                 console.log('[AdminZona] Loaded', invoices.length, 'invoices');
+                console.log('[AdminZona] Sample invoice data:', invoices.slice(0, 3).map(inv => ({
+                    faktur: inv.faktur,
+                    invoice_pdf_path: inv.invoice_pdf_path,
+                    bukti_bayar_path: inv.bukti_bayar_path,
+                    faktur_pajak_path: inv.faktur_pajak_path,
+                    files_uploaded_count: inv.files_uploaded_count,
+                    files_required_count: inv.files_required_count
+                })));
             } catch (err) {
                 console.error('[AdminZona] Error loading invoices:', err);
                 document.getElementById('invoiceTableBody').innerHTML = `
@@ -1139,6 +1147,15 @@
                     const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
                     const buttons = [];
                     
+                    console.log(`[RenderInvoices] Checking files for ${inv.faktur}:`, {
+                        keterangan: inv.keterangan,
+                        invoice_pdf_path: inv.invoice_pdf_path,
+                        bukti_bayar_path: inv.bukti_bayar_path,
+                        faktur_pajak_path: inv.faktur_pajak_path,
+                        files_uploaded_count: inv.files_uploaded_count,
+                        files_required_count: inv.files_required_count
+                    });
+                    
                     // Run ALL 3 checks IN PARALLEL (not sequential)
                     const checkPromises = [];
                     
@@ -1147,7 +1164,10 @@
                             fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
                                 headers: { 'Authorization': `Bearer ${token}` }
                             }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
-                                .then(d => ({ type: 'invoice', exists: d.exists }))
+                                .then(d => {
+                                    console.log(`[RenderInvoices] Check result for ${inv.faktur}/invoice: exists=${d.exists}`);
+                                    return { type: 'invoice', exists: d.exists };
+                                })
                         );
                     }
                     
@@ -1156,7 +1176,10 @@
                             fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
                                 headers: { 'Authorization': `Bearer ${token}` }
                             }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
-                                .then(d => ({ type: 'bukti_bayar', exists: d.exists }))
+                                .then(d => {
+                                    console.log(`[RenderInvoices] Check result for ${inv.faktur}/bukti_bayar: exists=${d.exists}`);
+                                    return { type: 'bukti_bayar', exists: d.exists };
+                                })
                         );
                     }
                     
@@ -1165,7 +1188,10 @@
                             fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
                                 headers: { 'Authorization': `Bearer ${token}` }
                             }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
-                                .then(d => ({ type: 'faktur_pajak', exists: d.exists }))
+                                .then(d => {
+                                    console.log(`[RenderInvoices] Check result for ${inv.faktur}/faktur_pajak: exists=${d.exists}`);
+                                    return { type: 'faktur_pajak', exists: d.exists };
+                                })
                         );
                     }
                     
