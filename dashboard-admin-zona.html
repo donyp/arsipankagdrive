@@ -263,13 +263,13 @@
                     <!-- Search Faktur/Konsumen -->
                     <div class="filter-group">
                         <label for="filterSearch">Cari Faktur/Konsumen</label>
-                        <input type="text" id="filterSearch" placeholder="Cari faktur atau konsumen..." onkeypress="if(event.key==='Enter') applyFilters()">
+                        <input type="text" id="filterSearch" placeholder="Cari faktur atau konsumen..." onkeydown="if(event.key==='Enter') { event.preventDefault(); applyFilters(); }">
                     </div>
 
                     <!-- Supplier -->
                     <div class="filter-group">
                         <label for="filterSupplier">Supplier</label>
-                        <select id="filterSupplier" onkeypress="if(event.key==='Enter') applyFilters()">
+                        <select id="filterSupplier" onkeydown="if(event.key==='Enter') { event.preventDefault(); applyFilters(); }">
                             <option value="">Semua Supplier</option>
                         </select>
                     </div>
@@ -277,7 +277,7 @@
                     <!-- Keterangan -->
                     <div class="filter-group">
                         <label for="filterKeterangan">Keterangan</label>
-                        <select id="filterKeterangan" onkeypress="if(event.key==='Enter') applyFilters()">
+                        <select id="filterKeterangan" onkeydown="if(event.key==='Enter') { event.preventDefault(); applyFilters(); }">
                             <option value="">Semua</option>
                             <option value="PPN">PPN</option>
                             <option value="NON PPN">NON PPN</option>
@@ -288,7 +288,7 @@
                     <!-- Tahun -->
                     <div class="filter-group">
                         <label for="filterYear">Tahun</label>
-                        <select id="filterYear" onkeypress="if(event.key==='Enter') applyFilters()">
+                        <select id="filterYear" onkeydown="if(event.key==='Enter') { event.preventDefault(); applyFilters(); }">
                             <option value="">Semua Tahun</option>
                         </select>
                     </div>
@@ -296,7 +296,7 @@
                     <!-- Bulan -->
                     <div class="filter-group">
                         <label for="filterMonth">Bulan</label>
-                        <select id="filterMonth" onkeypress="if(event.key==='Enter') applyFilters()">
+                        <select id="filterMonth" onkeydown="if(event.key==='Enter') { event.preventDefault(); applyFilters(); }">
                             <option value="">Semua Bulan</option>
                         </select>
                     </div>
