@@ -1178,7 +1178,7 @@
                         hasBuktiBayar: !!inv.bukti_bayar_path,
                         hasFakturPajak: inv.keterangan === 'PPN' && !!inv.faktur_pajak_path
                     };
-                }));
+                });
                 
                 // Collect all batch results
                 allInvoicesWithStatus.push(...batchWithFileStatus);
