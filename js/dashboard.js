@@ -3036,30 +3036,8 @@ async function downloadInvoiceFile(btn, faktur, fileType) {
         
         const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
         
-        // Check if file exists first
-        const checkRes = await fetch(`${CONFIG.API_URL}/api/invoice/check-file/${faktur}/${fileType}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (!checkRes.ok) {
-            Swal.close();
-            throw new Error('File not found or unable to check');
-        }
-        
-        const checkData = await checkRes.json();
-        
-        if (!checkData.exists) {
-            Swal.fire({
-                icon: 'error',
-                title: 'File Tidak Ditemukan',
-                text: `File ${colorConfig.text} tidak ditemukan di server. File mungkin telah dihapus.`,
-                confirmButtonColor: '#e74c3c'
-            });
-            // Refresh table
-            await loadInvoicesInDashboard();
-            return;
-        }
-        
+        // Skip file existence check - if user clicked button, file must exist
+        // Download endpoint will return 404 if file doesn't exist
         const response = await fetch(`${CONFIG.API_URL}/api/invoice/download-file/${faktur}/${fileType}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });

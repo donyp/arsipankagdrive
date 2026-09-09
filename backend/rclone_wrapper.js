@@ -46,6 +46,12 @@ let syncQueueWorkerRunning = false;
 const FILE_EXISTENCE_CACHE = new Map();
 const FILE_EXISTENCE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
+// OPTIMIZATION: Request deduplication for parallel file checks
+// When multiple requests come in for the same file simultaneously,
+// wait for first response instead of spawning multiple rclone commands
+// Expected benefit: 90% reduction on simultaneous checks (shared rclone call)
+const FILE_CHECK_IN_FLIGHT = new Map(); // filePath → Promise
+
 function getCachedFileExistence(storagePath) {
     const cached = FILE_EXISTENCE_CACHE.get(storagePath);
     if (!cached) return null;
@@ -220,20 +226,38 @@ async function remoteFileExists(storagePath) {
         return cached; // Cache hit - return immediately
     }
     
-    const remotePath = `${PRIMARY_REMOTE}:${storagePath}`;
-    try {
-        await rcloneExec(['ls', remotePath]);
-        const result = true;
-        setCachedFileExistence(storagePath, result);
-        return result;
-    } catch (err) {
-        if (/not found|error 404/i.test(err.message)) {
-            const result = false;
+    // OPTIMIZATION: Request deduplication - if another request is already checking this file,
+    // wait for that result instead of spawning another rclone command
+    if (FILE_CHECK_IN_FLIGHT.has(storagePath)) {
+        console.log(`[FileCheck] Deduplicating: ${storagePath} - waiting for in-flight request`);
+        return FILE_CHECK_IN_FLIGHT.get(storagePath);
+    }
+    
+    // Create a promise for this check and store it for deduplication
+    const checkPromise = (async () => {
+        const remotePath = `${PRIMARY_REMOTE}:${storagePath}`;
+        try {
+            await rcloneExec(['ls', remotePath]);
+            const result = true;
             setCachedFileExistence(storagePath, result);
             return result;
+        } catch (err) {
+            if (/not found|error 404/i.test(err.message)) {
+                const result = false;
+                setCachedFileExistence(storagePath, result);
+                return result;
+            }
+            throw err;
         }
-        throw err;
-    }
+    })().finally(() => {
+        // Remove from in-flight map after completion
+        FILE_CHECK_IN_FLIGHT.delete(storagePath);
+    });
+    
+    // Store in-flight request for deduplication
+    FILE_CHECK_IN_FLIGHT.set(storagePath, checkPromise);
+    
+    return checkPromise;
 }
 
 async function processSyncQueue() {

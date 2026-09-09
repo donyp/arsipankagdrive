@@ -2177,30 +2177,39 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
                 console.log(`[Invoice Combine] Combining ${requiredCount} files for ${isPPN ? 'PPN' : 'NON PPN'} invoice`);
                 
-                // Download all required files
+                // Download all required files IN PARALLEL
                 const filesToCombine = [];
                 
                 try {
-                    // Order: BUKTI BAYAR first
+                    // Create all download promises first
+                    const downloadPromises = [];
+                    
                     if (invoice.bukti_bayar_path) {
-                        console.log(`[Invoice Combine] Downloading bukti bayar...`);
-                        const buffer = await RcloneStorage.downloadFile(invoice.bukti_bayar_path);
-                        filesToCombine.push({ name: 'bukti_bayar', buffer });
+                        downloadPromises.push(
+                            RcloneStorage.downloadFile(invoice.bukti_bayar_path)
+                                .then(buffer => ({ name: 'bukti_bayar', buffer }))
+                        );
                     }
                     
-                    // Then INVOICE
                     if (invoice.invoice_pdf_path) {
-                        console.log(`[Invoice Combine] Downloading invoice...`);
-                        const buffer = await RcloneStorage.downloadFile(invoice.invoice_pdf_path);
-                        filesToCombine.push({ name: 'invoice', buffer });
+                        downloadPromises.push(
+                            RcloneStorage.downloadFile(invoice.invoice_pdf_path)
+                                .then(buffer => ({ name: 'invoice', buffer }))
+                        );
                     }
                     
-                    // Then FAKTUR PAJAK (only for PPN)
                     if (isPPN && invoice.faktur_pajak_path) {
-                        console.log(`[Invoice Combine] Downloading faktur pajak...`);
-                        const buffer = await RcloneStorage.downloadFile(invoice.faktur_pajak_path);
-                        filesToCombine.push({ name: 'faktur_pajak', buffer });
+                        downloadPromises.push(
+                            RcloneStorage.downloadFile(invoice.faktur_pajak_path)
+                                .then(buffer => ({ name: 'faktur_pajak', buffer }))
+                        );
                     }
+                    
+                    console.log(`[Invoice Combine] Downloading ${downloadPromises.length} files in PARALLEL...`);
+                    
+                    // Wait for ALL downloads to complete in parallel
+                    const downloadedFiles = await Promise.all(downloadPromises);
+                    filesToCombine.push(...downloadedFiles);
                     
                 } catch (downloadErr) {
                     console.error(`[Invoice Combine] Download error:`, downloadErr.message);
