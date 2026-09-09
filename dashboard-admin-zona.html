@@ -1142,27 +1142,27 @@
                     const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
                     
                     // Run ALL 3 checks IN PARALLEL (not sequential)
+                    // IMPORTANT: ALWAYS check, regardless of DB paths!
                     const checkPromises = [];
                 
-                    if (inv.invoice_pdf_path) {
-                        checkPromises.push(
-                            fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
-                                .then(d => ({ type: 'invoice', exists: d.exists }))
-                        );
-                    }
+                    // ALWAYS check invoice file
+                    checkPromises.push(
+                        fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                            .then(d => ({ type: 'invoice', exists: d.exists }))
+                    );
                     
-                    if (inv.bukti_bayar_path) {
-                        checkPromises.push(
-                            fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
-                                .then(d => ({ type: 'bukti_bayar', exists: d.exists }))
-                        );
-                    }
+                    // ALWAYS check bukti bayar
+                    checkPromises.push(
+                        fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
+                            .then(d => ({ type: 'bukti_bayar', exists: d.exists }))
+                    );
                     
-                    if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
+                    // ALWAYS check faktur pajak (if PPN)
+                    if (inv.keterangan === 'PPN') {
                         checkPromises.push(
                             fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
                                 headers: { 'Authorization': `Bearer ${token}` }
