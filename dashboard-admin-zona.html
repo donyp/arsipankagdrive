@@ -1402,6 +1402,14 @@
             saveAdminZonaFilterState();
             console.log('[AdminZonaFilter] ✅ Filter state saved to localStorage:', invoiceFilterState);
             
+            // Ensure filters are populated
+            console.log('[AdminZonaFilter] Ensuring filters are populated...');
+            try {
+                await loadAllInvoices();
+            } catch (err) {
+                console.warn('[AdminZonaFilter] Warning reloading filter options:', err);
+            }
+            
             // Start filtered background scan (async, don't wait)
             invoiceBackgroundScanStarted = false; // Reset so scan runs
             startAdminZonaBackgroundScan();
