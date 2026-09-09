@@ -2861,6 +2861,115 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
 }
 
 // ============================================
+// DELETE /api/invoice/clear-file/:faktur/:fileType
+// Remove/clear a specific file path from an invoice
+// Used when file upload failed but path was saved
+// fileType: 'invoice_pdf' | 'bukti_bayar' | 'faktur_pajak'
+// ============================================
+function addClearFileEndpoint(app, supabase, createAuth) {
+    app.delete('/api/invoice/clear-file/:faktur/:fileType',
+        createAuth(['super_admin', 'moderator']),
+        async (req, res) => {
+            try {
+                const { faktur, fileType } = req.params;
+                
+                if (!faktur || !fileType) {
+                    return res.status(400).json({ error: 'Faktur and fileType are required' });
+                }
+                
+                const validTypes = ['invoice_pdf', 'bukti_bayar', 'faktur_pajak'];
+                if (!validTypes.includes(fileType)) {
+                    return res.status(400).json({ 
+                        error: `Invalid fileType. Must be one of: ${validTypes.join(', ')}` 
+                    });
+                }
+                
+                // Get current invoice
+                const { data: invoice, error: queryErr } = await supabase
+                    .from('invoice_file_list')
+                    .select('*')
+                    .eq('faktur', faktur)
+                    .single();
+                
+                if (queryErr || !invoice) {
+                    return res.status(404).json({ error: `Invoice not found: ${faktur}` });
+                }
+                
+                // Map fileType to column names
+                const pathColumn = fileType === 'invoice_pdf' ? 'invoice_pdf_path' :
+                                  fileType === 'bukti_bayar' ? 'bukti_bayar_path' :
+                                  'faktur_pajak_path';
+                
+                const uploadedAtColumn = fileType === 'invoice_pdf' ? 'invoice_uploaded_at' :
+                                        fileType === 'bukti_bayar' ? 'bukti_bayar_uploaded_at' :
+                                        'faktur_pajak_uploaded_at';
+                
+                const oldPath = invoice[pathColumn];
+                
+                if (!oldPath) {
+                    return res.status(400).json({ 
+                        error: `File path not found for ${fileType}` 
+                    });
+                }
+                
+                // Clear the path and timestamp
+                const updateData = {};
+                updateData[pathColumn] = null;
+                updateData[uploadedAtColumn] = null;
+                updateData['updated_at'] = new Date().toISOString();
+                
+                const { error: updateErr } = await supabase
+                    .from('invoice_file_list')
+                    .update(updateData)
+                    .eq('faktur', faktur);
+                
+                if (updateErr) {
+                    console.error(`[ClearFile] Update error:`, updateErr);
+                    return res.status(500).json({ error: 'Failed to clear file path' });
+                }
+                
+                // Recalculate files_uploaded_count
+                let uploadedCount = 0;
+                const updated = invoice;
+                updated[pathColumn] = null;
+                updated[uploadedAtColumn] = null;
+                
+                if (updated.invoice_pdf_path) uploadedCount++;
+                if (updated.bukti_bayar_path) uploadedCount++;
+                if (updated.faktur_pajak_path) uploadedCount++;
+                
+                const { error: countErr } = await supabase
+                    .from('invoice_file_list')
+                    .update({
+                        files_uploaded_count: uploadedCount,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('faktur', faktur);
+                
+                if (countErr) {
+                    console.warn(`[ClearFile] Failed to update count:`, countErr);
+                }
+                
+                console.log(`[ClearFile] ✅ Cleared ${fileType} for faktur ${faktur}. New count: ${uploadedCount}`);
+                
+                res.json({
+                    success: true,
+                    faktur: faktur,
+                    clearedFileType: fileType,
+                    removedPath: oldPath,
+                    newFilesUploadedCount: uploadedCount,
+                    filesRequiredCount: invoice.files_required_count
+                });
+                
+            } catch (error) {
+                console.error('[ClearFile] Error:', error);
+                res.status(500).json({ error: 'Server error', details: error.message });
+            }
+        }
+    );
+}
+
+// ============================================
 // POST /api/invoice/verify-files-in-gdrive/:faktur
 // Verify files actually exist in Google Drive (not just DB paths)
 // Corrects files_uploaded_count based on actual file existence
@@ -2983,4 +3092,4 @@ function addFileExistenceVerificationEndpoint(app, supabase, createAuth, RcloneS
     );
 }
 
-module.exports = { registerInvoiceEndpoints, addFileExistenceVerificationEndpoint };
+module.exports = { registerInvoiceEndpoints, addFileExistenceVerificationEndpoint, addClearFileEndpoint };
