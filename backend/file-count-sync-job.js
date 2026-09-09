@@ -189,17 +189,17 @@ async function runFileCountSync(supabase, rcloneStorage) {
 
 /**
  * Start the background sync job
- * Runs every 30 minutes
+ * Runs every 5 minutes (detects deleted files quickly)
  */
 function startFileCountSyncJob(supabase, rcloneStorage) {
-    console.log('[FileCountSync] Initializing background sync job (every 30 minutes)...');
+    console.log('[FileCountSync] Initializing background sync job (every 5 minutes)...');
 
     // Run immediately on startup
     console.log('[FileCountSync] Running initial sync...');
     runFileCountSync(supabase, rcloneStorage).catch(err => console.error('[FileCountSync] Initial run error:', err));
 
-    // Then run every 30 minutes
-    const SYNC_INTERVAL = 30 * 60 * 1000; // 30 minutes
+    // Then run every 5 minutes (was 30 minutes, decreased for faster sync detection)
+    const SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes
     const timer = setInterval(() => {
         console.log('[FileCountSync] Running periodic sync...');
         runFileCountSync(supabase, rcloneStorage).catch(err => console.error('[FileCountSync] Periodic run error:', err));

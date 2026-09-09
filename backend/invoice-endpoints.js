@@ -3095,4 +3095,55 @@ function addFileExistenceVerificationEndpoint(app, supabase, createAuth, RcloneS
     );
 }
 
-module.exports = { registerInvoiceEndpoints, addFileExistenceVerificationEndpoint, addClearFileEndpoint };
+// ============================================
+// POST /api/invoice/sync-all-file-counts
+// Manual trigger to sync all invoice file counts NOW
+// (normally runs every 5 minutes in background)
+// ============================================
+function addManualSyncEndpoint(app, supabase, createAuth, fileCountSyncJob) {
+    app.post('/api/invoice/sync-all-file-counts',
+        createAuth(['super_admin', 'moderator']),
+        async (req, res) => {
+            try {
+                console.log('[ManualSync] Manual sync triggered by user');
+                
+                // Get sync module - this will be passed from server.js
+                if (!fileCountSyncJob || !fileCountSyncJob.runSync) {
+                    return res.status(500).json({ 
+                        error: 'Sync module not available',
+                        message: 'File count sync service is not initialized'
+                    });
+                }
+                
+                // Run sync immediately (non-blocking)
+                setImmediate(() => {
+                    fileCountSyncJob.runSync()
+                        .then(result => {
+                            console.log('[ManualSync] ✅ Sync completed:', result);
+                        })
+                        .catch(err => {
+                            console.error('[ManualSync] ✗ Sync error:', err.message);
+                        });
+                });
+                
+                // Return immediately
+                res.json({
+                    success: true,
+                    message: 'File count sync started (running in background)',
+                    status: 'syncing'
+                });
+                
+            } catch (error) {
+                console.error('[ManualSync] Error:', error);
+                res.status(500).json({ error: 'Server error', details: error.message });
+            }
+        }
+    );
+}
+
+module.exports = { 
+    registerInvoiceEndpoints, 
+    addFileExistenceVerificationEndpoint, 
+    addClearFileEndpoint,
+    addManualSyncEndpoint
+};

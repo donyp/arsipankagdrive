@@ -652,7 +652,7 @@ console.log('[INIT] Registering Phase 2 feature endpoints...');
 const sessionManagement = require('./session-management');
 const faqEndpoints = require('./faq-endpoints');
 const notificationEndpoints = require('./notification-endpoints');
-const { registerInvoiceEndpoints, addFileExistenceVerificationEndpoint, addClearFileEndpoint } = require('./invoice-endpoints');
+const { registerInvoiceEndpoints, addFileExistenceVerificationEndpoint, addClearFileEndpoint, addManualSyncEndpoint } = require('./invoice-endpoints');
 const renameFakturEndpoints = require('./rename-faktur-endpoints');
 app.use('/api', sessionManagement);
 app.use('/api', faqEndpoints);
@@ -5750,8 +5750,13 @@ const HOST = '0.0.0.0';
         });
 
         // Start background file count sync job
-        console.log('[FileCountSync] Starting file count verification job (every 30 min)...');
-        startFileCountSyncJob(supabase, RcloneStorage);
+        console.log('[FileCountSync] Starting file count verification job (every 5 min)...');
+        const fileCountSyncJob = startFileCountSyncJob(supabase, RcloneStorage);
+        
+        // Register manual sync endpoint
+        addManualSyncEndpoint(app, supabase, createInvoiceAuth, {
+            runSync: () => fileCountSyncJob.stats ? require('./file-count-sync-job').runFileCountSync(supabase, RcloneStorage) : Promise.resolve()
+        });
 
     // Task 3.1: Error handler for port binding failures
     server.on('error', (err) => {
