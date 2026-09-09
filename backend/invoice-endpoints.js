@@ -3085,22 +3085,19 @@ function addManualSyncEndpoint(app, supabase, createAuth, fileCountSyncJob) {
                     });
                 }
                 
-                // Run sync immediately (non-blocking)
-                setImmediate(() => {
-                    fileCountSyncJob.runSync()
-                        .then(result => {
-                            console.log('[ManualSync] ✅ Sync completed:', result);
-                        })
-                        .catch(err => {
-                            console.error('[ManualSync] ✗ Sync error:', err.message);
-                        });
-                });
+                // Run sync and WAIT for completion (blocking)
+                // This ensures client has accurate counts before rendering
+                console.log('[ManualSync] Waiting for sync to complete...');
+                const result = await fileCountSyncJob.runSync();
                 
-                // Return immediately
+                console.log('[ManualSync] ✅ Sync completed:', result);
+                
+                // Return with actual sync results
                 res.json({
                     success: true,
-                    message: 'File count sync started (running in background)',
-                    status: 'syncing'
+                    message: 'File count sync completed',
+                    status: 'complete',
+                    ...result
                 });
                 
             } catch (error) {
