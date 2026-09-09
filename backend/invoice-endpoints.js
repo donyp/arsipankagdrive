@@ -1163,8 +1163,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // Check if file exists on remote storage
     // fileType: 'invoice', 'bukti_bayar', or 'faktur_pajak'
     // 
-    // OPTIMIZATION: Use database count first (fast-path)
-    // Only do actual file check if DB count mismatch detected
+    // STRATEGY: Check actual files in Google Drive by searching for files matching the faktur
+    // This is independent of database paths (which may be NULL or outdated)
     // ============================================
     app.get('/api/invoice/check-file/:faktur/:fileType',
         createAuth(['super_admin', 'moderator', 'user', 'admin_zona']),
@@ -1185,7 +1185,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     });
                 }
                 
-                // Get invoice data - including files_uploaded_count for fast-path
+                // Get invoice data from database
                 const { data: invoice, error: queryError } = await supabase
                     .from('invoice_file_list')
                     .select('invoice_pdf_path, bukti_bayar_path, faktur_pajak_path, files_uploaded_count, files_required_count, keterangan')
@@ -1199,73 +1199,102 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 console.log(`[Check File] Request: faktur=${faktur}, fileType=${fileType}`);
                 console.log(`[Check File] Invoice keterangan: ${invoice.keterangan}, Files uploaded count: ${invoice.files_uploaded_count}/${invoice.files_required_count}`);
                 
-                // Get file path based on type
-                let filePath = null;
+                // Get file path from database (if it exists)
+                let dbFilePath = null;
                 
                 switch (fileType) {
                     case 'invoice':
-                        filePath = invoice.invoice_pdf_path;
+                        dbFilePath = invoice.invoice_pdf_path;
                         break;
                     case 'bukti_bayar':
-                        filePath = invoice.bukti_bayar_path;
+                        dbFilePath = invoice.bukti_bayar_path;
                         break;
                     case 'faktur_pajak':
-                        filePath = invoice.faktur_pajak_path;
+                        dbFilePath = invoice.faktur_pajak_path;
                         break;
                 }
                 
-                console.log(`[Check File] File path from DB (${fileType}): ${filePath || 'NULL'}`);
+                console.log(`[Check File] DB path (${fileType}): ${dbFilePath || 'NULL'}`);
                 
-                // OPTIMIZATION: Fast-path using database count
-                // If file path exists in DB and count matches expected, assume file exists
                 let fileExists = false;
-                let usedFastPath = false;
-                let usedFallback = false;
+                let filePath = dbFilePath;
                 
-                if (filePath) {
-                    // After sync job fixes, ALWAYS check GDrive for the ground truth
-                    // (Don't rely on fast-path - it can be stale after deletions)
-                    // The sync job should keep counts accurate, so this is safe
-                    
+                // STRATEGY 1: If DB has a path, check it first (fast-path)
+                if (dbFilePath) {
                     try {
-                        fileExists = await RcloneStorage.checkFileExists(filePath);
-                        usedFallback = true;
-                        console.log(`[Check File] GDrive check for ${filePath}: ${fileExists ? 'EXISTS' : 'MISSING'}`);
-                        
-                        // If file doesn't exist but DB shows it, auto-correct
-                        if (!fileExists && invoice.files_uploaded_count > 0) {
-                            console.warn(`[Check File] ⚠️  File MISSING but DB shows ${invoice.files_uploaded_count}, auto-correcting...`);
-                            updateFilesUploadedCount(supabase, faktur).catch(err => 
-                                console.error(`[Check File] Auto-correct failed: ${err.message}`)
-                            );
-                        }
-                    } catch (checkErr) {
-                        console.warn(`[Check File] Error checking file:`, checkErr.message);
+                        fileExists = await RcloneStorage.checkFileExists(dbFilePath);
+                        console.log(`[Check File] GDrive check via DB path (${fileType}): ${fileExists ? 'EXISTS' : 'MISSING'}`);
+                    } catch (err) {
+                        console.warn(`[Check File] Error checking DB path: ${err.message}`);
                         fileExists = false;
                     }
-                } else {
-                    // No file path in DB = file not uploaded
-                    fileExists = false;
-                    console.log(`[Check File] No file path in DB: ${faktur}/${fileType} = not uploaded`);
                 }
                 
-                // Log metrics for monitoring
-                const logEntry = {
-                    timestamp: new Date().toISOString(),
-                    faktur: faktur,
-                    fileType: fileType,
-                    exists: fileExists,
-                    usedFastPath: usedFastPath,
-                    usedFallback: usedFallback,
-                    dbCount: invoice.files_uploaded_count,
-                    dbRequired: invoice.files_required_count
-                };
-
-                // Log to console with appropriate level
-                if (usedFallback && fileExists !== (invoice.files_uploaded_count > 0)) {
-                    console.warn(`[Check File] DISCREPANCY DETECTED: ${JSON.stringify(logEntry)}`);
-                } else if (usedFastPath) {
-                    console.log(`[Check File] Fast-path hit: ${faktur}/${fileType}`);
+                // STRATEGY 2: If not found via DB path (or DB path is NULL), search by faktur naming convention
+                // This allows detection of files uploaded directly to Google Drive
+                if (!fileExists) {
+                    console.log(`[Check File] Attempting search-by-faktur for ${faktur}/${fileType}...`);
+                    
+                    try {
+                        // Search patterns for each file type
+                        const searchPatterns = [];
+                        switch (fileType) {
+                            case 'invoice':
+                                searchPatterns.push(`${faktur}*.pdf`, `*${faktur}*invoice*.pdf`, `invoice*${faktur}*.pdf`);
+                                break;
+                            case 'bukti_bayar':
+                                searchPatterns.push(`${faktur}*bukti*.pdf`, `*${faktur}*bukti*.pdf`, `bukti*${faktur}*.pdf`);
+                                break;
+                            case 'faktur_pajak':
+                                searchPatterns.push(`${faktur}*pajak*.pdf`, `*${faktur}*pajak*.pdf`, `pajak*${faktur}*.pdf`);
+                                break;
+                        }
+                        
+                        // Try searching in Google Drive for matching files
+                        // Use rclone lsjson to list files and search
+                        const { execSync } = require('child_process');
+                        try {
+                            const listCmd = `rclone lsjson "gdrive:/ARSIP ANKA" --config "/app/rclone.conf" --recursive 2>/dev/null | grep -i "${faktur}"`;
+                            const result = execSync(listCmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 }).trim();
+                            
+                            if (result) {
+                                // Files found matching faktur name
+                                const files = result.split('\n').filter(line => line.length > 0);
+                                
+                                // Check for matching file type
+                                for (const fileEntry of files) {
+                                    try {
+                                        const parsed = JSON.parse(fileEntry);
+                                        const fileName = parsed.Name || '';
+                                        const lowerName = fileName.toLowerCase();
+                                        
+                                        // Match by file type pattern
+                                        let isMatch = false;
+                                        if (fileType === 'invoice' && (lowerName.includes('invoice') || !lowerName.includes('bukti') && !lowerName.includes('pajak'))) {
+                                            isMatch = true;
+                                        } else if (fileType === 'bukti_bayar' && lowerName.includes('bukti')) {
+                                            isMatch = true;
+                                        } else if (fileType === 'faktur_pajak' && lowerName.includes('pajak')) {
+                                            isMatch = true;
+                                        }
+                                        
+                                        if (isMatch) {
+                                            fileExists = true;
+                                            filePath = `ARSIP ANKA/${fileName}`;
+                                            console.log(`[Check File] Found file via search: ${fileName}`);
+                                            break;
+                                        }
+                                    } catch (parseErr) {
+                                        // Skip parse errors
+                                    }
+                                }
+                            }
+                        } catch (searchErr) {
+                            console.log(`[Check File] Search result: no files found or search error`);
+                        }
+                    } catch (err) {
+                        console.warn(`[Check File] Search-by-faktur failed: ${err.message}`);
+                    }
                 }
 
                 res.json({
@@ -1273,9 +1302,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     faktur: faktur,
                     fileType: fileType,
                     filePath: filePath,
-                    // Performance info for monitoring
-                    usedFastPath: usedFastPath,
-                    usedFallback: usedFallback,
+                    method: dbFilePath && fileExists ? 'db_path' : fileExists ? 'search_by_faktur' : 'none',
                     dbCount: invoice.files_uploaded_count,
                     dbRequired: invoice.files_required_count
                 });
