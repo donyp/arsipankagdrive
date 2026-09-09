@@ -30,6 +30,7 @@ async function verifySingleInvoice(supabase, rcloneStorage, invoice) {
         // ALWAYS check actual file existence, even if DB count matches path count
         // (files might have been deleted from Google Drive directly)
         console.log(`[FileCountSync] Checking actual file existence for ${invoice.faktur} (DB count: ${dbCount})...`);
+        console.log(`[FileCountSync] Invoice details - keterangan: ${invoice.keterangan}, toko: ${invoice.toko}, tanggal: ${invoice.tanggal}`);
 
         let actualFilesExist = 0;
         
@@ -41,44 +42,68 @@ async function verifySingleInvoice(supabase, rcloneStorage, invoice) {
         
         // Always check invoice PDF (all invoices need this)
         if (invoice.invoice_pdf_path) {
+            console.log(`[FileCountSync] Checking invoice_pdf_path: ${invoice.invoice_pdf_path}`);
             checkPromises.push(
                 Promise.race([
-                    rcloneStorage.checkFileExists(invoice.invoice_pdf_path),
+                    rcloneStorage.checkFileExistsNoCache(invoice.invoice_pdf_path),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
-                ]).then(exists => ({ type: 'invoice', exists }))
-                  .catch(() => ({ type: 'invoice', exists: false }))
+                ]).then(exists => {
+                    console.log(`[FileCountSync] invoice_pdf check result: ${exists ? 'EXISTS' : 'MISSING'}`);
+                    return { type: 'invoice', exists };
+                })
+                  .catch((err) => {
+                    console.log(`[FileCountSync] invoice_pdf check error: ${err.message}`);
+                    return { type: 'invoice', exists: false };
+                  })
             );
         } else {
             // Even if path is NULL, we count as "doesn't exist"
+            console.log(`[FileCountSync] invoice_pdf_path is NULL - counting as missing`);
             checkPromises.push(Promise.resolve({ type: 'invoice', exists: false }));
         }
         
         // Always check bukti bayar (all invoices need this)
         if (invoice.bukti_bayar_path) {
+            console.log(`[FileCountSync] Checking bukti_bayar_path: ${invoice.bukti_bayar_path}`);
             checkPromises.push(
                 Promise.race([
-                    rcloneStorage.checkFileExists(invoice.bukti_bayar_path),
+                    rcloneStorage.checkFileExistsNoCache(invoice.bukti_bayar_path),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
-                ]).then(exists => ({ type: 'bukti_bayar', exists }))
-                  .catch(() => ({ type: 'bukti_bayar', exists: false }))
+                ]).then(exists => {
+                    console.log(`[FileCountSync] bukti_bayar check result: ${exists ? 'EXISTS' : 'MISSING'}`);
+                    return { type: 'bukti_bayar', exists };
+                })
+                  .catch((err) => {
+                    console.log(`[FileCountSync] bukti_bayar check error: ${err.message}`);
+                    return { type: 'bukti_bayar', exists: false };
+                  })
             );
         } else {
             // Even if path is NULL, we count as "doesn't exist"
+            console.log(`[FileCountSync] bukti_bayar_path is NULL - counting as missing`);
             checkPromises.push(Promise.resolve({ type: 'bukti_bayar', exists: false }));
         }
         
         // Check faktur pajak only if PPN or path exists
         if (invoice.keterangan === 'PPN' || invoice.faktur_pajak_path) {
             if (invoice.faktur_pajak_path) {
+                console.log(`[FileCountSync] Checking faktur_pajak_path (PPN=${invoice.keterangan === 'PPN'}): ${invoice.faktur_pajak_path}`);
                 checkPromises.push(
                     Promise.race([
-                        rcloneStorage.checkFileExists(invoice.faktur_pajak_path),
+                        rcloneStorage.checkFileExistsNoCache(invoice.faktur_pajak_path),
                         new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
-                    ]).then(exists => ({ type: 'faktur_pajak', exists }))
-                      .catch(() => ({ type: 'faktur_pajak', exists: false }))
+                    ]).then(exists => {
+                        console.log(`[FileCountSync] faktur_pajak check result: ${exists ? 'EXISTS' : 'MISSING'}`);
+                        return { type: 'faktur_pajak', exists };
+                    })
+                      .catch((err) => {
+                        console.log(`[FileCountSync] faktur_pajak check error: ${err.message}`);
+                        return { type: 'faktur_pajak', exists: false };
+                      })
                 );
             } else {
                 // PPN invoice but no path - count as missing
+                console.log(`[FileCountSync] faktur_pajak_path is NULL (PPN=${invoice.keterangan === 'PPN'}) - counting as missing`);
                 checkPromises.push(Promise.resolve({ type: 'faktur_pajak', exists: false }));
             }
         }
@@ -86,12 +111,15 @@ async function verifySingleInvoice(supabase, rcloneStorage, invoice) {
         // Wait for all checks
         const results = await Promise.all(checkPromises);
         results.forEach(r => {
+            console.log(`[FileCountSync] Result summary: ${r.type} = ${r.exists ? 'EXISTS' : 'MISSING'}`);
             if (r.exists) actualFilesExist++;
         });
+        
+        console.log(`[FileCountSync] Final count for ${invoice.faktur}: DB=${dbCount}, Actual=${actualFilesExist}`);
 
         // If actual file count differs from DB count, correct DB
         if (actualFilesExist !== dbCount) {
-            console.warn(`[FileCountSync] Correcting ${invoice.faktur}: ${dbCount} → ${actualFilesExist}`);
+            console.warn(`[FileCountSync] ⚠️  MISMATCH DETECTED for ${invoice.faktur}: ${dbCount} → ${actualFilesExist}`);
             
             // IMPORTANT: Invalidate cache AND clear path for missing files
             // This ensures:

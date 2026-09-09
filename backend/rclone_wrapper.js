@@ -1489,6 +1489,38 @@ const RcloneStorage = {
         // Call the optimized function that has all the caching/dedup logic
         return remoteFileExists(storagePath);
     },
+    
+    /**
+     * Check file exists WITHOUT using cache - for critical sync operations
+     * This ensures we get the current true state from Google Drive
+     */
+    async checkFileExistsNoCache(storagePath) {
+        console.log(`[checkFileExistsNoCache] Bypassing cache for: ${storagePath}`);
+        
+        try {
+            const remotePath = `${PRIMARY_REMOTE}:${storagePath}`;
+            
+            try {
+                // Force a fresh check from Google Drive
+                await rcloneExec(['ls', remotePath]);
+                console.log(`[checkFileExistsNoCache] ✅ File EXISTS (fresh check): ${storagePath}`);
+                // Update cache with fresh result
+                setCachedFileExistence(storagePath, true);
+                return true;
+            } catch (err) {
+                if (/not found|error 404/i.test(err.message)) {
+                    console.log(`[checkFileExistsNoCache] ❌ File MISSING (fresh check): ${storagePath}`);
+                    // Update cache with fresh result
+                    setCachedFileExistence(storagePath, false);
+                    return false;
+                }
+                throw err;
+            }
+        } catch (err) {
+            console.error(`[checkFileExistsNoCache] Error checking file:`, err.message);
+            return false;
+        }
+    },
 
     /**
      * Return pending automatic uploads without exposing file contents.

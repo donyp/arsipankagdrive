@@ -60,7 +60,10 @@ try {
  */
 /**
  * Recalculate and update files_uploaded_count based on actual file paths
- * Safe operation - counts only non-null paths
+ * IMPORTANT: Just counts non-null paths (does NOT verify file existence)
+ * File existence verification is done by the sync job separately
+ * 
+ * This is called immediately after upload succeeds, so paths should be accurate
  */
 async function updateFilesUploadedCount(supabase, faktur) {
     try {
@@ -77,10 +80,31 @@ async function updateFilesUploadedCount(supabase, faktur) {
         }
         
         // Count non-null file paths
+        // NOTE: This just counts paths, it does NOT verify actual GDrive existence
+        // That verification happens in the sync job
         let uploadedCount = 0;
-        if (invoice.invoice_pdf_path) uploadedCount++;
-        if (invoice.bukti_bayar_path) uploadedCount++;
-        if (invoice.faktur_pajak_path) uploadedCount++;
+        console.log(`[UpdateCount] Counting files for ${faktur}:`);
+        
+        if (invoice.invoice_pdf_path) {
+            uploadedCount++;
+            console.log(`[UpdateCount]   - invoice_pdf_path: SET (${invoice.invoice_pdf_path})`);
+        } else {
+            console.log(`[UpdateCount]   - invoice_pdf_path: NULL`);
+        }
+        
+        if (invoice.bukti_bayar_path) {
+            uploadedCount++;
+            console.log(`[UpdateCount]   - bukti_bayar_path: SET (${invoice.bukti_bayar_path})`);
+        } else {
+            console.log(`[UpdateCount]   - bukti_bayar_path: NULL`);
+        }
+        
+        if (invoice.faktur_pajak_path) {
+            uploadedCount++;
+            console.log(`[UpdateCount]   - faktur_pajak_path: SET (${invoice.faktur_pajak_path})`);
+        } else {
+            console.log(`[UpdateCount]   - faktur_pajak_path: NULL`);
+        }
         
         // Calculate required count
         const requiredCount = (invoice.keterangan === 'PPN') ? 3 : 2;
@@ -102,7 +126,7 @@ async function updateFilesUploadedCount(supabase, faktur) {
         }
         
         const newCount = updated?.[0]?.files_uploaded_count || 0;
-        console.log(`[UpdateCount] Updated ${faktur}: ${newCount}/${requiredCount} files`);
+        console.log(`[UpdateCount] ✅ Updated ${faktur}: ${newCount}/${requiredCount} files`);
         
         return newCount;
     } catch (err) {
@@ -1172,6 +1196,9 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     return res.status(404).json({ error: `Invoice not found: ${faktur}` });
                 }
                 
+                console.log(`[Check File] Request: faktur=${faktur}, fileType=${fileType}`);
+                console.log(`[Check File] Invoice keterangan: ${invoice.keterangan}, Files uploaded count: ${invoice.files_uploaded_count}/${invoice.files_required_count}`);
+                
                 // Get file path based on type
                 let filePath = null;
                 
@@ -1187,6 +1214,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         break;
                 }
                 
+                console.log(`[Check File] File path from DB (${fileType}): ${filePath || 'NULL'}`);
+                
                 // OPTIMIZATION: Fast-path using database count
                 // If file path exists in DB and count matches expected, assume file exists
                 let fileExists = false;
@@ -1201,7 +1230,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     try {
                         fileExists = await RcloneStorage.checkFileExists(filePath);
                         usedFallback = true;
-                        console.log(`[Check File] GDrive check: ${faktur}/${fileType} = ${fileExists ? 'exists' : 'missing'}`);
+                        console.log(`[Check File] GDrive check for ${filePath}: ${fileExists ? 'EXISTS' : 'MISSING'}`);
                         
                         // If file doesn't exist but DB shows it, auto-correct
                         if (!fileExists && invoice.files_uploaded_count > 0) {
@@ -1531,10 +1560,12 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 // Path structure: /ARSIPINVOICE/LOCATION/TAHUN/BULAN/TANGGAL/CATEGORY/
                 // LOCATION: BEKASI or PEMALANG (extracted from TOKO column)
                 console.log(`[Invoice PDF] Path components - Location: ${location}, Year: ${year}, Month: ${monthName}, Day: ${day}, Category: ${category}`);
+                console.log(`[Invoice PDF] Invoice keterangan: "${invoice.keterangan}" → Category: "${category}"`);
                 
                 // Build expected new path with location
                 const expectedNewPath = `ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${category}/${filename}`;
                 console.log(`[Invoice PDF] Expected new path: ${expectedNewPath}`);
+                console.log(`[Invoice PDF] Current DB path: ${invoice.invoice_pdf_path || 'NULL'}`);
                 
                 // Check if this is a re-upload of same file (path already matches new structure)
                 const isReuploadWithNewPath = invoice.invoice_pdf_path === expectedNewPath;
@@ -1545,8 +1576,10 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     // Only reject if file ACTUALLY exists in GDrive (true duplicate)
                     // Don't clear path here - let the upload process handle it
                     if (invoice.invoice_pdf_path) {
+                        console.log(`[Invoice PDF] Checking if existing path still exists in GDrive: ${invoice.invoice_pdf_path}`);
                         try {
                             const existsInGDrive = await RcloneStorage.checkFileExists(invoice.invoice_pdf_path);
+                            console.log(`[Invoice PDF] Duplicate check result: ${existsInGDrive ? 'EXISTS - REJECT' : 'MISSING - ALLOW'}`);
                             if (existsInGDrive) {
                                 // File truly exists in Google Drive - this is a real duplicate, reject
                                 console.warn(`[Invoice PDF] File truly exists in Google Drive: ${invoice.invoice_pdf_path}`);
@@ -1610,6 +1643,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                             console.error('[Invoice PDF BG] Update error:', updateError);
                         } else {
                             console.log(`[Invoice PDF BG] ✅ Database updated for faktur: ${faktur}`);
+                            console.log(`[Invoice PDF BG] Stored path: ${remotePath || 'NULL'}`);
+                            console.log(`[Invoice PDF BG] Category in path: ${remotePath ? remotePath.includes('/PPN/') ? 'PPN' : 'NON' : 'N/A'}`);
                             const uploadedCount = await updateFilesUploadedCount(supabase, faktur);
                             console.log(`[Invoice PDF BG] Files uploaded count: ${uploadedCount}`);
                         }
