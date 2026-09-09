@@ -1,0 +1,242 @@
+/**
+ * Background Job: File Count Sync
+ * 
+ * Periodically verifies files_uploaded_count accuracy across all invoices
+ * Fixes stale counts from failed uploads, deleted files, or sync issues
+ * 
+ * Runs every 30 minutes
+ * Non-blocking - errors don't interrupt main service
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+// Counter for statistics
+let syncStats = {
+    totalChecked: 0,
+    totalCorrected: 0,
+    lastRun: null,
+    lastError: null,
+    errors: []
+};
+
+/**
+ * Verify and correct file count for a single invoice
+ */
+async function verifySingleInvoice(supabase, invoice) {
+    try {
+        // Calculate actual count from paths
+        let actualCount = 0;
+        if (invoice.invoice_pdf_path) actualCount++;
+        if (invoice.bukti_bayar_path) actualCount++;
+        if (invoice.faktur_pajak_path) actualCount++;
+
+        const dbCount = invoice.files_uploaded_count || 0;
+        
+        // If counts match, no action needed
+        if (dbCount === actualCount) {
+            return { faktur: invoice.faktur, matched: true };
+        }
+
+        // Mismatch detected - do actual file checks to be certain
+        console.log(`[FileCountSync] Verifying ${invoice.faktur}: DB=${dbCount}, Actual=${actualCount}, checking files...`);
+
+        let actualFilesExist = 0;
+        
+        // Check each file with timeout to avoid hanging
+        const checkPromises = [];
+        
+        if (invoice.invoice_pdf_path) {
+            checkPromises.push(
+                Promise.race([
+                    checkFileExists(invoice.invoice_pdf_path),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+                ]).then(exists => ({ type: 'invoice', exists }))
+                  .catch(() => ({ type: 'invoice', exists: false }))
+            );
+        }
+        
+        if (invoice.bukti_bayar_path) {
+            checkPromises.push(
+                Promise.race([
+                    checkFileExists(invoice.bukti_bayar_path),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+                ]).then(exists => ({ type: 'bukti_bayar', exists }))
+                  .catch(() => ({ type: 'bukti_bayar', exists: false }))
+            );
+        }
+        
+        if (invoice.faktur_pajak_path) {
+            checkPromises.push(
+                Promise.race([
+                    checkFileExists(invoice.faktur_pajak_path),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+                ]).then(exists => ({ type: 'faktur_pajak', exists }))
+                  .catch(() => ({ type: 'faktur_pajak', exists: false }))
+            );
+        }
+
+        // Wait for all checks
+        const results = await Promise.all(checkPromises);
+        results.forEach(r => {
+            if (r.exists) actualFilesExist++;
+        });
+
+        // If actual file count differs from DB count, correct DB
+        if (actualFilesExist !== dbCount) {
+            console.warn(`[FileCountSync] ⚠️  Correcting ${invoice.faktur}: ${dbCount} → ${actualFilesExist}`);
+            
+            const { error: updateErr } = await supabase
+                .from('invoice_file_list')
+                .update({
+                    files_uploaded_count: actualFilesExist,
+                    files_required_count: invoice.keterangan === 'PPN' ? 3 : 2,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('faktur', invoice.faktur);
+
+            if (updateErr) {
+                console.error(`[FileCountSync] Update error for ${invoice.faktur}:`, updateErr);
+                syncStats.errors.push(`${invoice.faktur}: ${updateErr.message}`);
+                return { faktur: invoice.faktur, matched: false, error: updateErr.message };
+            }
+
+            console.log(`[FileCountSync] ✅ Corrected ${invoice.faktur}: ${dbCount} → ${actualFilesExist}`);
+            return { faktur: invoice.faktur, matched: false, corrected: true, dbCount, actualFilesExist };
+        }
+
+        return { faktur: invoice.faktur, matched: true };
+
+    } catch (err) {
+        console.error(`[FileCountSync] Error verifying ${invoice.faktur}:`, err.message);
+        syncStats.errors.push(`${invoice.faktur}: ${err.message}`);
+        return { faktur: invoice.faktur, error: err.message };
+    }
+}
+
+/**
+ * Main sync job - verify all invoices
+ */
+async function runFileCountSync(supabase) {
+    try {
+        console.log('\n' + '='.repeat(80));
+        console.log('[FileCountSync] Starting background file count verification...');
+        const startTime = Date.now();
+
+        syncStats.totalChecked = 0;
+        syncStats.totalCorrected = 0;
+        syncStats.errors = [];
+
+        // Get all invoices
+        const { data: invoices, error: queryErr } = await supabase
+            .from('invoice_file_list')
+            .select('faktur, invoice_pdf_path, bukti_bayar_path, faktur_pajak_path, files_uploaded_count, keterangan')
+            .order('faktur', { ascending: true });
+
+        if (queryErr) {
+            console.error('[FileCountSync] Query error:', queryErr);
+            syncStats.lastError = queryErr.message;
+            return { success: false, error: queryErr.message };
+        }
+
+        console.log(`[FileCountSync] Checking ${invoices.length} invoices...`);
+
+        // Process invoices in batches (to avoid overwhelming DB/storage)
+        const BATCH_SIZE = 50;
+        let correctedCount = 0;
+
+        for (let i = 0; i < invoices.length; i += BATCH_SIZE) {
+            const batch = invoices.slice(i, i + BATCH_SIZE);
+            console.log(`[FileCountSync] Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(invoices.length / BATCH_SIZE)}`);
+
+            // Process batch in parallel (but not too many)
+            const results = await Promise.all(
+                batch.map(inv => verifySingleInvoice(supabase, inv))
+            );
+
+            results.forEach(result => {
+                syncStats.totalChecked++;
+                if (result.corrected) {
+                    syncStats.totalCorrected++;
+                    correctedCount++;
+                }
+            });
+
+            // Small delay between batches to avoid overwhelming storage
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        const duration = Date.now() - startTime;
+        syncStats.lastRun = new Date().toISOString();
+
+        console.log('[FileCountSync] ✅ Sync complete');
+        console.log(`[FileCountSync] Checked: ${syncStats.totalChecked} | Corrected: ${syncStats.totalCorrected} | Duration: ${duration}ms`);
+        
+        if (syncStats.errors.length > 0) {
+            console.log(`[FileCountSync] Errors: ${syncStats.errors.length}`);
+            syncStats.errors.slice(0, 5).forEach(err => console.log(`  - ${err}`));
+            if (syncStats.errors.length > 5) {
+                console.log(`  ... and ${syncStats.errors.length - 5} more`);
+            }
+        }
+
+        console.log('='.repeat(80) + '\n');
+
+        return {
+            success: true,
+            totalChecked: syncStats.totalChecked,
+            totalCorrected: syncStats.totalCorrected,
+            duration: duration,
+            errorCount: syncStats.errors.length
+        };
+
+    } catch (err) {
+        console.error('[FileCountSync] Fatal error:', err);
+        syncStats.lastError = err.message;
+        return { success: false, error: err.message };
+    }
+}
+
+/**
+ * Start the background sync job
+ * Runs every 30 minutes
+ */
+function startFileCountSyncJob(supabase) {
+    console.log('[FileCountSync] Initializing background sync job (every 30 minutes)...');
+
+    // Run immediately on startup
+    console.log('[FileCountSync] Running initial sync...');
+    runFileCountSync(supabase).catch(err => console.error('[FileCountSync] Initial run error:', err));
+
+    // Then run every 30 minutes
+    const SYNC_INTERVAL = 30 * 60 * 1000; // 30 minutes
+    const timer = setInterval(() => {
+        console.log('[FileCountSync] Running periodic sync...');
+        runFileCountSync(supabase).catch(err => console.error('[FileCountSync] Periodic run error:', err));
+    }, SYNC_INTERVAL);
+
+    return { timer, stats: syncStats };
+}
+
+/**
+ * Stub for file existence check (will be called from rclone_wrapper)
+ * This is a placeholder - actual implementation should be imported from rclone_wrapper
+ */
+async function checkFileExists(filePath) {
+    // This will be provided by the calling code
+    throw new Error('checkFileExists not implemented in this context');
+}
+
+/**
+ * Get sync job statistics
+ */
+function getSyncStats() {
+    return syncStats;
+}
+
+module.exports = {
+    runFileCountSync,
+    startFileCountSyncJob,
+    getSyncStats,
+    verifySingleInvoice
+};

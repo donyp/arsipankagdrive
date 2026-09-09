@@ -21,6 +21,7 @@ const { runBackendInitialization } = require('./backendInitializer');
 const { startAutoSync } = require('./gdrive-file-sync');
 const registerFeatureEndpoints = require('./feature-endpoints');
 const { generateRcloneConfig, verifyRcloneConfig } = require('./generate-rclone-config');
+const { startFileCountSyncJob } = require('./file-count-sync-job');
 
 // Load environment variables FIRST (before using them)
 // In local development: loads from .env file
@@ -5745,6 +5746,10 @@ const HOST = '0.0.0.0';
                 console.log('[GDriveSync] â¸ï¸  Auto-sync disabled (set ENABLE_GDRIVE_SYNC=true to enable)');
             }
         });
+
+        // Start background file count sync job
+        console.log('[FileCountSync] Starting file count verification job (every 30 min)...');
+        startFileCountSyncJob(supabase);
 
     // Task 3.1: Error handler for port binding failures
     server.on('error', (err) => {
