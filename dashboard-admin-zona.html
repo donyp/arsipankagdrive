@@ -1116,130 +1116,50 @@
                 return;
             }
 
-            // Show loading overlay while checking files
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d; font-size: 14px;">Memeriksa ketersediaan file...</span></div></td></tr>';
-
-            const token = API.getToken() || localStorage.getItem('jwt_token');
-            
-            // PAGINATION: Process in batches of 50 to avoid timeout on large datasets
-            const PAGE_SIZE = 50;
-            const allInvoicesWithStatus = [];
-            
-            for (let batch = 0; batch < invoices.length; batch += PAGE_SIZE) {
-                const batchInvoices = invoices.slice(batch, batch + PAGE_SIZE);
-                const batchProgress = Math.floor(batch / PAGE_SIZE) + 1;
-                const totalBatches = Math.ceil(invoices.length / PAGE_SIZE);
+            // Use files_uploaded_count directly from database (no need to check files)
+            const invoicesWithFileStatus = invoices.map(inv => {
+                const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
+                const actualCount = inv.files_uploaded_count || 0;
                 
-                // Update loading message
-                if (batch > 0) {
-                    const msg = 'Memeriksa ketersediaan file... (Batch ' + batchProgress + '/' + totalBatches + ')';
-                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><span style="color: #7f8c8d; font-size: 14px;">' + msg + '</span></div></td></tr>';
-                }
-            
-                // Check ALL files in batch FIRST before rendering - PARALLEL BATCH (SAME AS MODERATOR)
-                const batchWithFileStatus = await Promise.all(batchInvoices.map(async (inv) => {
-                    let actualUploadedCount = 0;
-                    const requiredCount = inv.keterangan === 'PPN' ? 3 : 2;
-                    
-                    console.log(`[RenderInvoices] Checking ${inv.faktur}:`, {
-                        invoice_pdf_path: inv.invoice_pdf_path,
-                        bukti_bayar_path: inv.bukti_bayar_path,
-                        faktur_pajak_path: inv.faktur_pajak_path,
-                        keterangan: inv.keterangan
-                    });
-                    
-                    // Run ALL 3 checks IN PARALLEL (not sequential)
-                    const checkPromises = [];
+                console.log(`[RenderInvoices] ${inv.faktur}:`, {
+                    files_uploaded_count: actualCount,
+                    requiredCount: requiredCount,
+                    isComplete: actualCount >= requiredCount
+                });
                 
-                    if (inv.invoice_pdf_path) {
-                        checkPromises.push(
-                            fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/invoice?t=${Date.now()}`, {
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
-                                .then(d => {
-                                    console.log(`[RenderInvoices] Check result for ${inv.faktur}/invoice:`, d);
-                                    return { type: 'invoice', exists: d.exists };
-                                })
-                        );
-                    }
-                    
-                    if (inv.bukti_bayar_path) {
-                        checkPromises.push(
-                            fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/bukti_bayar?t=${Date.now()}`, {
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
-                                .then(d => {
-                                    console.log(`[RenderInvoices] Check result for ${inv.faktur}/bukti_bayar:`, d);
-                                    return { type: 'bukti_bayar', exists: d.exists };
-                                })
-                        );
-                    }
-                    
-                    if (inv.keterangan === 'PPN' && inv.faktur_pajak_path) {
-                        checkPromises.push(
-                            fetch(`${CONFIG.API_URL}/api/invoice/check-file/${inv.faktur}/faktur_pajak?t=${Date.now()}`, {
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            }).then(r => r.ok ? r.json() : { exists: false }).catch(() => ({ exists: false }))
-                                .then(d => {
-                                    console.log(`[RenderInvoices] Check result for ${inv.faktur}/faktur_pajak:`, d);
-                                    return { type: 'faktur_pajak', exists: d.exists };
-                                })
-                        );
-                    }
-                    
-                    // Wait for ALL parallel checks
-                    const results = await Promise.all(checkPromises);
-                    
-                    // Process results
-                    let invoiceExists = false, buktiExists = false, fakturExists = false;
-                    results.forEach(res => {
-                        if (res.exists) {
-                            actualUploadedCount++;
-                            if (res.type === 'invoice') {
-                                invoiceExists = true;
-                            } else if (res.type === 'bukti_bayar') {
-                                buktiExists = true;
-                            } else if (res.type === 'faktur_pajak') {
-                                fakturExists = true;
-                            }
-                        }
-                    });
-                    
-                    // Store file status for popup usage later
-                    const fileStatus = {
-                        hasInvoice: invoiceExists,
-                        hasBuktiBayar: buktiExists,
-                        hasFakturPajak: fakturExists,
-                        isPPN: inv.keterangan === 'PPN',
-                        actualCount: actualUploadedCount,
-                        requiredCount: requiredCount,
-                        isComplete: actualUploadedCount >= requiredCount
-                    };
-                    
-                    return {
-                        ...inv,
-                        actualUploadedCount,
-                        requiredCount,
-                        fileStatus,
-                        isComplete: actualUploadedCount >= requiredCount,
-                        hasInvoice: invoiceExists,
-                        hasBuktiBayar: buktiExists,
-                        hasFakturPajak: fakturExists
-                    };
-                }));
+                // Determine which files are available based on the count
+                let hasInvoice = false, hasBuktiBayar = false, hasFakturPajak = false;
                 
-                // Collect all batch results
-                allInvoicesWithStatus.push(...batchWithFileStatus);
-            }
+                if (actualCount >= 1) hasInvoice = true;
+                if (actualCount >= 2) hasBuktiBayar = true;
+                if (actualCount >= 3 && inv.keterangan === 'PPN') hasFakturPajak = true;
+                
+                const fileStatus = {
+                    hasInvoice: hasInvoice,
+                    hasBuktiBayar: hasBuktiBayar,
+                    hasFakturPajak: hasFakturPajak,
+                    isPPN: inv.keterangan === 'PPN',
+                    actualCount: actualCount,
+                    requiredCount: requiredCount,
+                    isComplete: actualCount >= requiredCount
+                };
+                
+                return {
+                    ...inv,
+                    actualUploadedCount: actualCount,
+                    requiredCount,
+                    fileStatus,
+                    isComplete: actualCount >= requiredCount,
+                    hasInvoice,
+                    hasBuktiBayar,
+                    hasFakturPajak
+                };
+            });
             
-            // Use collected results instead
-            const invoicesWithFileStatus = allInvoicesWithStatus;
+            console.log('[RenderInvoices] File status from database counts, rendering final table...');
             
-            console.log('[RenderInvoices] File checks complete, rendering final table...');
-            
-            // Render rows with final file status
+            // Render rows with file status
             tbody.innerHTML = invoicesWithFileStatus.map(inv => {
-                // Store file status in data attribute for later retrieval
                 const fileStatus = inv.fileStatus;
                 
                 console.log('[RenderRow] File status for', inv.faktur, ':', fileStatus);
@@ -1261,7 +1181,7 @@
                 </tr>
             `; }).join('');
             
-            console.log('[RenderInvoices] ✅ Rendered successfully with file checks complete');
+            console.log('[RenderInvoices] ✅ Rendered successfully using database file counts');
         }
 
         async function checkAndRenderButtons(inv, token) {
