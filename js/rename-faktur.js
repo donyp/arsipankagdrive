@@ -468,15 +468,18 @@ function displayHistorySection(histories) {
     });
     
     section.classList.remove('hidden');
-    list.innerHTML = uniqueHistories.map(h => {
+    list.innerHTML = '';
+    
+    uniqueHistories.forEach(h => {
         // Format date/time properly in Indonesia timezone
         const timestamp = formatIndonesianDateTime(h.renamed_at);
         
         // Use full_name if available, otherwise use renamed_by
         const displayName = h.full_name || h.renamed_by || 'Unknown';
         
-        return `
-        <div class="flex items-center justify-between p-2 hover:bg-red-50 rounded transition-colors text-sm group">
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between p-2 hover:bg-red-50 rounded transition-colors text-sm group';
+        div.innerHTML = `
             <div class="flex-1 min-w-0">
                 <span class="text-gray-700">
                     File asli: <span class="font-mono text-gray-600">${h.old_filename}</span>
@@ -488,19 +491,26 @@ function displayHistorySection(histories) {
                     <span class="text-gray-500">${timestamp}</span>
                 </span>
             </div>
-            <button onclick="deleteHistoryRecord(${h.id}, event)" class="ml-2 p-1 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" title="Hapus history ini">
+            <button class="ml-2 p-1 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0 delete-history-btn" title="Hapus history ini" data-history-id="${h.id}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-        </div>
         `;
-    }).join('');
+        
+        // Add event listener to delete button
+        const deleteBtn = div.querySelector('.delete-history-btn');
+        deleteBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            deleteHistoryRecord(h.id);
+        });
+        
+        list.appendChild(div);
+    });
 }
 
-async function deleteHistoryRecord(historyId, event) {
-    event.stopPropagation();  // Prevent event bubbling
-    
+async function deleteHistoryRecord(historyId) {
     try {
         const token = API.getToken();
         if (!token) {
