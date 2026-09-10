@@ -331,10 +331,11 @@ async function loadLatestHistory() {
             return;
         }
         
-        console.log('[Rename Faktur] Loading history from API...');
+        console.log('[Rename Faktur] Loading latest history from database...');
         
-        // Get recent renames from last 24 hours
-        const response = await fetch('/api/faktur-pajak/rename-history/recent?hours=24&limit=20', {
+        // Try to get history by recent updates using a wildcard approach
+        // Get recent renames - use a simple prefix "tax" which all renamed files have
+        const response = await fetch('/api/faktur-pajak/rename-history/tax?limit=20', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -346,8 +347,8 @@ async function loadLatestHistory() {
         
         if (response.ok) {
             const data = await response.json();
-            console.log('[Rename Faktur] Recent history loaded:', data.history.length, 'items');
-            console.log('[Rename Faktur] History data:', JSON.stringify(data.history, null, 2));
+            console.log('[Rename Faktur] History loaded:', data.history.length, 'items');
+            console.log('[Rename Faktur] History data:', JSON.stringify(data.history.slice(0, 2), null, 2));
             
             if (data.history && data.history.length > 0) {
                 displayHistorySection(data.history);
@@ -356,10 +357,10 @@ async function loadLatestHistory() {
             }
         } else {
             const errData = await response.json().catch(() => ({}));
-            console.warn('[Rename Faktur] Failed to load recent history:', response.status, errData);
+            console.warn('[Rename Faktur] Failed to load history:', response.status, errData);
         }
     } catch (err) {
-        console.warn('[Rename Faktur] Error loading recent history:', err.message, err.stack);
+        console.warn('[Rename Faktur] Error loading history:', err.message, err.stack);
     }
 }
 
