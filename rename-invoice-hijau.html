@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rename Invoice Hijau - Pusat Arsip Anka</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(16, 185, 129, 0.15);
+        }
+
+        .success-checkmark {
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .file-drop-zone {
+            border: 2px dashed #10b981;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-drop-zone:hover {
+            border-color: #059669;
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .file-drop-zone.dragover {
+            border-color: #059669;
+            background: rgba(16, 185, 129, 0.15);
+            transform: scale(1.02);
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .result-card {
+            border-left: 4px solid #10b981;
+            background: #f0fdf4;
+        }
+
+        .error-card {
+            border-left: 4px solid #ef4444;
+            background: #fef2f2;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app">
+        <!-- Sidebar -->
+        <div id="sidebar"></div>
+
+        <!-- Main Content -->
+        <div class="ml-0 lg:ml-64 transition-all duration-300">
+            <!-- Header -->
+            <div class="gradient-header text-white sticky top-0 z-30 shadow-lg">
+                <div class="px-6 py-8">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-white/20 p-3 rounded-lg">
+                            <i class="fas fa-file-pdf text-2xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold">Rename Invoice Hijau</h1>
+                            <p class="text-green-100 text-sm mt-1">Ekstrak No. Invoice dan rename otomatis ke nomor invoice</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="p-6 max-w-4xl mx-auto">
+                <!-- Info Box -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <p class="text-blue-800 text-sm">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>Cara Kerja:</strong> Upload file Invoice Hijau (PDF). Sistem akan otomatis mencari No. Invoice dan rename file menjadi nomor invoice.
+                    </p>
+                </div>
+
+                <!-- Upload Section -->
+                <div class="card-hover bg-white rounded-lg shadow-md p-8 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-cloud-upload-alt text-green-600"></i>
+                        Upload File Invoice
+                    </h2>
+
+                    <!-- File Drop Zone -->
+                    <div class="file-drop-zone p-8 text-center cursor-pointer" id="dropZone">
+                        <input type="file" id="fileInput" multiple accept=".pdf" style="display: none;">
+                        <i class="fas fa-file-pdf text-4xl text-green-600 mb-3 block"></i>
+                        <p class="text-gray-700 font-medium mb-2">Tarik file PDF ke sini atau klik untuk browse</p>
+                        <p class="text-gray-500 text-sm">Mendukung multiple file upload sekaligus</p>
+                    </div>
+
+                    <!-- File List -->
+                    <div id="fileList" class="mt-6 space-y-2 hidden">
+                        <h3 class="font-semibold text-gray-700 mb-2">File yang dipilih:</h3>
+                        <div id="selectedFiles"></div>
+                        <button id="btnProcess" class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
+                            <i class="fas fa-play"></i>
+                            Mulai Proses Rename
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="resultsSection" class="hidden">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                        Hasil Proses
+                    </h2>
+                    <div id="resultsList" class="space-y-3"></div>
+
+                    <!-- Download Button -->
+                    <button id="btnDownloadAll" class="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
+                        <i class="fas fa-download"></i>
+                        Download Semua File
+                    </button>
+                </div>
+
+                <!-- Progress Section -->
+                <div id="progressSection" class="hidden">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4">Memproses...</h2>
+                    <div class="space-y-4" id="progressList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/sidebar.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+
+    <script>
+        // ============================================
+        // Rename Invoice Hijau - Main Logic
+        // ============================================
+
+        let selectedFiles = [];
+        const maxFiles = 50;
+
+        // File input handling
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+        document.getElementById('dropZone').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        // Drag and drop
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFileSelect(e) {
+            handleFiles(e.target.files);
+        }
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files).filter(f => f.type === 'application/pdf').slice(0, maxFiles);
+            
+            if (selectedFiles.length === 0) {
+                alert('Silakan pilih file PDF');
+                return;
+            }
+
+            const fileListDiv = document.getElementById('selectedFiles');
+            fileListDiv.innerHTML = selectedFiles.map((f, i) => `
+                <div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg">
+                    <span class="text-sm text-gray-700">
+                        <i class="fas fa-file-pdf text-red-500 mr-2"></i>
+                        ${f.name}
+                    </span>
+                    <button onclick="removeFile(${i})" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            `).join('');
+
+            document.getElementById('fileList').classList.remove('hidden');
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            if (selectedFiles.length === 0) {
+                document.getElementById('fileList').classList.add('hidden');
+            } else {
+                handleFiles(selectedFiles);
+            }
+        }
+
+        // Process button
+        document.getElementById('btnProcess').addEventListener('click', processFiles);
+
+        async function processFiles() {
+            if (selectedFiles.length === 0) return;
+
+            document.getElementById('fileList').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('progressSection').classList.remove('hidden');
+
+            const token = API.getToken() || localStorage.getItem('jwt_token');
+            const results = [];
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const progressDiv = document.getElementById('progressList');
+
+                // Add progress item
+                const progressId = `progress-${i}`;
+                const progressItem = document.createElement('div');
+                progressItem.id = progressId;
+                progressItem.innerHTML = `
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-gray-700">${file.name}</span>
+                            <span class="text-sm text-gray-500">Memproses...</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                `;
+                progressDiv.appendChild(progressItem);
+
+                try {
+                    // Upload and process
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await fetch('/api/invoice/rename-invoice-hijau', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        results.push({
+                            originalName: result.originalFileName,
+                            renamedName: result.renamedFileName,
+                            noInvoice: result.noInvoice,
+                            fileData: result.fileData,
+                            success: true
+                        });
+
+                        // Update progress
+                        document.querySelector(`#${progressId} .progress-fill`).style.width = '100%';
+                        document.querySelector(`#${progressId} span:last-of-type`).innerHTML = `
+                            <i class="fas fa-check text-green-600"></i> Berhasil
+                        `;
+                    } else {
+                        results.push({
+                            originalName: result.originalFileName || file.name,
+                            error: result.error,
+                            success: false
+                        });
+
+                        document.querySelector(`#${progressId}`).innerHTML = `
+                            <div class="error-card p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-medium text-red-700">${file.name}</span>
+                                    <span class="text-sm text-red-600"><i class="fas fa-times"></i> ${result.error}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } catch (err) {
+                    results.push({
+                        originalName: file.name,
+                        error: err.message,
+                        success: false
+                    });
+
+                    document.querySelector(`#${progressId}`).innerHTML = `
+                        <div class="error-card p-4 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium text-red-700">${file.name}</span>
+                                <span class="text-sm text-red-600"><i class="fas fa-times"></i> ${err.message}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Add delay between requests
+                if (i < selectedFiles.length - 1) {
+                    await new Promise(r => setTimeout(r, 300));
+                }
+            }
+
+            // Show results
+            showResults(results);
+        }
+
+        function showResults(results) {
+            document.getElementById('progressSection').classList.add('hidden');
+
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = results.map((r, i) => {
+                if (r.success) {
+                    return `
+                        <div class="result-card p-4 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-green-700">
+                                        <i class="fas fa-check-circle mr-2"></i>
+                                        ${r.originalName}
+                                    </p>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        <strong>No. Invoice:</strong> ${r.noInvoice}
+                                    </p>
+                                    <p class="text-sm text-gray-600">
+                                        <strong>Rename ke:</strong> ${r.renamedName}
+                                    </p>
+                                </div>
+                                <button onclick="downloadFile('${r.renamedName}', '${r.fileData}')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="error-card p-4 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-red-700">
+                                        <i class="fas fa-times-circle mr-2"></i>
+                                        ${r.originalName}
+                                    </p>
+                                    <p class="text-sm text-red-600 mt-1">${r.error}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+            // Store results for batch download
+            window.processedResults = results.filter(r => r.success);
+        }
+
+        // Download functions
+        function downloadFile(filename, base64Data) {
+            const binary = atob(base64Data);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        document.getElementById('btnDownloadAll').addEventListener('click', () => {
+            if (window.processedResults && window.processedResults.length > 0) {
+                window.processedResults.forEach(r => {
+                    setTimeout(() => {
+                        downloadFile(r.renamedName, r.fileData);
+                    }, 300);
+                });
+            }
+        });
+
+        // Auth check
+        window.addEventListener('load', async () => {
+            const token = localStorage.getItem('jwt_token');
+            if (!token) {
+                window.location.href = '/login';
+            }
+        });
+    </script>
+</body>
+</html>

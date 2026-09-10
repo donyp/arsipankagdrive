@@ -232,6 +232,14 @@ app.get('/upload-invoice', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'upload-invoice-pdf.html'));
 });
 
+app.get('/rename-faktur', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'rename-faktur.html'));
+});
+
+app.get('/rename-invoice-hijau', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'rename-invoice-hijau.html'));
+});
+
 app.get('/upload-faktur', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'upload-faktur-pajak.html'));
 });
@@ -819,10 +827,12 @@ const notificationEndpoints = require('./notification-endpoints');
 const { registerInvoiceEndpoints, addFileExistenceVerificationEndpoint, addClearFileEndpoint, addManualSyncEndpoint } = require('./invoice-endpoints');
 const { addFakturPajakRenameEndpoints } = require('./faktur-pajak-rename-endpoints');
 const renameFakturEndpoints = require('./rename-faktur-endpoints');
+const renameInvoiceHijauEndpoints = require('./rename-invoice-hijau-endpoints');
 app.use('/api', sessionManagement);
 app.use('/api', faqEndpoints);
 app.use('/api', notificationEndpoints);
 renameFakturEndpoints(app, supabase);
+renameInvoiceHijauEndpoints(app, supabase);
 console.log('[INIT] Phase 2 feature endpoints registered âœ…');
 console.log('  âœ“ Session Management & Device Tracking');
 console.log('  âœ“ FAQ Knowledge Base');
