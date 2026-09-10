@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS faktur_pajak_rename_history (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   
   -- Invoice Reference
-  invoice_id UUID NOT NULL,
+  invoice_id UUID,  -- Optional: may be NULL when renamed via UI
   faktur VARCHAR(100) NOT NULL,
   zona_id INT,
   
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS faktur_pajak_rename_history (
   status VARCHAR(50) DEFAULT 'completed',
   notes TEXT,
   
-  -- Foreign Key
+  -- Foreign Key (optional, can be NULL)
   CONSTRAINT fk_rename_history_invoice FOREIGN KEY (invoice_id) 
     REFERENCES invoice_file_list(id) ON DELETE CASCADE
 );
