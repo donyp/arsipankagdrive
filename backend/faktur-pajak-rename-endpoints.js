@@ -196,14 +196,16 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
     // GET /api/faktur-pajak/rename-history/recent
     // Get recent renames (last 24 hours)
     // =====================================================================
-    app.get('/api/faktur-pajak/rename-history/recent', createAuth(['super_admin', 'moderator']), async (req, res) => {
+    app.get('/api/faktur-pajak/rename-history/recent', createAuth(['super_admin', 'moderator', 'admin_zona']), async (req, res) => {
         try {
             const { limit = 100, offset = 0, hours = 24 } = req.query;
             
             console.log(`[FakturPajak] Getting recent renames (last ${hours} hours)`);
+            console.log(`[FakturPajak] Cutoff: ${hours} hours, Limit: ${limit}`);
             
             // Calculate cutoff time
             const cutoffTime = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+            console.log(`[FakturPajak] Cutoff time: ${cutoffTime}`);
             
             // Get rename history
             const { data, error, count } = await supabase
@@ -221,7 +223,8 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
                 });
             }
             
-            console.log(`[FakturPajak] ✅ Found ${data?.length || 0} recent rename records`);
+            console.log(`[FakturPajak] ✅ Found ${data?.length || 0} recent rename records (total: ${count})`);
+            console.log(`[FakturPajak] Sample data:`, data && data.length > 0 ? data[0] : 'none');
             
             res.json({
                 success: true,
