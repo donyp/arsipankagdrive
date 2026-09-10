@@ -23,6 +23,7 @@ const { startAutoSync } = require('./gdrive-file-sync');
 const registerFeatureEndpoints = require('./feature-endpoints');
 const { generateRcloneConfig, verifyRcloneConfig } = require('./generate-rclone-config');
 const { startFileCountSyncJob } = require('./file-count-sync-job');
+const { initializeAutoLogoutScheduler } = require('./scheduled-auto-logout');
 
 // Load environment variables FIRST (before using them)
 // In local development: loads from .env file
@@ -5837,6 +5838,14 @@ const HOST = '0.0.0.0';
             runSync: () => fileCountSyncJob.stats ? require('./file-count-sync-job').runFileCountSync(supabase, RcloneStorage) : Promise.resolve()
         });
 
+        // Initialize auto-logout scheduler
+        console.log('[AutoLogout] Starting automatic logout scheduler...');
+        try {
+            initializeAutoLogoutScheduler();
+        } catch (err) {
+            console.error('[AutoLogout] Failed to initialize scheduler:', err.message);
+        }
+
     // Task 3.1: Error handler for port binding failures
     server.on('error', (err) => {
         if (err.code === 'EADDRINUSE') {
@@ -5937,3 +5946,74 @@ process.on('unhandledRejection', (reason, promise) => {
 
 
 
+
+
+// ============================================================
+// AUTO-LOGOUT SYSTEM
+// ============================================================
+
+// POST /api/auth/force-logout - Force logout all active sessions (for scheduled auto-logout)
+app.post('/api/auth/force-logout', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
+    try {
+        const { reason = 'Automatic daily logout' } = req.body;
+        
+        // Invalidate all active sessions
+        const { error } = await supabase
+            .from('active_sessions')
+            .update({ is_active: false, invalidated_at: new Date().toISOString() })
+            .eq('is_active', true);
+
+        if (error) throw error;
+
+        // Log this action
+        await supabase.from('audit_logs').insert({
+            user_id: req.user?.userId || null,
+            action: 'Force Logout All Sessions',
+            context: JSON.stringify({ reason, timestamp: new Date().toISOString() })
+        });
+
+        res.json({ 
+            success: true, 
+            message: 'All sessions invalidated',
+            reason: reason
+        });
+    } catch (err) {
+        console.error('[FORCE_LOGOUT] Error:', err);
+        res.status(500).json({ error: 'Failed to force logout sessions: ' + err.message });
+    }
+});
+
+// GET /api/auth/check-logout-time - Check if user should be logged out (called by frontend)
+app.get('/api/auth/check-logout-time', authenticateToken, async (req, res) => {
+    try {
+        const autoLogoutTime = process.env.AUTO_LOGOUT_TIME || '18:00';
+        const [logoutHour, logoutMinute] = autoLogoutTime.split(':').map(Number);
+        
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        
+        // Convert to minutes for easier comparison
+        const currentTimeInMinutes = currentHour * 60 + currentMinute;
+        const logoutTimeInMinutes = logoutHour * 60 + logoutMinute;
+        
+        // Check if within 5 minutes before logout time
+        const minutesUntilLogout = logoutTimeInMinutes - currentTimeInMinutes;
+        const shouldLogout = currentTimeInMinutes >= logoutTimeInMinutes;
+        const warningThreshold = 5; // 5 minutes warning
+        
+        res.json({
+            currentTime: `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`,
+            logoutTime: autoLogoutTime,
+            shouldLogout: shouldLogout,
+            isWarningTime: !shouldLogout && minutesUntilLogout <= warningThreshold,
+            minutesUntilLogout: Math.max(0, minutesUntilLogout),
+            warningMessage: !shouldLogout && minutesUntilLogout <= warningThreshold 
+                ? `System akan logout otomatis dalam ${minutesUntilLogout} menit` 
+                : null
+        });
+    } catch (err) {
+        console.error('[CHECK_LOGOUT_TIME] Error:', err);
+        res.status(500).json({ error: 'Failed to check logout time: ' + err.message });
+    }
+});
