@@ -80,6 +80,15 @@
     </style>
 </head>
 <body class="bg-gray-50">
+    <style>
+        body {
+            zoom: 0.8;
+            transform-origin: top left;
+        }
+        #app {
+            width: 125%;
+        }
+    </style>
     <div id="app">
         <!-- Sidebar -->
         <div id="sidebar"></div>
@@ -420,6 +429,32 @@
         window.addEventListener('load', async () => {
             const token = localStorage.getItem('jwt_token');
             if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Check user role - only moderator and super_admin
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const data = await response.json();
+                const userRole = data.user?.role;
+                
+                if (!['super_admin', 'moderator'].includes(userRole)) {
+                    alert('Access denied. Only moderator and super_admin can access this page.');
+                    window.location.href = '/dashboard';
+                }
+            } catch (err) {
+                console.error('Auth check error:', err);
                 window.location.href = '/login';
             }
         });
