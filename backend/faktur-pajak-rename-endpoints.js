@@ -16,7 +16,7 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
     app.post('/api/faktur-pajak/log-rename', createAuth(['super_admin', 'moderator', 'admin_zona']), async (req, res) => {
         try {
             const {
-                invoice_id,  // UUID
+                invoice_id,  // UUID (optional)
                 faktur,
                 old_filename,
                 new_filename,
@@ -31,11 +31,11 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
             const renamed_by = req.user?.email || req.user?.id || 'unknown';
             const user_email = req.user?.email;
             
-            // Validation
-            if (!invoice_id || !faktur || !old_filename || !new_filename) {
+            // Validation - faktur, old_filename, new_filename are required
+            if (!faktur || !old_filename || !new_filename) {
                 return res.status(400).json({
                     error: 'Missing required fields',
-                    required: ['invoice_id', 'faktur', 'old_filename', 'new_filename']
+                    required: ['faktur', 'old_filename', 'new_filename']
                 });
             }
             
@@ -48,7 +48,7 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
             const { data, error } = await supabase
                 .from('faktur_pajak_rename_history')
                 .insert({
-                    invoice_id,
+                    invoice_id: invoice_id || null,  // Optional UUID
                     faktur,
                     old_filename,
                     new_filename,

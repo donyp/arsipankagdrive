@@ -221,8 +221,7 @@ async function processFile(file) {
                             'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify({
-                            invoice_id: result.invoiceId || '',
-                            faktur: result.faktur || '',
+                            faktur: result.newName.split('-')[0] || 'unknown',
                             old_filename: file.name,
                             new_filename: result.newName,
                             old_path: '',
