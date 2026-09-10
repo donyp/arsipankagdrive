@@ -35,15 +35,23 @@ CREATE TABLE IF NOT EXISTS faktur_pajak_rename_history (
   status VARCHAR(50) DEFAULT 'completed',
   notes TEXT,
   
-  -- Indexes
+  -- Foreign Key
   CONSTRAINT fk_rename_history_invoice FOREIGN KEY (invoice_id) 
-    REFERENCES invoices(id) ON DELETE CASCADE,
-  
-  INDEX idx_faktur_pajak_rename_faktur (faktur),
-  INDEX idx_faktur_pajak_rename_renamed_by (renamed_by),
-  INDEX idx_faktur_pajak_rename_renamed_at (renamed_at),
-  INDEX idx_faktur_pajak_rename_zona (zona_id)
+    REFERENCES invoices(id) ON DELETE CASCADE
 );
+
+-- Create indexes separately (PostgreSQL syntax)
+CREATE INDEX IF NOT EXISTS idx_faktur_pajak_rename_faktur 
+  ON faktur_pajak_rename_history(faktur);
+
+CREATE INDEX IF NOT EXISTS idx_faktur_pajak_rename_renamed_by 
+  ON faktur_pajak_rename_history(renamed_by);
+
+CREATE INDEX IF NOT EXISTS idx_faktur_pajak_rename_renamed_at 
+  ON faktur_pajak_rename_history(renamed_at);
+
+CREATE INDEX IF NOT EXISTS idx_faktur_pajak_rename_zona 
+  ON faktur_pajak_rename_history(zona_id);
 
 -- =====================================================================
 -- CLEANUP FUNCTION - Auto delete records older than 1 day (PostgreSQL)
