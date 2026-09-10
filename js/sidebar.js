@@ -89,7 +89,7 @@
     for (const item of menuItems) {
         if (item.section) {
             const marginClass = item.marginTop || 'mt-6';
-            navHTML += `<p class="text-[10px] text-gray-400 uppercase tracking-widest ${marginClass} mb-1 px-5 font-bold">${item.section}</p>`;
+            navHTML += `<p style="font-size: 0.625rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin: 0; padding: 0.5rem 1.25rem; font-weight: 700; ${item.marginTop ? 'margin-top: 3rem;' : 'margin-top: 1.5rem;'} margin-bottom: 0.25rem; word-break: break-word;">${item.section}</p>`;
             continue;
         }
 
@@ -110,41 +110,41 @@
                 if (child.isButton) {
                     childrenHTML += `
                         <button onclick="${child.onclick}" ${child.guard || ''}
-                            class="sidebar-link flex items-center gap-3 px-5 py-2.5 mt-0.5 mx-2 rounded-xl text-xs transition-all group text-gray-500 hover:text-gray-900 hover:bg-gray-50 border-none bg-transparent cursor-pointer w-full text-left">
-                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            style="display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1.25rem; margin-top: 0.125rem; margin-left: 0.5rem; margin-right: 0.5rem; border-radius: 0.75rem; font-size: 0.75rem; transition: all 0.2s ease; color: #6b7280; text-align: left; border: none; background: transparent; cursor: pointer; width: calc(100% - 1rem); min-width: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                            <svg style="width: 1rem; height: 1rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 ${renderIcon(child.icon, child.iconPaths)}
                             </svg>
-                            ${child.label}
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${child.label}</span>
                         </button>
                      `;
                 } else {
                     childrenHTML += `
                         <a href="${child.href}" ${child.guard || ''}
-                            class="sidebar-link flex items-center gap-3 px-5 py-2.5 mt-0.5 mx-2 rounded-xl text-xs transition-all group ${activeClass}">
-                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            style="display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1.25rem; margin-top: 0.125rem; margin-left: 0.5rem; margin-right: 0.5rem; border-radius: 0.75rem; font-size: 0.75rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: #eff6ff; font-weight: 700;' : 'color: #6b7280;'} text-decoration: none; min-width: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                            <svg style="width: 1rem; height: 1rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 ${renderIcon(child.icon, child.iconPaths)}
                             </svg>
-                            ${child.label}
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${child.label}</span>
                         </a>
                      `;
                 }
             }
 
             navHTML += `
-                <div id="${item.id}-parent" class="sidebar-dropdown ${parentClass} mt-1 mb-0.5 px-2">
-                    <button onclick="toggleSidebarDropdown('${item.id}')" class="sidebar-dropdown-btn w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-xs text-gray-600 hover:text-gray-900 group font-bold tracking-tight">
-                        <div class="flex items-center gap-3">
-                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div id="${item.id}-parent" style="margin-top: 0.25rem; margin-bottom: 0.125rem; padding-left: 0.5rem; padding-right: 0.5rem;">
+                    <button onclick="toggleSidebarDropdown('${item.id}')" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 1rem; border-radius: 0.75rem; font-size: 0.75rem; color: #4b5563; border: none; background: transparent; cursor: pointer; font-weight: 700; letter-spacing: 0.05em; min-width: 0;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; overflow: hidden;">
+                            <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 ${renderIcon(item.icon, item.iconPaths)}
                             </svg>
-                            <span>${item.label}</span>
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.label}</span>
                         </div>
-                        <svg class="sidebar-dropdown-icon w-3.5 h-3.5 opacity-40 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="sidebar-dropdown-icon" style="width: 0.875rem; height: 0.875rem; opacity: 0.4; transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
-                    <div id="${item.id}" class="sidebar-dropdown-content" style="max-height: ${maxH};">
-                        <div class="py-1">
+                    <div id="${item.id}" class="sidebar-dropdown-content" style="max-height: ${maxH}; overflow: hidden; transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1);">
+                        <div style="padding-top: 0.25rem; padding-bottom: 0.25rem;">
                             ${childrenHTML}
                         </div>
                     </div>
@@ -158,13 +158,13 @@
                 : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50';
 
             navHTML += `
-                <div class="px-2">
+                <div style="padding-left: 0.5rem; padding-right: 0.5rem;">
                 <a href="${item.href}" ${item.guard || ''}
-                    class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs transition-all group font-bold tracking-tight ${activeClass}">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    style="display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; border-radius: 0.75rem; font-size: 0.75rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: rgba(59, 130, 246, 0.1); font-weight: 700;' : 'color: #6b7280;'} text-decoration: none; font-weight: 700; letter-spacing: 0.05em; min-width: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                    <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         ${renderIcon(item.icon, item.iconPaths)}
                     </svg>
-                    ${item.label}
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.label}</span>
                 </a>
                 </div>`;
         }
@@ -190,32 +190,40 @@
             background: #ffffff;
             border-right: 1px solid #e5e7eb;
             z-index: 40;
+            overflow: hidden;
+            box-sizing: border-box;
         `;
 
         sidebar.innerHTML = `
             <!-- Header -->
-            <div class="p-6 border-b border-gray-100">
-                <div class="flex items-center gap-3 group">
-                    <div class="w-10 h-10 rounded-[1rem] bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200 group-hover:scale-105 transition-transform duration-300">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div style="padding: 1.5rem; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                    <div style="width: 2.5rem; height: 2.5rem; border-radius: 1rem; background: #2563eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg style="width: 1.25rem; height: 1.25rem; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                         </svg>
                     </div>
-                    <div>
-                        <h1 class="text-[13px] font-black text-gray-900 uppercase tracking-tight">Pusat Arsip Anka</h1>
-                        <span class="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Multi-Zona v3.1</span>
+                    <div style="min-width: 0; flex: 1; overflow: hidden;">
+                        <h1 style="font-size: 0.8125rem; font-weight: 900; color: #111827; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; word-break: break-word;">Pusat Arsip Anka</h1>
+                        <span style="font-size: 0.625rem; color: #3b82f6; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; display: block; word-break: break-word;">Multi-Zona v3.1</span>
                     </div>
                 </div>
             </div>
 
             <!-- Navigation (scrollable) -->
-            <nav class="py-4 space-y-0.5 overflow-y-auto custom-scrollbar">
+            <nav style="padding: 1rem 0; space-y: 0.125rem; overflow-y: auto; overflow-x: hidden; flex: 1; min-width: 0; -webkit-overflow-scrolling: touch;">
                 ${navHTML}
             </nav>
         `;
 
+        // Ensure main content area is properly offset
         const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+            mainContent.style.marginLeft = '16rem';
+            mainContent.style.width = 'calc(100% - 16rem)';
+        }
+
         if (mainContent && !document.getElementById('global-broadcast-bar')) {
             const bar = document.createElement('div');
             bar.id = 'global-broadcast-bar';
