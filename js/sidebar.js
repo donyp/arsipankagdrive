@@ -160,7 +160,6 @@
             background: #ffffff;
             border-right: 1px solid #e5e7eb;
             z-index: 40;
-            overflow: hidden;
         `;
 
         sidebar.innerHTML = `
