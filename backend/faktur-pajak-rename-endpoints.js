@@ -16,7 +16,7 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
     app.post('/api/faktur-pajak/log-rename', createAuth(['super_admin', 'moderator', 'admin_zona']), async (req, res) => {
         try {
             const {
-                invoice_id,
+                invoice_id,  // UUID
                 faktur,
                 old_filename,
                 new_filename,

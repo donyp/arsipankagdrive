@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS faktur_pajak_rename_history (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   
   -- Invoice Reference
-  invoice_id BIGINT NOT NULL,
+  invoice_id UUID NOT NULL,
   faktur VARCHAR(100) NOT NULL,
   zona_id INT,
   
@@ -77,7 +77,7 @@ $$ LANGUAGE plpgsql;
 -- =====================================================================
 
 CREATE OR REPLACE FUNCTION log_faktur_pajak_rename(
-  p_invoice_id BIGINT,
+  p_invoice_id UUID,
   p_faktur VARCHAR,
   p_old_filename VARCHAR,
   p_new_filename VARCHAR,
