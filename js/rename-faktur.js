@@ -76,8 +76,8 @@ function handleFiles(files) {
 
     // Add max files note
     const maxFilesNote = document.createElement('p');
-    maxFilesNote.className = 'text-xs text-gray-500 mt-3 italic';
-    maxFilesNote.textContent = `Maksimal ${MAX_FILES} file, ${selectedFiles.length} file dipilih`;
+    maxFilesNote.className = 'text-sm font-semibold text-gray-800 mt-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded';
+    maxFilesNote.textContent = `📋 Maksimal ${MAX_FILES} file | ${selectedFiles.length} file dipilih`;
     filesContainer.appendChild(maxFilesNote);
     
     processButtonContainer.classList.remove('hidden');
