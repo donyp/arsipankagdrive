@@ -33,7 +33,6 @@
             width: 256px;
             height: 100vh;
             overflow-y: auto;
-            position: fixed;
             left: 0;
             top: 0;
             z-index: 40;
@@ -45,10 +44,11 @@
         
         #main-content {
             flex: 1;
-            margin-left: 256px;
             min-height: 100vh;
             max-width: none;
             padding: 40px 20px;
+            margin-left: 16rem;
+            width: calc(100% - 16rem);
         }
         
         header {
