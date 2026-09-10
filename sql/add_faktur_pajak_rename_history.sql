@@ -5,6 +5,7 @@
 -- Menyimpan history perubahan nama faktur pajak
 -- Hanya menyimpan teks/metadata (tidak menyimpan file)
 -- Auto delete records lebih dari 1 hari
+-- Production Ready: v1.0
 --
 -- =====================================================================
 
