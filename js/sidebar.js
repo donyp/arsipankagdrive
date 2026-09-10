@@ -110,7 +110,7 @@
                 if (child.isButton) {
                     childrenHTML += `
                         <button onclick="${child.onclick}" ${child.guard || ''}
-                            style="display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1.25rem; margin-top: 0.125rem; margin-left: 0.5rem; margin-right: 0.5rem; border-radius: 0.75rem; font-size: 0.75rem; transition: all 0.2s ease; color: #6b7280; text-align: left; border: none; background: transparent; cursor: pointer; width: calc(100% - 1rem); min-width: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                            style="display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; margin-top: 0.125rem; border-radius: 0.75rem; font-size: 0.75rem; transition: all 0.2s ease; color: #6b7280; text-align: left; border: none; background: transparent; cursor: pointer; width: 100%; min-width: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
                             <svg style="width: 1rem; height: 1rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 ${renderIcon(child.icon, child.iconPaths)}
                             </svg>
@@ -120,7 +120,7 @@
                 } else {
                     childrenHTML += `
                         <a href="${child.href}" ${child.guard || ''}
-                            style="display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1.25rem; margin-top: 0.125rem; margin-left: 0.5rem; margin-right: 0.5rem; border-radius: 0.75rem; font-size: 0.75rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: #eff6ff; font-weight: 700;' : 'color: #6b7280;'} text-decoration: none; min-width: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                            style="display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; margin-top: 0.125rem; border-radius: 0.75rem; font-size: 0.75rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: #eff6ff; font-weight: 700;' : 'color: #6b7280;'} text-decoration: none; width: 100%; min-width: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
                             <svg style="width: 1rem; height: 1rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 ${renderIcon(child.icon, child.iconPaths)}
                             </svg>
