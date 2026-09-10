@@ -380,6 +380,11 @@
                 filtered = allMessages.filter(m => m.sent_at);
             }
 
+            console.log('[WA-Dashboard] Rendering', filtered.length, 'messages, currentFilter:', currentFilter);
+            if (filtered.length > 0) {
+                console.log('[WA-Dashboard] First filtered message:', JSON.stringify(filtered[0]));
+            }
+
             if (filtered.length === 0) {
                 container.innerHTML = `
                     <div class="no-messages">
