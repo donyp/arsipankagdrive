@@ -107,9 +107,11 @@ async function createInvoiceNotifications(invoices, moderatorId, batchId) {
         const zonaKodeMap = {};
         zonas.forEach(z => {
             zonaMap[z.id] = z.nama;
-            // Parse kode to remove leading zeros (e.g., "01" → "1", "02" → "2")
-            const kode = z.kode ? String(parseInt(z.kode, 10)) : `${z.id}`;
-            zonaKodeMap[z.id] = kode;
+            // Remove leading zeros but preserve letters (e.g., "01" → "1", "03a" → "3a", "03A" → "3A")
+            let kode = z.kode ? z.kode.toString() : `${z.id}`;
+            // Remove leading zeros: "01" → "1", "03a" → "3a"
+            kode = kode.replace(/^0+(?=\d)/, '');
+            zonaKodeMap[z.id] = kode || `${z.id}`;
         });
 
         // Create notifications per zona
