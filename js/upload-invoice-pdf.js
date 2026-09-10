@@ -556,6 +556,44 @@ async function uploadValidFiles() {
                     successCount++;
                     console.log('[PDF Bulk] ✓ Uploaded:', fileResult.faktur);
                     showNotification(`✓ ${fileResult.faktur}`, 'success', 2000);
+                    
+                    // Generate WhatsApp message if we have zone data
+                    if (result.zona_id && result.tipe && result.konsumen && result.nominal) {
+                        try {
+                            console.log('[PDF Bulk] Generating WhatsApp message for:', {
+                                zona_id: result.zona_id,
+                                tipe: result.tipe,
+                                konsumen: result.konsumen,
+                                nominal: result.nominal
+                            });
+                            
+                            const waResponse = await fetch('/api/whatsapp/generate-invoice-messages', {
+                                method: 'POST',
+                                headers: {
+                                    ...headers,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    invoices: [{
+                                        zona_id: result.zona_id,
+                                        tipe: result.tipe,
+                                        konsumen: result.konsumen,
+                                        nominal: result.nominal
+                                    }],
+                                    batchId: 'batch_' + Date.now() + '_' + fileResult.faktur
+                                })
+                            });
+                            
+                            const waResult = await waResponse.json();
+                            if (waResponse.ok && waResult.success) {
+                                console.log('[PDF Bulk] ✓ WhatsApp message generated');
+                            } else {
+                                console.warn('[PDF Bulk] WhatsApp generation failed:', waResult.error);
+                            }
+                        } catch (waError) {
+                            console.warn('[PDF Bulk] WhatsApp generation error:', waError);
+                        }
+                    }
                 } else {
                     failCount++;
                     console.error('[PDF Bulk] ✗ Upload failed:', fileResult.faktur, result.error);

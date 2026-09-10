@@ -1702,14 +1702,18 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 // Start background upload but DON'T wait for it
                 setImmediate(() => performUpload());
                 
-                // Return response immediately to client
+                // Return response immediately to client (with WhatsApp data)
                 res.json({
                     success: true,
                     message: `File upload started for faktur: ${faktur} (processing in background)`,
                     faktur,
                     status: 'processing',
                     konsumen: invoice.konsumen,
-                    total: invoice.total_jumlah_jual
+                    total: invoice.total_jumlah_jual,
+                    // WhatsApp data
+                    zona_id: invoice.zona_id,
+                    tipe: invoice.keterangan || 'PPN',
+                    nominal: invoice.total_jumlah_jual
                 });
                 
             } catch (error) {
