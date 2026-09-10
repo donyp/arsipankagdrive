@@ -414,3 +414,8 @@ function displayHistorySection(histories) {
         </div>
     `).join('');
 }
+
+function closeHistorySection() {
+    const section = document.getElementById('historySection');
+    section.classList.add('hidden');
+}
