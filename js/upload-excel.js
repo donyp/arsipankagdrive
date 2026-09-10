@@ -269,6 +269,11 @@ async function uploadData() {
             updateStep(4);
 
             console.log('[Upload] ✅ Success!');
+            
+            // Reset upload form for next file - delay to let UI update
+            setTimeout(() => {
+                resetUpload();
+            }, 1500);
         } else {
             Toast.error(result.error || 'Upload failed', '❌ Upload Error');
             btnUpload.disabled = false;
