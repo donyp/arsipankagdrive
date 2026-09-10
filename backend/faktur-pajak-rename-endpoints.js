@@ -346,6 +346,11 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
         }
     });
     
+    // =====================================================================
+    // DELETE /api/faktur-pajak/rename-history/:history_id
+    // Manually delete a specific rename history record (Admin only)
+    // =====================================================================
+    app.delete('/api/faktur-pajak/rename-history/:history_id', createAuth(['super_admin']), async (req, res) => {
         try {
             const { history_id } = req.params;
             
