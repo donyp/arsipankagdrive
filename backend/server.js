@@ -155,6 +155,25 @@ const shareLimiter = rateLimit({
 // Allow /index instead of /index.html
 // Must be BEFORE express.static() to intercept requests
 // ============================================================
+
+// URL Aliases for cleaner routes
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
+app.get('/upload-invoice', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'upload-invoice-pdf.html'));
+});
+
+app.get('/upload-faktur', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'upload-faktur-pajak.html'));
+});
+
+app.get('/dashboard-zona', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'dashboard-admin-zona.html'));
+});
+
+// Generic page router
 app.get('/:page', (req, res, next) => {
     const page = req.params.page;
     
