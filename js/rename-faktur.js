@@ -420,12 +420,9 @@ function showHistoryActionButton(successFiles) {
     const parts = firstFileName.split('-');
     const faktur = parts[0] || successFiles[0].originalName;
     
-    // Load and display recent history
-    loadRecentHistory(faktur);
-    
     // Create temporary button and add to page
     const btn = document.createElement('button');
-    btn.className = 'fixed bottom-6 right-6 px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 shadow-lg z-40 transition-all';
+    btn.className = 'fixed bottom-6 right-6 px-4 py-3 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 shadow-lg z-40 transition-all';
     btn.textContent = '📋 Lihat Riwayat Rename';
     btn.onclick = () => {
         loadAndShowHistoryForFaktur(faktur);
@@ -437,75 +434,4 @@ function showHistoryActionButton(successFiles) {
     setTimeout(() => {
         if (btn.parentNode) btn.remove();
     }, 30000);
-}
-
-async function loadRecentHistory(faktur) {
-    try {
-        console.log('[Rename Faktur] Loading recent history for:', faktur);
-        
-        // Get token from localStorage
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            console.warn('[Rename Faktur] No auth token found');
-            return;
-        }
-        
-        const response = await fetch(`/api/faktur-pajak/rename-history/${encodeURIComponent(faktur)}?limit=5`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('[Rename Faktur] Recent history loaded:', data.history);
-            displayRecentHistory(data.history || []);
-        } else {
-            console.warn('[Rename Faktur] Failed to load history:', response.status);
-        }
-    } catch (err) {
-        console.warn('[Rename Faktur] Error loading recent history:', err);
-    }
-}
-
-function displayRecentHistory(histories) {
-    const section = document.getElementById('historySection');
-    const list = document.getElementById('recentHistoryList');
-    
-    console.log('[Rename Faktur] Displaying history:', histories.length, 'items');
-    
-    if (!histories || histories.length === 0) {
-        console.log('[Rename Faktur] No history to show, hiding section');
-        section.classList.add('hidden');
-        return;
-    }
-    
-    console.log('[Rename Faktur] Showing history section');
-    section.classList.remove('hidden');
-    list.innerHTML = histories.map(h => `
-        <div class="border border-gray-200 rounded-lg p-4 space-y-2 hover:border-green-300 transition-colors">
-            <div class="flex items-start gap-2">
-                <div class="text-green-600 mt-1 flex-shrink-0">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs text-gray-500 mb-1">Nama Lama:</p>
-                    <p class="text-sm font-mono text-gray-900 break-all truncate">${h.old_filename}</p>
-                    <p class="text-xs text-gray-400 my-1">↓</p>
-                    <p class="text-xs text-gray-500 mb-1">Nama Baru:</p>
-                    <p class="text-sm font-mono text-green-700 break-all font-bold truncate">${h.new_filename}</p>
-                </div>
-            </div>
-            <div class="flex items-center justify-between text-xs text-gray-500 bg-gray-50 rounded p-2">
-                <span class="truncate">${h.renamed_by}</span>
-                <span class="ml-2 flex-shrink-0">${new Date(h.renamed_at).toLocaleString('id-ID')}</span>
-            </div>
-        </div>
-    `).join('');
-    
-    console.log('[Rename Faktur] History section updated with', histories.length, 'items');
 }
