@@ -3,7 +3,24 @@
 // Generates and manages WhatsApp messages for zona groups
 // ============================================================
 
-const { supabase } = require('./execute-schema');
+const { createClient } = require('@supabase/supabase-js');
+
+// Initialize Supabase client (lazy, will fail gracefully if credentials missing)
+let supabase = null;
+
+function getSupabaseClient() {
+    if (supabase) return supabase;
+    
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!url || !key) {
+        throw new Error('Missing Supabase credentials (SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)');
+    }
+    
+    supabase = createClient(url, key);
+    return supabase;
+}
 
 /**
  * Generate WhatsApp message template
@@ -56,6 +73,8 @@ function generateWAMessage(zonaName, invoiceCount, tokoList, uploadDate) {
 async function createWANotifications(invoices, moderatorId, batchId) {
     try {
         console.log('[WA-Notifications] Creating messages for', invoices.length, 'invoices');
+
+        const supabase = getSupabaseClient();
 
         // Group invoices by zona
         const invoicesByZona = {};
@@ -146,6 +165,8 @@ async function createWANotifications(invoices, moderatorId, batchId) {
  */
 async function getPendingNotifications(moderatorId = null) {
     try {
+        const supabase = getSupabaseClient();
+
         let query = supabase
             .from('whatsapp_notifications')
             .select(`
@@ -197,6 +218,8 @@ async function getPendingNotifications(moderatorId = null) {
  */
 async function markAsSent(notificationId) {
     try {
+        const supabase = getSupabaseClient();
+
         const { data, error } = await supabase
             .from('whatsapp_notifications')
             .update({ sent_at: new Date().toISOString() })
@@ -223,6 +246,8 @@ async function markAsSent(notificationId) {
  */
 async function markBatchAsSent(batchId) {
     try {
+        const supabase = getSupabaseClient();
+
         const { data, error } = await supabase
             .from('whatsapp_notifications')
             .update({ sent_at: new Date().toISOString() })
