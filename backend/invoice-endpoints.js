@@ -1188,7 +1188,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 // Get invoice data from database
                 const { data: invoice, error: queryError } = await supabase
                     .from('invoice_file_list')
-                    .select('invoice_pdf_path, bukti_bayar_path, faktur_pajak_path, files_uploaded_count, files_required_count, keterangan')
+                    .select('invoice_pdf_path, bukti_bayar_path, faktur_pajak_path, files_uploaded_count, files_required_count, keterangan, tanggal, toko')
                     .eq('faktur', faktur)
                     .single();
                 
@@ -1232,68 +1232,100 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
                 // STRATEGY 2: If not found via DB path (or DB path is NULL), search by faktur naming convention
                 // This allows detection of files uploaded directly to Google Drive
+                // Uses correct Google Drive path structure: ARSIPINVOICE/ARSIPINVOICE/[LOCATION]/YYYY/MONTHNAME/DD/[FILETYPE]
                 if (!fileExists) {
-                    console.log(`[Check File] Attempting search-by-faktur for ${faktur}/${fileType}...`);
+                    console.log(`[Check File] STRATEGY 2: Attempting search-by-faktur for ${faktur}/${fileType}...`);
                     
                     try {
-                        // Search patterns for each file type
-                        const searchPatterns = [];
-                        switch (fileType) {
-                            case 'invoice':
-                                searchPatterns.push(`${faktur}*.pdf`, `*${faktur}*invoice*.pdf`, `invoice*${faktur}*.pdf`);
-                                break;
-                            case 'bukti_bayar':
-                                searchPatterns.push(`${faktur}*bukti*.pdf`, `*${faktur}*bukti*.pdf`, `bukti*${faktur}*.pdf`);
-                                break;
-                            case 'faktur_pajak':
-                                searchPatterns.push(`${faktur}*pajak*.pdf`, `*${faktur}*pajak*.pdf`, `pajak*${faktur}*.pdf`);
-                                break;
-                        }
-                        
-                        // Try searching in Google Drive for matching files
-                        // Use rclone lsjson to list files and search
-                        const { execSync } = require('child_process');
-                        try {
-                            const listCmd = `rclone lsjson "gdrive:/ARSIP ANKA" --config "/app/rclone.conf" --recursive 2>/dev/null | grep -i "${faktur}"`;
-                            const result = execSync(listCmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 }).trim();
+                        // Get date components from invoice.tanggal (ISO format: YYYY-MM-DD)
+                        if (!invoice.tanggal) {
+                            console.log(`[Check File] STRATEGY 2: No tanggal found in invoice, skipping search`);
+                        } else {
+                            const dateParts = invoice.tanggal.split('-');
+                            const year = dateParts[0];
+                            const monthNum = parseInt(dateParts[1], 10);
+                            const day = String(parseInt(dateParts[2], 10)).padStart(2, '0');
                             
-                            if (result) {
-                                // Files found matching faktur name
-                                const files = result.split('\n').filter(line => line.length > 0);
+                            // Convert month number to Indonesian month name
+                            const monthNames = [
+                                'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
+                                'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'
+                            ];
+                            const monthName = monthNames[monthNum - 1];
+                            
+                            // Map fileType to folder name
+                            const fileTypeMap = {
+                                'invoice': 'PPN',
+                                'bukti_bayar': 'BUKTIBAYAR',
+                                'faktur_pajak': 'FAKTURPAJAK'
+                            };
+                            const folderName = fileTypeMap[fileType] || fileType.toUpperCase();
+                            
+                            // Try both locations (BEKASI and PEMALANG)
+                            const locations = ['BEKASI', 'PEMALANG'];
+                            
+                            for (const location of locations) {
+                                // Construct the search path
+                                const searchPath = `gdrive:/ARSIPINVOICE/ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${folderName}`;
                                 
-                                // Check for matching file type
-                                for (const fileEntry of files) {
+                                console.log(`[Check File] STRATEGY 2: Searching path: ${searchPath}`);
+                                
+                                try {
+                                    const { execSync } = require('child_process');
+                                    const listCmd = `rclone lsjson "${searchPath}" --config "/app/rclone.conf" 2>/dev/null`;
+                                    
+                                    let result;
                                     try {
-                                        const parsed = JSON.parse(fileEntry);
-                                        const fileName = parsed.Name || '';
-                                        const lowerName = fileName.toLowerCase();
-                                        
-                                        // Match by file type pattern
-                                        let isMatch = false;
-                                        if (fileType === 'invoice' && (lowerName.includes('invoice') || !lowerName.includes('bukti') && !lowerName.includes('pajak'))) {
-                                            isMatch = true;
-                                        } else if (fileType === 'bukti_bayar' && lowerName.includes('bukti')) {
-                                            isMatch = true;
-                                        } else if (fileType === 'faktur_pajak' && lowerName.includes('pajak')) {
-                                            isMatch = true;
-                                        }
-                                        
-                                        if (isMatch) {
-                                            fileExists = true;
-                                            filePath = `ARSIP ANKA/${fileName}`;
-                                            console.log(`[Check File] Found file via search: ${fileName}`);
-                                            break;
-                                        }
-                                    } catch (parseErr) {
-                                        // Skip parse errors
+                                        result = execSync(listCmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024, timeout: 20000 }).trim();
+                                    } catch (execErr) {
+                                        // rclone command failed, path may not exist
+                                        console.log(`[Check File] STRATEGY 2: Path does not exist or error: ${location}/${year}/${monthName}/${day}/${folderName}`);
+                                        continue;
                                     }
+                                    
+                                    if (!result) {
+                                        console.log(`[Check File] STRATEGY 2: No files found in ${location}/${year}/${monthName}/${day}/${folderName}`);
+                                        continue;
+                                    }
+                                    
+                                    // Parse files and search for matching faktur number
+                                    const files = result.split('\n').filter(line => line.trim().length > 0);
+                                    
+                                    console.log(`[Check File] STRATEGY 2: Found ${files.length} file(s) in ${location} path`);
+                                    
+                                    for (const fileEntry of files) {
+                                        try {
+                                            const parsed = JSON.parse(fileEntry);
+                                            const fileName = parsed.Name || '';
+                                            
+                                            // Check if filename contains the faktur number
+                                            if (fileName.includes(faktur)) {
+                                                fileExists = true;
+                                                filePath = `ARSIPINVOICE/ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${folderName}/${fileName}`;
+                                                console.log(`[Check File] STRATEGY 2: ✅ Found file: ${fileName}`);
+                                                console.log(`[Check File] STRATEGY 2: Full path: ${filePath}`);
+                                                break;
+                                            }
+                                        } catch (parseErr) {
+                                            // Skip parse errors
+                                        }
+                                    }
+                                    
+                                    if (fileExists) {
+                                        console.log(`[Check File] STRATEGY 2: File found in location: ${location}`);
+                                        break;
+                                    }
+                                } catch (locationErr) {
+                                    console.log(`[Check File] STRATEGY 2: Error searching ${location}: ${locationErr.message}`);
                                 }
                             }
-                        } catch (searchErr) {
-                            console.log(`[Check File] Search result: no files found or search error`);
+                            
+                            if (!fileExists) {
+                                console.log(`[Check File] STRATEGY 2: No matching file found in either location (BEKASI/PEMALANG)`);
+                            }
                         }
                     } catch (err) {
-                        console.warn(`[Check File] Search-by-faktur failed: ${err.message}`);
+                        console.warn(`[Check File] STRATEGY 2: Search-by-faktur failed: ${err.message}`);
                     }
                 }
 
