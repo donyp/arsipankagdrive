@@ -476,7 +476,7 @@ function displayHistorySection(histories) {
         const displayName = h.full_name || h.renamed_by || 'Unknown';
         
         return `
-        <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded transition-colors text-sm group">
+        <div class="flex items-center justify-between p-2 hover:bg-red-50 rounded transition-colors text-sm group">
             <div class="flex-1 min-w-0">
                 <span class="text-gray-700">
                     File asli: <span class="font-mono text-gray-600">${h.old_filename}</span>
@@ -488,7 +488,7 @@ function displayHistorySection(histories) {
                     <span class="text-gray-500">${timestamp}</span>
                 </span>
             </div>
-            <button onclick="deleteHistoryRecord(${h.id})" class="ml-2 p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100" title="Hapus history ini">
+            <button onclick="deleteHistoryRecord(${h.id}, event)" class="ml-2 p-1 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" title="Hapus history ini">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -498,7 +498,9 @@ function displayHistorySection(histories) {
     }).join('');
 }
 
-async function deleteHistoryRecord(historyId) {
+async function deleteHistoryRecord(historyId, event) {
+    event.stopPropagation();  // Prevent event bubbling
+    
     try {
         const token = API.getToken();
         if (!token) {
