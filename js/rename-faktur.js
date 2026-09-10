@@ -212,7 +212,7 @@ async function processFile(file) {
             
             // Log rename to history
             try {
-                const token = localStorage.getItem('authToken');
+                const token = API.getToken();
                 if (token) {
                     const logResponse = await fetch('/api/faktur-pajak/log-rename', {
                         method: 'POST',
@@ -360,7 +360,7 @@ function showHistoryActionButton(successFiles) {
 
 async function loadAndDisplayHistory(faktur) {
     try {
-        const token = localStorage.getItem('authToken');
+        const token = API.getToken();
         if (!token) {
             console.warn('[Rename Faktur] No auth token');
             return;
