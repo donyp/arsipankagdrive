@@ -420,18 +420,63 @@ function showHistoryActionButton(successFiles) {
     const parts = firstFileName.split('-');
     const faktur = parts[0] || successFiles[0].originalName;
     
-    // Create temporary button and add to page
-    const btn = document.createElement('button');
-    btn.className = 'fixed bottom-6 right-6 px-4 py-3 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 shadow-lg z-40 transition-all';
-    btn.textContent = '📋 Lihat Riwayat Rename';
-    btn.onclick = () => {
-        loadAndShowHistoryForFaktur(faktur);
-        btn.remove();
-    };
-    document.body.appendChild(btn);
+    console.log('[Rename Faktur] Loading history for faktur:', faktur);
+    loadAndDisplayHistory(faktur);
+}
+
+async function loadAndDisplayHistory(faktur) {
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.warn('[Rename Faktur] No auth token');
+            return;
+        }
+        
+        const response = await fetch(`/api/faktur-pajak/rename-history/${encodeURIComponent(faktur)}?limit=10`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('[Rename Faktur] History loaded:', data.history.length, 'items');
+            displayHistorySection(data.history || []);
+        } else {
+            console.warn('[Rename Faktur] Failed:', response.status);
+        }
+    } catch (err) {
+        console.warn('[Rename Faktur] Error:', err.message);
+    }
+}
+
+function displayHistorySection(histories) {
+    const section = document.getElementById('historySection');
+    const list = document.getElementById('recentHistoryList');
     
-    // Auto-remove after 30 seconds
-    setTimeout(() => {
-        if (btn.parentNode) btn.remove();
-    }, 30000);
+    if (!histories || histories.length === 0) {
+        section.classList.add('hidden');
+        return;
+    }
+    
+    section.classList.remove('hidden');
+    list.innerHTML = histories.map(h => `
+        <div class="border border-gray-200 rounded-lg p-3 hover:border-green-300 transition-colors">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs text-gray-500">Ubah dari:</p>
+                    <p class="text-sm font-mono text-gray-700 truncate">${h.old_filename}</p>
+                    <p class="text-xs text-gray-400 my-1">→</p>
+                    <p class="text-xs text-gray-500">Menjadi:</p>
+                    <p class="text-sm font-mono text-green-700 font-bold truncate">${h.new_filename}</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-between text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
+                <span>${h.renamed_by}</span>
+                <span>${new Date(h.renamed_at).toLocaleString('id-ID')}</span>
+            </div>
+        </div>
+    `).join('');
 }
