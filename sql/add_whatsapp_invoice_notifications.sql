@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_invoice_notifications (
     notification_type TEXT DEFAULT 'invoice_upload', -- 'invoice_upload' for individual uploads
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     sent_at TIMESTAMP WITH TIME ZONE, -- NULL if not sent yet
-    batch_id UUID, -- Group messages from same upload batch
+    batch_id TEXT, -- Group messages from same upload batch (e.g., "batch_timestamp_faktur")
     
     -- Constraints
     CONSTRAINT chk_invoice_count CHECK (invoice_count > 0),
