@@ -119,10 +119,27 @@ function handleFileSelect(input) {
 function addFiles(files) {
     const newFiles = Array.from(files).filter(f => {
         const ext = f.name.split('.').pop().toLowerCase();
-        if (ext !== 'pdf' && ext !== 'jpg' && ext !== 'jpeg' && ext !== 'png') {
-            Toast.warning(`File "${f.name}" format tidak didukung.`);
+        const validExts = ['pdf', 'jpg', 'jpeg', 'png'];
+        
+        // Extension check
+        if (!validExts.includes(ext)) {
+            Toast.error(`❌ File "${f.name}" ditolak`, `Format tidak valid: .${ext}\n\nHanya .pdf, .jpg, .jpeg, .png yang diizinkan`);
             return false;
         }
+        
+        // MIME type warning (not blocking)
+        const validMimeTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+        if (!validMimeTypes.includes(f.type) && f.type !== '') {
+            console.warn(`[Upload] File ${f.name} has unexpected MIME type: ${f.type}`);
+        }
+        
+        // Size check
+        const maxSize = 100 * 1024 * 1024; // 100MB
+        if (f.size > maxSize) {
+            Toast.error(`❌ File "${f.name}" terlalu besar`, `Ukuran: ${(f.size / 1024 / 1024).toFixed(2)}MB (maks 100MB)`);
+            return false;
+        }
+        
         // Check duplicate in current queue
         if (selectedFiles.some(sf => sf.file.name === f.name)) {
             Toast.warning(`File "${f.name}" sudah ada dalam antrian.`);

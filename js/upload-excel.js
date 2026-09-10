@@ -55,8 +55,24 @@ document.addEventListener('DOMContentLoaded', () => {
 function handleFileSelected(file) {
     console.log('[Upload] File selected:', file.name);
     
-    if (!file.name.toLowerCase().endsWith('.xls') && !file.name.toLowerCase().endsWith('.xlsx')) {
-        Toast.error('Hanya file Excel (.xls, .xlsx) yang diizinkan', '❌ File Type Error');
+    // Strict validation: Extension check
+    const ext = file.name.toLowerCase().split('.').pop();
+    if (ext !== 'xlsx') {
+        Toast.error('❌ Format file tidak valid', 'Hanya file Microsoft Excel Worksheet (.xlsx) yang diizinkan.\n\nFile lain seperti .xls, .csv, atau format lain tidak didukung.');
+        return;
+    }
+
+    // MIME type check
+    const validMimeTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+    if (!validMimeTypes.includes(file.type)) {
+        Toast.warning('⚠️ MIME type tidak standard', `File type: ${file.type || 'unknown'}\n\nSistem masih akan mencoba memproses file ini.`);
+        // Continue anyway - MIME type might not be set correctly on some systems
+    }
+
+    // Size check
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+        Toast.error('❌ File terlalu besar', `Ukuran file: ${(file.size / 1024 / 1024).toFixed(2)}MB\n\nMaksimal ukuran file: 10MB`);
         return;
     }
 

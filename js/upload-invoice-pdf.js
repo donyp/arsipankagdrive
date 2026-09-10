@@ -262,15 +262,57 @@ document.addEventListener('DOMContentLoaded', () => {
 function handleFilesSelected(files) {
     console.log('[PDF Bulk] Files selected:', files.length);
     
-    // Filter only PDF files
-    selectedFiles = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
+    // Strict PDF validation
+    const pdfFiles = [];
+    const rejectedFiles = [];
     
-    if (selectedFiles.length === 0) {
-        showNotification('❌ Hanya file PDF yang diizinkan', 'error');
+    Array.from(files).forEach(f => {
+        const ext = f.name.toLowerCase().split('.').pop();
+        const validMimeTypes = ['application/pdf'];
+        
+        // Extension check
+        if (ext !== 'pdf') {
+            rejectedFiles.push({
+                name: f.name,
+                reason: `Format tidak valid: .${ext} (hanya .pdf yang diizinkan)`
+            });
+            return;
+        }
+        
+        // MIME type check (warning only, not blocking)
+        if (!validMimeTypes.includes(f.type) && f.type !== '') {
+            console.warn(`[PDF Bulk] File ${f.name} has unexpected MIME type: ${f.type}`);
+        }
+        
+        // Size check
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (f.size > maxSize) {
+            rejectedFiles.push({
+                name: f.name,
+                reason: `File terlalu besar: ${(f.size / 1024 / 1024).toFixed(2)}MB (maks 10MB)`
+            });
+            return;
+        }
+        
+        pdfFiles.push(f);
+    });
+    
+    // Show rejection summary if any
+    if (rejectedFiles.length > 0) {
+        const rejectionMsg = rejectedFiles.map(r => `• ${r.name}: ${r.reason}`).join('\n');
+        showNotification(
+            `❌ ${rejectedFiles.length} file ditolak:\n\n${rejectionMsg}`,
+            'error'
+        );
+    }
+    
+    if (pdfFiles.length === 0) {
+        showNotification('❌ Tidak ada file PDF yang valid', 'error');
         return;
     }
-
-    console.log('[PDF Bulk] PDF files:', selectedFiles.length);
+    
+    selectedFiles = pdfFiles;
+    console.log(`[PDF Bulk] Valid PDF files: ${selectedFiles.length}`);
 
     // Start validation
     validateAllFiles();
