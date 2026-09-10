@@ -227,7 +227,8 @@ async function markBatchAsSent(batchId) {
             .from('whatsapp_notifications')
             .update({ sent_at: new Date().toISOString() })
             .eq('batch_id', batchId)
-            .is('sent_at', null);
+            .is('sent_at', null)
+            .select();
 
         if (error) {
             throw new Error(`Failed to mark batch as sent: ${error.message}`);
@@ -235,7 +236,7 @@ async function markBatchAsSent(batchId) {
 
         console.log('[WA-Notifications] ✅ Marked batch', batchId, 'as sent');
 
-        return data.length;
+        return data ? data.length : 0;
     } catch (error) {
         console.error('[WA-Notifications] Error marking batch as sent:', error);
         throw error;
