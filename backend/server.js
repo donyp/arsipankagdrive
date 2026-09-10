@@ -551,8 +551,22 @@ function authenticateToken(req, res, next) {
  */
 function authorizeRole(...allowedRoles) {
     return (req, res, next) => {
+        console.log('[RBAC] User role check:', {
+            userRole: req.user?.role,
+            allowedRoles,
+            hasUser: !!req.user,
+            isAllowed: allowedRoles.includes(req.user?.role)
+        });
+        
         if (!req.user || !allowedRoles.includes(req.user.role)) {
-            return res.status(403).json({ error: 'Anda tidak memiliki akses ke fitur ini.' });
+            return res.status(403).json({ 
+                error: 'Anda tidak memiliki akses ke fitur ini.',
+                debug: {
+                    userRole: req.user?.role,
+                    allowedRoles,
+                    path: req.path
+                }
+            });
         }
         next();
     };
