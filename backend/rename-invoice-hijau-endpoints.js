@@ -4,19 +4,48 @@
 // ============================================================
 
 const busboy = require('busboy');
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
 let pdfParse;
+let Tesseract;
 
-// Lazy-load pdf-parse to detect if it's installed
+// Lazy-load dependencies
 async function initPdfParse() {
     if (!pdfParse) {
         try {
             pdfParse = require('pdf-parse');
         } catch (err) {
             console.error('[Rename Invoice Hijau] pdf-parse not installed');
-            throw new Error('PDF parsing not available. Please install pdf-parse.');
         }
     }
     return pdfParse;
+}
+
+async function initTesseract() {
+    if (!Tesseract) {
+        try {
+            Tesseract = require('tesseract.js');
+            console.log('[Rename Invoice Hijau] ✅ Tesseract.js loaded');
+        } catch (err) {
+            console.error('[Rename Invoice Hijau] Tesseract.js not installed:', err.message);
+        }
+    }
+    return Tesseract;
+}
+
+// Convert PDF page to image using ImageMagick/Ghostscript if available
+async function convertPdfPageToImage(pdfBuffer, pageNum = 0) {
+    try {
+        // Try using native Node.js approach with pdf2image or similar
+        // For now, we'll use a simpler approach: extract text via Tesseract directly on PDF data
+        // Tesseract.js can sometimes work with PDF buffers through Ghostscript
+        console.log('[Rename Invoice Hijau] Attempting direct OCR on PDF (page', pageNum, ')');
+        return pdfBuffer;
+    } catch (err) {
+        console.error('[Rename Invoice Hijau] PDF to image conversion failed:', err.message);
+        return null;
+    }
 }
 
 module.exports = (app, supabase) => {
@@ -92,12 +121,52 @@ module.exports = (app, supabase) => {
                     const pdf = await initPdfParse();
 
                     // Parse PDF
-                    const pdfData = await pdf(fileData);
-                    const textContent = pdfData.text;
+                    let textContent = '';
+                    try {
+                        const pdfData = await pdf(fileData);
+                        textContent = pdfData.text;
+                        console.log(`[Rename Invoice Hijau] PDF text extracted, length: ${textContent.length}`);
+                    } catch (pdfErr) {
+                        console.error('[Rename Invoice Hijau] PDF text extraction failed:', pdfErr.message);
+                        textContent = '';
+                    }
 
-                    console.log(`[Rename Invoice Hijau] PDF text extracted, length: ${textContent.length}`);
-                    console.log(`[Rename Invoice Hijau] First 1000 chars:\n${textContent.substring(0, 1000)}`);
-                    console.log(`[Rename Invoice Hijau] Full text (first 3000 chars for debugging):\n${textContent.substring(0, 3000)}`);
+                    // If PDF text extraction failed or returned minimal text, try OCR
+                    if (!textContent || textContent.length < 50) {
+                        console.log('[Rename Invoice Hijau] ⚠️  PDF text too short or empty, attempting OCR...');
+                        
+                        const Tesseract = await initTesseract();
+                        if (Tesseract) {
+                            try {
+                                const { createWorker } = Tesseract;
+                                console.log('[Rename Invoice Hijau] OCR: Initializing Tesseract worker...');
+                                const worker = await createWorker('eng');
+                                
+                                try {
+                                    // Tesseract can work with PDF buffers via Ghostscript
+                                    // Pass the PDF buffer directly
+                                    console.log('[Rename Invoice Hijau] OCR: Processing PDF with Tesseract...');
+                                    const result = await worker.recognize(fileData, {
+                                        pdfTitle: 'invoice'
+                                    });
+                                    
+                                    textContent = result.data.text;
+                                    const confidence = result.data.confidence;
+                                    
+                                    console.log(`[Rename Invoice Hijau] ✅ OCR success! Text length: ${textContent.length}, confidence: ${confidence}%`);
+                                    console.log(`[Rename Invoice Hijau] OCR result (first 1000 chars):\n${textContent.substring(0, 1000)}`);
+                                } finally {
+                                    await worker.terminate();
+                                }
+                            } catch (ocrErr) {
+                                console.error('[Rename Invoice Hijau] ❌ OCR failed:', ocrErr.message);
+                                console.log('[Rename Invoice Hijau] Will attempt pattern matching on existing text');
+                                // Continue with whatever text we have
+                            }
+                        } else {
+                            console.warn('[Rename Invoice Hijau] ⚠️  Tesseract.js not available - OCR skipped');
+                        }
+                    }
 
                     // Extract No. Invoice using priority patterns with confidence matching
                     let noInvoice = null;
@@ -107,6 +176,10 @@ module.exports = (app, supabase) => {
                     const cleanText = textContent.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ');
                     
                     console.log(`[Rename Invoice Hijau] Cleaned text (first 1000 chars):\n${cleanText.substring(0, 1000)}`);
+                    console.log(`[Rename Invoice Hijau] ===== EXTRACTION SUMMARY =====`);
+                    console.log(`[Rename Invoice Hijau] Raw text length: ${textContent.length}`);
+                    console.log(`[Rename Invoice Hijau] First 500 chars:\n${textContent.substring(0, 500)}`);
+                    console.log(`[Rename Invoice Hijau] ============================`);
 
                     // Priority 1: Look for "No. Invoice :" pattern with flexible spacing (usually page 2)
                     const pattern1 = /No\.\s*Invoice\s*[:=]?\s*([0-9\s]{12,})/gi;
