@@ -3049,10 +3049,10 @@ function formatCurrency(value) {
     return 'Rp ' + parseInt(value).toLocaleString('id-ID');
 }
 
-// Download individual invoice files
+// Download individual invoice files with detailed progress stages
 async function downloadInvoiceFile(btn, faktur, fileType) {
     try {
-        // Define colors for each file type
+        // Define colors and stages for each file type
         const fileTypeColors = {
             'invoice': { bg: '#3498db', icon: '📄', text: 'Invoice' },
             'bukti_bayar': { bg: '#27ae60', icon: '💰', text: 'Bukti Bayar' },
@@ -3061,7 +3061,69 @@ async function downloadInvoiceFile(btn, faktur, fileType) {
         
         const colorConfig = fileTypeColors[fileType] || { bg: '#95a5a6', icon: '📁', text: 'File' };
         
-        // Show colorful popup loading with animated spinner
+        const stages = [
+            { num: 1, text: 'Mencari file...', percent: 0 },
+            { num: 2, text: 'Mengambil file dari server...', percent: 30 },
+            { num: 3, text: 'Memproses file...', percent: 60 },
+            { num: 4, text: 'Mendownload file...', percent: 90 },
+            { num: 5, text: 'Selesai!', percent: 100 }
+        ];
+        
+        let currentStage = 0;
+        
+        // Helper function to update progress display
+        const updateProgress = (stageIndex) => {
+            if (stageIndex >= stages.length) return;
+            
+            const stage = stages[stageIndex];
+            const progressPercent = stage.percent;
+            
+            // Update SweetAlert with new progress
+            Swal.update({
+                html: `
+                    <div style="margin: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                        <div style="position: relative; width: 60px; height: 60px;">
+                            <i class="fas fa-spinner fa-spin" style="
+                                font-size: 3rem;
+                                color: rgba(255,255,255,0.8);
+                                animation: spin 2s linear infinite;
+                            "></i>
+                        </div>
+                        <div style="
+                            width: 200px;
+                            height: 8px;
+                            background: rgba(255,255,255,0.3);
+                            border-radius: 4px;
+                            overflow: hidden;
+                        ">
+                            <div style="
+                                width: ${progressPercent}%;
+                                height: 100%;
+                                background: linear-gradient(90deg, rgba(255,255,255,0.8), rgba(255,255,255,1), rgba(255,255,255,0.8));
+                                border-radius: 4px;
+                                transition: width 0.3s ease;
+                            "></div>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 5px 0; font-size: 16px; font-weight: 600;">
+                                ${stage.num}️⃣ ${stage.text}
+                            </p>
+                            <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">
+                                ${progressPercent}%
+                            </p>
+                        </div>
+                    </div>
+                    <style>
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    </style>
+                `
+            });
+        };
+        
+        // Show initial progress popup
         Swal.fire({
             title: `${colorConfig.icon} Mengunduh ${colorConfig.text}`,
             html: `
@@ -3074,30 +3136,33 @@ async function downloadInvoiceFile(btn, faktur, fileType) {
                         "></i>
                     </div>
                     <div style="
-                        width: 120px;
-                        height: 4px;
+                        width: 200px;
+                        height: 8px;
                         background: rgba(255,255,255,0.3);
-                        border-radius: 2px;
+                        border-radius: 4px;
                         overflow: hidden;
                     ">
                         <div style="
-                            width: 100%;
+                            width: 0%;
                             height: 100%;
-                            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
-                            animation: slide 1.5s infinite;
+                            background: linear-gradient(90deg, rgba(255,255,255,0.8), rgba(255,255,255,1), rgba(255,255,255,0.8));
+                            border-radius: 4px;
+                            transition: width 0.3s ease;
                         "></div>
                     </div>
+                    <div style="text-align: center;">
+                        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 5px 0; font-size: 16px; font-weight: 600;">
+                            1️⃣ Mencari file...
+                        </p>
+                        <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">
+                            0%
+                        </p>
+                    </div>
                 </div>
-                <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">Mohon tunggu...</p>
                 <style>
                     @keyframes spin {
                         0% { transform: rotate(0deg); }
                         100% { transform: rotate(360deg); }
-                    }
-                    @keyframes slide {
-                        0% { transform: translateX(-100%); }
-                        50% { transform: translateX(100%); }
-                        100% { transform: translateX(100%); }
                     }
                 </style>
             `,
@@ -3109,6 +3174,15 @@ async function downloadInvoiceFile(btn, faktur, fileType) {
                 popup: 'colored-download-popup'
             }
         });
+        
+        // Progress stage 1: Mencari file (0%)
+        currentStage = 0;
+        updateProgress(currentStage);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Progress stage 2: Mengambil file dari server (30%)
+        currentStage = 1;
+        updateProgress(currentStage);
         
         const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
         
@@ -3124,7 +3198,17 @@ async function downloadInvoiceFile(btn, faktur, fileType) {
             throw new Error(error.error || 'Download failed');
         }
         
+        // Progress stage 3: Memproses file (60%)
+        currentStage = 2;
+        updateProgress(currentStage);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
         const blob = await response.blob();
+        
+        // Progress stage 4: Mendownload file (90%)
+        currentStage = 3;
+        updateProgress(currentStage);
+        
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -3143,7 +3227,12 @@ async function downloadInvoiceFile(btn, faktur, fileType) {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
         
+        // Progress stage 5: Selesai! (100%)
+        currentStage = 4;
+        updateProgress(currentStage);
+        
         // Close loading and show success
+        await new Promise(resolve => setTimeout(resolve, 500));
         Swal.fire({
             icon: 'success',
             title: 'Berhasil!',
@@ -3162,10 +3251,72 @@ async function downloadInvoiceFile(btn, faktur, fileType) {
     }
 }
 
-// Combine PDFs into single file
+// Combine PDFs into single file with detailed progress stages
 async function combinePDF(faktur) {
     try {
-        // Show colorful popup loading with animated spinner
+        const stages = [
+            { num: 1, text: 'Mencari file...', percent: 0 },
+            { num: 2, text: 'Mengambil file dari server...', percent: 30 },
+            { num: 3, text: 'Menggabungkan PDF...', percent: 60 },
+            { num: 4, text: 'Memproses hasil gabungan...', percent: 90 },
+            { num: 5, text: 'Selesai!', percent: 100 }
+        ];
+        
+        let currentStage = 0;
+        
+        // Helper function to update progress display
+        const updateProgress = (stageIndex) => {
+            if (stageIndex >= stages.length) return;
+            
+            const stage = stages[stageIndex];
+            const progressPercent = stage.percent;
+            
+            // Update SweetAlert with new progress
+            Swal.update({
+                html: `
+                    <div style="margin: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                        <div style="position: relative; width: 60px; height: 60px;">
+                            <i class="fas fa-spinner fa-spin" style="
+                                font-size: 3rem;
+                                color: rgba(255,255,255,0.8);
+                                animation: spin 2s linear infinite;
+                            "></i>
+                        </div>
+                        <div style="
+                            width: 200px;
+                            height: 8px;
+                            background: rgba(255,255,255,0.3);
+                            border-radius: 4px;
+                            overflow: hidden;
+                        ">
+                            <div style="
+                                width: ${progressPercent}%;
+                                height: 100%;
+                                background: linear-gradient(90deg, rgba(255,255,255,0.8), rgba(255,255,255,1), rgba(255,255,255,0.8));
+                                border-radius: 4px;
+                                transition: width 0.3s ease;
+                            "></div>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 5px 0; font-size: 16px; font-weight: 600;">
+                                ${stage.num}️⃣ ${stage.text}
+                            </p>
+                            <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">
+                                ${progressPercent}%
+                            </p>
+                        </div>
+                    </div>
+                    <style>
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    </style>
+                `
+            });
+        };
+        
+        // Show initial progress popup
         Swal.fire({
             title: '📄 Menggabungkan PDF',
             html: `
@@ -3178,30 +3329,33 @@ async function combinePDF(faktur) {
                         "></i>
                     </div>
                     <div style="
-                        width: 120px;
-                        height: 4px;
+                        width: 200px;
+                        height: 8px;
                         background: rgba(255,255,255,0.3);
-                        border-radius: 2px;
+                        border-radius: 4px;
                         overflow: hidden;
                     ">
                         <div style="
-                            width: 100%;
+                            width: 0%;
                             height: 100%;
-                            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
-                            animation: slide 1.5s infinite;
+                            background: linear-gradient(90deg, rgba(255,255,255,0.8), rgba(255,255,255,1), rgba(255,255,255,0.8));
+                            border-radius: 4px;
+                            transition: width 0.3s ease;
                         "></div>
                     </div>
+                    <div style="text-align: center;">
+                        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 5px 0; font-size: 16px; font-weight: 600;">
+                            1️⃣ Mencari file...
+                        </p>
+                        <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">
+                            0%
+                        </p>
+                    </div>
                 </div>
-                <p style="color: rgba(255,255,255,0.9); margin-top: 15px; font-size: 14px;">Mohon tunggu...</p>
                 <style>
                     @keyframes spin {
                         0% { transform: rotate(0deg); }
                         100% { transform: rotate(360deg); }
-                    }
-                    @keyframes slide {
-                        0% { transform: translateX(-100%); }
-                        50% { transform: translateX(100%); }
-                        100% { transform: translateX(100%); }
                     }
                 </style>
             `,
@@ -3214,6 +3368,15 @@ async function combinePDF(faktur) {
             }
         });
 
+        // Progress stage 1: Mencari file (0%)
+        currentStage = 0;
+        updateProgress(currentStage);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Progress stage 2: Mengambil file dari server (30%)
+        currentStage = 1;
+        updateProgress(currentStage);
+
         const token = localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
         const response = await fetch(`${CONFIG.API_URL}/api/invoice/combine-pdf/${faktur}`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -3225,7 +3388,17 @@ async function combinePDF(faktur) {
             throw new Error(error.error || 'Combine failed');
         }
         
+        // Progress stage 3: Menggabungkan PDF (60%)
+        currentStage = 2;
+        updateProgress(currentStage);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
         const blob = await response.blob();
+        
+        // Progress stage 4: Memproses hasil gabungan (90%)
+        currentStage = 3;
+        updateProgress(currentStage);
+        
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -3235,7 +3408,12 @@ async function combinePDF(faktur) {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
 
+        // Progress stage 5: Selesai! (100%)
+        currentStage = 4;
+        updateProgress(currentStage);
+
         // Show success
+        await new Promise(resolve => setTimeout(resolve, 500));
         Swal.fire({
             icon: 'success',
             title: 'Berhasil!',
