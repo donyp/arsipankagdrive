@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Invoice - ARSIP ANKA</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        html, body { zoom: 0.8; }
+        .container { max-width: 900px; margin: 40px auto; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #3498db; box-shadow: 0 0 5px rgba(52, 152, 219, 0.3); }
+        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 6px; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 6px; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 15px; border-radius: 6px; }
+        .whatsapp-panel { background: #ecf0f1; border-left: 4px solid #25d366; padding: 20px; border-radius: 6px; margin-top: 20px; }
+        .message-preview { background: white; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 3px solid #25d366; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+        .copy-btn { background: #25d366; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .copy-btn:hover { background: #1fa857; }
+    </style>
+</head>
+<body style="background: #f5f7fa;">
+    <div id="sidebar"></div>
+
+    <div class="container" style="margin-left: 300px;">
+        <h1>📄 Upload Invoice</h1>
+        <p style="color: #7f8c8d;">Upload invoice individual dan otomatis generate pesan WhatsApp untuk zona</p>
+
+        <div class="card">
+            <form id="invoiceForm">
+                <div class="form-group">
+                    <label for="zona">Pilih Zona *</label>
+                    <select id="zona" required onchange="loadZonaData()">
+                        <option value="">-- Pilih Zona --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="tipe">Tipe Invoice (PPN/PPH) *</label>
+                    <select id="tipe" required>
+                        <option value="">-- Pilih Tipe --</option>
+                        <option value="PPN">PPN</option>
+                        <option value="PPH">PPH</option>
+                        <option value="PPN23">PPN 23%</option>
+                        <option value="PPH21">PPH 21%</option>
+                        <option value="PPH22">PPH 22%</option>
+                        <option value="PPH23">PPH 23%</option>
+                        <option value="PPH25">PPH 25%</option>
+                        <option value="PPH26">PPH 26%</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="konsumen">Nama Konsumen/Customer *</label>
+                    <input type="text" id="konsumen" placeholder="Contoh: PT ABC, CILEDUG, dll" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="nominal">Nominal (Rp) *</label>
+                    <input type="number" id="nominal" placeholder="Contoh: 2930223" required min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="fileInput">Pilih File Invoice (PDF) *</label>
+                    <input type="file" id="fileInput" accept=".pdf" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="uploadBtn">
+                    <i class="fas fa-upload"></i> Upload Invoice
+                </button>
+            </form>
+
+            <div id="message"></div>
+            <div id="whatsappContainer"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/sidebar.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+
+    <script>
+        let zonas = [];
+
+        // Load zonas on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadZonas();
+            document.getElementById('invoiceForm').addEventListener('submit', handleUpload);
+        });
+
+        /**
+         * Load all zonas
+         */
+        async function loadZonas() {
+            try {
+                const { data, error } = await window.supabase
+                    .from('zonas')
+                    .select('id, nama')
+                    .order('nama');
+
+                if (error) throw error;
+
+                zonas = data || [];
+                const zonaSelect = document.getElementById('zona');
+                zonaSelect.innerHTML = '<option value="">-- Pilih Zona --</option>' +
+                    zonas.map(z => `<option value="${z.id}">${z.nama}</option>`).join('');
+
+            } catch (error) {
+                console.error('Error loading zonas:', error);
+                showMessage('Gagal memuat data zona', 'error');
+            }
+        }
+
+        /**
+         * Load zona-specific data (if needed)
+         */
+        function loadZonaData() {
+            const zonaId = document.getElementById('zona').value;
+            if (zonaId) {
+                const zona = zonas.find(z => z.id == zonaId);
+                console.log('Selected zona:', zona);
+            }
+        }
+
+        /**
+         * Handle invoice upload
+         */
+        async function handleUpload(e) {
+            e.preventDefault();
+
+            const zona_id = parseInt(document.getElementById('zona').value);
+            const tipe = document.getElementById('tipe').value;
+            const konsumen = document.getElementById('konsumen').value;
+            const nominal = parseInt(document.getElementById('nominal').value);
+            const file = document.getElementById('fileInput').files[0];
+
+            if (!zona_id || !tipe || !konsumen || !nominal || !file) {
+                showMessage('Semua field harus diisi', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('uploadBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Loading...';
+
+            try {
+                // 1. Upload file to storage
+                const fileName = `invoice_${Date.now()}_${file.name}`;
+                const { data: uploadData, error: uploadError } = await window.supabase
+                    .storage
+                    .from('invoices')
+                    .upload(`zone-${zona_id}/${fileName}`, file);
+
+                if (uploadError) throw uploadError;
+
+                // 2. Generate WhatsApp message
+                const invoiceData = [{
+                    zona_id: zona_id,
+                    tipe: tipe,
+                    konsumen: konsumen,
+                    nominal: nominal
+                }];
+
+                const batchId = 'batch_' + Date.now();
+                const token = API.getToken() || localStorage.getItem('jwt_token');
+
+                console.log('[Upload] Calling API with token:', !!token);
+                console.log('[Upload] Invoice data:', invoiceData);
+                console.log('[Upload] Batch ID:', batchId);
+
+                const response = await fetch('/api/whatsapp/generate-invoice-messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        invoices: invoiceData,
+                        batchId: batchId
+                    })
+                });
+
+                console.log('[Upload] API response status:', response.status);
+                const result = await response.json();
+                console.log('[Upload] API response:', result);
+
+                if (response.ok && result.success) {
+                    showMessage('✅ Invoice berhasil diupload! Pesan WhatsApp sudah digenerate.', 'success');
+                    displayWhatsappMessages(result.notifications);
+                    document.getElementById('invoiceForm').reset();
+                } else {
+                    throw new Error(result.error || 'Gagal generate pesan WhatsApp');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '<i class="fas fa-upload"></i> Upload Invoice';
+            }
+        }
+
+        /**
+         * Display WhatsApp messages
+         */
+        function displayWhatsappMessages(notifications) {
+            const container = document.getElementById('whatsappContainer');
+
+            const html = Object.entries(notifications).map(([zonaName, data]) => `
+                <div class="whatsapp-panel">
+                    <h3 style="margin-top: 0; color: #25d366;">
+                        <i class="fab fa-whatsapp"></i> Pesan WhatsApp Zona ${zonaName}
+                    </h3>
+                    <div class="message-preview">${escapeHtml(data.message)}</div>
+                    <button class="copy-btn" onclick="copyMessage('${escapeJsString(data.message)}', '${zonaName}')">
+                        📋 Salin Pesan
+                    </button>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+
+        /**
+         * Copy message to clipboard
+         */
+        async function copyMessage(message, zonaName) {
+            try {
+                await navigator.clipboard.writeText(message);
+                if (typeof Toast !== 'undefined') {
+                    Toast.success(`✅ Pesan zona ${zonaName} sudah disalin!`);
+                }
+            } catch (error) {
+                console.error('Copy failed:', error);
+                if (typeof Toast !== 'undefined') {
+                    Toast.error('Gagal menyalin pesan');
+                }
+            }
+        }
+
+        /**
+         * Show message
+         */
+        function showMessage(msg, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}">${msg}</div>`;
+        }
+
+        /**
+         * Escape HTML
+         */
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        /**
+         * Escape for JS string
+         */
+        function escapeJsString(str) {
+            return str.replace(/\\/g, '\\\\')
+                      .replace(/'/g, "\\'")
+                      .replace(/"/g, '\\"')
+                      .replace(/\n/g, '\\n')
+                      .replace(/\r/g, '\\r');
+        }
+    </script>
+</body>
+</html>

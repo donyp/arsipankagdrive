@@ -3,267 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pesan WhatsApp - ARSIP ANKA</title>
+    <title>WhatsApp Messages - ARSIP ANKA</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        html, body {
-            zoom: 0.8;
-        }
-        
-        .container {
-            padding: 40px;
-            max-width: 1400px;
-            margin: 0 auto;
-            margin-left: 280px;
-        }
-
-        .header {
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .header p {
-            color: #7f8c8d;
-            font-size: 14px;
-        }
-
-        .filter-bar {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-        }
-
-        .filter-bar select, .filter-bar button {
-            padding: 10px 15px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            background: white;
-            transition: all 0.3s;
-        }
-
-        .filter-bar select:hover, .filter-bar button:hover {
-            border-color: #25d366;
-            background: #f0f9ff;
-        }
-
-        .messages-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-        }
-
-        .message-card {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 15px;
-            transition: all 0.3s;
-            position: relative;
-        }
-
-        .message-card:hover {
-            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.15);
-            border-color: #25d366;
-        }
-
-        .message-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 12px;
-            border-bottom: 1px solid #ecf0f1;
-            padding-bottom: 10px;
-        }
-
-        .zona-name {
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 14px;
-        }
-
-        .zona-badge {
-            background: #25d366;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .invoice-count {
-            background: #ecf0f1;
-            color: #2c3e50;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .message-content {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 12px;
-            font-size: 12px;
-            line-height: 1.5;
-            white-space: pre-wrap;
-            word-break: break-word;
-            max-height: 200px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            border-left: 3px solid #25d366;
-        }
-
-        .message-footer {
-            display: flex;
-            gap: 8px;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 11px;
-            color: #7f8c8d;
-            padding-top: 10px;
-            border-top: 1px solid #ecf0f1;
-        }
-
-        .timestamp {
-            font-size: 11px;
-            color: #95a5a6;
-        }
-
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: 600;
-            font-size: 11px;
-        }
-
-        .status-pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .status-sent {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .btn-copy {
-            flex: 1;
-            padding: 8px;
-            background: #25d366;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .btn-copy:hover {
-            background: #1fa857;
-        }
-
-        .btn-sent {
-            flex: 1;
-            padding: 8px;
-            background: #34495e;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .btn-sent:hover {
-            background: #2c3e50;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #7f8c8d;
-        }
-
-        .empty-state i {
-            font-size: 48px;
-            color: #bdc3c7;
-            margin-bottom: 15px;
-        }
-
-        .empty-state p {
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-
-        .empty-state .hint {
-            font-size: 12px;
-            color: #95a5a6;
-        }
+        html, body { zoom: 0.8; }
+        .container { max-width: 1200px; margin: 40px auto; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .message-group { background: #f8f9fa; border-left: 4px solid #25d366; padding: 20px; border-radius: 6px; margin-bottom: 20px; }
+        .message-group h3 { margin-top: 0; color: #25d366; }
+        .message-preview { background: white; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 3px solid #25d366; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; font-family: monospace; }
+        .badge { display: inline-block; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+        .badge-pending { background: #fff3cd; color: #856404; }
+        .badge-sent { background: #d4edda; color: #155724; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s; margin-right: 10px; }
+        .btn-copy { background: #25d366; color: white; }
+        .btn-copy:hover { background: #1fa857; }
+        .btn-mark-sent { background: #3498db; color: white; }
+        .btn-mark-sent:hover { background: #2980b9; }
+        .no-messages { text-align: center; padding: 40px; color: #7f8c8d; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .loading { text-align: center; padding: 40px; }
+        .spinner { border: 4px solid #e0e0e0; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .filter-tabs { margin-bottom: 20px; }
+        .filter-tabs button { padding: 10px 20px; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 4px; margin-right: 10px; font-weight: 600; }
+        .filter-tabs button.active { background: #3498db; color: white; border-color: #3498db; }
     </style>
 </head>
 <body style="background: #f5f7fa;">
-    <!-- Sidebar -->
     <div id="sidebar"></div>
 
-    <!-- Main Content -->
-    <div class="container">
-        <div class="header">
-            <h1>
-                <i class="fab fa-whatsapp" style="color: #25d366; font-size: 28px;"></i>
-                Pesan WhatsApp
-            </h1>
-            <p>📱 Kelola dan kirim pesan WhatsApp zona - Pendaftar Invoice & Notifikasi</p>
+    <div class="container" style="margin-left: 300px;">
+        <h1>💬 WhatsApp Messages</h1>
+        <p style="color: #7f8c8d;">Pesan WhatsApp yang sudah digenerate - siap untuk di copy ke zona group</p>
+
+        <div class="card">
+            <div class="info">
+                <i class="fas fa-info-circle"></i> 
+                Klik tombol "Salin Pesan" untuk copy ke clipboard, lalu paste ke WhatsApp grup zona masing-masing.
+                Setelah dikirim, klik "Mark Sent" untuk menandai sebagai sudah dikirim.
+            </div>
+
+            <div class="filter-tabs">
+                <button class="filter-btn active" data-filter="pending">
+                    <i class="fas fa-hourglass-end"></i> Pending (<span id="pendingCount">0</span>)
+                </button>
+                <button class="filter-btn" data-filter="sent">
+                    <i class="fas fa-check-circle"></i> Sent (<span id="sentCount">0</span>)
+                </button>
+                <button class="filter-btn" data-filter="all">
+                    <i class="fas fa-list"></i> All (<span id="allCount">0</span>)
+                </button>
+            </div>
+
+            <div id="messagesContainer" class="loading">
+                <div class="spinner"></div>
+                <p>Loading messages...</p>
+            </div>
         </div>
-
-        <!-- Filter Bar -->
-        <div class="filter-bar">
-            <select id="filterStatus" onchange="applyFilters()">
-                <option value="">Semua Status</option>
-                <option value="pending">⏳ Belum Dikirim</option>
-                <option value="sent">✅ Sudah Dikirim</option>
-            </select>
-
-            <select id="filterType" onchange="applyFilters()">
-                <option value="">Semua Tipe</option>
-                <option value="invoice_upload">📄 Invoice Upload</option>
-                <option value="excel_upload">📊 Excel Upload</option>
-            </select>
-
-            <button onclick="loadPendingMessages()" style="background: #25d366; color: white; border: 1px solid #25d366;">
-                <i class="fas fa-sync-alt"></i> Refresh
-            </button>
-        </div>
-
-        <!-- Messages Grid -->
-        <div id="messagesContainer" class="messages-grid"></div>
     </div>
 
-    <!-- Sidebar Script -->
-    <script src="js/sidebar.js"></script>
-    
     <!-- Scripts -->
+    <script src="js/sidebar.js"></script>
     <script src="js/config.js"></script>
     <script src="js/supabase.js"></script>
     <script src="js/auth.js"></script>
@@ -271,161 +73,132 @@
 
     <script>
         let allMessages = [];
+        let currentFilter = 'pending';
 
-        // Load messages on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadPendingMessages();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadMessages();
+            
+            // Add filter event listeners
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    renderMessages();
+                });
+            });
         });
 
         /**
          * Load all pending WhatsApp messages
          */
-        async function loadPendingMessages() {
+        async function loadMessages() {
             try {
                 const token = API.getToken() || localStorage.getItem('jwt_token');
                 
-                if (!token) {
-                    showEmptyState('Silakan login terlebih dahulu');
-                    return;
+                console.log('[WA-Dashboard] Loading messages...');
+                
+                const response = await fetch('/api/whatsapp/pending-invoice-messages', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                console.log('[WA-Dashboard] Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
                 }
 
-                // Try both endpoints
-                const invoiceRes = await fetch('/api/whatsapp/pending-invoice-messages', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                }).catch(() => ({ json: async () => ({ success: false }) }));
+                const data = await response.json();
+                console.log('[WA-Dashboard] Loaded messages:', data);
 
-                const excelRes = await fetch('/api/whatsapp/pending-messages', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                }).catch(() => ({ json: async () => ({ success: false }) }));
-
-                const invoiceData = await invoiceRes.json();
-                const excelData = await excelRes.json();
-
-                allMessages = [];
-
-                // Process invoice notifications
-                if (invoiceData.success && invoiceData.notifications) {
-                    Object.entries(invoiceData.notifications).forEach(([zonaName, messages]) => {
-                        messages.forEach(msg => {
-                            allMessages.push({
-                                id: msg.id,
-                                zona_name: zonaName,
-                                message: msg.message,
-                                invoice_count: msg.invoice_count,
-                                created_at: msg.created_at,
-                                sent_at: msg.sent_at,
-                                type: 'invoice_upload',
-                                batch_id: msg.batch_id
-                            });
-                        });
-                    });
+                if (data.notifications && data.notifications.raw) {
+                    allMessages = data.notifications.raw || [];
+                    console.log('[WA-Dashboard] Total messages:', allMessages.length);
+                } else {
+                    allMessages = [];
                 }
 
-                // Process excel notifications
-                if (excelData.success && excelData.notifications) {
-                    Object.entries(excelData.notifications).forEach(([zonaName, messages]) => {
-                        messages.forEach(msg => {
-                            allMessages.push({
-                                id: msg.id,
-                                zona_name: zonaName,
-                                message: msg.message,
-                                invoice_count: msg.invoice_count,
-                                created_at: msg.created_at,
-                                sent_at: msg.sent_at,
-                                type: 'excel_upload',
-                                batch_id: msg.batch_id
-                            });
-                        });
-                    });
-                }
-
-                console.log('Loaded', allMessages.length, 'messages');
-                renderMessages(allMessages);
+                updateCounts();
+                renderMessages();
 
             } catch (error) {
-                console.error('Error loading messages:', error);
-                showEmptyState('Gagal memuat pesan');
+                console.error('[WA-Dashboard] Error loading messages:', error);
+                document.getElementById('messagesContainer').innerHTML = `
+                    <div class="no-messages">
+                        <p>❌ Error loading messages: ${error.message}</p>
+                        <p style="font-size: 12px; color: #999;">Check console for details</p>
+                    </div>
+                `;
             }
         }
 
         /**
-         * Apply filters
+         * Render messages based on current filter
          */
-        function applyFilters() {
-            const statusFilter = document.getElementById('filterStatus').value;
-            const typeFilter = document.getElementById('filterType').value;
-
-            let filtered = allMessages;
-
-            if (statusFilter) {
-                filtered = filtered.filter(msg => {
-                    return statusFilter === 'pending' ? !msg.sent_at : !!msg.sent_at;
-                });
-            }
-
-            if (typeFilter) {
-                filtered = filtered.filter(msg => msg.type === typeFilter);
-            }
-
-            renderMessages(filtered);
-        }
-
-        /**
-         * Render messages to UI
-         */
-        function renderMessages(messages) {
+        function renderMessages() {
             const container = document.getElementById('messagesContainer');
 
-            if (messages.length === 0) {
-                showEmptyState('Tidak ada pesan WhatsApp yang ditemukan');
+            let filtered = allMessages;
+            if (currentFilter === 'pending') {
+                filtered = allMessages.filter(m => !m.sent_at);
+            } else if (currentFilter === 'sent') {
+                filtered = allMessages.filter(m => m.sent_at);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="no-messages">
+                        <i class="fas fa-inbox" style="font-size: 48px; color: #bdc3c7; margin-bottom: 20px; display: block;"></i>
+                        <p>Tidak ada pesan</p>
+                    </div>
+                `;
                 return;
             }
 
-            container.innerHTML = messages.map(msg => {
-                const isPending = !msg.sent_at;
-                const createdDate = new Date(msg.created_at);
-                const dateStr = createdDate.toLocaleDateString('id-ID', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-
-                const typeLabel = msg.type === 'invoice_upload' ? '📄 Invoice' : '📊 Excel';
-                const statusLabel = isPending ? '⏳ Belum Dikirim' : '✅ Sudah Dikirim';
-                const statusClass = isPending ? 'status-pending' : 'status-sent';
+            const html = filtered.map(msg => {
+                const status = msg.sent_at ? '✅ Sent' : '⏳ Pending';
+                const badge = msg.sent_at ? 'badge-sent' : 'badge-pending';
+                const zonaName = msg.zonas?.nama || `Zona ${msg.zona_id}`;
+                const createdAt = new Date(msg.created_at).toLocaleString('id-ID');
 
                 return `
-                    <div class="message-card">
-                        <div class="message-header">
+                    <div class="message-group">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
                             <div>
-                                <div class="zona-name">📍 ${msg.zona_name}</div>
-                                <div style="font-size: 11px; color: #95a5a6; margin-top: 3px;">${typeLabel}</div>
+                                <h3>
+                                    <i class="fab fa-whatsapp"></i> ${zonaName}
+                                    <span class="badge ${badge}">${status}</span>
+                                </h3>
+                                <p style="color: #7f8c8d; font-size: 12px; margin: 5px 0;">
+                                    <i class="far fa-calendar"></i> ${createdAt}
+                                    &nbsp;|&nbsp;
+                                    <i class="fas fa-file-pdf"></i> ${msg.invoice_count} invoices
+                                </p>
                             </div>
-                            <span class="invoice-count">${msg.invoice_count} invoice${msg.invoice_count > 1 ? 's' : ''}</span>
+                            <div style="text-align: right;">
+                                ${!msg.sent_at ? `
+                                    <button class="btn btn-copy" onclick="copyMessage('${escapeJsString(msg.message)}', '${escapeJsString(zonaName)}')">
+                                        📋 Copy
+                                    </button>
+                                    <button class="btn btn-mark-sent" onclick="markSent('${msg.id}')">
+                                        ✔️ Mark Sent
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-copy" onclick="copyMessage('${escapeJsString(msg.message)}', '${escapeJsString(zonaName)}')">
+                                        📋 Copy
+                                    </button>
+                                `}
+                            </div>
                         </div>
-
-                        <div class="message-content">${escapeHtml(msg.message)}</div>
-
-                        <div class="message-footer">
-                            <div class="timestamp">${dateStr}</div>
-                            <span class="status-badge ${statusClass}">${statusLabel}</span>
-                        </div>
-
-                        <div class="action-buttons">
-                            <button class="btn-copy" onclick="copyMessage('${escapeJsString(msg.message)}', '${msg.zona_name}')">
-                                📋 Salin
-                            </button>
-                            ${isPending ? `
-                                <button class="btn-sent" onclick="markAsSent('${msg.id}', '${msg.type}')">
-                                    ✅ Tandai Terkirim
-                                </button>
-                            ` : ''}
-                        </div>
+                        <div class="message-preview">${escapeHtml(msg.message)}</div>
                     </div>
                 `;
             }).join('');
+
+            container.innerHTML = html;
         }
 
         /**
@@ -434,29 +207,27 @@
         async function copyMessage(message, zonaName) {
             try {
                 await navigator.clipboard.writeText(message);
-                
                 if (typeof Toast !== 'undefined') {
                     Toast.success(`✅ Pesan zona ${zonaName} sudah disalin!`);
+                } else {
+                    alert('✅ Pesan sudah disalin ke clipboard!');
                 }
             } catch (error) {
                 console.error('Copy failed:', error);
                 if (typeof Toast !== 'undefined') {
-                    Toast.error('Gagal menyalin pesan');
+                    Toast.error('❌ Gagal menyalin pesan');
                 }
             }
         }
 
         /**
-         * Mark message as sent
+         * Mark single message as sent
          */
-        async function markAsSent(notificationId, type) {
+        async function markSent(notificationId) {
             try {
                 const token = API.getToken() || localStorage.getItem('jwt_token');
-                const endpoint = type === 'invoice_upload' 
-                    ? '/api/whatsapp/mark-invoice-sent'
-                    : '/api/whatsapp/mark-sent';
-
-                const response = await fetch(endpoint, {
+                
+                const response = await fetch('/api/whatsapp/mark-invoice-sent', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -465,41 +236,37 @@
                     body: JSON.stringify({ notificationId })
                 });
 
-                const result = await response.json();
-
-                if (result.success) {
+                if (response.ok) {
                     if (typeof Toast !== 'undefined') {
-                        Toast.success('✅ Pesan ditandai sudah dikirim!');
+                        Toast.success('✅ Pesan marked as sent');
                     }
-                    loadPendingMessages(); // Reload
+                    await loadMessages(); // Reload
                 } else {
-                    if (typeof Toast !== 'undefined') {
-                        Toast.error(result.error || 'Gagal menandai pesan');
-                    }
+                    throw new Error('Failed to mark as sent');
                 }
             } catch (error) {
-                console.error('Error marking as sent:', error);
+                console.error('Error:', error);
                 if (typeof Toast !== 'undefined') {
-                    Toast.error('Terjadi kesalahan');
+                    Toast.error('Error marking as sent');
                 }
             }
         }
 
         /**
-         * Show empty state
+         * Update message counts
          */
-        function showEmptyState(message) {
-            document.getElementById('messagesContainer').innerHTML = `
-                <div class="empty-state" style="grid-column: 1/-1;">
-                    <i class="fas fa-inbox"></i>
-                    <p>${message}</p>
-                    <p class="hint">Pesan akan muncul setelah Anda upload invoice atau Excel</p>
-                </div>
-            `;
+        function updateCounts() {
+            const pending = allMessages.filter(m => !m.sent_at).length;
+            const sent = allMessages.filter(m => m.sent_at).length;
+            const total = allMessages.length;
+
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('sentCount').textContent = sent;
+            document.getElementById('allCount').textContent = total;
         }
 
         /**
-         * Escape HTML special characters
+         * Escape HTML
          */
         function escapeHtml(text) {
             const map = {
@@ -513,15 +280,19 @@
         }
 
         /**
-         * Escape for JavaScript string
+         * Escape for JS string
          */
         function escapeJsString(str) {
             return str.replace(/\\/g, '\\\\')
                       .replace(/'/g, "\\'")
                       .replace(/"/g, '\\"')
                       .replace(/\n/g, '\\n')
-                      .replace(/\r/g, '\\r');
+                      .replace(/\r/g, '\\r')
+                      .replace(/\t/g, '\\t');
         }
+
+        // Auto-refresh every 10 seconds
+        setInterval(loadMessages, 10000);
     </script>
 </body>
 </html>
