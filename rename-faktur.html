@@ -21,74 +21,33 @@
         }
         
         body {
-            display: flex;
-            flex-direction: row;
-            width: 100%;
+            background: #F0F2F5;
             min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
         }
         
         #sidebar {
-            flex-shrink: 0;
-            width: 320px;
-            position: fixed;
-            left: 0;
-            top: 0;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 40;
-            background: white;
-            border-right: 1px solid #e5e7eb;
+            display: none;
+        }
+        
+        #mobile-overlay {
+            display: none;
         }
         
         #main-content {
-            flex: 1;
-            margin-left: 320px;
-            overflow-x: hidden;
-            min-width: 0;
-            width: calc(100% - 320px);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: 100vh;
         }
         
-        @media (max-width: 1024px) {
-            #sidebar {
-                position: fixed;
-                width: 256px;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                background: white;
-            }
-            
-            #sidebar.open {
-                transform: translateX(0);
-            }
-            
-            #main-content {
-                margin-left: 0;
-                width: 100%;
-            }
+        header {
+            display: none;
         }
     </style>
 </head>
 <body class="bg-[#F0F2F5] min-h-screen text-gray-800 font-sans">
-    <div id="mobile-overlay" class="mobile-overlay" onclick="toggleSidebar()"></div>
-    <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-40"></aside>
-
-    <main id="main-content" class="min-h-screen transition-all duration-300 ml-80">
-        <!-- Top Bar -->
-        <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg text-gray-400 hover:bg-gray-100">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-                    <div>
-                        <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Rename Faktur Pajak</h2>
-                    </div>
-                </div>
-            </div>
-        </header>
-
+    <main id="main-content" class="min-h-screen">
         <!-- Main Content -->
         <div class="p-6 space-y-6">
             <!-- Upload Area -->
@@ -198,10 +157,7 @@
         </div>
     </div>
 
-    <!-- Rename History Modal - REMOVED, using section instead -->
-
     <!-- Scripts -->
-    <script src="js/sidebar.js?v=ULTRACLEAN_2026"></script>
     <script src="js/config.js"></script>
     <script src="js/supabase.js"></script>
     <script src="js/auth.js"></script>
@@ -214,13 +170,6 @@
             document.documentElement.style.opacity = '1';
             document.documentElement.classList.remove('auth-loading');
         });
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobile-overlay');
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('active');
-        }
 
         // Fallback Toast if utils.js doesn't load
         if (typeof Toast === 'undefined') {
