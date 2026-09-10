@@ -160,7 +160,11 @@
     }
 
     function inject() {
-        const sidebar = document.getElementById('sidebar');
+        // Support both #sidebar and #sidebar-container
+        let sidebar = document.getElementById('sidebar');
+        if (!sidebar) {
+            sidebar = document.getElementById('sidebar-container');
+        }
         if (!sidebar) return;
 
         // Set sidebar styles properly for fixed positioning
