@@ -309,10 +309,43 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
     });
     
     // =====================================================================
-    // DELETE /api/faktur-pajak/rename-history/:history_id
-    // Manually delete a specific rename history record (Admin only)
+    // POST /api/faktur-pajak/cleanup-old-records
+    // Manually trigger cleanup of records older than 1 day (Admin only)
+    // In production, call this via cron job or scheduled task
     // =====================================================================
-    app.delete('/api/faktur-pajak/rename-history/:history_id', createAuth(['super_admin']), async (req, res) => {
+    app.post('/api/faktur-pajak/cleanup-old-records', createAuth(['super_admin']), async (req, res) => {
+        try {
+            console.log('[FakturPajak] Triggering cleanup of old rename records...');
+            
+            // Call cleanup function
+            const { data, error } = await supabase
+                .rpc('cleanup_faktur_pajak_rename_history');
+            
+            if (error) {
+                console.error('[FakturPajak] Error during cleanup:', error);
+                return res.status(500).json({
+                    error: 'Cleanup failed',
+                    details: error.message
+                });
+            }
+            
+            console.log('[FakturPajak] ✅ Cleanup completed successfully');
+            
+            res.json({
+                success: true,
+                message: 'Cleanup of old records completed',
+                timestamp: new Date().toISOString()
+            });
+            
+        } catch (error) {
+            console.error('[FakturPajak] Endpoint error:', error);
+            res.status(500).json({
+                error: 'Server error',
+                details: error.message
+            });
+        }
+    });
+    
         try {
             const { history_id } = req.params;
             

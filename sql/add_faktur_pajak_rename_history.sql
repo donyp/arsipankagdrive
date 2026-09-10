@@ -46,55 +46,62 @@ CREATE TABLE IF NOT EXISTS faktur_pajak_rename_history (
 );
 
 -- =====================================================================
--- CLEANUP FUNCTION - Auto delete records older than 1 day
+-- CLEANUP FUNCTION - Auto delete records older than 1 day (PostgreSQL)
 -- =====================================================================
+-- Note: For production use, implement cleanup via application cron job
+-- or use pg_cron extension if available on your PostgreSQL instance
 
-CREATE EVENT IF NOT EXISTS cleanup_faktur_pajak_rename_history
-ON SCHEDULE EVERY 1 HOUR
-DO
+CREATE OR REPLACE FUNCTION cleanup_faktur_pajak_rename_history()
+RETURNS void AS $$
+BEGIN
   DELETE FROM faktur_pajak_rename_history
   WHERE renamed_at < NOW() - INTERVAL '1 day';
+  
+  RAISE NOTICE 'Cleanup complete: Deleted old faktur pajak rename history records';
+END;
+$$ LANGUAGE plpgsql;
+
+-- For pg_cron users (if available):
+-- SELECT cron.schedule('cleanup_faktur_pajak_rename', '0 */6 * * *', 'SELECT cleanup_faktur_pajak_rename_history()');
 
 -- =====================================================================
--- HELPER FUNCTIONS
+-- HELPER FUNCTION - Log rename history (PostgreSQL)
 -- =====================================================================
 
--- Function to log rename history
-DELIMITER $$
-
-CREATE FUNCTION IF NOT EXISTS log_faktur_pajak_rename(
+CREATE OR REPLACE FUNCTION log_faktur_pajak_rename(
   p_invoice_id BIGINT,
-  p_faktur VARCHAR(100),
-  p_old_filename VARCHAR(500),
-  p_new_filename VARCHAR(500),
-  p_old_path VARCHAR(1000),
-  p_new_path VARCHAR(1000),
-  p_renamed_by VARCHAR(100),
-  p_user_email VARCHAR(100),
-  p_reason VARCHAR(500),
+  p_faktur VARCHAR,
+  p_old_filename VARCHAR,
+  p_new_filename VARCHAR,
+  p_old_path VARCHAR,
+  p_new_path VARCHAR,
+  p_renamed_by VARCHAR,
+  p_user_email VARCHAR,
+  p_reason VARCHAR,
   p_zona_id INT
 )
-RETURNS BIGINT
-DETERMINISTIC
-MODIFIES SQL DATA
+RETURNS BIGINT AS $$
+DECLARE
+  new_id BIGINT;
 BEGIN
-  DECLARE new_id BIGINT;
-  
   INSERT INTO faktur_pajak_rename_history (
     invoice_id, faktur, old_filename, new_filename,
     old_path, new_path, renamed_by, user_email,
-    reason, zona_id, status
+    reason, zona_id, status, renamed_at
   ) VALUES (
     p_invoice_id, p_faktur, p_old_filename, p_new_filename,
     p_old_path, p_new_path, p_renamed_by, p_user_email,
-    p_reason, p_zona_id, 'completed'
-  );
+    p_reason, p_zona_id, 'completed', NOW()
+  ) RETURNING id INTO new_id;
   
-  SET new_id = LAST_INSERT_ID();
   RETURN new_id;
-END$$
+END;
+$$ LANGUAGE plpgsql;
 
-DELIMITER ;
+-- =====================================================================
+-- MAINTENANCE - To run cleanup manually (or via cron job)
+-- =====================================================================
+-- SELECT cleanup_faktur_pajak_rename_history();
 
 -- =====================================================================
 -- SAMPLE QUERIES
