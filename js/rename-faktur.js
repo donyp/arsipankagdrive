@@ -335,7 +335,7 @@ async function loadLatestHistory() {
         
         // Try to get history by recent updates using a wildcard approach
         // Get recent renames - use a simple prefix "tax" which all renamed files have
-        const response = await fetch('/api/faktur-pajak/rename-history/tax?limit=100', {
+        const response = await fetch('/api/faktur-pajak/rename-history/tax?limit=10', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,

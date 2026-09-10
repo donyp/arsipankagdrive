@@ -102,7 +102,7 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
     app.get('/api/faktur-pajak/rename-history/:faktur', createAuth(['super_admin', 'moderator', 'admin_zona']), async (req, res) => {
         try {
             const { faktur } = req.params;
-            const { limit = 100, offset = 0 } = req.query;
+            const { limit = 10, offset = 0 } = req.query;
             
             if (!faktur) {
                 return res.status(400).json({ error: 'Faktur parameter required' });
@@ -127,6 +127,36 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
             }
             
             console.log(`[FakturPajak] ✅ Found ${data?.length || 0} rename records for ${faktur}`);
+            
+            // Auto-cleanup: Delete records beyond the top 10 for this faktur
+            // This ensures only the 10 most recent records are kept
+            if (count > 10) {
+                console.log(`[FakturPajak] Auto-cleanup: ${count} total records, deleting older records...`);
+                
+                // Get all records beyond the top 10
+                const { data: oldRecords, error: fetchOldError } = await supabase
+                    .from('faktur_pajak_rename_history')
+                    .select('id')
+                    .eq('faktur', faktur)
+                    .order('renamed_at', { ascending: false })
+                    .range(10, 9999);  // Skip top 10, get the rest
+                
+                if (!fetchOldError && oldRecords && oldRecords.length > 0) {
+                    const oldIds = oldRecords.map(r => r.id);
+                    
+                    // Delete old records
+                    const { error: deleteError } = await supabase
+                        .from('faktur_pajak_rename_history')
+                        .delete()
+                        .in('id', oldIds);
+                    
+                    if (deleteError) {
+                        console.warn('[FakturPajak] Error during cleanup:', deleteError.message);
+                    } else {
+                        console.log(`[FakturPajak] ✅ Auto-cleanup deleted ${oldIds.length} old records`);
+                    }
+                }
+            }
             
             res.json({
                 success: true,
