@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rename Invoice Hijau - Pusat Arsip Anka</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/tailwind.generated.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .gradient-header {
@@ -76,6 +76,95 @@
         .error-card {
             border-left: 4px solid #ef4444;
             background: #fef2f2;
+        }
+
+        /* Loading Modal Styles */
+        .loading-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-modal.show {
+            display: flex;
+        }
+
+        .loading-modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideInUp 0.3s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .loading-progress {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .loading-counter {
+            color: #7f8c8d;
+            font-size: 12px;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -161,20 +250,30 @@
                         Download Semua File
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Progress Section -->
-                <div id="progressSection" class="hidden">
-                    <h2 class="text-lg font-bold text-gray-800 mb-4">Memproses...</h2>
-                    <div class="space-y-4" id="progressList"></div>
-                </div>
+    <!-- Loading Modal -->
+    <div class="loading-modal" id="loadingModal">
+        <div class="loading-modal-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Memproses File</div>
+            <div class="loading-subtext" id="loadingMessage">Sedang memproses...</div>
+            <div class="loading-progress">
+                <div class="loading-progress-bar" id="loadingProgressBar"></div>
+            </div>
+            <div class="loading-counter">
+                <span id="loadingCurrent">0</span> / <span id="loadingTotal">0</span> file
             </div>
         </div>
     </div>
 
     <!-- Scripts -->
     <script src="js/sidebar.js"></script>
-    <script src="js/auth.js"></script>
+    <script src="js/config.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
 
     <script>
         // ============================================
@@ -182,7 +281,7 @@
         // ============================================
 
         let selectedFiles = [];
-        const maxFiles = 50;
+        const maxFiles = 15;
 
         // File input handling
         document.getElementById('fileInput').addEventListener('change', handleFileSelect);
@@ -210,11 +309,16 @@
         }
 
         function handleFiles(files) {
-            selectedFiles = Array.from(files).filter(f => f.type === 'application/pdf').slice(0, maxFiles);
+            selectedFiles = Array.from(files).filter(f => f.type === 'application/pdf').slice(0, 15);
             
             if (selectedFiles.length === 0) {
                 alert('Silakan pilih file PDF');
                 return;
+            }
+
+            if (selectedFiles.length > 15) {
+                alert('Maksimal 15 file dapat diproses sekaligus');
+                selectedFiles = selectedFiles.slice(0, 15);
             }
 
             const fileListDiv = document.getElementById('selectedFiles');
@@ -250,31 +354,23 @@
 
             document.getElementById('fileList').classList.add('hidden');
             document.getElementById('resultsSection').classList.add('hidden');
-            document.getElementById('progressSection').classList.remove('hidden');
+
+            // Show loading modal
+            const loadingModal = document.getElementById('loadingModal');
+            loadingModal.classList.add('show');
+            document.getElementById('loadingTotal').textContent = selectedFiles.length;
 
             const token = API.getToken() || localStorage.getItem('jwt_token');
             const results = [];
 
             for (let i = 0; i < selectedFiles.length; i++) {
                 const file = selectedFiles[i];
-                const progressDiv = document.getElementById('progressList');
 
-                // Add progress item
-                const progressId = `progress-${i}`;
-                const progressItem = document.createElement('div');
-                progressItem.id = progressId;
-                progressItem.innerHTML = `
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="font-medium text-gray-700">${file.name}</span>
-                            <span class="text-sm text-gray-500">Memproses...</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 0%"></div>
-                        </div>
-                    </div>
-                `;
-                progressDiv.appendChild(progressItem);
+                // Update loading modal
+                document.getElementById('loadingCurrent').textContent = i + 1;
+                const progress = ((i + 1) / selectedFiles.length) * 100;
+                document.getElementById('loadingProgressBar').style.width = progress + '%';
+                document.getElementById('loadingMessage').textContent = `${file.name}...`;
 
                 try {
                     // Upload and process
@@ -299,27 +395,12 @@
                             fileData: result.fileData,
                             success: true
                         });
-
-                        // Update progress
-                        document.querySelector(`#${progressId} .progress-fill`).style.width = '100%';
-                        document.querySelector(`#${progressId} span:last-of-type`).innerHTML = `
-                            <i class="fas fa-check text-green-600"></i> Berhasil
-                        `;
                     } else {
                         results.push({
                             originalName: result.originalFileName || file.name,
                             error: result.error,
                             success: false
                         });
-
-                        document.querySelector(`#${progressId}`).innerHTML = `
-                            <div class="error-card p-4 rounded-lg">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-medium text-red-700">${file.name}</span>
-                                    <span class="text-sm text-red-600"><i class="fas fa-times"></i> ${result.error}</span>
-                                </div>
-                            </div>
-                        `;
                     }
                 } catch (err) {
                     results.push({
@@ -327,15 +408,6 @@
                         error: err.message,
                         success: false
                     });
-
-                    document.querySelector(`#${progressId}`).innerHTML = `
-                        <div class="error-card p-4 rounded-lg">
-                            <div class="flex items-center justify-between">
-                                <span class="font-medium text-red-700">${file.name}</span>
-                                <span class="text-sm text-red-600"><i class="fas fa-times"></i> ${err.message}</span>
-                            </div>
-                        </div>
-                    `;
                 }
 
                 // Add delay between requests
@@ -343,6 +415,9 @@
                     await new Promise(r => setTimeout(r, 300));
                 }
             }
+
+            // Hide loading modal
+            loadingModal.classList.remove('show');
 
             // Show results
             showResults(results);
