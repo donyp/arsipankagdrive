@@ -5780,7 +5780,7 @@ const HOST = '0.0.0.0';
 // WhatsApp Notification Endpoints
 // ============================================================
 const { createWANotifications, getPendingNotifications, markAsSent, markBatchAsSent } = require('./whatsapp-notification-handler');
-const { createInvoiceNotifications, getPendingInvoiceNotifications, markInvoiceAsSent, markInvoiceBatchAsSent } = require('./whatsapp-invoice-notifications');
+const { createInvoiceNotifications, getPendingInvoiceNotifications, getAllInvoiceNotifications, markInvoiceAsSent, markInvoiceBatchAsSent } = require('./whatsapp-invoice-notifications');
 
 // POST /api/whatsapp/generate-messages
 // Generate WhatsApp messages after bulk upload
@@ -5933,25 +5933,29 @@ app.post('/api/whatsapp/generate-invoice-messages', authenticateToken, async (re
 });
 
 // GET /api/whatsapp/pending-invoice-messages
-// Get all pending invoice WhatsApp notifications
+// Get all invoice WhatsApp notifications (pending and sent) - can filter by status
+// Query params: ?status=pending|sent|null (default: null = all messages)
 app.get('/api/whatsapp/pending-invoice-messages', authenticateToken, async (req, res) => {
     try {
         const moderatorId = req.query.moderator_id || req.user.userId;
+        const status = req.query.status || null; // 'pending', 'sent', or null for all
 
-        console.log('[API] GET /api/whatsapp/pending-invoice-messages - User:', req.user.userId);
+        console.log('[API] GET /api/whatsapp/pending-invoice-messages - User:', req.user.userId, 'Status:', status);
 
-        const result = await getPendingInvoiceNotifications(moderatorId);
+        const result = await getAllInvoiceNotifications(moderatorId, status);
 
         res.json({
             success: true,
-            pending_count: result.count,
+            pending_count: result.pending_count,
+            sent_count: result.sent_count,
+            total_count: result.count,
             notifications: result.notifications,
             raw: result.raw
         });
     } catch (error) {
         console.error('[API] WhatsApp pending invoice error:', error);
         res.status(500).json({ 
-            error: error.message || 'Failed to fetch pending invoice messages',
+            error: error.message || 'Failed to fetch invoice messages',
             details: error.message
         });
     }

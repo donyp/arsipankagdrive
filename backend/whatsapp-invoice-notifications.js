@@ -221,6 +221,73 @@ async function getPendingInvoiceNotifications(moderatorId = null) {
 }
 
 /**
+ * Get all invoice notifications (pending and sent)
+ * Can filter by status: 'pending', 'sent', or null for all
+ * @param {string} moderatorId - Optional filter by moderator
+ * @param {string} status - Optional filter: 'pending' or 'sent'
+ * @returns {object} All notifications grouped by zona
+ */
+async function getAllInvoiceNotifications(moderatorId = null, status = null) {
+    try {
+        const supabase = getSupabaseClient();
+
+        let query = supabase
+            .from('whatsapp_invoice_notifications')
+            .select(`
+                id,
+                zona_id,
+                zonas(nama),
+                invoice_count,
+                invoice_details,
+                message,
+                created_at,
+                sent_at,
+                moderator_id
+            `)
+            .eq('notification_type', 'invoice_upload')
+            .order('created_at', { ascending: false });
+
+        // Filter by status if specified
+        if (status === 'pending') {
+            query = query.is('sent_at', null);
+        } else if (status === 'sent') {
+            query = query.not('sent_at', 'is', null);
+        }
+        // If status is null, return all records
+
+        if (moderatorId) {
+            query = query.eq('moderator_id', moderatorId);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            throw new Error(`Failed to fetch notifications: ${error.message}`);
+        }
+
+        // Transform response
+        const grouped = {};
+        data.forEach(notif => {
+            const zonaName = notif.zonas.nama;
+            if (!grouped[zonaName]) {
+                grouped[zonaName] = [];
+            }
+            grouped[zonaName].push(notif);
+        });
+
+        const pendingCount = data.filter(n => !n.sent_at).length;
+        const sentCount = data.filter(n => n.sent_at).length;
+
+        console.log('[WA-Invoice] Found', data.length, 'invoice messages (pending:', pendingCount, ', sent:', sentCount, ')');
+
+        return { count: data.length, pending_count: pendingCount, sent_count: sentCount, notifications: grouped, raw: data };
+    } catch (error) {
+        console.error('[WA-Invoice] Error fetching all notifications:', error);
+        throw error;
+    }
+}
+
+/**
  * Mark invoice notification as sent
  * @param {string} notificationId - UUID of notification
  * @returns {object} Updated notification
@@ -283,6 +350,7 @@ module.exports = {
     generateZonaInvoiceMessage,
     createInvoiceNotifications,
     getPendingInvoiceNotifications,
+    getAllInvoiceNotifications,
     markInvoiceAsSent,
     markInvoiceBatchAsSent,
     formatRupiah

@@ -225,7 +225,7 @@
                     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentFilter = btn.dataset.filter;
-                    renderMessages();
+                    loadMessages(); // Reload messages with new filter
                 });
             });
         });
@@ -237,9 +237,12 @@
             try {
                 const token = API.getToken() || localStorage.getItem('jwt_token');
                 
-                console.log('[WA-Dashboard] Loading messages...');
+                console.log('[WA-Dashboard] Loading messages... Filter:', currentFilter);
                 
-                const response = await fetch('/api/whatsapp/pending-invoice-messages', {
+                // Pass status parameter to API
+                const statusParam = currentFilter !== 'all' ? `?status=${currentFilter}` : '';
+                
+                const response = await fetch(`/api/whatsapp/pending-invoice-messages${statusParam}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -255,11 +258,11 @@
                 const data = await response.json();
                 console.log('[WA-Dashboard] Loaded messages:', data);
 
-                // Fix: API returns {success, pending_count, notifications, raw}
+                // Fix: API returns {success, pending_count, sent_count, total_count, notifications, raw}
                 // where notifications is grouped by zona, and raw is the flat array
                 if (data.raw && Array.isArray(data.raw)) {
                     allMessages = data.raw;
-                    console.log('[WA-Dashboard] Total messages:', allMessages.length);
+                    console.log('[WA-Dashboard] Total messages:', allMessages.length, '(pending:', data.pending_count, ', sent:', data.sent_count, ')');
                 } else {
                     allMessages = [];
                     console.warn('[WA-Dashboard] No raw messages in response');
