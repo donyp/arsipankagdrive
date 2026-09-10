@@ -237,7 +237,9 @@ async function uploadData() {
     const btnUpload = document.getElementById('btnUpload');
     const originalText = btnUpload.textContent;
     btnUpload.disabled = true;
-    btnUpload.textContent = '⏳ Uploading...';
+    
+    // Show loading spinner with animated text
+    btnUpload.innerHTML = '<span class="loading-spinner"></span><span class="loading-text">Uploading...</span>';
 
     try {
         console.log('[Upload] Uploading', parsedData.length, 'invoices...');

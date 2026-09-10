@@ -400,6 +400,28 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Loading Animation for Upload Button */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading-text {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
         /* Success Message */
         .success-message {
             display: none;
