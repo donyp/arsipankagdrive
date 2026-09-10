@@ -5775,7 +5775,126 @@ const HOST = '0.0.0.0';
 //         console.log('[Stage 3] Starting Node.js backend server...');
 //         const server = app.listen(port, HOST, () => {
 
+
+// ============================================================
+// WhatsApp Notification Endpoints
+// ============================================================
+const { createWANotifications, getPendingNotifications, markAsSent, markBatchAsSent } = require('./whatsapp-notification-handler');
+
+// POST /api/whatsapp/generate-messages
+// Generate WhatsApp messages after bulk upload
+app.post('/api/whatsapp/generate-messages', authenticateToken, async (req, res) => {
+    try {
+        const { invoices, batchId } = req.body;
+        
+        if (!invoices || !Array.isArray(invoices) || invoices.length === 0) {
+            return res.status(400).json({ error: 'Invalid invoices array' });
+        }
+
+        if (!batchId) {
+            return res.status(400).json({ error: 'batchId required' });
+        }
+
+        console.log('[API] POST /api/whatsapp/generate-messages - User:', req.user.userId, 'Invoices:', invoices.length);
+
+        // Create notifications
+        const notifications = await createWANotifications(invoices, req.user.userId, batchId);
+
+        res.json({
+            success: true,
+            message: `Generated ${notifications.length} WhatsApp messages for ${notifications.length} zonas`,
+            notifications: notifications
+        });
+    } catch (error) {
+        console.error('[API] WhatsApp generate error:', error);
+        res.status(500).json({ 
+            error: error.message || 'Failed to generate WhatsApp messages',
+            details: error.message
+        });
+    }
+});
+
+// GET /api/whatsapp/pending-messages
+// Get all pending WhatsApp notifications
+app.get('/api/whatsapp/pending-messages', authenticateToken, async (req, res) => {
+    try {
+        const moderatorId = req.query.moderator_id || req.user.userId;
+
+        console.log('[API] GET /api/whatsapp/pending-messages - User:', req.user.userId);
+
+        const result = await getPendingNotifications(moderatorId);
+
+        res.json({
+            success: true,
+            pending_count: result.count,
+            notifications: result.notifications,
+            raw: result.raw
+        });
+    } catch (error) {
+        console.error('[API] WhatsApp pending error:', error);
+        res.status(500).json({ 
+            error: error.message || 'Failed to fetch pending messages',
+            details: error.message
+        });
+    }
+});
+
+// POST /api/whatsapp/mark-sent
+// Mark a single WhatsApp notification as sent
+app.post('/api/whatsapp/mark-sent', authenticateToken, async (req, res) => {
+    try {
+        const { notificationId } = req.body;
+
+        if (!notificationId) {
+            return res.status(400).json({ error: 'notificationId required' });
+        }
+
+        console.log('[API] POST /api/whatsapp/mark-sent - Notification:', notificationId);
+
+        await markAsSent(notificationId);
+
+        res.json({
+            success: true,
+            message: 'Notification marked as sent'
+        });
+    } catch (error) {
+        console.error('[API] WhatsApp mark-sent error:', error);
+        res.status(500).json({ 
+            error: error.message || 'Failed to mark as sent',
+            details: error.message
+        });
+    }
+});
+
+// POST /api/whatsapp/mark-batch-sent
+// Mark entire batch as sent
+app.post('/api/whatsapp/mark-batch-sent', authenticateToken, async (req, res) => {
+    try {
+        const { batchId } = req.body;
+
+        if (!batchId) {
+            return res.status(400).json({ error: 'batchId required' });
+        }
+
+        console.log('[API] POST /api/whatsapp/mark-batch-sent - Batch:', batchId);
+
+        const count = await markBatchAsSent(batchId);
+
+        res.json({
+            success: true,
+            message: `Marked ${count} notifications as sent`
+        });
+    } catch (error) {
+        console.error('[API] WhatsApp mark-batch-sent error:', error);
+        res.status(500).json({ 
+            error: error.message || 'Failed to mark batch as sent',
+            details: error.message
+        });
+    }
+});
+
 // Initialize storage credentials at startup
+
 (async () => {
     try {
         // ================================================================

@@ -313,6 +313,11 @@ async function uploadData() {
             document.getElementById('card4').style.display = 'block';
             updateStep(4);
 
+            // Generate WhatsApp messages for zona notifications
+            if (parsedData && parsedData.length > 0) {
+                await generateWhatsappMessages(parsedData, result.summary?.batch_id || 'batch_' + Date.now());
+            }
+
             console.log('[Upload] ✅ Success!');
         } else {
             Toast.error(result.error || 'Upload failed', '❌ Upload Error');
@@ -359,6 +364,218 @@ function updateStep(activeStep) {
             step.classList.remove('completed');
         } else {
             step.classList.remove('active', 'completed');
+        }
+    }
+}
+
+// ============================================================
+// WhatsApp Notification Functions
+// ============================================================
+
+let currentBatchId = null;
+let whatsappNotifications = [];
+
+/**
+ * Generate WhatsApp messages after successful upload
+ * Called automatically after upload success
+ */
+async function generateWhatsappMessages(invoices, batchId) {
+    try {
+        console.log('[WhatsApp] Generating messages for', invoices.length, 'invoices, batch:', batchId);
+
+        currentBatchId = batchId;
+
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+
+        // Call backend to generate messages
+        const response = await fetch('/api/whatsapp/generate-messages', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                invoices: invoices,
+                batchId: batchId
+            })
+        });
+
+        const result = await response.json();
+        console.log('[WhatsApp] Generate result:', result);
+
+        if (response.ok && result.success) {
+            whatsappNotifications = result.notifications;
+            displayWhatsappNotifications();
+            return true;
+        } else {
+            console.error('[WhatsApp] Generation failed:', result);
+            return false;
+        }
+    } catch (error) {
+        console.error('[WhatsApp] Error generating messages:', error);
+        return false;
+    }
+}
+
+/**
+ * Display WhatsApp notifications in UI
+ */
+function displayWhatsappNotifications() {
+    const panel = document.getElementById('whatsappPanel');
+    const container = document.getElementById('whatsappMessagesContainer');
+
+    if (!panel || !container) {
+        console.warn('[WhatsApp] UI elements not found');
+        return;
+    }
+
+    // Clear container
+    container.innerHTML = '';
+
+    if (whatsappNotifications.length === 0) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    // Create message card for each zona
+    whatsappNotifications.forEach((notif, index) => {
+        const messageCard = document.createElement('div');
+        messageCard.style.cssText = `
+            background: white;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            padding: 12px;
+            position: relative;
+        `;
+
+        const zonaLabel = document.createElement('div');
+        zonaLabel.style.cssText = `
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 13px;
+        `;
+        zonaLabel.textContent = `📍 ${notif.zona_name} (${notif.invoice_count} invoice)`;
+
+        const messageText = document.createElement('div');
+        messageText.style.cssText = `
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 150px;
+            overflow-y: auto;
+            border-left: 3px solid #25d366;
+            font-family: 'Courier New', monospace;
+        `;
+        messageText.textContent = notif.message;
+
+        const copyButton = document.createElement('button');
+        copyButton.style.cssText = `
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px;
+            background: #25d366;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.2s;
+        `;
+        copyButton.textContent = '📋 Salin Pesan';
+        copyButton.onmouseover = () => copyButton.style.background = '#1fa857';
+        copyButton.onmouseout = () => copyButton.style.background = '#25d366';
+        copyButton.onclick = () => copyToClipboard(notif.message, notif.zona_name, copyButton);
+
+        messageCard.appendChild(zonaLabel);
+        messageCard.appendChild(messageText);
+        messageCard.appendChild(copyButton);
+        container.appendChild(messageCard);
+    });
+
+    panel.style.display = 'block';
+    console.log('[WhatsApp] ✅ Displayed', whatsappNotifications.length, 'messages');
+}
+
+/**
+ * Copy message to clipboard
+ */
+async function copyToClipboard(message, zonaName, buttonElement) {
+    try {
+        await navigator.clipboard.writeText(message);
+        
+        // Show feedback
+        const originalText = buttonElement.textContent;
+        buttonElement.textContent = '✅ Sudah Disalin!';
+        buttonElement.style.background = '#27ae60';
+        
+        setTimeout(() => {
+            buttonElement.textContent = originalText;
+            buttonElement.style.background = '#25d366';
+        }, 2000);
+
+        console.log('[WhatsApp] ✅ Copied to clipboard:', zonaName);
+        
+        // Show toast
+        if (typeof Toast !== 'undefined') {
+            Toast.success(`Pesan untuk zona ${zonaName} sudah disalin!`);
+        }
+    } catch (error) {
+        console.error('[WhatsApp] Copy failed:', error);
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Gagal menyalin pesan');
+        }
+    }
+}
+
+/**
+ * Mark all WhatsApp messages as sent
+ */
+async function markAllWhatsappAsSent() {
+    try {
+        console.log('[WhatsApp] Marking batch', currentBatchId, 'as sent');
+
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+
+        const response = await fetch('/api/whatsapp/mark-batch-sent', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                batchId: currentBatchId
+            })
+        });
+
+        const result = await response.json();
+        console.log('[WhatsApp] Mark-sent result:', result);
+
+        if (response.ok && result.success) {
+            // Hide panel
+            document.getElementById('whatsappPanel').style.display = 'none';
+            
+            if (typeof Toast !== 'undefined') {
+                Toast.success('Semua pesan sudah ditandai sebagai terkirim!', '✅ Sukses');
+            }
+
+            console.log('[WhatsApp] ✅ All messages marked as sent');
+        } else {
+            if (typeof Toast !== 'undefined') {
+                Toast.error(result.error || 'Gagal menandai sebagai terkirim');
+            }
+        }
+    } catch (error) {
+        console.error('[WhatsApp] Error marking as sent:', error);
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Error: ' + error.message);
         }
     }
 }
