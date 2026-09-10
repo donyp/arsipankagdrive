@@ -50,50 +50,35 @@
         }
         
         .container { 
-            max-width: none; 
-            margin: 0; 
-            padding: 30px 40px 40px 320px;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            max-width: 1000px; 
+            margin: 40px auto; 
+            padding: 20px; 
+            margin-left: 320px;
         }
         
         .card { 
-            background: transparent; 
-            padding: 0; 
-            border-radius: 0; 
-            box-shadow: none; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
             margin-bottom: 20px; 
         }
         
         .message-group { 
-            background: white; 
-            border-left: 5px solid #25d366; 
-            padding: 24px; 
-            border-radius: 10px; 
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-        }
-        
-        .message-group:hover {
-            box-shadow: 0 8px 24px rgba(37, 211, 102, 0.2);
-            transform: translateY(-3px);
+            background: #f8f9fa; 
+            border-left: 4px solid #25d366; 
+            padding: 20px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; 
         }
         
         .message-group h3 { 
-            margin: 0 0 15px 0; 
-            color: #1a1a1a;
-            font-size: 16px;
-            font-weight: 600;
-        }
-        
-        .message-group p {
-            margin: 8px 0;
-            color: #666;
+            margin-top: 0; 
+            color: #25d366; 
         }
         
         .message-preview { 
-            background: #f8f9fa; 
+            background: white; 
             padding: 15px; 
             border-radius: 6px; 
             margin-top: 15px; 
@@ -102,9 +87,8 @@
             line-height: 1.6; 
             white-space: pre-wrap; 
             word-break: break-word; 
-            font-family: 'Courier New', monospace; 
+            font-family: monospace; 
             text-align: left;
-            color: #333;
         }
         
         .badge { 
@@ -223,13 +207,12 @@
         }
         
         .info { 
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            border: 2px solid #2196F3; 
-            color: #1565c0; 
-            padding: 18px 20px; 
-            border-radius: 8px; 
-            margin-bottom: 25px;
-            font-weight: 500;
+            background: #d1ecf1; 
+            border: 1px solid #bee5eb; 
+            color: #0c5460; 
+            padding: 15px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; 
         }
         
         .loading { 
@@ -289,8 +272,8 @@
     <div id="sidebar"></div>
 
     <div class="container">
-        <h1 style="color: white; font-size: 32px; margin-bottom: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">💬 WhatsApp Messages</h1>
-        <p style="color: rgba(255,255,255,0.9); margin-bottom: 30px; font-size: 15px;">Pesan WhatsApp yang sudah digenerate - siap untuk di copy ke zona group</p>
+        <h1>💬 WhatsApp Messages</h1>
+        <p style="color: #7f8c8d;">Pesan WhatsApp yang sudah digenerate - siap untuk di copy ke zona group</p>
 
         <div class="card">
             <div class="info">
