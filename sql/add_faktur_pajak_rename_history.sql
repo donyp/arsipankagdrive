@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS faktur_pajak_rename_history (
   
   -- Foreign Key
   CONSTRAINT fk_rename_history_invoice FOREIGN KEY (invoice_id) 
-    REFERENCES invoices(id) ON DELETE CASCADE
+    REFERENCES invoice_file_list(id) ON DELETE CASCADE
 );
 
 -- Create indexes separately (PostgreSQL syntax)
