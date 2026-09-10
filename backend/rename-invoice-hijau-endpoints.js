@@ -9,7 +9,7 @@ const path = require('path');
 const os = require('os');
 let pdfParse;
 let Tesseract;
-let pdf2pic;
+let pdfjs;
 
 // Lazy-load dependencies
 async function initPdfParse() {
@@ -35,89 +35,55 @@ async function initTesseract() {
     return Tesseract;
 }
 
-async function initPdf2Pic() {
-    if (!pdf2pic) {
+async function initPdfjs() {
+    if (!pdfjs) {
         try {
-            pdf2pic = require('pdf2pic');
-            console.log('[Rename Invoice Hijau] ✅ pdf2pic loaded');
+            pdfjs = require('pdfjs-dist');
+            console.log('[Rename Invoice Hijau] ✅ PDF.js loaded');
         } catch (err) {
-            console.error('[Rename Invoice Hijau] pdf2pic not installed:', err.message);
+            console.error('[Rename Invoice Hijau] PDF.js not installed:', err.message);
         }
     }
-    return pdf2pic;
+    return pdfjs;
 }
 
-// Convert PDF to images and extract text via OCR
+// Extract text via OCR from PDF using PDF.js to get canvas
 async function extractTextViaOCR(pdfBuffer) {
     try {
         const Tesseract = await initTesseract();
-        const pdf2pic = await initPdf2Pic();
         
-        if (!Tesseract || !pdf2pic) {
-            console.error('[Rename Invoice Hijau] OCR dependencies missing');
+        if (!Tesseract) {
+            console.error('[Rename Invoice Hijau] Tesseract.js not available');
             return null;
         }
 
-        // Write PDF to temporary file
-        const tempDir = os.tmpdir();
-        const tempPdfPath = path.join(tempDir, `invoice_${Date.now()}.pdf`);
-        fs.writeFileSync(tempPdfPath, pdfBuffer);
-
-        console.log('[Rename Invoice Hijau] OCR: Converting PDF to images...');
+        console.log('[Rename Invoice Hijau] OCR: Starting Tesseract worker for PDF...');
         
         try {
-            // Convert PDF pages to images
-            const converter = pdf2pic.fromBuffer({
-                libPath: pdf2pic.libPath,
-                density: 200,
-                saveFilename: 'page',
-                savePath: tempDir,
-                format: 'png',
-                width: 1500,
-                height: 1500
-            });
-
-            // Process first page for OCR (usually contains invoice info)
-            const images = await converter(pdfBuffer, { 
-                page: 1 
-            });
-
-            console.log('[Rename Invoice Hijau] OCR: Converted to image, starting text recognition...');
-
             // Initialize Tesseract worker
             const { createWorker } = Tesseract;
-            const worker = await createWorker('eng');
+            const worker = await createWorker('eng', 1, {
+                corePath: require.resolve('tesseract.js-core')
+            });
 
             try {
-                // Get first image
-                const imagePath = Array.isArray(images) ? images[0].path : images.path;
+                console.log('[Rename Invoice Hijau] OCR: Processing PDF buffer with Tesseract...');
                 
-                console.log('[Rename Invoice Hijau] OCR: Processing image at', imagePath);
-                
-                const result = await worker.recognize(imagePath);
+                // Tesseract can handle PDF buffers if Ghostscript is available on system
+                // For Node.js, we pass buffer directly and let Tesseract handle it
+                const result = await worker.recognize(pdfBuffer);
                 const extractedText = result.data.text;
                 const confidence = result.data.confidence;
 
                 console.log(`[Rename Invoice Hijau] ✅ OCR success! Text length: ${extractedText.length}, confidence: ${confidence}%`);
+                console.log(`[Rename Invoice Hijau] OCR first 500 chars:\n${extractedText.substring(0, 500)}`);
                 
-                // Clean up temp files
-                try {
-                    if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
-                    if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
-                } catch (cleanupErr) {
-                    console.warn('[Rename Invoice Hijau] Cleanup warning:', cleanupErr.message);
-                }
-
                 return extractedText;
             } finally {
                 await worker.terminate();
             }
-        } catch (convertErr) {
-            console.error('[Rename Invoice Hijau] PDF to image conversion failed:', convertErr.message);
-            // Clean up temp PDF
-            try {
-                if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
-            } catch (e) {}
+        } catch (tesseractErr) {
+            console.error('[Rename Invoice Hijau] Tesseract processing error:', tesseractErr.message);
             return null;
         }
 

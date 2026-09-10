@@ -23,7 +23,7 @@
         "jsonwebtoken": "^9.0.2",
         "multer": "^2.2.0",
         "pdf-parse": "^1.1.1",
-        "pdf2pic": "^3.0.0",
+        "pdfjs-dist": "^4.0.379",
         "tesseract.js": "^5.0.4",
         "ua-parser-js": "^2.0.0",
         "uuid": "^9.0.1",
