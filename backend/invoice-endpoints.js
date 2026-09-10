@@ -1165,6 +1165,8 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // 
     // STRATEGY: Check actual files in Google Drive by searching for files matching the faktur
     // This is independent of database paths (which may be NULL or outdated)
+    // 
+    // FALLBACK: If tanggal is NULL, search last 7 days of folder structures
     // ============================================
     app.get('/api/invoice/check-file/:faktur/:fileType',
         createAuth(['super_admin', 'moderator', 'user', 'admin_zona']),
@@ -1237,11 +1239,47 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                     console.log(`[Check File] STRATEGY 2: Attempting search-by-faktur for ${faktur}/${fileType}...`);
                     
                     try {
-                        // Get date components from invoice.tanggal (ISO format: YYYY-MM-DD)
-                        if (!invoice.tanggal) {
-                            console.log(`[Check File] STRATEGY 2: No tanggal found in invoice, skipping search`);
+                        // Extract location from toko field
+                        const location = extractLocationFromToko(invoice.toko);
+                        console.log(`[Check File] Extracted location from toko "${invoice.toko}": ${location}`);
+                        
+                        // Map fileType to folder name
+                        const fileTypeMap = {
+                            'invoice': 'PPN',
+                            'bukti_bayar': 'BUKTIBAYAR',
+                            'faktur_pajak': 'FAKTURPAJAK'
+                        };
+                        const folderName = fileTypeMap[fileType] || fileType.toUpperCase();
+                        
+                        // Generate list of dates to search
+                        let datesToSearch = [];
+                        
+                        if (invoice.tanggal) {
+                            // If tanggal exists, search only that date
+                            datesToSearch.push(invoice.tanggal);
                         } else {
-                            const dateParts = invoice.tanggal.split('-');
+                            // If tanggal is NULL, search last 7 days
+                            console.log(`[Check File] ⚠️  tanggal is NULL - generating last 7 days for fallback search`);
+                            const today = new Date();
+                            for (let i = 0; i < 7; i++) {
+                                const searchDate = new Date(today);
+                                searchDate.setDate(today.getDate() - i);
+                                const isoDate = searchDate.toISOString().split('T')[0];
+                                datesToSearch.push(isoDate);
+                            }
+                        }
+                        
+                        // Log all dates being searched
+                        console.log(`[Check File] Dates to search (${datesToSearch.length}):`);
+                        datesToSearch.forEach((d, idx) => {
+                            console.log(`[Check File]   ${idx + 1}. ${d}`);
+                        });
+                        
+                        // Search each date
+                        for (const dateStr of datesToSearch) {
+                            if (fileExists) break; // Stop on first match
+                            
+                            const dateParts = dateStr.split('-');
                             const year = dateParts[0];
                             const monthNum = parseInt(dateParts[1], 10);
                             const day = String(parseInt(dateParts[2], 10)).padStart(2, '0');
@@ -1253,76 +1291,63 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                             ];
                             const monthName = monthNames[monthNum - 1];
                             
-                            // Map fileType to folder name
-                            const fileTypeMap = {
-                                'invoice': 'PPN',
-                                'bukti_bayar': 'BUKTIBAYAR',
-                                'faktur_pajak': 'FAKTURPAJAK'
-                            };
-                            const folderName = fileTypeMap[fileType] || fileType.toUpperCase();
+                            // Construct the search path
+                            const searchPath = `gdrive:/ARSIPINVOICE/ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${folderName}`;
                             
-                            // Try both locations (BEKASI and PEMALANG)
-                            const locations = ['BEKASI', 'PEMALANG'];
+                            console.log(`[Check File] STRATEGY 2: Searching path: ${searchPath}`);
                             
-                            for (const location of locations) {
-                                // Construct the search path
-                                const searchPath = `gdrive:/ARSIPINVOICE/ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${folderName}`;
+                            try {
+                                const { execSync } = require('child_process');
+                                const listCmd = `rclone lsjson "${searchPath}" --config "/app/rclone.conf" 2>/dev/null`;
                                 
-                                console.log(`[Check File] STRATEGY 2: Searching path: ${searchPath}`);
-                                
+                                let result;
                                 try {
-                                    const { execSync } = require('child_process');
-                                    const listCmd = `rclone lsjson "${searchPath}" --config "/app/rclone.conf" 2>/dev/null`;
-                                    
-                                    let result;
-                                    try {
-                                        result = execSync(listCmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024, timeout: 20000 }).trim();
-                                    } catch (execErr) {
-                                        // rclone command failed, path may not exist
-                                        console.log(`[Check File] STRATEGY 2: Path does not exist or error: ${location}/${year}/${monthName}/${day}/${folderName}`);
-                                        continue;
-                                    }
-                                    
-                                    if (!result) {
-                                        console.log(`[Check File] STRATEGY 2: No files found in ${location}/${year}/${monthName}/${day}/${folderName}`);
-                                        continue;
-                                    }
-                                    
-                                    // Parse files and search for matching faktur number
-                                    const files = result.split('\n').filter(line => line.trim().length > 0);
-                                    
-                                    console.log(`[Check File] STRATEGY 2: Found ${files.length} file(s) in ${location} path`);
-                                    
-                                    for (const fileEntry of files) {
-                                        try {
-                                            const parsed = JSON.parse(fileEntry);
-                                            const fileName = parsed.Name || '';
-                                            
-                                            // Check if filename contains the faktur number
-                                            if (fileName.includes(faktur)) {
-                                                fileExists = true;
-                                                filePath = `ARSIPINVOICE/ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${folderName}/${fileName}`;
-                                                console.log(`[Check File] STRATEGY 2: ✅ Found file: ${fileName}`);
-                                                console.log(`[Check File] STRATEGY 2: Full path: ${filePath}`);
-                                                break;
-                                            }
-                                        } catch (parseErr) {
-                                            // Skip parse errors
-                                        }
-                                    }
-                                    
-                                    if (fileExists) {
-                                        console.log(`[Check File] STRATEGY 2: File found in location: ${location}`);
-                                        break;
-                                    }
-                                } catch (locationErr) {
-                                    console.log(`[Check File] STRATEGY 2: Error searching ${location}: ${locationErr.message}`);
+                                    result = execSync(listCmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024, timeout: 20000 }).trim();
+                                } catch (execErr) {
+                                    // rclone command failed, path may not exist
+                                    console.log(`[Check File] STRATEGY 2: Path does not exist: ${year}/${monthName}/${day}/${folderName}`);
+                                    continue;
                                 }
+                                
+                                if (!result) {
+                                    console.log(`[Check File] STRATEGY 2: No files found in ${year}/${monthName}/${day}/${folderName}`);
+                                    continue;
+                                }
+                                
+                                // Parse files and search for matching faktur number
+                                const files = result.split('\n').filter(line => line.trim().length > 0);
+                                
+                                console.log(`[Check File] STRATEGY 2: Found ${files.length} file(s) in path`);
+                                
+                                for (const fileEntry of files) {
+                                    try {
+                                        const parsed = JSON.parse(fileEntry);
+                                        const fileName = parsed.Name || '';
+                                        
+                                        // Check if filename contains the faktur number
+                                        if (fileName.includes(faktur)) {
+                                            fileExists = true;
+                                            filePath = `ARSIPINVOICE/ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${folderName}/${fileName}`;
+                                            console.log(`[Check File] STRATEGY 2: ✅ Found file: ${fileName}`);
+                                            console.log(`[Check File] STRATEGY 2: Full path: ${filePath}`);
+                                            break;
+                                        }
+                                    } catch (parseErr) {
+                                        // Skip parse errors
+                                    }
+                                }
+                                
+                                if (fileExists) {
+                                    console.log(`[Check File] STRATEGY 2: File found on date: ${dateStr}`);
+                                    break;
+                                }
+                            } catch (dateErr) {
+                                console.log(`[Check File] STRATEGY 2: Error searching ${dateStr}: ${dateErr.message}`);
                             }
-                            
-                            if (!fileExists) {
-                                console.log(`[Check File] STRATEGY 2: No matching file found in either location (BEKASI/PEMALANG)`);
-                            }
+                        }
+                        
+                        if (!fileExists) {
+                            console.log(`[Check File] STRATEGY 2: No matching file found in any of the ${datesToSearch.length} date folder(s)`);
                         }
                     } catch (err) {
                         console.warn(`[Check File] STRATEGY 2: Search-by-faktur failed: ${err.message}`);
