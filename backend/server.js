@@ -5780,7 +5780,7 @@ const HOST = '0.0.0.0';
 // WhatsApp Notification Endpoints
 // ============================================================
 const { createWANotifications, getPendingNotifications, markAsSent, markBatchAsSent } = require('./whatsapp-notification-handler');
-const { createInvoiceNotifications, getPendingInvoiceNotifications, getAllInvoiceNotifications, markInvoiceAsSent, markInvoiceBatchAsSent } = require('./whatsapp-invoice-notifications');
+const { createInvoiceNotifications, getPendingInvoiceNotifications, getAllInvoiceNotifications, markInvoiceAsSent, markInvoiceBatchAsSent, deleteInvoiceNotification } = require('./whatsapp-invoice-notifications');
 
 // POST /api/whatsapp/generate-messages
 // Generate WhatsApp messages after bulk upload
@@ -6010,6 +6010,33 @@ app.post('/api/whatsapp/mark-invoice-batch-sent', authenticateToken, async (req,
         console.error('[API] WhatsApp mark-invoice-batch-sent error:', error);
         res.status(500).json({ 
             error: error.message || 'Failed to mark invoice batch as sent',
+            details: error.message
+        });
+    }
+});
+
+// POST /api/whatsapp/delete-invoice-message
+// Delete an invoice WhatsApp notification
+app.post('/api/whatsapp/delete-invoice-message', authenticateToken, async (req, res) => {
+    try {
+        const { notificationId } = req.body;
+
+        if (!notificationId) {
+            return res.status(400).json({ error: 'notificationId is required' });
+        }
+
+        console.log('[API] POST /api/whatsapp/delete-invoice-message - Notification:', notificationId);
+
+        await deleteInvoiceNotification(notificationId);
+
+        res.json({ 
+            success: true, 
+            message: 'Message deleted successfully'
+        });
+    } catch (error) {
+        console.error('[API] WhatsApp delete-invoice-message error:', error);
+        res.status(500).json({ 
+            error: error.message || 'Failed to delete message',
             details: error.message
         });
     }

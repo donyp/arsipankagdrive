@@ -114,6 +114,9 @@
         
         .btn-copy { background: #25d366; color: white; }
         .btn-copy:hover { background: #1fa857; }
+        
+        .btn-delete { background: #e74c3c; color: white; margin-left: 5px; }
+        .btn-delete:hover { background: #c0392b; }
         .btn-mark-sent { background: #3498db; color: white; }
         .btn-mark-sent:hover { background: #2980b9; }
         
@@ -343,6 +346,9 @@
                                     <button class="btn btn-copy" onclick="copyMessage('${escapeJsString(msg.message)}', '${escapeJsString(zonaName)}', '${msg.id}')">
                                         📋 Copy
                                     </button>
+                                    <button class="btn btn-delete" onclick="deleteMessage('${msg.id}', '${escapeJsString(zonaName)}')">
+                                        🗑️ Delete
+                                    </button>
                                 `}
                             </div>
                         </div>
@@ -409,6 +415,42 @@
                 console.error('Error:', error);
                 if (typeof Toast !== 'undefined') {
                     Toast.error('Error marking as sent');
+                }
+            }
+        }
+
+        /**
+         * Delete a message
+         */
+        async function deleteMessage(notificationId, zonaName) {
+            if (!confirm(`Yakin mau delete pesan zona ${zonaName}?`)) {
+                return;
+            }
+
+            try {
+                const token = API.getToken() || localStorage.getItem('jwt_token');
+                
+                const response = await fetch('/api/whatsapp/delete-invoice-message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ notificationId })
+                });
+
+                if (response.ok) {
+                    if (typeof Toast !== 'undefined') {
+                        Toast.success('✅ Pesan deleted');
+                    }
+                    await loadMessages(); // Reload
+                } else {
+                    throw new Error('Failed to delete message');
+                }
+            } catch (error) {
+                console.error('Error deleting:', error);
+                if (typeof Toast !== 'undefined') {
+                    Toast.error('Error deleting message');
                 }
             }
         }

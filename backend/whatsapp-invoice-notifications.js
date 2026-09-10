@@ -347,6 +347,34 @@ async function markInvoiceBatchAsSent(batchId) {
     }
 }
 
+/**
+ * Delete invoice notification
+ * @param {string} notificationId - UUID of notification
+ * @returns {object} Deleted notification count
+ */
+async function deleteInvoiceNotification(notificationId) {
+    try {
+        const supabase = getSupabaseClient();
+
+        const { data, error } = await supabase
+            .from('whatsapp_invoice_notifications')
+            .delete()
+            .eq('id', notificationId)
+            .select();
+
+        if (error) {
+            throw new Error(`Failed to delete: ${error.message}`);
+        }
+
+        console.log('[WA-Invoice] ✅ Deleted notification', notificationId);
+
+        return data ? data.length : 0;
+    } catch (error) {
+        console.error('[WA-Invoice] Error deleting notification:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     generateInvoiceMessage,
     generateZonaInvoiceMessage,
@@ -355,5 +383,6 @@ module.exports = {
     getAllInvoiceNotifications,
     markInvoiceAsSent,
     markInvoiceBatchAsSent,
+    deleteInvoiceNotification,
     formatRupiah
 };
