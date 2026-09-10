@@ -125,6 +125,33 @@
         </div>
     </div>
 
+    <!-- Rename History Modal -->
+    <div id="historyModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-3">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Riwayat Rename
+                </h3>
+                <button onclick="closeHistoryModal()" class="p-1 text-gray-400 hover:bg-gray-100 rounded">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div id="historyList" class="space-y-3">
+                <!-- History items will be inserted here -->
+            </div>
+
+            <button onclick="closeHistoryModal()" class="mt-6 w-full px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700">
+                Tutup
+            </button>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/sidebar.js?v=ULTRACLEAN_2026"></script>
     <script src="js/config.js"></script>

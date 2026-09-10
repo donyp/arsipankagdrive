@@ -146,6 +146,10 @@ async function processFiles() {
             Toast.error(`${failedCount} dari ${results.length} file gagal diproses`);
         } else {
             Toast.success(`${successFiles.length} file berhasil diproses!`);
+            // Show button to view history after 1 second
+            setTimeout(() => {
+                showHistoryActionButton(successFiles);
+            }, 1000);
         }
     } finally {
         // Always re-enable button at the end (success or error)
@@ -205,6 +209,35 @@ async function processFile(file) {
 
         if (result.success) {
             console.log(`[Rename Faktur] Success:`, result.newName);
+            
+            // Log rename to history
+            try {
+                const logResponse = await fetch('/api/faktur-pajak/log-rename', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        invoice_id: result.invoiceId || '',
+                        faktur: result.faktur || '',
+                        old_filename: file.name,
+                        new_filename: result.newName,
+                        old_path: '',
+                        new_path: '',
+                        reason: 'Manual rename via UI',
+                        zona_id: null,
+                        notes: `Toko: ${result.namaToko}, Harga: ${result.harga}`
+                    })
+                });
+                
+                if (logResponse.ok) {
+                    const logResult = await logResponse.json();
+                    console.log('[Rename Faktur] History logged:', logResult.history_id);
+                } else {
+                    console.warn('[Rename Faktur] Failed to log history');
+                }
+            } catch (err) {
+                console.warn('[Rename Faktur] Error logging history:', err.message);
+            }
+            
             return {
                 success: true,
                 originalName: file.name,
@@ -264,6 +297,64 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ============================================
+// History Modal Functions
+// ============================================
+function showHistoryModal(histories) {
+    const historyList = document.getElementById('historyList');
+    
+    if (!histories || histories.length === 0) {
+        historyList.innerHTML = `
+            <div class="text-center py-6 text-gray-500">
+                <p>Tidak ada riwayat rename</p>
+            </div>
+        `;
+    } else {
+        historyList.innerHTML = histories.map(h => `
+            <div class="border border-gray-200 rounded-lg p-4 space-y-2">
+                <div class="flex items-start gap-2">
+                    <div class="text-green-600 mt-1">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-mono text-gray-900 break-all">${h.old_filename}</p>
+                        <p class="text-xs text-gray-400 mt-1">↓</p>
+                        <p class="text-sm font-mono text-green-700 break-all font-bold">${h.new_filename}</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between text-xs text-gray-500 bg-gray-50 rounded p-2">
+                    <span>Oleh: ${h.renamed_by}</span>
+                    <span>${new Date(h.renamed_at).toLocaleString('id-ID')}</span>
+                </div>
+                ${h.reason ? `<p class="text-xs text-gray-600 italic">"${h.reason}"</p>` : ''}
+            </div>
+        `).join('');
+    }
+    
+    document.getElementById('historyModal').classList.remove('hidden');
+}
+
+function closeHistoryModal() {
+    document.getElementById('historyModal').classList.add('hidden');
+}
+
+async function loadAndShowHistoryForFaktur(faktur) {
+    try {
+        const response = await fetch(`/api/faktur-pajak/rename-history/${encodeURIComponent(faktur)}`);
+        if (response.ok) {
+            const data = await response.json();
+            showHistoryModal(data.history || []);
+        } else {
+            Toast.warning('Gagal memuat riwayat rename');
+        }
+    } catch (err) {
+        console.error('Error loading history:', err);
+        Toast.error('Terjadi kesalahan saat memuat riwayat');
+    }
+}
+
+// ============================================
 // Loading Modal Functions
 // ============================================
 function showLoadingModal(totalFiles) {
@@ -298,4 +389,28 @@ function updateLoadingModal(current, fileName, total) {
     } else {
         statusEl.textContent = 'Menyelesaikan proses...';
     }
+}
+
+function showHistoryActionButton(successFiles) {
+    // Get latest faktur from success files for history query
+    if (successFiles.length === 0) return;
+    
+    const firstFileName = successFiles[0].newName;
+    const parts = firstFileName.split('-');
+    const faktur = parts[0] || successFiles[0].originalName;
+    
+    // Create temporary button and add to page
+    const btn = document.createElement('button');
+    btn.className = 'fixed bottom-6 right-6 px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 shadow-lg z-40 transition-all';
+    btn.textContent = '📋 Lihat Riwayat Rename';
+    btn.onclick = () => {
+        loadAndShowHistoryForFaktur(faktur);
+        btn.remove();
+    };
+    document.body.appendChild(btn);
+    
+    // Auto-remove after 30 seconds
+    setTimeout(() => {
+        if (btn.parentNode) btn.remove();
+    }, 30000);
 }
