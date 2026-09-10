@@ -653,6 +653,7 @@ const sessionManagement = require('./session-management');
 const faqEndpoints = require('./faq-endpoints');
 const notificationEndpoints = require('./notification-endpoints');
 const { registerInvoiceEndpoints, addFileExistenceVerificationEndpoint, addClearFileEndpoint, addManualSyncEndpoint } = require('./invoice-endpoints');
+const { addFakturPajakRenameEndpoints } = require('./faktur-pajak-rename-endpoints');
 const renameFakturEndpoints = require('./rename-faktur-endpoints');
 app.use('/api', sessionManagement);
 app.use('/api', faqEndpoints);
@@ -676,6 +677,7 @@ const createInvoiceAuth = (allowedRoles = null) => {
 registerInvoiceEndpoints(app, supabase, createInvoiceAuth, RcloneStorage);
 addFileExistenceVerificationEndpoint(app, supabase, createInvoiceAuth, RcloneStorage);
 addClearFileEndpoint(app, supabase, createInvoiceAuth);
+addFakturPajakRenameEndpoints(app, supabase, createInvoiceAuth);
 console.log('[INIT] Invoice System endpoints registered âœ…');
 console.log('  âœ“ Excel Upload & Parsing');
 console.log('  âœ“ Invoice List & Statistics');
