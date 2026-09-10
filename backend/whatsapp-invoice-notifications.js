@@ -52,14 +52,14 @@ function generateInvoiceMessage(invoice) {
  * Combines individual invoices into zone-grouped message
  * @param {array} invoices - Array of invoice objects
  * @param {string} zonaName - Zona name
- * @param {number} zonaId - Zona ID (for message header)
+ * @param {string} zonaKode - Zona kode (e.g., "01", "02")
  * @returns {string} Complete WhatsApp message
  */
-function generateZonaInvoiceMessage(invoices, zonaName, zonaId) {
+function generateZonaInvoiceMessage(invoices, zonaName, zonaKode) {
     const invoiceLines = invoices.map(inv => generateInvoiceMessage(inv)).join('\n');
     
-    // Format: *UPDATE INVOICE ZONA {zonaId}* (no parentheses, no "Zona" prefix in header)
-    const message = `*UPDATE INVOICE ZONA ${zonaId}*
+    // Format: *UPDATE INVOICE ZONA {zonaKode}* (using zona kode like "01", "02", etc.)
+    const message = `*UPDATE INVOICE ZONA ${zonaKode}*
 
 ${invoiceLines}
 
@@ -92,11 +92,11 @@ async function createInvoiceNotifications(invoices, moderatorId, batchId) {
 
         console.log('[WA-Invoice] Grouped into', Object.keys(invoicesByZona).length, 'zonas');
 
-        // Get zona names
+        // Get zona names and kodes
         const zonaIds = Object.keys(invoicesByZona).map(Number);
         const { data: zonas, error: zonaError } = await supabase
             .from('zonas')
-            .select('id, nama')
+            .select('id, nama, kode')
             .in('id', zonaIds);
 
         if (zonaError) {
@@ -104,8 +104,10 @@ async function createInvoiceNotifications(invoices, moderatorId, batchId) {
         }
 
         const zonaMap = {};
+        const zonaKodeMap = {};
         zonas.forEach(z => {
             zonaMap[z.id] = z.nama;
+            zonaKodeMap[z.id] = z.kode || `${z.id}`; // Use kode if available, else use ID
         });
 
         // Create notifications per zona
@@ -115,9 +117,10 @@ async function createInvoiceNotifications(invoices, moderatorId, batchId) {
         for (const [zonaId, invoicesForZona] of Object.entries(invoicesByZona)) {
             const zId = Number(zonaId);
             const zonaName = zonaMap[zId] || `Zona ${zId}`;
+            const zonaKode = zonaKodeMap[zId] || zId; // Use zona kode (e.g., "01") or ID as fallback
             
-            // Generate message for this zona's invoices - format: *UPDATE INVOICE ZONA {zonaId}*
-            const message = generateZonaInvoiceMessage(invoicesForZona, zonaName, zId);
+            // Generate message for this zona's invoices - format: *UPDATE INVOICE ZONA {kode}*
+            const message = generateZonaInvoiceMessage(invoicesForZona, zonaName, zonaKode);
 
             notificationsToInsert.push({
                 zona_id: zId,
