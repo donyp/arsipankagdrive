@@ -517,6 +517,15 @@
             console.log('[WA-Dashboard] deleteMessage called with ID:', notificationId, 'Zona:', zonaName);
             console.log('[WA-Dashboard] Type of ID:', typeof notificationId);
             
+            if (!notificationId) {
+                if (typeof Toast !== 'undefined') {
+                    Toast.error('❌ Message ID not found. Please refresh the page.');
+                } else {
+                    alert('❌ Message ID not found. Please refresh the page.');
+                }
+                return;
+            }
+            
             // Store the ID and show modal
             pendingDeleteId = notificationId;
             console.log('[WA-Dashboard] pendingDeleteId set to:', pendingDeleteId);
