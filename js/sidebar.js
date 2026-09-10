@@ -222,6 +222,12 @@
         if (mainContent) {
             mainContent.style.marginLeft = '16rem';
             mainContent.style.width = 'calc(100% - 16rem)';
+        } else {
+            // If no main-content div, ensure body/html can accommodate sidebar
+            document.documentElement.style.marginLeft = '16rem';
+            document.documentElement.style.width = 'calc(100% - 16rem)';
+            document.body.style.marginLeft = '16rem';
+            document.body.style.width = 'calc(100% - 16rem)';
         }
 
         if (mainContent && !document.getElementById('global-broadcast-bar')) {
