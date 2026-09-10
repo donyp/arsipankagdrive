@@ -43,7 +43,9 @@ function handleFiles(files) {
     // Processing time: ~12-13 seconds (acceptable)
     const MAX_FILES = 25;
     if (fileArray.length > MAX_FILES) {
-        Toast.warning(`Maksimal ${MAX_FILES} file sekaligus. ${fileArray.length - MAX_FILES} file dihapus dari antrian.`);
+        const deletedCount = fileArray.length - MAX_FILES;
+        const deletedFiles = fileArray.slice(MAX_FILES).map(f => f.name).join(', ');
+        Toast.warning(`⚠️ Maksimal ${MAX_FILES} file sekaligus\n\n${deletedCount} file terbaru dihapus dari antrian:\n${deletedFiles}`);
         fileArray = fileArray.slice(0, MAX_FILES);
     }
 
