@@ -248,6 +248,49 @@ async function uploadData() {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
+        // ============================================
+        // STEP 1: Check for duplicates
+        // ============================================
+        console.log('[Upload] Checking for duplicate fakturs...');
+        const fakturs = parsedData.map(item => item.faktur).filter(Boolean);
+        
+        const checkDupResponse = await fetch('/api/invoice/check-duplicate-fakturs', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({ fakturs: fakturs })
+        });
+
+        const dupResult = await checkDupResponse.json();
+        console.log('[Upload] Duplicate check result:', dupResult);
+
+        if (checkDupResponse.ok && dupResult.hasDuplicates) {
+            // Found duplicates - reject upload
+            const dupCount = dupResult.duplicateCount;
+            const dupList = dupResult.duplicates.slice(0, 10).join(', ');
+            const message = dupCount > 10 
+                ? `${dupCount} fakturs sudah ada di database:\n${dupList}... dan ${dupCount - 10} lainnya`
+                : `${dupCount} fakturs sudah ada di database:\n${dupList}`;
+            
+            Toast.error(message, `❌ Upload Ditolak - Duplikat Ditemukan`);
+            console.log('[Upload] ⚠️ Upload rejected due to duplicates');
+            btnUpload.disabled = false;
+            btnUpload.textContent = originalText;
+            return;
+        }
+
+        if (!checkDupResponse.ok) {
+            console.error('[Upload] Duplicate check failed:', dupResult);
+            Toast.error(dupResult.details || 'Gagal memeriksa duplikat', '❌ Kesalahan Validasi');
+            btnUpload.disabled = false;
+            btnUpload.textContent = originalText;
+            return;
+        }
+
+        console.log('[Upload] ✅ No duplicates found - proceeding with upload');
+
+        // ============================================
+        // STEP 2: Upload data
+        // ============================================
         const response = await fetch('/api/invoice/upload-excel-data', {
             method: 'POST',
             headers: headers,
@@ -269,11 +312,6 @@ async function uploadData() {
             updateStep(4);
 
             console.log('[Upload] ✅ Success!');
-            
-            // Reset upload form for next file - delay to let UI update
-            setTimeout(() => {
-                resetUpload();
-            }, 1500);
         } else {
             Toast.error(result.error || 'Upload failed', '❌ Upload Error');
             btnUpload.disabled = false;

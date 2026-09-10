@@ -473,6 +473,80 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     );
 
     // ============================================
+    // POST /api/invoice/check-duplicate-fakturs
+    // Check if fakturs already exist in database
+    // RESTRICTED: super_admin & moderator only
+    // ============================================
+    app.post('/api/invoice/check-duplicate-fakturs',
+        ...createAuth(['super_admin', 'moderator']),
+        async (req, res) => {
+            try {
+                const { fakturs } = req.body;
+
+                console.log(`[Invoice API] Duplicate check by ${req.user?.name}: checking ${fakturs?.length || 0} fakturs`);
+
+                if (!fakturs || !Array.isArray(fakturs) || fakturs.length === 0) {
+                    return res.status(400).json({
+                        error: 'No fakturs provided',
+                        details: 'Fakturs array is required and must not be empty'
+                    });
+                }
+
+                // Filter out empty/null fakturs
+                const validFakturs = fakturs.filter(f => f && f.trim());
+
+                if (validFakturs.length === 0) {
+                    return res.status(400).json({
+                        error: 'No valid fakturs provided',
+                        details: 'All fakturs are empty or invalid'
+                    });
+                }
+
+                console.log(`[Invoice API] Checking ${validFakturs.length} valid fakturs...`);
+                console.log(`[Invoice API] Sample fakturs:`, validFakturs.slice(0, 5));
+
+                // Query database for existing fakturs
+                const { data: existingInvoices, error: queryError } = await supabase
+                    .from('invoice_file_list')
+                    .select('faktur')
+                    .in('faktur', validFakturs);
+
+                if (queryError) {
+                    console.error('[Invoice API] Query error:', queryError);
+                    return res.status(500).json({
+                        error: 'Database query failed',
+                        details: queryError.message
+                    });
+                }
+
+                // Build list of duplicates
+                const existingFakturs = (existingInvoices || []).map(inv => inv.faktur);
+                const duplicates = validFakturs.filter(f => existingFakturs.includes(f));
+
+                console.log(`[Invoice API] Found ${duplicates.length} duplicates out of ${validFakturs.length}`);
+                if (duplicates.length > 0) {
+                    console.log(`[Invoice API] Duplicates:`, duplicates.slice(0, 10));
+                }
+
+                res.json({
+                    success: true,
+                    totalChecked: validFakturs.length,
+                    duplicateCount: duplicates.length,
+                    duplicates: duplicates,
+                    hasDuplicates: duplicates.length > 0
+                });
+
+            } catch (error) {
+                console.error('[Invoice API] Duplicate check error:', error);
+                res.status(500).json({
+                    error: 'Server error',
+                    details: error.message
+                });
+            }
+        }
+    );
+
+    // ============================================
     // POST /api/invoice/upload-excel
     // Upload and parse Excel file (REKAP_LABA.xls)
     // ============================================
