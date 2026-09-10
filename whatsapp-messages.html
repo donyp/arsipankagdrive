@@ -216,7 +216,8 @@
     <script>
         let allMessages = [];
         let currentFilter = 'pending';
-        let allMessages = []; // Store all messages (both pending + sent)
+
+        document.addEventListener('DOMContentLoaded', async () => {
             await loadMessages();
             
             // Add filter event listeners
