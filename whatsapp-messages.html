@@ -345,6 +345,9 @@
                 if (data.raw && Array.isArray(data.raw)) {
                     allMessages = data.raw;
                     console.log('[WA-Dashboard] Total messages:', allMessages.length, '(pending:', data.pending_count, ', sent:', data.sent_count, ')');
+                    if (allMessages.length > 0) {
+                        console.log('[WA-Dashboard] First message structure:', allMessages[0]);
+                    }
                 } else {
                     allMessages = [];
                     console.warn('[WA-Dashboard] No raw messages in response');
@@ -506,8 +509,13 @@
         let pendingDeleteId = null;
         
         async function deleteMessage(notificationId, zonaName) {
+            console.log('[WA-Dashboard] deleteMessage called with ID:', notificationId, 'Zona:', zonaName);
+            console.log('[WA-Dashboard] Type of ID:', typeof notificationId);
+            
             // Store the ID and show modal
             pendingDeleteId = notificationId;
+            console.log('[WA-Dashboard] pendingDeleteId set to:', pendingDeleteId);
+            
             document.getElementById('deleteModalMessage').textContent = `Yakin mau delete pesan zona ${zonaName}?`;
             document.getElementById('deleteModal').style.display = 'flex';
         }
