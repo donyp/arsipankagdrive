@@ -376,12 +376,13 @@ async function loadAndDisplayHistory(faktur) {
         if (response.ok) {
             const data = await response.json();
             console.log('[Rename Faktur] History loaded:', data.history.length, 'items');
+            // Clear and display fresh history
             displayHistorySection(data.history || []);
         } else {
-            console.warn('[Rename Faktur] Failed:', response.status);
+            console.warn('[Rename Faktur] Failed to load history:', response.status);
         }
     } catch (err) {
-        console.warn('[Rename Faktur] Error:', err.message);
+        console.warn('[Rename Faktur] Error loading history:', err.message);
     }
 }
 
@@ -394,15 +395,30 @@ function displayHistorySection(histories) {
         return;
     }
     
+    // Deduplicate by ID to prevent double entries
+    const uniqueHistories = [];
+    const seenIds = new Set();
+    
+    histories.forEach(h => {
+        if (!seenIds.has(h.id)) {
+            seenIds.add(h.id);
+            uniqueHistories.push(h);
+        }
+    });
+    
     section.classList.remove('hidden');
-    list.innerHTML = histories.map(h => {
-        const timestamp = new Date(h.renamed_at).toLocaleString('id-ID', {
+    list.innerHTML = uniqueHistories.map(h => {
+        // Format: "17 Agustus 2026 13:00 WIB"
+        const date = new Date(h.renamed_at);
+        const options = {
             year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
+            month: 'long',
+            day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
-        });
+            minute: '2-digit',
+            timeZone: 'Asia/Jakarta'
+        };
+        const timestamp = date.toLocaleString('id-ID', options) + ' WIB';
         
         return `
         <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded transition-colors text-sm">
