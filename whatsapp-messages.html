@@ -525,6 +525,8 @@
             try {
                 const token = API.getToken() || localStorage.getItem('jwt_token');
                 
+                console.log('[WA-Dashboard] Deleting message:', pendingDeleteId);
+                
                 const response = await fetch('/api/whatsapp/delete-invoice-message', {
                     method: 'POST',
                     headers: {
@@ -534,18 +536,22 @@
                     body: JSON.stringify({ notificationId: pendingDeleteId })
                 });
 
+                console.log('[WA-Dashboard] Delete response status:', response.status);
+
                 if (response.ok) {
                     if (typeof Toast !== 'undefined') {
                         Toast.success('✅ Pesan deleted');
                     }
                     await loadMessages(); // Reload
                 } else {
-                    throw new Error('Failed to delete message');
+                    const errorData = await response.json();
+                    console.error('[WA-Dashboard] Delete error response:', errorData);
+                    throw new Error(errorData.error || 'Failed to delete message');
                 }
             } catch (error) {
                 console.error('Error deleting:', error);
                 if (typeof Toast !== 'undefined') {
-                    Toast.error('Error deleting message');
+                    Toast.error('Error deleting message: ' + error.message);
                 }
             }
             

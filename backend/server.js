@@ -6021,17 +6021,23 @@ app.post('/api/whatsapp/delete-invoice-message', authenticateToken, async (req, 
     try {
         const { notificationId } = req.body;
 
+        console.log('[API] POST /api/whatsapp/delete-invoice-message - Body:', req.body);
+
         if (!notificationId) {
+            console.error('[API] Missing notificationId');
             return res.status(400).json({ error: 'notificationId is required' });
         }
 
-        console.log('[API] POST /api/whatsapp/delete-invoice-message - Notification:', notificationId);
+        console.log('[API] Deleting notification:', notificationId);
 
-        await deleteInvoiceNotification(notificationId);
+        const result = await deleteInvoiceNotification(notificationId);
+
+        console.log('[API] Delete result:', result);
 
         res.json({ 
             success: true, 
-            message: 'Message deleted successfully'
+            message: 'Message deleted successfully',
+            deleted: result
         });
     } catch (error) {
         console.error('[API] WhatsApp delete-invoice-message error:', error);
