@@ -395,23 +395,31 @@ function displayHistorySection(histories) {
     }
     
     section.classList.remove('hidden');
-    list.innerHTML = histories.map(h => `
-        <div class="border border-gray-200 rounded-lg p-3 hover:border-green-300 transition-colors">
-            <div class="flex items-start justify-between gap-3">
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs text-gray-500">Ubah dari:</p>
-                    <p class="text-sm font-mono text-gray-700 truncate">${h.old_filename}</p>
-                    <p class="text-xs text-gray-400 my-1">→</p>
-                    <p class="text-xs text-gray-500">Menjadi:</p>
-                    <p class="text-sm font-mono text-green-700 font-bold truncate">${h.new_filename}</p>
-                </div>
-            </div>
-            <div class="flex items-center justify-between text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
-                <span>${h.renamed_by}</span>
-                <span>${new Date(h.renamed_at).toLocaleString('id-ID')}</span>
+    list.innerHTML = histories.map(h => {
+        const timestamp = new Date(h.renamed_at).toLocaleString('id-ID', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        return `
+        <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded transition-colors text-sm">
+            <div class="flex-1 min-w-0">
+                <span class="text-gray-700">
+                    File asli: <span class="font-mono text-gray-600">${h.old_filename}</span>
+                    <span class="text-gray-400 mx-1">›</span>
+                    <span class="font-mono text-green-700 font-semibold">${h.new_filename}</span>
+                    <span class="text-gray-400 mx-2">|</span>
+                    Oleh: <span class="font-semibold text-gray-700">${h.renamed_by}</span>
+                    <span class="text-gray-400 mx-2">|</span>
+                    <span class="text-gray-500">${timestamp}</span>
+                </span>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function closeHistorySection() {
