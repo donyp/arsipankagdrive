@@ -313,11 +313,6 @@ async function uploadData() {
             document.getElementById('card4').style.display = 'block';
             updateStep(4);
 
-            // Generate WhatsApp messages for zona notifications
-            if (parsedData && parsedData.length > 0) {
-                await generateWhatsappMessages(parsedData, result.summary?.batch_id || 'batch_' + Date.now());
-            }
-
             console.log('[Upload] ✅ Success!');
         } else {
             Toast.error(result.error || 'Upload failed', '❌ Upload Error');

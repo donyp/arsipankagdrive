@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Test WhatsApp Database</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .test { margin: 15px 0; padding: 10px; border: 1px solid #ccc; }
+        .pass { background: #d4edda; }
+        .fail { background: #f8d7da; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test WhatsApp Database</h1>
+
+    <div id="results"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+
+    <script>
+        async function runTests() {
+            const results = [];
+
+            // Test 1: Check if tables exist
+            try {
+                const { data, error } = await window.supabase
+                    .from('whatsapp_notifications')
+                    .select('COUNT(*)')
+                    .limit(1);
+
+                if (error && error.code === 'PGRST116') {
+                    results.push({
+                        test: '❌ whatsapp_notifications table',
+                        status: 'FAIL',
+                        message: 'Table does not exist: ' + error.message
+                    });
+                } else if (error) {
+                    results.push({
+                        test: '⚠️ whatsapp_notifications query',
+                        status: 'FAIL',
+                        message: 'Query error: ' + error.message
+                    });
+                } else {
+                    results.push({
+                        test: '✅ whatsapp_notifications table',
+                        status: 'PASS',
+                        message: 'Table exists and is accessible'
+                    });
+                }
+            } catch (e) {
+                results.push({
+                    test: '❌ whatsapp_notifications connection',
+                    status: 'FAIL',
+                    message: e.message
+                });
+            }
+
+            // Test 2: Check invoice table
+            try {
+                const { data, error } = await window.supabase
+                    .from('whatsapp_invoice_notifications')
+                    .select('COUNT(*)')
+                    .limit(1);
+
+                if (error && error.code === 'PGRST116') {
+                    results.push({
+                        test: '❌ whatsapp_invoice_notifications table',
+                        status: 'FAIL',
+                        message: 'Table does not exist: ' + error.message
+                    });
+                } else if (error) {
+                    results.push({
+                        test: '⚠️ whatsapp_invoice_notifications query',
+                        status: 'FAIL',
+                        message: 'Query error: ' + error.message
+                    });
+                } else {
+                    results.push({
+                        test: '✅ whatsapp_invoice_notifications table',
+                        status: 'PASS',
+                        message: 'Table exists and is accessible'
+                    });
+                }
+            } catch (e) {
+                results.push({
+                    test: '❌ whatsapp_invoice_notifications connection',
+                    status: 'FAIL',
+                    message: e.message
+                });
+            }
+
+            // Test 3: Count records in each table
+            try {
+                const { data, error } = await window.supabase
+                    .from('whatsapp_notifications')
+                    .select('*', { count: 'exact', head: true });
+
+                if (!error) {
+                    results.push({
+                        test: '📊 whatsapp_notifications records',
+                        status: 'INFO',
+                        message: `Total records: ${data ? data.length : 0}`
+                    });
+                }
+            } catch (e) {
+                // Ignore
+            }
+
+            try {
+                const { data, error } = await window.supabase
+                    .from('whatsapp_invoice_notifications')
+                    .select('*', { count: 'exact', head: true });
+
+                if (!error) {
+                    results.push({
+                        test: '📊 whatsapp_invoice_notifications records',
+                        status: 'INFO',
+                        message: `Total records: ${data ? data.length : 0}`
+                    });
+                }
+            } catch (e) {
+                // Ignore
+            }
+
+            // Render results
+            const html = results.map(r => `
+                <div class="test ${r.status === 'PASS' ? 'pass' : 'fail'}">
+                    <strong>${r.test}</strong><br>
+                    Status: ${r.status}<br>
+                    Message: ${r.message}
+                </div>
+            `).join('');
+
+            document.getElementById('results').innerHTML = html;
+
+            console.log('Test Results:', results);
+        }
+
+        // Run on load
+        document.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>
