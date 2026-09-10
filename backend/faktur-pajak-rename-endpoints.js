@@ -44,6 +44,9 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
             console.log(`  New: ${new_filename}`);
             console.log(`  By: ${renamed_by}`);
             
+            // Ensure timestamp is in UTC ISO format
+            const renamedAt = new Date().toISOString();
+            
             // Insert rename history
             const { data, error } = await supabase
                 .from('faktur_pajak_rename_history')
@@ -60,7 +63,7 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
                     zona_id,
                     status: 'completed',
                     notes,
-                    renamed_at: new Date().toISOString()
+                    renamed_at: renamedAt  // Use ISO string with Z suffix
                 })
                 .select();
             

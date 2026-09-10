@@ -493,8 +493,15 @@ function formatIndonesianDateTime(isoString) {
     if (!isoString) return 'Tidak ada';
     
     try {
-        // Parse ISO string
-        const date = new Date(isoString);
+        // Ensure ISO string ends with Z to indicate UTC
+        let dateStr = isoString;
+        if (!dateStr.includes('Z') && !dateStr.includes('+')) {
+            // Add Z to indicate this is UTC time
+            dateStr = dateStr.replace(/(\.\d{3})?$/, 'Z');
+        }
+        
+        // Parse as UTC
+        const date = new Date(dateStr);
         
         // Check if date is valid
         if (isNaN(date.getTime())) {
@@ -504,24 +511,22 @@ function formatIndonesianDateTime(isoString) {
         
         console.log('[Rename Faktur] Formatting date:', isoString, '→', date.toISOString());
         
-        // Using Intl.DateTimeFormat with Jakarta timezone for accurate conversion
-        const formatter = new Intl.DateTimeFormat('id-ID', {
-            year: 'numeric',
-            month: 'long',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            timeZone: 'Asia/Jakarta',
-            hour12: false  // Use 24-hour format
-        });
+        // Convert to Jakarta time (UTC+7)
+        const jakartaDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
         
-        // Get formatted string
-        const formatted = formatter.format(date);
-        console.log('[Rename Faktur] Formatted result:', formatted);
+        // Get date components
+        const day = jakartaDate.getUTCDate().toString().padStart(2, '0');
+        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const month = monthNames[jakartaDate.getUTCMonth()];
+        const year = jakartaDate.getUTCFullYear();
+        const hour = jakartaDate.getUTCHours().toString().padStart(2, '0');
+        const minute = jakartaDate.getUTCMinutes().toString().padStart(2, '0');
         
-        // Add WIB suffix
-        return formatted + ' WIB';
+        const result = `${day} ${month} ${year} ${hour}:${minute} WIB`;
+        console.log('[Rename Faktur] Formatted result:', result);
+        
+        return result;
     } catch (err) {
         console.error('[Rename Faktur] Error formatting date:', err);
         return isoString;
