@@ -38,8 +38,10 @@ function handleFiles(files) {
         return;
     }
 
-    // Max 10 files limit
-    const MAX_FILES = 10;
+    // Max 25 files limit (safe for 2MB avg file size)
+    // Memory: 25 × 2MB = 50MB raw; ~67MB with base64 overhead (very safe)
+    // Processing time: ~12-13 seconds (acceptable)
+    const MAX_FILES = 25;
     if (fileArray.length > MAX_FILES) {
         Toast.warning(`Maksimal ${MAX_FILES} file sekaligus. ${fileArray.length - MAX_FILES} file dihapus dari antrian.`);
         fileArray = fileArray.slice(0, MAX_FILES);
