@@ -1589,6 +1589,12 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 console.log(`[Invoice PDF] Found invoice: ${invoice.konsumen} (${invoice.toko})`);
                 
                 // Determine path based on keterangan (PPN/NON PPN)
+                // SAFEGUARD: Check if tanggal exists and is in valid format
+                if (!invoice.tanggal) {
+                    console.error(`[Invoice PDF] Invoice tanggal is missing for faktur: ${faktur}`);
+                    return res.status(400).json({ error: 'Invoice tanggal tidak ditemukan' });
+                }
+                
                 const year = invoice.tanggal.split('-')[0];
                 const monthNum = String(invoice.tanggal.split('-')[1]).padStart(2, '0');
                 const day = String(invoice.tanggal.split('-')[2]).padStart(2, '0');
