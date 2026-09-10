@@ -1,0 +1,104 @@
+╔════════════════════════════════════════════════════════════════╗
+║   WhatsApp Notification System - QUICK SETUP                  ║
+║   Status: ✅ Deployed | ⏳ Waiting for Database Setup         ║
+╚════════════════════════════════════════════════════════════════╝
+
+LANGKAH 1: CREATE TABLE DI SUPABASE
+──────────────────────────────────
+
+1. Login ke https://supabase.com
+2. Select project: arsipanka
+3. Go to: SQL Editor (sidebar kiri)
+4. Click: New Query
+5. COPY-PASTE seluruh kode ini:
+
+═══ KODE SQL (Copy semua) ═══
+CREATE TABLE IF NOT EXISTS whatsapp_notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    zona_id INTEGER NOT NULL REFERENCES zonas(id),
+    moderator_id UUID NOT NULL REFERENCES auth.users(id),
+    invoice_count INTEGER NOT NULL,
+    toko_list TEXT[] NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    sent_at TIMESTAMP WITH TIME ZONE,
+    batch_id UUID,
+    CONSTRAINT chk_invoice_count CHECK (invoice_count > 0)
+);
+
+CREATE INDEX IF NOT EXISTS idx_whatsapp_zona_id ON whatsapp_notifications(zona_id);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_moderator_id ON whatsapp_notifications(moderator_id);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_batch_id ON whatsapp_notifications(batch_id);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_sent_at ON whatsapp_notifications(sent_at) WHERE sent_at IS NULL;
+
+COMMENT ON TABLE whatsapp_notifications IS 'Stores auto-generated WhatsApp messages for manual copy-paste to zona groups';
+COMMENT ON COLUMN whatsapp_notifications.sent_at IS 'Timestamp when moderator marked as sent to group';
+COMMENT ON COLUMN whatsapp_notifications.batch_id IS 'Batch ID from excel upload session for grouping related uploads';
+═══ END KODE SQL ═══
+
+6. Click: RUN (atau Ctrl+Enter)
+7. Tunggu sampai muncul ✅ success
+
+
+LANGKAH 2: TEST FEATURE
+──────────────────────
+
+1. Login ke: https://arsipankagdrive-production.up.railway.app/
+2. Upload Excel dengan invoices dari 2+ zonas
+3. Setelah upload, harus muncul:
+   - ✅ Success message
+   - 📱 WhatsApp panel (header hijau)
+   - Messages untuk masing-masing zona
+   - 📋 Tombol copy paste untuk setiap zona
+
+4. Click: 📋 Salin Pesan → button berubah hijau ✅
+5. Open: WhatsApp Web/Mobile
+6. Paste message ke zona group
+7. Back to web → Click: ✅ Tandai Semua Sudah Dikirim
+8. Panel harus hilang (= berhasil disimpan di database)
+
+
+LANGKAH 3: VERIFY
+─────────────────
+
+Buka Supabase SQL Editor, jalankan:
+
+SELECT * FROM whatsapp_notifications 
+ORDER BY created_at DESC 
+LIMIT 5;
+
+Harus muncul:
+- 2 rows (satu per zona dari test upload)
+- Columns: id, zona_id, moderator_id, invoice_count, toko_list, message, created_at, sent_at, batch_id
+- sent_at harus ada value setelah klik "Mark as Sent"
+
+
+ISSUE: Panel tidak muncul?
+──────────────────────────
+
+1. Check browser console (F12):
+   - Network tab → filter /api/whatsapp
+   - Lihat response (harus 200 OK)
+   - Jika error, lihat message-nya
+
+2. Check Supabase:
+   - Table whatsapp_notifications ada?
+   - Jalankan: SELECT * FROM whatsapp_notifications LIMIT 1;
+   - Jika error "does not exist" → tabel belum di-create
+
+3. Check file upload:
+   - File punya kolom zona_id?
+   - Minimal 2 zonas dalam file?
+   - Invoices ada value?
+
+
+FITUR READY ✅
+──────────────
+
+Database table: ⏳ (NEED SETUP)
+Backend API: ✅ (DEPLOYED)
+Frontend UI: ✅ (DEPLOYED)
+Integration: ✅ (INTEGRATED)
+
+Setelah setup database: SIAP DIGUNAKAN! 🚀
+
