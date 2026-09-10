@@ -107,7 +107,9 @@ async function createInvoiceNotifications(invoices, moderatorId, batchId) {
         const zonaKodeMap = {};
         zonas.forEach(z => {
             zonaMap[z.id] = z.nama;
-            zonaKodeMap[z.id] = z.kode || `${z.id}`; // Use kode if available, else use ID
+            // Parse kode to remove leading zeros (e.g., "01" → "1", "02" → "2")
+            const kode = z.kode ? String(parseInt(z.kode, 10)) : `${z.id}`;
+            zonaKodeMap[z.id] = kode;
         });
 
         // Create notifications per zona
