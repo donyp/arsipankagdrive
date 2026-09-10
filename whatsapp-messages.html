@@ -215,8 +215,7 @@
     <script>
         let allMessages = [];
         let currentFilter = 'pending';
-
-        document.addEventListener('DOMContentLoaded', async () => {
+        let allMessages = []; // Store all messages (both pending + sent)
             await loadMessages();
             
             // Add filter event listeners
@@ -239,10 +238,8 @@
                 
                 console.log('[WA-Dashboard] Loading messages... Filter:', currentFilter);
                 
-                // Pass status parameter to API
-                const statusParam = currentFilter !== 'all' ? `?status=${currentFilter}` : '';
-                
-                const response = await fetch(`/api/whatsapp/pending-invoice-messages${statusParam}`, {
+                // Always fetch ALL messages (no status filter) to keep counts accurate
+                const response = await fetch(`/api/whatsapp/pending-invoice-messages`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -256,10 +253,9 @@
                 }
 
                 const data = await response.json();
-                console.log('[WA-Dashboard] Loaded messages:', data);
+                console.log('[WA-Dashboard] Loaded all messages:', data);
 
-                // Fix: API returns {success, pending_count, sent_count, total_count, notifications, raw}
-                // where notifications is grouped by zona, and raw is the flat array
+                // Store all messages (both pending and sent)
                 if (data.raw && Array.isArray(data.raw)) {
                     allMessages = data.raw;
                     console.log('[WA-Dashboard] Total messages:', allMessages.length, '(pending:', data.pending_count, ', sent:', data.sent_count, ')');
