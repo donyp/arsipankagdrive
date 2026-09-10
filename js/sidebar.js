@@ -163,35 +163,39 @@
         `;
 
         sidebar.innerHTML = `
-            <div class="p-6 border-b border-gray-100" style="flex-shrink: 0;">
-                <div class="flex items-center gap-3 group">
-                    <div class="w-10 h-10 rounded-[1rem] bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200 group-hover:scale-105 transition-transform duration-300">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 class="text-[13px] font-black text-gray-900 uppercase tracking-tight">Pusat Arsip Anka</h1>
-                        <span class="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Multi-Zona v3.1</span>
+            <div class="flex flex-col h-full">
+                <!-- Header -->
+                <div class="p-6 border-b border-gray-100 flex-shrink-0">
+                    <div class="flex items-center gap-3 group">
+                        <div class="w-10 h-10 rounded-[1rem] bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200 group-hover:scale-105 transition-transform duration-300">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-[13px] font-black text-gray-900 uppercase tracking-tight">Pusat Arsip Anka</h1>
+                            <span class="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Multi-Zona v3.1</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <nav class="flex-1 py-4 space-y-0.5 overflow-y-auto custom-scrollbar" style="flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0;">
-                ${navHTML}
-            </nav>
+                <!-- Navigation (grows to fill space) -->
+                <nav class="flex-1 py-4 space-y-0.5 overflow-y-auto custom-scrollbar" style="overflow-y: auto; overflow-x: hidden;">
+                    ${navHTML}
+                </nav>
 
-            <!-- Logout Button at Bottom -->
-            <div class="p-3 border-t border-gray-100 flex-shrink-0">
-                <button onclick="logout()"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 bg-red-50/50 transition-all text-left">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Logout
-                </button>
+                <!-- Logout Button at Bottom -->
+                <div class="p-3 border-t border-gray-100 flex-shrink-0">
+                    <button onclick="logout()"
+                        class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 bg-red-50/50 transition-all text-left">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Logout
+                    </button>
+                </div>
             </div>
         `;
 
