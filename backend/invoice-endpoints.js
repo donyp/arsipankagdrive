@@ -1258,10 +1258,11 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                             // If tanggal exists, search only that date
                             datesToSearch.push(invoice.tanggal);
                         } else {
-                            // If tanggal is NULL, search last 7 days
-                            console.log(`[Check File] ⚠️  tanggal is NULL - generating last 7 days for fallback search`);
+                            // If tanggal is NULL, search last 90 days
+                            // This covers: current month + previous 2 full months + buffer
+                            console.log(`[Check File] ⚠️  tanggal is NULL - generating last 90 days for fallback search`);
                             const today = new Date();
-                            for (let i = 0; i < 7; i++) {
+                            for (let i = 0; i < 90; i++) {
                                 const searchDate = new Date(today);
                                 searchDate.setDate(today.getDate() - i);
                                 const isoDate = searchDate.toISOString().split('T')[0];
@@ -1294,7 +1295,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                             // Construct the search path
                             const searchPath = `gdrive:/ARSIPINVOICE/ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${folderName}`;
                             
-                            console.log(`[Check File] STRATEGY 2: Searching path: ${searchPath}`);
+                            console.log(`[Check File] Searching [${location}/${year}/${monthName}/${day}] for ${fileType}...`);
                             
                             try {
                                 const { execSync } = require('child_process');
@@ -1328,8 +1329,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                                         if (fileName.includes(faktur)) {
                                             fileExists = true;
                                             filePath = `ARSIPINVOICE/ARSIPINVOICE/${location}/${year}/${monthName}/${day}/${folderName}/${fileName}`;
-                                            console.log(`[Check File] STRATEGY 2: ✅ Found file: ${fileName}`);
-                                            console.log(`[Check File] STRATEGY 2: Full path: ${filePath}`);
+                                            console.log(`[Check File] ✅ Found file: ${fileName} at [${location}/${year}/${monthName}/${day}]`);
                                             break;
                                         }
                                     } catch (parseErr) {
@@ -1351,6 +1351,76 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                         }
                     } catch (err) {
                         console.warn(`[Check File] STRATEGY 2: Search-by-faktur failed: ${err.message}`);
+                    }
+                }
+
+                // ============================================
+                // STRATEGY 3: Recursive search fallback
+                // If file still not found after 90-day search,
+                // use recursive rclone search on entire folder tree
+                // ============================================
+                if (!fileExists) {
+                    console.log(`[Check File] 🔍 STRATEGY 3: Starting recursive search for faktur: ${faktur}`);
+                    
+                    try {
+                        const { execSync } = require('child_process');
+                        
+                        // Use rclone lsjson with recursive flag on entire ARSIPINVOICE folder
+                        const recursiveSearchPath = `gdrive:/ARSIPINVOICE/ARSIPINVOICE/${location}`;
+                        const recursiveCmd = `rclone lsjson "${recursiveSearchPath}" --recursive --config "/app/rclone.conf" 2>/dev/null`;
+                        
+                        console.log(`[Check File] STRATEGY 3: Executing recursive search on: ${recursiveSearchPath}`);
+                        console.log(`[Check File] STRATEGY 3: Command: ${recursiveCmd}`);
+                        
+                        let recursiveResult;
+                        try {
+                            recursiveResult = execSync(recursiveCmd, { 
+                                encoding: 'utf8', 
+                                maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large directory trees
+                                timeout: 60000 // 60 second timeout for recursive search
+                            }).trim();
+                        } catch (execErr) {
+                            console.log(`[Check File] STRATEGY 3: Recursive search path does not exist or error: ${execErr.message}`);
+                            recursiveResult = '';
+                        }
+                        
+                        if (recursiveResult) {
+                            const filesFound = recursiveResult.split('\n').filter(line => line.trim().length > 0);
+                            console.log(`[Check File] STRATEGY 3: Scanned ${filesFound.length} file(s) in recursive tree`);
+                            
+                            // Search for files containing the faktur number anywhere in the tree
+                            for (const fileEntry of filesFound) {
+                                try {
+                                    const parsed = JSON.parse(fileEntry);
+                                    const fileName = parsed.Name || '';
+                                    const filePath_parsed = parsed.Path || '';
+                                    
+                                    // Check if filename contains the faktur number
+                                    if (fileName.includes(faktur)) {
+                                        fileExists = true;
+                                        // Map file location back to proper path
+                                        filePath = `ARSIPINVOICE/ARSIPINVOICE/${location}${filePath_parsed ? '/' + filePath_parsed : ''}${filePath_parsed ? '/' + fileName : '/' + fileName}`;
+                                        console.log(`[Check File] ✅ STRATEGY 3: Found file via recursive search!`);
+                                        console.log(`[Check File]   File: ${fileName}`);
+                                        console.log(`[Check File]   Path: ${filePath}`);
+                                        console.log(`[Check File]   Location: ${filePath_parsed}`);
+                                        break;
+                                    }
+                                } catch (parseErr) {
+                                    // Skip parse errors
+                                }
+                            }
+                            
+                            if (fileExists) {
+                                console.log(`[Check File] STRATEGY 3: ✅ File found at: ${filePath}`);
+                            } else {
+                                console.log(`[Check File] STRATEGY 3: File not found in entire recursive tree`);
+                            }
+                        } else {
+                            console.log(`[Check File] STRATEGY 3: No files returned from recursive search`);
+                        }
+                    } catch (err) {
+                        console.warn(`[Check File] STRATEGY 3: Recursive search failed: ${err.message}`);
                     }
                 }
 
