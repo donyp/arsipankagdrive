@@ -872,6 +872,8 @@ console.log('  âœ“ PDF Upload & Auto-matching');
 // ============================================================
 // Catches multer errors and returns JSON instead of HTML error page
 app.use((err, req, res, next) => {
+    console.error('[ERROR HANDLER] Caught error:', err.code || err.message);
+    
     if (err instanceof multer.MulterError) {
         console.error('[Multer Error]', err.code, err.message);
         if (err.code === 'FILE_TOO_LARGE' || err.code === 'LIMIT_FILE_SIZE') {
@@ -885,6 +887,10 @@ app.use((err, req, res, next) => {
         // Custom file filter error
         console.error('[File Filter Error]', err.message);
         return res.status(400).json({ error: err.message });
+    } else if (err) {
+        // Generic error handler
+        console.error('[Generic Error]', err.message, err.stack);
+        return res.status(500).json({ error: err.message || 'Server error' });
     }
     next(err);
 });

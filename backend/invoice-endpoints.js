@@ -147,6 +147,18 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     
     const { v4: uuidv4 } = uuid;
     
+    // ============================================================
+    // MULTER ERROR WRAPPER for Invoice Endpoints
+    // ============================================================
+    // Custom middleware to catch multer errors from this instance and return JSON
+    const handleMulterError = (err, req, res, next) => {
+        if (err instanceof multer.MulterError || (err && err.message)) {
+            console.error('[Invoice Multer Error]', err.code || err.message);
+            return res.status(400).json({ error: err.message || 'Upload failed' });
+        }
+        next(err);
+    };
+    
     // ============================================
     // Helper: Extract location from TOKO column
     // Returns: 'BEKASI' or 'PEMALANG' based on TOKO name
@@ -553,6 +565,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     // TEST ENDPOINT - just capture file without parsing (NO AUTH for debugging)
     app.post('/api/invoice/test-upload', 
         upload.single('excel'),
+        handleMulterError,
         async (req, res) => {
             try {
                 console.log('[TEST] File received:');
@@ -588,6 +601,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     app.post('/api/invoice/upload-excel', 
         ...createAuth(['super_admin', 'moderator']),
         upload.single('excel'),
+        handleMulterError,
         async (req, res) => {
             console.log('[Invoice API] Upload endpoint hit');
             
@@ -1555,6 +1569,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     app.post('/api/invoice/upload-pdf',
         ...createAuth(['super_admin', 'moderator', 'user']),
         upload.single('pdf'),
+        handleMulterError,
         async (req, res) => {
             try {
                 if (!req.file) {
@@ -1737,6 +1752,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     app.post('/api/invoice/upload-document',
         ...createAuth(['super_admin', 'moderator']),
         upload.single('file'),
+        handleMulterError,
         async (req, res) => {
             try {
                 if (!req.file) {
@@ -2059,6 +2075,7 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
     app.post('/api/invoice/upload-faktur-pajak',
         ...createAuth(['super_admin', 'moderator']),
         upload.single('file'),
+        handleMulterError,
         async (req, res) => {
             try {
                 if (!req.file) {

@@ -45,8 +45,20 @@ module.exports = (app, supabase) => {
             console.log('[Rename Faktur] POST request received');
             console.log('[Rename Faktur] Content-Type:', req.headers['content-type']);
 
+            // Validate content-type
+            if (!req.headers['content-type'] || !req.headers['content-type'].includes('multipart/form-data')) {
+                return res.status(400).json({ error: 'Content-Type must be multipart/form-data' });
+            }
+
             // Parse multipart form data
-            const bb = busboy({ headers: req.headers });
+            let bb;
+            try {
+                bb = busboy({ headers: req.headers });
+            } catch (bberr) {
+                console.error('[Rename Faktur] Busboy init error:', bberr.message);
+                return res.status(400).json({ error: 'Error initializing form parser: ' + bberr.message });
+            }
+            
             let fileData = null;
             let fileName = null;
 
