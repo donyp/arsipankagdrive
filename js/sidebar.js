@@ -89,7 +89,7 @@
     for (const item of menuItems) {
         if (item.section) {
             const marginClass = item.marginTop || 'mt-6';
-            navHTML += `<p style="font-size: 0.625rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin: 0; padding: 0.5rem 1.25rem; font-weight: 700; ${item.marginTop ? 'margin-top: 3rem;' : 'margin-top: 1.5rem;'} margin-bottom: 0.25rem; word-break: break-word;">${item.section}</p>`;
+            navHTML += `<p style="font-size: 0.625rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin: 0; padding: 0.5rem 1rem; font-weight: 700; ${item.marginTop ? 'margin-top: 3rem;' : 'margin-top: 1.5rem;'} margin-bottom: 0.25rem; word-break: break-word;">${item.section}</p>`;
             continue;
         }
 
@@ -158,13 +158,13 @@
                 : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50';
 
             navHTML += `
-                <div style="padding-left: 0.5rem; padding-right: 0.5rem;">
+                <div style="padding-left: 0.5rem; padding-right: 0.5rem; margin-top: 0.25rem; margin-bottom: 0.125rem;">
                 <a href="${item.href}" ${item.guard || ''}
-                    style="display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; border-radius: 0.75rem; font-size: 0.75rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: rgba(59, 130, 246, 0.1); font-weight: 700;' : 'color: #6b7280;'} text-decoration: none; font-weight: 700; letter-spacing: 0.05em; min-width: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                    style="display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; border-radius: 0.75rem; font-size: 0.75rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: rgba(59, 130, 246, 0.1); font-weight: 700;' : 'color: #6b7280;'} text-decoration: none; font-weight: 700; letter-spacing: 0.05em; overflow: hidden; width: 100%;">
                     <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         ${renderIcon(item.icon, item.iconPaths)}
                     </svg>
-                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.label}</span>
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;">${item.label}</span>
                 </a>
                 </div>`;
         }
@@ -212,7 +212,7 @@
             </div>
 
             <!-- Navigation (scrollable) -->
-            <nav style="padding: 1rem 0; space-y: 0.125rem; overflow-y: auto; overflow-x: hidden; flex: 1; min-width: 0; -webkit-overflow-scrolling: touch;">
+            <nav style="padding: 0; overflow-y: auto; overflow-x: hidden; flex: 1; min-width: 0; -webkit-overflow-scrolling: touch;">
                 ${navHTML}
             </nav>
         `;
