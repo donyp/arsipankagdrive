@@ -868,6 +868,28 @@ console.log('  âœ“ Invoice List & Statistics');
 console.log('  âœ“ PDF Upload & Auto-matching');
 
 // ============================================================
+// MULTER ERROR HANDLER (Middleware)
+// ============================================================
+// Catches multer errors and returns JSON instead of HTML error page
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        console.error('[Multer Error]', err.code, err.message);
+        if (err.code === 'FILE_TOO_LARGE' || err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(413).json({ error: 'File terlalu besar' });
+        } else if (err.code === 'LIMIT_FILE_COUNT') {
+            return res.status(400).json({ error: 'Terlalu banyak file' });
+        } else {
+            return res.status(400).json({ error: 'Upload error: ' + err.message });
+        }
+    } else if (err && err.message && (err.message.includes('Only') || err.message.includes('PDF') || err.message.includes('Excel'))) {
+        // Custom file filter error
+        console.error('[File Filter Error]', err.message);
+        return res.status(400).json({ error: err.message });
+    }
+    next(err);
+});
+
+// ============================================================
 // AUTH ENDPOINTS
 // ============================================================
 
