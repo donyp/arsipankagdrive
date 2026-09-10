@@ -124,15 +124,15 @@
             return;
         }
 
-        const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+        const currentPage = window.location.pathname.split('/').pop() || 'dashboard';
         const userRole = localStorage.getItem('user_role') || 'admin_zona';
 
         // Define navigation items based on role
         const navItems = [
-            { href: 'dashboard.html', icon: '🏠', label: 'Home', roles: ['super_admin', 'moderator', 'admin_zona'] },
-            { href: 'upload.html', icon: '📤', label: 'Upload', roles: ['super_admin', 'moderator'] },
-            { href: 'notification-settings.html', icon: '🔔', label: 'Notif', roles: ['super_admin', 'moderator', 'admin_zona'], badge: true },
-            { href: 'users.html', icon: '👥', label: 'Users', roles: ['super_admin', 'moderator'] }
+            { href: '/dashboard', icon: '🏠', label: 'Home', roles: ['super_admin', 'moderator', 'admin_zona'] },
+            { href: '/upload', icon: '📤', label: 'Upload', roles: ['super_admin', 'moderator'] },
+            { href: '/notification-settings', icon: '🔔', label: 'Notif', roles: ['super_admin', 'moderator', 'admin_zona'], badge: true },
+            { href: '/users', icon: '👥', label: 'Users', roles: ['super_admin', 'moderator'] }
         ];
 
         // Filter items based on user role
@@ -200,7 +200,7 @@
     function initFAB() {
         // Check if FAB should be shown
         const currentPage = window.location.pathname;
-        const showFABPages = ['dashboard.html', 'index.html'];
+        const showFABPages = ['/dashboard', '/'];
         
         if (!showFABPages.some(page => currentPage.includes(page))) {
             return;

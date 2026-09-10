@@ -80,7 +80,7 @@ const API = {
             const body = await res.json().catch(() => ({}));
             if (body.error?.includes('expired') || body.error?.includes('Token')) {
                 this.clearAuth();
-                window.location.href = '/index';
+                window.location.href = '/';
                 const error = new Error('Sesi Anda telah berakhir. Silakan login kembali.');
                 error.status = res.status;
                 throw error;
@@ -93,8 +93,8 @@ const API = {
         // Handle Maintenance Mode (503)
         if (res.status === 503) {
             this.clearAuth();
-            if (!window.location.pathname.endsWith('index.html') && window.location.pathname !== '/') {
-                window.location.href = 'index.html?reason=maintenance';
+            if (!window.location.pathname.endsWith('index') && window.location.pathname !== '/') {
+                window.location.href = '/?reason=maintenance';
             }
             const errBody = await res.json().catch(() => ({}));
             const error = new Error(errBody.message || 'Sistem sedang dalam perbaikan.');

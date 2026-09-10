@@ -78,7 +78,7 @@ const NotificationSystem = {
 
             return `
             <div class="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50/50 cursor-pointer group ${isRead ? 'opacity-60' : 'bg-blue-50/20'}" 
-                 onclick="viewNotification('${notif.id}', '${notif.link || 'dashboard.html'}')">
+                 onclick="viewNotification('${notif.id}', '${notif.link || '/dashboard'}')">
                 <div class="flex items-start gap-3">
                     <div class="w-8 h-8 rounded-full ${typeClass} flex items-center justify-center flex-shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -115,7 +115,7 @@ function renderTable(batches) {
 // ============================================
 function viewBatchInvoices(batchId) {
     // Redirect to invoice list with batch filter
-    window.location.href = `invoice-list.html?batch=${batchId}`;
+    window.location.href = `/invoice-list?batch=${batchId}`;
 }
 
 // ============================================

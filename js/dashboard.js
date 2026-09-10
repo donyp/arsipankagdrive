@@ -2638,7 +2638,7 @@ function extractNominalFromFilename(filename) {
 // File Detail View Function
 // ============================================================
 function openFileDetail(fileId) {
-    window.location.href = `file-detail.html?id=${fileId}`;
+    window.location.href = `/file-detail?id=${fileId}`;
 }
 
 
