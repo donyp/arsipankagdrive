@@ -14,36 +14,35 @@
     <style>
         html, body {
             zoom: 0.8;
+            margin: 0;
+            padding: 0;
         }
         
-        /* Fix layout when zoomed */
         body {
             display: flex;
+            flex-direction: row;
         }
         
         #sidebar {
-            position: relative;
             flex-shrink: 0;
             width: 256px;
+            position: relative;
             z-index: 40;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .flex {
+            display: flex !important;
+            flex-direction: row !important;
+            width: 100%;
         }
         
         #main-content {
             flex: 1;
-            margin-left: 0;
+            margin-left: 0 !important;
             overflow-x: hidden;
-        }
-        
-        /* Mobile responsive */
-        @media (max-width: 1024px) {
-            #sidebar {
-                position: fixed;
-                width: 256px;
-            }
-            
-            #main-content {
-                margin-left: 256px;
-            }
+            min-width: 0;
         }
     </style>
 </head>
