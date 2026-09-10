@@ -1,28 +1,18 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Toko | Pusat Arsip Anka</title>
-    <meta name="description" content="Kelola daftar toko dan klasifikasi zona">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="css/tailwind.generated.css">
-    <link rel="stylesheet" href="css/style.css">
-    <script>
-        // Cloak the page until Auth and UI checks are done
-        document.documentElement.style.opacity = '0';
-        document.documentElement.classList.add('auth-loading');
-    </script>
+    <title>Manajemen Toko - Pusat Arsip Anka</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         html, body {
             zoom: 0.8;
         }
     </style>
 </head>
-
-<body class="bg-[#F0F2F5] min-h-screen text-gray-800">
+<body class="bg-gray-50">
     <style>
         body {
             zoom: 0.8;
@@ -39,127 +29,67 @@
 
         <!-- Main Content -->
         <div style="margin-left: 16rem; width: calc(100% - 16rem); transition: all 300ms ease;">
-            <!-- Main Content -->
-            <main id="main-content" class="min-h-screen transition-all duration-300">
-                <!-- Top Bar -->
-                <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4">
+            <!-- Header -->
+            <div class="bg-white sticky top-0 z-30 shadow-sm border-b border-gray-100">
+                <div class="px-6 py-4">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div>
-                        <h2 class="text-xl font-bold text-gray-900">Manajemen Toko</h2>
-                        <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Kelola daftar toko
-                            dan alokasi zona</p>
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">Manajemen Toko</h2>
+                            <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Kelola daftar toko dan alokasi zona</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <select id="filter-zona" onchange="applyTokoFilter()" class="px-4 py-2 rounded-lg text-sm bg-white border border-gray-200 text-gray-600 focus:outline-none focus:border-blue-500">
+                                <option value="">Semua Zona</option>
+                            </select>
+                            <button onclick="openTokoModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center gap-2">
+                                <i class="fas fa-plus"></i>
+                                Tambah Toko
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <select id="filter-zona" onchange="applyTokoFilter()"
-                        class="px-4 py-2 rounded-xl text-sm bg-white border border-gray-200 text-gray-600 focus:outline-none focus:ring-4 focus:ring-blue-100 min-w-[140px] transition-all">
-                        <option value="">Semua Zona</option>
-                    </select>
-                    <button onclick="openTokoModal()"
-                        class="btn-primary px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg shadow-indigo-500/20">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Tambah Toko
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <div class="p-6">
-            <!-- Stats -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <div class="glass-card rounded-2xl p-5">
-                    <p class="text-xs text-gray-500 mb-1">Total Toko</p>
-                    <p id="stat-total-tokos" class="text-2xl font-bold text-gray-900">0</p>
-                </div>
-                <div class="glass-card rounded-2xl p-5">
-                    <p class="text-xs text-gray-500 mb-1">Cakupan Zona</p>
-                    <p id="stat-total-zonas" class="text-2xl font-bold text-cyan-400">0</p>
                 </div>
             </div>
 
-            <!-- List Content -->
-            <div
-                class="glass-card rounded-2xl overflow-hidden animate-fade-in text-sm border border-gray-100 shadow-xl shadow-blue-500/5">
-                <div class="overflow-x-auto">
-                    <table class="data-table w-full text-left" id="tokos-table">
-                        <thead>
-                            <tr>
-                                <th class="pl-8 py-5">Nama Toko</th>
-                                <th class="py-5">Kode Toko</th>
-                                <th class="py-5">Zona</th>
-                                <th class="pr-8 py-5 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tokos-body">
-                            <!-- Rows rendered by JS -->
-                        </tbody>
-                    </table>
+            <!-- Main Content -->
+            <div class="p-6">
+                <!-- Stats -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-white rounded-lg p-5 shadow-md border border-gray-100">
+                        <p class="text-xs text-gray-500 mb-1">Total Toko</p>
+                        <p id="stat-total-tokos" class="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-5 shadow-md border border-gray-100">
+                        <p class="text-xs text-gray-500 mb-1">Cakupan Zona</p>
+                        <p id="stat-total-zonas" class="text-2xl font-bold text-cyan-400">0</p>
+                    </div>
                 </div>
-                <div id="tokos-empty" class="empty-state hidden">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                            d="M19 21V5a2 2 0 012-2H9a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    <p class="text-lg font-medium text-gray-400 mb-1">Daftar toko kosong</p>
-                    <p class="text-sm text-gray-600">Tekan "Tambah Toko" untuk memulai.</p>
-                </div>
-            </div>
-        </div>
-    </main>
 
-    <!-- Add/Edit Toko Modal -->
-    <div id="toko-modal" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeTokoModal()"></div>
-        <div class="absolute inset-0 flex items-center justify-center p-4">
-            <div
-                class="relative bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl animate-scale-in border border-gray-100">
-                <h3 id="modal-title" class="text-xl font-extrabold text-gray-900 mb-6">Tambah Toko Baru</h3>
-                <form id="toko-form" class="space-y-6">
-                    <input type="hidden" id="edit-toko-id">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 ml-1">Nama
-                            Toko</label>
-                        <input id="modal-nama" type="text" required placeholder="Contoh: Toko Berkah"
-                            class="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-400 transition-all font-medium">
+                <!-- Table -->
+                <div class="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm" id="tokos-table">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-3 font-bold text-gray-700">Nama Toko</th>
+                                    <th class="px-6 py-3 font-bold text-gray-700">Kode Toko</th>
+                                    <th class="px-6 py-3 font-bold text-gray-700">Zona</th>
+                                    <th class="px-6 py-3 text-right font-bold text-gray-700">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tokos-body">
+                                <tr class="border-b border-gray-200">
+                                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">Memuat data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 ml-1">Kode
-                            Toko</label>
-                        <input id="modal-kode" type="text" required placeholder="Contoh: TRK-01"
-                            class="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-400 transition-all uppercase font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 ml-1">Alokasi
-                            Zona</label>
-                        <select id="modal-zona" required
-                            class="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-400 transition-all font-bold">
-                            <option value="">Pilih zona</option>
-                        </select>
-                    </div>
-                    <div class="flex gap-3 pt-2">
-                        <button type="button" onclick="closeTokoModal()"
-                            class="btn-ghost flex-1 py-3 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 transition-all">Batal</button>
-                        <button type="submit"
-                            class="btn-primary flex-1 py-3 rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Simpan</button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/sidebar.js?v=ULTRACLEAN_2026"></script>
     <script src="js/config.js"></script>
-    <script src="js/supabase.js"></script>
-    <script src="js/utils.js?v=1778387279965"></script>
     <script src="js/auth.js"></script>
-    <script src="js/tokos.js"></script>
-            </main>
-        </div>
-    </div>
+    <script src="js/sidebar.js"></script>
 </body>
-
 </html>

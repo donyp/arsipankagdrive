@@ -3,335 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload PDF Invoice - ARSIP ANKA</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Upload PDF Invoice - Pusat Arsip Anka</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        html, body {
-            zoom: 0.8;
-        }
-        
-        .upload-container {
-            padding: 40px;
-            max-width: 100%;
-            width: 100%;
-            margin: 0 auto;
-        }
-
-        .upload-header {
-            margin-bottom: 40px;
-        }
-
-        .upload-header h1 {
-            font-size: 32px;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .upload-header p {
-            font-size: 16px;
-            color: #7f8c8d;
-        }
-
-        /* Card */
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-
-        .card h3 {
-            margin-top: 0;
-            color: #2c3e50;
-            font-size: 18px;
-        }
-
-        /* Drop Zone */
-        .drop-zone {
-            border: 2px dashed #e74c3c;
-            border-radius: 12px;
-            padding: 60px 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: #fff5f3;
-        }
-
-        .drop-zone:hover,
-        .drop-zone.drag-over {
-            border-color: #c0392b;
-            background: #fadbd8;
-        }
-
-        .drop-zone i {
-            font-size: 64px;
-            color: #e74c3c;
-            margin-bottom: 15px;
-            display: block;
-        }
-
-        .drop-zone p {
-            margin: 0 0 15px 0;
-            color: #2c3e50;
-            font-weight: 600;
-            font-size: 18px;
-        }
-
-        .drop-zone span {
-            font-size: 14px;
-            color: #7f8c8d;
-        }
-
-        /* Files List */
-        .files-list {
-            display: none;
-            margin-top: 30px;
-        }
-
-        .files-list.show {
-            display: block;
-        }
-
-        .files-list h4 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-
-        .file-item {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border-left: 4px solid #95a5a6;
-            gap: 12px;
-        }
-
-        .file-item.valid {
-            border-left-color: #27ae60;
-            background: #f0fdf4;
-        }
-
-        .file-item.invalid {
-            border-left-color: #e74c3c;
-            background: #fef2f2;
-        }
-
-        .file-item-icon {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: white;
-            border-radius: 50%;
-            margin-right: 0;
-            font-weight: 700;
-            font-size: 18px;
-            flex-shrink: 0;
-        }
-
-        .file-item.valid .file-item-icon {
-            background: #27ae60;
-            color: white;
-        }
-
-        .file-item.invalid .file-item-icon {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .file-item-name {
-            flex: 1;
-            color: #2c3e50;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .file-item-faktur {
-            font-size: 12px;
-            color: #7f8c8d;
-            margin-top: 4px;
-        }
-
-        .file-item-status {
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 4px;
-            flex-shrink: 0;
-        }
-
-        .file-item.valid .file-item-status {
-            background: #d5f4e6;
-            color: #27ae60;
-        }
-
-        .file-item.invalid .file-item-status {
-            background: #fadbd8;
-            color: #e74c3c;
-        }
-
-        /* Delete button for invalid files */
-        .delete-btn {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            flex-shrink: 0;
-            margin-left: 8px;
-            font-size: 16px;
-        }
-
-        .delete-btn:hover {
-            background: #c0392b;
-            transform: scale(1.1);
-        }
-
-        .delete-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Stats */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .stat-box {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: #2c3e50;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #7f8c8d;
-            text-transform: uppercase;
-            margin-top: 5px;
-        }
-
-        /* Buttons */
-        .btn-group {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            margin-top: 30px;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-
-        .btn-primary {
-            background: #3498db;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #2980b9;
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #c0392b;
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: #95a5a6;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #7f8c8d;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        /* Info Box */
-        .info-box {
-            background: #fff3cd;
-            border-left: 4px solid #f39c12;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            color: #856404;
-        }
-
-        .info-box i {
-            color: #f39c12;
-            margin-right: 10px;
-        }
-
-        /* Hidden input */
-        input[type="file"] {
-            display: none;
-        }
-
-        .validating {
-            text-align: center;
-            padding: 20px;
-            color: #3498db;
-        }
-
-        .validating i {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 768px) {
-            .upload-container {
-                padding: 20px;
-            }
-
-            .stats {
-                grid-template-columns: 1fr;
-            }
+        .gradient-header {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
         }
     </style>
 </head>
-<body>
+<body class="bg-gray-50">
     <style>
         body {
             zoom: 0.8;
@@ -348,82 +29,85 @@
 
         <!-- Main Content -->
         <div style="margin-left: 16rem; width: calc(100% - 16rem); transition: all 300ms ease;">
-            <div class="main-content" id="main-content">
-                <div class="upload-container">
             <!-- Header -->
-            <div class="upload-header">
-                <h1>📄 Upload PDF Invoice Massal</h1>
-                <p>Upload multiple PDF files sekaligus. Sistem akan validasi faktur otomatis dan tampil status setiap file.</p>
+            <div class="gradient-header text-white sticky top-0 z-30 shadow-lg">
+                <div class="px-6 py-8">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-white/20 p-3 rounded-lg">
+                            <i class="fas fa-file-pdf text-2xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold">Upload PDF Invoice</h1>
+                            <p class="text-red-100 text-sm mt-1">Upload file PDF invoice untuk disimpan</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Card -->
-            <div class="card">
-                <h3>Drag & Drop File PDF Invoice</h3>
-                
-                <div class="info-box">
-                    <i class="fas fa-info-circle"></i>
-                    Nama file harus sesuai nomor faktur (contoh: 835100310.pdf). Drag drop multiple files sekaligus!
+            <!-- Main Content Area -->
+            <div class="p-6 max-w-4xl mx-auto">
+                <!-- Info Box -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <p class="text-yellow-800 text-sm">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>Informasi:</strong> Upload file PDF invoice dengan format yang benar
+                    </p>
                 </div>
 
-                <!-- Drop Zone -->
-                <div class="drop-zone" id="dropZone">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Drag & drop multiple PDF di sini</p>
-                    <span>atau klik untuk memilih file</span>
-                </div>
+                <!-- Upload Card -->
+                <div class="bg-white rounded-lg shadow-md p-8 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-cloud-upload-alt text-red-600"></i>
+                        Drag & Drop PDF Invoice
+                    </h2>
 
-                <input type="file" id="fileInput" accept=".pdf" multiple>
-
-                <!-- Validating -->
-                <div class="validating" id="validating" style="display: none;">
-                    <i class="fas fa-spinner"></i>
-                    <p>Scanning dan validasi file...</p>
-                </div>
-
-                <!-- Stats -->
-                <div class="stats" id="stats" style="display: none;">
-                    <div class="stat-box">
-                        <div class="stat-value" id="totalFiles">0</div>
-                        <div class="stat-label">Total File</div>
+                    <!-- Drop Zone -->
+                    <div id="dropZone" style="border: 2px dashed #e74c3c; border-radius: 12px; padding: 60px 40px; text-align: center; cursor: pointer; transition: all 0.3s; background: #fff5f3;">
+                        <i class="fas fa-file-pdf" style="font-size: 64px; color: #e74c3c; margin-bottom: 15px; display: block;"></i>
+                        <p style="margin: 0 0 15px 0; color: #2c3e50; font-weight: 600; font-size: 18px;">Drag & drop multiple PDF di sini</p>
+                        <span style="font-size: 14px; color: #7f8c8d;">atau klik untuk memilih file</span>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-value" style="color: #27ae60;" id="validFiles">0</div>
-                        <div class="stat-label">Valid ✓</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" style="color: #e74c3c;" id="invalidFiles">0</div>
-                        <div class="stat-label">Invalid ✗</div>
-                    </div>
-                </div>
 
-                <!-- Files List -->
-                <div class="files-list" id="filesList">
-                    <h4>Hasil Validasi:</h4>
-                    <div id="filesContainer"></div>
-                </div>
+                    <input type="file" id="fileInput" accept=".pdf" multiple style="display: none;">
 
-                <!-- Buttons -->
-                <div class="btn-group">
-                    <button class="btn btn-secondary" onclick="resetUpload()">
-                        <i class="fas fa-redo"></i> Reset
-                    </button>
-                    <button class="btn btn-success" id="btnUpload" disabled>
-                        <i class="fas fa-upload"></i> Upload File Valid
-                    </button>
+                    <!-- Stats -->
+                    <div id="stats" style="display: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 30px 0;">
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 700; color: #2c3e50;" id="totalFiles">0</div>
+                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-top: 5px;">Total File</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 700; color: #27ae60;" id="validFiles">0</div>
+                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-top: 5px;">Valid ✓</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 700; color: #e74c3c;" id="invalidFiles">0</div>
+                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-top: 5px;">Invalid ✗</div>
+                        </div>
+                    </div>
+
+                    <!-- Files List -->
+                    <div id="filesList" style="display: none; margin-top: 30px;">
+                        <h4 style="color: #2c3e50; margin-bottom: 15px; font-size: 16px; font-weight: 600;">File Selection:</h4>
+                        <div id="filesContainer"></div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 30px;">
+                        <button class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition" onclick="resetUpload()">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                        <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition" id="btnUpload" disabled>
+                            <i class="fas fa-upload"></i> Upload PDF
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="js/auth.js"></script>
     <script src="js/config.js"></script>
-    <script src="js/supabase.js"></script>
-    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/sidebar.js"></script>
-    <script src="js/upload-invoice-pdf.js"></script>
-                </div>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
