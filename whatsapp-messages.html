@@ -229,7 +229,9 @@
                     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentFilter = btn.dataset.filter;
-                    loadMessages(); // Reload messages with new filter
+                    // Just render with new filter - don't reload from API (already have all data)
+                    updateCounts();
+                    renderMessages();
                 });
             });
         });
