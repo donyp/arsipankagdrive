@@ -102,64 +102,60 @@ module.exports = (app, supabase) => {
                     let noInvoice = null;
                     let confidence = 'low';
 
-                    // Priority 1: Look for numbers starting with 83510031 (usually page 1)
-                    const pattern1 = /83510031\d{10,}/g;
-                    const matches1 = textContent.match(pattern1);
+                    // Remove common PDF artifacts and normalize spaces
+                    const cleanText = textContent.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ');
+
+                    // Priority 1: Look for "No. Invoice :" pattern with flexible spacing (usually page 2)
+                    const pattern1 = /No\.\s*Invoice\s*[:=]?\s*([0-9\s]{12,})/gi;
+                    const matches1 = cleanText.match(pattern1);
                     let priority1Number = null;
                     
                     if (matches1 && matches1.length > 0) {
-                        // Use first clear match (if appears multiple times, it's clear)
-                        priority1Number = matches1[0];
-                        confidence = matches1.length > 1 ? 'high' : 'medium';
-                        console.log(`[Rename Invoice Hijau] Priority 1 candidates: ${matches1.join(', ')}, confidence: ${confidence}`);
+                        // Extract just the numbers, remove spaces
+                        const numberMatch = matches1[0].match(/([0-9]+)/g);
+                        if (numberMatch) {
+                            priority1Number = numberMatch.join('');
+                            console.log(`[Rename Invoice Hijau] Priority 1 (No. Invoice :) found: ${priority1Number}`);
+                        }
                     }
 
-                    // Priority 2: Fallback to "No. Invoice :" pattern (usually page 2)
-                    const pattern2 = /No\.\s*Invoice\s*:\s*(\d{12,})/gi;
-                    const matches2Pattern = textContent.match(pattern2);
+                    // Priority 2: Look for numbers starting with 83510031 (Invoice prefix, usually page 1)
+                    const pattern2 = /83510031\s*0?[\d\s]{8,12}/g;
+                    const matches2 = cleanText.match(pattern2);
                     let priority2Number = null;
                     
-                    if (matches2Pattern) {
-                        // Extract just the numbers from "No. Invoice : XXX"
-                        const numberPattern = /(\d{12,})/;
-                        const numMatch = matches2Pattern[0].match(numberPattern);
-                        if (numMatch) {
-                            priority2Number = numMatch[1];
-                            console.log(`[Rename Invoice Hijau] Priority 2 found: ${priority2Number}`);
+                    if (matches2 && matches2.length > 0) {
+                        // Extract just the numbers, remove spaces
+                        const numberMatch = matches2[0].match(/([0-9]+)/g);
+                        if (numberMatch) {
+                            priority2Number = numberMatch.join('');
+                            confidence = matches2.length > 1 ? 'high' : 'medium';
+                            console.log(`[Rename Invoice Hijau] Priority 2 (83510031 prefix): ${priority2Number}, confidence: ${confidence}`);
                         }
+                    }
+
+                    // Priority 3: Look for any 15-digit number that looks like an invoice
+                    let priority3Number = null;
+                    const pattern3 = /\b8351\d{11,}\b/g;
+                    const matches3 = cleanText.match(pattern3);
+                    if (matches3 && matches3.length > 0) {
+                        priority3Number = matches3[0];
+                        console.log(`[Rename Invoice Hijau] Priority 3 (15-digit number): ${priority3Number}`);
                     }
 
                     // Matching logic:
-                    if (priority1Number && priority2Number) {
-                        // Both found - check if they match
-                        if (priority1Number === priority2Number) {
-                            noInvoice = priority1Number;
-                            console.log(`[Rename Invoice Hijau] Both priorities match: ${noInvoice} (confidence: high)`);
-                        } else {
-                            // Mismatch - use Priority 2 (more reliable)
-                            noInvoice = priority2Number;
-                            console.log(`[Rename Invoice Hijau] Mismatch: P1=${priority1Number}, P2=${priority2Number} - Using Priority 2`);
-                        }
-                    } else if (priority1Number && confidence === 'high') {
-                        // Priority 1 only with high confidence (multiple occurrences)
+                    if (priority1Number) {
+                        // Priority 1 is most reliable (explicit "No. Invoice" label)
                         noInvoice = priority1Number;
-                        console.log(`[Rename Invoice Hijau] Using Priority 1 (high confidence): ${noInvoice}`);
+                        console.log(`[Rename Invoice Hijau] Selected: Priority 1 - ${noInvoice}`);
                     } else if (priority2Number) {
-                        // Priority 2 found - use it
+                        // Priority 2 second choice
                         noInvoice = priority2Number;
-                        console.log(`[Rename Invoice Hijau] Using Priority 2: ${noInvoice}`);
-                    } else if (priority1Number) {
-                        // Priority 1 only with medium confidence - uncertain
-                        // Try more flexible patterns before deciding
-                        const pattern3 = /Invoice\s*[:#]?\s*(\d{12,})/i;
-                        const match3 = textContent.match(pattern3);
-                        if (match3) {
-                            noInvoice = match3[1];
-                            console.log(`[Rename Invoice Hijau] Using flexible pattern: ${noInvoice}`);
-                        } else {
-                            noInvoice = priority1Number;
-                            console.log(`[Rename Invoice Hijau] Using Priority 1 (no alternatives): ${noInvoice}`);
-                        }
+                        console.log(`[Rename Invoice Hijau] Selected: Priority 2 - ${noInvoice}`);
+                    } else if (priority3Number) {
+                        // Priority 3 last resort
+                        noInvoice = priority3Number;
+                        console.log(`[Rename Invoice Hijau] Selected: Priority 3 - ${noInvoice}`);
                     }
 
                     // If no invoice found, return error
