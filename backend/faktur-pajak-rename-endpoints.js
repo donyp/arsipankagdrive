@@ -102,7 +102,7 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
     app.get('/api/faktur-pajak/rename-history/:faktur', createAuth(['super_admin', 'moderator', 'admin_zona']), async (req, res) => {
         try {
             const { faktur } = req.params;
-            const { limit = 10, offset = 0 } = req.query;
+            const { limit = 100, offset = 0 } = req.query;
             
             if (!faktur) {
                 return res.status(400).json({ error: 'Faktur parameter required' });
