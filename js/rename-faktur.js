@@ -472,22 +472,66 @@ function displayHistorySection(histories) {
         // Format date/time properly in Indonesia timezone
         const timestamp = formatIndonesianDateTime(h.renamed_at);
         
+        // Use full_name if available, otherwise use renamed_by
+        const displayName = h.full_name || h.renamed_by || 'Unknown';
+        
         return `
-        <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded transition-colors text-sm">
+        <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded transition-colors text-sm group">
             <div class="flex-1 min-w-0">
                 <span class="text-gray-700">
                     File asli: <span class="font-mono text-gray-600">${h.old_filename}</span>
                     <span class="text-gray-400 mx-1">›</span>
                     <span class="font-mono text-green-700 font-semibold">${h.new_filename}</span>
                     <span class="text-gray-400 mx-2">|</span>
-                    Oleh: <span class="font-semibold text-gray-700">${h.renamed_by}</span>
+                    Oleh: <span class="font-semibold text-gray-700">${displayName}</span>
                     <span class="text-gray-400 mx-2">|</span>
                     <span class="text-gray-500">${timestamp}</span>
                 </span>
             </div>
+            <button onclick="deleteHistoryRecord(${h.id})" class="ml-2 p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100" title="Hapus history ini">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         </div>
         `;
     }).join('');
+}
+
+async function deleteHistoryRecord(historyId) {
+    try {
+        const token = API.getToken();
+        if (!token) {
+            console.warn('[Rename Faktur] No auth token for deleting');
+            Toast.error('Tidak dapat menghapus - token tidak valid');
+            return;
+        }
+        
+        console.log('[Rename Faktur] Deleting history record:', historyId);
+        
+        const response = await fetch(`/api/faktur-pajak/rename-history/${historyId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            console.log('[Rename Faktur] History deleted successfully');
+            Toast.success('History dihapus');
+            
+            // Reload history
+            loadLatestHistory();
+        } else {
+            const errData = await response.json().catch(() => ({}));
+            console.warn('[Rename Faktur] Failed to delete:', response.status, errData);
+            Toast.error('Gagal menghapus history: ' + (errData.error || 'Unknown error'));
+        }
+    } catch (err) {
+        console.warn('[Rename Faktur] Error deleting history:', err.message);
+        Toast.error('Error: ' + err.message);
+    }
 }
 
 function formatIndonesianDateTime(isoString) {

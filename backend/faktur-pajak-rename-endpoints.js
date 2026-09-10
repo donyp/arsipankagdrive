@@ -30,6 +30,7 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
             // Get user info from token
             const renamed_by = req.user?.email || req.user?.id || 'unknown';
             const user_email = req.user?.email;
+            const full_name = req.user?.full_name || req.user?.name || renamed_by;  // Get full name
             
             // Validation - faktur, old_filename, new_filename are required
             if (!faktur || !old_filename || !new_filename) {
@@ -59,6 +60,7 @@ function addFakturPajakRenameEndpoints(app, supabase, createAuth) {
                     new_path,
                     renamed_by,
                     user_email,
+                    full_name,  // Store full name
                     reason,
                     zona_id,
                     status: 'completed',
