@@ -165,7 +165,7 @@
 
         sidebar.innerHTML = `
             <!-- Header -->
-            <div class="p-6 border-b border-gray-100 flex-shrink-0">
+            <div class="p-6 border-b border-gray-100" style="flex-shrink: 0;">
                 <div class="flex items-center gap-3 group">
                     <div class="w-10 h-10 rounded-[1rem] bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200 group-hover:scale-105 transition-transform duration-300">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,12 +181,12 @@
             </div>
 
             <!-- Navigation (grows to fill space) -->
-            <nav class="flex-1 py-4 space-y-0.5 overflow-y-auto custom-scrollbar">
+            <nav class="py-4 space-y-0.5 overflow-y-auto custom-scrollbar" style="flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0;">
                 ${navHTML}
             </nav>
 
             <!-- Logout Button at Bottom -->
-            <div class="p-3 border-t border-gray-100 flex-shrink-0">
+            <div class="p-3 border-t border-gray-100" style="flex-shrink: 0;">
                 <button onclick="logout()"
                     class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 bg-red-50/50 transition-all text-left">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
