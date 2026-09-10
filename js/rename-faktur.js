@@ -301,7 +301,43 @@ function downloadFile(filename, fileData) {
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Rename Faktur] Initialized');
+    
+    // Auto-load latest rename history on page load
+    setTimeout(() => {
+        loadLatestHistory();
+    }, 1500);
 });
+
+async function loadLatestHistory() {
+    try {
+        const token = API.getToken();
+        if (!token) {
+            console.warn('[Rename Faktur] No auth token for loading history');
+            return;
+        }
+        
+        // Get recent renames from last 24 hours
+        const response = await fetch('/api/faktur-pajak/rename-history/recent?hours=24&limit=10', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('[Rename Faktur] Recent history loaded:', data.history.length, 'items');
+            if (data.history && data.history.length > 0) {
+                displayHistorySection(data.history);
+            }
+        } else {
+            console.warn('[Rename Faktur] Failed to load recent history:', response.status);
+        }
+    } catch (err) {
+        console.warn('[Rename Faktur] Error loading recent history:', err.message);
+    }
+}
 
 // ============================================
 // History Modal Functions - REMOVED
@@ -408,17 +444,8 @@ function displayHistorySection(histories) {
     
     section.classList.remove('hidden');
     list.innerHTML = uniqueHistories.map(h => {
-        // Format: "17 Agustus 2026 13:00 WIB"
-        const date = new Date(h.renamed_at);
-        const options = {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZone: 'Asia/Jakarta'
-        };
-        const timestamp = date.toLocaleString('id-ID', options) + ' WIB';
+        // Format date/time properly in Indonesia timezone
+        const timestamp = formatIndonesianDateTime(h.renamed_at);
         
         return `
         <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded transition-colors text-sm">
@@ -436,6 +463,37 @@ function displayHistorySection(histories) {
         </div>
         `;
     }).join('');
+}
+
+function formatIndonesianDateTime(isoString) {
+    // Parse ISO string and convert to Jakarta timezone
+    const date = new Date(isoString);
+    
+    // Get date/time components
+    const formatter = new Intl.DateTimeFormat('id-ID', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: 'Asia/Jakarta'
+    });
+    
+    const parts = formatter.formatToParts(date);
+    let day = '', month = '', year = '', hour = '', minute = '', second = '';
+    
+    parts.forEach(part => {
+        if (part.type === 'day') day = part.value;
+        if (part.type === 'month') month = part.value;
+        if (part.type === 'year') year = part.value;
+        if (part.type === 'hour') hour = part.value;
+        if (part.type === 'minute') minute = part.value;
+        if (part.type === 'second') second = part.value;
+    });
+    
+    // Format: "17 Agustus 2026 13:00:45 WIB"
+    return `${day} ${month} ${year} ${hour}:${minute} WIB`;
 }
 
 function closeHistorySection() {
