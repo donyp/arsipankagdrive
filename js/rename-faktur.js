@@ -300,12 +300,27 @@ function downloadFile(filename, fileData) {
 // Initialize
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('[Rename Faktur] Initialized');
+    console.log('[Rename Faktur] DOMContentLoaded event triggered');
     
-    // Auto-load latest rename history on page load
-    setTimeout(() => {
-        loadLatestHistory();
-    }, 1500);
+    // Wait for auth to initialize
+    let retries = 0;
+    const maxRetries = 10;
+    
+    const waitForAuth = setInterval(async () => {
+        retries++;
+        const token = API.getToken();
+        
+        if (token) {
+            clearInterval(waitForAuth);
+            console.log('[Rename Faktur] Auth ready, loading history');
+            loadLatestHistory();
+        } else if (retries >= maxRetries) {
+            clearInterval(waitForAuth);
+            console.warn('[Rename Faktur] Auth failed after', maxRetries, 'retries');
+        } else {
+            console.log('[Rename Faktur] Waiting for auth... attempt', retries);
+        }
+    }, 200);
 });
 
 async function loadLatestHistory() {
@@ -316,8 +331,10 @@ async function loadLatestHistory() {
             return;
         }
         
+        console.log('[Rename Faktur] Loading history from API...');
+        
         // Get recent renames from last 24 hours
-        const response = await fetch('/api/faktur-pajak/rename-history/recent?hours=24&limit=10', {
+        const response = await fetch('/api/faktur-pajak/rename-history/recent?hours=24&limit=20', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -325,17 +342,24 @@ async function loadLatestHistory() {
             }
         });
         
+        console.log('[Rename Faktur] History API response status:', response.status);
+        
         if (response.ok) {
             const data = await response.json();
             console.log('[Rename Faktur] Recent history loaded:', data.history.length, 'items');
+            console.log('[Rename Faktur] History data:', JSON.stringify(data.history, null, 2));
+            
             if (data.history && data.history.length > 0) {
                 displayHistorySection(data.history);
+            } else {
+                console.log('[Rename Faktur] No history records found');
             }
         } else {
-            console.warn('[Rename Faktur] Failed to load recent history:', response.status);
+            const errData = await response.json().catch(() => ({}));
+            console.warn('[Rename Faktur] Failed to load recent history:', response.status, errData);
         }
     } catch (err) {
-        console.warn('[Rename Faktur] Error loading recent history:', err.message);
+        console.warn('[Rename Faktur] Error loading recent history:', err.message, err.stack);
     }
 }
 
@@ -466,34 +490,42 @@ function displayHistorySection(histories) {
 }
 
 function formatIndonesianDateTime(isoString) {
-    // Parse ISO string and convert to Jakarta timezone
-    const date = new Date(isoString);
+    if (!isoString) return 'Tidak ada';
     
-    // Get date/time components
-    const formatter = new Intl.DateTimeFormat('id-ID', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        timeZone: 'Asia/Jakarta'
-    });
-    
-    const parts = formatter.formatToParts(date);
-    let day = '', month = '', year = '', hour = '', minute = '', second = '';
-    
-    parts.forEach(part => {
-        if (part.type === 'day') day = part.value;
-        if (part.type === 'month') month = part.value;
-        if (part.type === 'year') year = part.value;
-        if (part.type === 'hour') hour = part.value;
-        if (part.type === 'minute') minute = part.value;
-        if (part.type === 'second') second = part.value;
-    });
-    
-    // Format: "17 Agustus 2026 13:00:45 WIB"
-    return `${day} ${month} ${year} ${hour}:${minute} WIB`;
+    try {
+        // Parse ISO string
+        const date = new Date(isoString);
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            console.warn('[Rename Faktur] Invalid date:', isoString);
+            return isoString;
+        }
+        
+        console.log('[Rename Faktur] Formatting date:', isoString, '→', date.toISOString());
+        
+        // Using Intl.DateTimeFormat with Jakarta timezone for accurate conversion
+        const formatter = new Intl.DateTimeFormat('id-ID', {
+            year: 'numeric',
+            month: 'long',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZone: 'Asia/Jakarta',
+            hour12: false  // Use 24-hour format
+        });
+        
+        // Get formatted string
+        const formatted = formatter.format(date);
+        console.log('[Rename Faktur] Formatted result:', formatted);
+        
+        // Add WIB suffix
+        return formatted + ' WIB';
+    } catch (err) {
+        console.error('[Rename Faktur] Error formatting date:', err);
+        return isoString;
+    }
 }
 
 function closeHistorySection() {
