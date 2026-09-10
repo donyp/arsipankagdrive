@@ -420,13 +420,17 @@ function showHistoryActionButton(successFiles) {
 
 async function loadRecentHistory(faktur) {
     try {
+        console.log('[Rename Faktur] Loading recent history for:', faktur);
         const response = await fetch(`/api/faktur-pajak/rename-history/${encodeURIComponent(faktur)}?limit=5`);
         if (response.ok) {
             const data = await response.json();
+            console.log('[Rename Faktur] Recent history loaded:', data.history);
             displayRecentHistory(data.history || []);
+        } else {
+            console.warn('[Rename Faktur] Failed to load history:', response.status);
         }
     } catch (err) {
-        console.warn('Error loading recent history:', err);
+        console.warn('[Rename Faktur] Error loading recent history:', err);
     }
 }
 
@@ -434,11 +438,15 @@ function displayRecentHistory(histories) {
     const section = document.getElementById('historySection');
     const list = document.getElementById('recentHistoryList');
     
+    console.log('[Rename Faktur] Displaying history:', histories.length, 'items');
+    
     if (!histories || histories.length === 0) {
+        console.log('[Rename Faktur] No history to show, hiding section');
         section.classList.add('hidden');
         return;
     }
     
+    console.log('[Rename Faktur] Showing history section');
     section.classList.remove('hidden');
     list.innerHTML = histories.map(h => `
         <div class="border border-gray-200 rounded-lg p-4 space-y-2 hover:border-green-300 transition-colors">
@@ -462,4 +470,6 @@ function displayRecentHistory(histories) {
             </div>
         </div>
     `).join('');
+    
+    console.log('[Rename Faktur] History section updated with', histories.length, 'items');
 }
