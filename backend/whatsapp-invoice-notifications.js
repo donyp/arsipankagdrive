@@ -52,12 +52,14 @@ function generateInvoiceMessage(invoice) {
  * Combines individual invoices into zone-grouped message
  * @param {array} invoices - Array of invoice objects
  * @param {string} zonaName - Zona name
+ * @param {number} zonaId - Zona ID (for message header)
  * @returns {string} Complete WhatsApp message
  */
-function generateZonaInvoiceMessage(invoices, zonaName) {
+function generateZonaInvoiceMessage(invoices, zonaName, zonaId) {
     const invoiceLines = invoices.map(inv => generateInvoiceMessage(inv)).join('\n');
     
-    const message = `*UPDATE INVOICE ZONA (${zonaName})*
+    // Format: *UPDATE INVOICE ZONA {zonaId}* (no parentheses, no "Zona" prefix in header)
+    const message = `*UPDATE INVOICE ZONA ${zonaId}*
 
 ${invoiceLines}
 
@@ -114,8 +116,8 @@ async function createInvoiceNotifications(invoices, moderatorId, batchId) {
             const zId = Number(zonaId);
             const zonaName = zonaMap[zId] || `Zona ${zId}`;
             
-            // Generate message for this zona's invoices
-            const message = generateZonaInvoiceMessage(invoicesForZona, zonaName);
+            // Generate message for this zona's invoices - format: *UPDATE INVOICE ZONA {zonaId}*
+            const message = generateZonaInvoiceMessage(invoicesForZona, zonaName, zId);
 
             notificationsToInsert.push({
                 zona_id: zId,

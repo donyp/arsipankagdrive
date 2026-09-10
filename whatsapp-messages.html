@@ -306,7 +306,18 @@
                 const status = msg.sent_at ? '✅ Sent' : '⏳ Pending';
                 const badge = msg.sent_at ? 'badge-sent' : 'badge-pending';
                 const zonaName = msg.zonas?.nama || `Zona ${msg.zona_id}`;
-                const createdAt = new Date(msg.created_at).toLocaleString('id-ID');
+                
+                // Fix timestamp - convert to Asia/Jakarta timezone
+                const date = new Date(msg.created_at);
+                const createdAt = date.toLocaleString('id-ID', {
+                    timeZone: 'Asia/Jakarta',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
 
                 return `
                     <div class="message-group">
@@ -324,14 +335,11 @@
                             </div>
                             <div style="text-align: right;">
                                 ${!msg.sent_at ? `
-                                    <button class="btn btn-copy" onclick="copyMessage('${escapeJsString(msg.message)}', '${escapeJsString(zonaName)}')">
-                                        📋 Copy
-                                    </button>
-                                    <button class="btn btn-mark-sent" onclick="markSent('${msg.id}')">
-                                        ✔️ Mark Sent
+                                    <button class="btn btn-copy" onclick="copyMessage('${escapeJsString(msg.message)}', '${escapeJsString(zonaName)}', '${msg.id}')">
+                                        📋 Copy & Send
                                     </button>
                                 ` : `
-                                    <button class="btn btn-copy" onclick="copyMessage('${escapeJsString(msg.message)}', '${escapeJsString(zonaName)}')">
+                                    <button class="btn btn-copy" onclick="copyMessage('${escapeJsString(msg.message)}', '${escapeJsString(zonaName)}', '${msg.id}')">
                                         📋 Copy
                                     </button>
                                 `}
@@ -348,11 +356,19 @@
         /**
          * Copy message to clipboard
          */
-        async function copyMessage(message, zonaName) {
+        /**
+         * Copy message to clipboard and auto-mark as sent
+         */
+        async function copyMessage(message, zonaName, notificationId) {
             try {
                 await navigator.clipboard.writeText(message);
+                console.log('[WA-Dashboard] Message copied, auto-marking as sent...');
+                
+                // Auto mark as sent after copy
+                await markSent(notificationId);
+                
                 if (typeof Toast !== 'undefined') {
-                    Toast.success(`✅ Pesan zona ${zonaName} sudah disalin!`);
+                    Toast.success(`✅ Pesan zona ${zonaName} sudah disalin & marked sent!`);
                 } else {
                     alert('✅ Pesan sudah disalin ke clipboard!');
                 }
