@@ -117,8 +117,88 @@
         
         .btn-delete { background: #e74c3c; color: white; margin-left: 5px; }
         .btn-delete:hover { background: #c0392b; }
+        
         .btn-mark-sent { background: #3498db; color: white; }
         .btn-mark-sent:hover { background: #2980b9; }
+        
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-width: 400px;
+            width: 90%;
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            color: #555;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            padding: 15px 20px;
+            border-top: 1px solid #e0e0e0;
+            background: #f8f9fa;
+            justify-content: flex-end;
+        }
+        
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .modal-btn-cancel {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .modal-btn-cancel:hover {
+            background: #d0d0d0;
+        }
+        
+        .modal-btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .modal-btn-delete:hover {
+            background: #c0392b;
+        }
         
         .no-messages { 
             text-align: center; 
@@ -424,11 +504,25 @@
         /**
          * Delete a message
          */
+        let pendingDeleteId = null;
+        
         async function deleteMessage(notificationId, zonaName) {
-            if (!confirm(`Yakin mau delete pesan zona ${zonaName}?`)) {
-                return;
-            }
-
+            // Store the ID and show modal
+            pendingDeleteId = notificationId;
+            document.getElementById('deleteModalMessage').textContent = `Yakin mau delete pesan zona ${zonaName}?`;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+            pendingDeleteId = null;
+        }
+        
+        async function confirmDelete() {
+            if (!pendingDeleteId) return;
+            
+            closeDeleteModal();
+            
             try {
                 const token = API.getToken() || localStorage.getItem('jwt_token');
                 
@@ -438,7 +532,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ notificationId })
+                    body: JSON.stringify({ notificationId: pendingDeleteId })
                 });
 
                 if (response.ok) {
@@ -455,7 +549,21 @@
                     Toast.error('Error deleting message');
                 }
             }
+            
+            pendingDeleteId = null;
         }
+        
+        // Close modal when clicking outside
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('deleteModal');
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closeDeleteModal();
+                    }
+                });
+            }
+        });
 
         /**
          * Update message counts
@@ -499,5 +607,21 @@
         // Auto-refresh every 10 seconds
         setInterval(loadMessages, 10000);
     </script>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🗑️ Delete Message</h3>
+            </div>
+            <div class="modal-body">
+                <p id="deleteModalMessage">Yakin mau delete pesan?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">Batal</button>
+                <button class="modal-btn modal-btn-delete" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
