@@ -212,27 +212,35 @@ async function processFile(file) {
             
             // Log rename to history
             try {
-                const logResponse = await fetch('/api/faktur-pajak/log-rename', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        invoice_id: result.invoiceId || '',
-                        faktur: result.faktur || '',
-                        old_filename: file.name,
-                        new_filename: result.newName,
-                        old_path: '',
-                        new_path: '',
-                        reason: 'Manual rename via UI',
-                        zona_id: null,
-                        notes: `Toko: ${result.namaToko}, Harga: ${result.harga}`
-                    })
-                });
-                
-                if (logResponse.ok) {
-                    const logResult = await logResponse.json();
-                    console.log('[Rename Faktur] History logged:', logResult.history_id);
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                    const logResponse = await fetch('/api/faktur-pajak/log-rename', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            invoice_id: result.invoiceId || '',
+                            faktur: result.faktur || '',
+                            old_filename: file.name,
+                            new_filename: result.newName,
+                            old_path: '',
+                            new_path: '',
+                            reason: 'Manual rename via UI',
+                            zona_id: null,
+                            notes: `Toko: ${result.namaToko}, Harga: ${result.harga}`
+                        })
+                    });
+                    
+                    if (logResponse.ok) {
+                        const logResult = await logResponse.json();
+                        console.log('[Rename Faktur] History logged:', logResult.history_id);
+                    } else {
+                        console.warn('[Rename Faktur] Failed to log history:', logResponse.status);
+                    }
                 } else {
-                    console.warn('[Rename Faktur] Failed to log history');
+                    console.warn('[Rename Faktur] No auth token for logging');
                 }
             } catch (err) {
                 console.warn('[Rename Faktur] Error logging history:', err.message);
@@ -341,7 +349,20 @@ function closeHistoryModal() {
 
 async function loadAndShowHistoryForFaktur(faktur) {
     try {
-        const response = await fetch(`/api/faktur-pajak/rename-history/${encodeURIComponent(faktur)}`);
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            Toast.error('Authentication token not found');
+            return;
+        }
+        
+        const response = await fetch(`/api/faktur-pajak/rename-history/${encodeURIComponent(faktur)}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
         if (response.ok) {
             const data = await response.json();
             showHistoryModal(data.history || []);
@@ -421,7 +442,22 @@ function showHistoryActionButton(successFiles) {
 async function loadRecentHistory(faktur) {
     try {
         console.log('[Rename Faktur] Loading recent history for:', faktur);
-        const response = await fetch(`/api/faktur-pajak/rename-history/${encodeURIComponent(faktur)}?limit=5`);
+        
+        // Get token from localStorage
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.warn('[Rename Faktur] No auth token found');
+            return;
+        }
+        
+        const response = await fetch(`/api/faktur-pajak/rename-history/${encodeURIComponent(faktur)}?limit=5`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
         if (response.ok) {
             const data = await response.json();
             console.log('[Rename Faktur] Recent history loaded:', data.history);
