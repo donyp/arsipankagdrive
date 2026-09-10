@@ -145,30 +145,22 @@ async function logout() {
     // If user confirmed logout
     if (result.isConfirmed) {
         try {
-            await API.post('/api/auth/logout', { session_id: API.getSessionId() });
-            
-            // Revoke current session
-            const sessionToken = localStorage.getItem('sessionToken');
-            if (sessionToken && currentUser) {
-                try {
-                    // Find session by token to get ID
-                    const { sessions } = await API.get(`/api/sessions/user/${currentUser.id}`);
-                    const currentSession = sessions.find(s => s.session_token === sessionToken);
-                    if (currentSession) {
-                        await API.delete(`/api/sessions/${currentSession.id}`, {
-                            revokedBy: currentUser.id
-                        });
-                    }
-                } catch (err) {
-                    console.warn('Failed to revoke session:', err);
-                }
-            }
+            // Fire-and-forget: Log logout for audit trail (don't wait for response)
+            API.post('/api/auth/logout', { session_id: API.getSessionId() }).catch(() => {
+                // Silent fail - we're logging out anyway
+            });
         } catch (_) {
-            // Silent fail — we're logging out anyway
+            // Ignore
         }
+        
+        // Clear auth immediately without waiting for API calls
         API.clearAuth();
         localStorage.removeItem('sessionToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         currentUser = null;
+        
+        // Redirect immediately (session invalidation happens server-side)
         window.location.href = '/index';
     }
 }

@@ -4002,10 +4002,37 @@ async function applyInvoiceFilters() {
             updateInvoiceStatsFromData(result.data || [], result.count);
         }
         
+        // Calculate and display total nominal
+        updateTotalNominalDisplay(result.data || []);
+        
     } catch (error) {
         console.error('[Filter] Error:', error);
         Toast.error('Error applying filters: ' + error.message, '❌ Error');
     }
+}
+
+// ============================================
+// Update Total Nominal Display
+// ============================================
+function updateTotalNominalDisplay(invoices) {
+    const totalDisplay = document.getElementById('totalNominalDisplay');
+    if (!totalDisplay) return;
+    
+    // Calculate total from all invoices
+    const total = invoices.reduce((sum, invoice) => {
+        const nominal = parseFloat(invoice.total) || 0;
+        return sum + nominal;
+    }, 0);
+    
+    // Format as Indonesian Rupiah
+    const formattedTotal = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(total);
+    
+    totalDisplay.textContent = `Total: ${formattedTotal}`;
+    console.log('[Total] Updated nominal display:', formattedTotal, 'from', invoices.length, 'invoices');
 }
 
 function resetInvoiceFilters() {
@@ -4024,6 +4051,10 @@ function resetInvoiceFilters() {
     if (filterSearch) filterSearch.value = '';
     if (filterYear) filterYear.value = '';
     if (filterMonth) filterMonth.value = '';
+    
+    // Reset total nominal display
+    const totalDisplay = document.getElementById('totalNominalDisplay');
+    if (totalDisplay) totalDisplay.textContent = 'Total: Rp 0';
     
     // Clear filter state completely
     invoiceFilterState.year = '';
