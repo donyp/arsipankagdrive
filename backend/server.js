@@ -5780,6 +5780,7 @@ const HOST = '0.0.0.0';
 // WhatsApp Notification Endpoints
 // ============================================================
 const { createWANotifications, getPendingNotifications, markAsSent, markBatchAsSent } = require('./whatsapp-notification-handler');
+const { createInvoiceNotifications, getPendingInvoiceNotifications, markInvoiceAsSent, markInvoiceBatchAsSent } = require('./whatsapp-invoice-notifications');
 
 // POST /api/whatsapp/generate-messages
 // Generate WhatsApp messages after bulk upload
@@ -5888,6 +5889,123 @@ app.post('/api/whatsapp/mark-batch-sent', authenticateToken, async (req, res) =>
         console.error('[API] WhatsApp mark-batch-sent error:', error);
         res.status(500).json({ 
             error: error.message || 'Failed to mark batch as sent',
+            details: error.message
+        });
+    }
+});
+
+// ============================================================
+// WhatsApp Invoice Notification Endpoints
+// For individual PDF invoice uploads
+// ============================================================
+
+// POST /api/whatsapp/generate-invoice-messages
+// Generate WhatsApp messages after individual invoice upload
+app.post('/api/whatsapp/generate-invoice-messages', authenticateToken, async (req, res) => {
+    try {
+        const { invoices, batchId } = req.body;
+        
+        if (!invoices || !Array.isArray(invoices) || invoices.length === 0) {
+            return res.status(400).json({ error: 'Invalid invoices array' });
+        }
+
+        if (!batchId) {
+            return res.status(400).json({ error: 'batchId required' });
+        }
+
+        console.log('[API] POST /api/whatsapp/generate-invoice-messages - User:', req.user.userId, 'Invoices:', invoices.length);
+
+        // Create invoice notifications
+        const notifications = await createInvoiceNotifications(invoices, req.user.userId, batchId);
+
+        res.json({
+            success: true,
+            message: `Generated ${Object.keys(notifications).length} WhatsApp messages for ${Object.keys(notifications).length} zonas`,
+            notifications: notifications
+        });
+    } catch (error) {
+        console.error('[API] WhatsApp invoice generate error:', error);
+        res.status(500).json({ 
+            error: error.message || 'Failed to generate WhatsApp invoice messages',
+            details: error.message
+        });
+    }
+});
+
+// GET /api/whatsapp/pending-invoice-messages
+// Get all pending invoice WhatsApp notifications
+app.get('/api/whatsapp/pending-invoice-messages', authenticateToken, async (req, res) => {
+    try {
+        const moderatorId = req.query.moderator_id || req.user.userId;
+
+        console.log('[API] GET /api/whatsapp/pending-invoice-messages - User:', req.user.userId);
+
+        const result = await getPendingInvoiceNotifications(moderatorId);
+
+        res.json({
+            success: true,
+            pending_count: result.count,
+            notifications: result.notifications,
+            raw: result.raw
+        });
+    } catch (error) {
+        console.error('[API] WhatsApp pending invoice error:', error);
+        res.status(500).json({ 
+            error: error.message || 'Failed to fetch pending invoice messages',
+            details: error.message
+        });
+    }
+});
+
+// POST /api/whatsapp/mark-invoice-sent
+// Mark a single invoice WhatsApp notification as sent
+app.post('/api/whatsapp/mark-invoice-sent', authenticateToken, async (req, res) => {
+    try {
+        const { notificationId } = req.body;
+
+        if (!notificationId) {
+            return res.status(400).json({ error: 'notificationId required' });
+        }
+
+        console.log('[API] POST /api/whatsapp/mark-invoice-sent - Notification:', notificationId);
+
+        await markInvoiceAsSent(notificationId);
+
+        res.json({
+            success: true,
+            message: 'Invoice notification marked as sent'
+        });
+    } catch (error) {
+        console.error('[API] WhatsApp mark-invoice-sent error:', error);
+        res.status(500).json({ 
+            error: error.message || 'Failed to mark as sent',
+            details: error.message
+        });
+    }
+});
+
+// POST /api/whatsapp/mark-invoice-batch-sent
+// Mark entire batch of invoice notifications as sent
+app.post('/api/whatsapp/mark-invoice-batch-sent', authenticateToken, async (req, res) => {
+    try {
+        const { batchId } = req.body;
+
+        if (!batchId) {
+            return res.status(400).json({ error: 'batchId required' });
+        }
+
+        console.log('[API] POST /api/whatsapp/mark-invoice-batch-sent - Batch:', batchId);
+
+        const count = await markInvoiceBatchAsSent(batchId);
+
+        res.json({
+            success: true,
+            message: `Marked ${count} invoice notifications as sent`
+        });
+    } catch (error) {
+        console.error('[API] WhatsApp mark-invoice-batch-sent error:', error);
+        res.status(500).json({ 
+            error: error.message || 'Failed to mark invoice batch as sent',
             details: error.message
         });
     }
