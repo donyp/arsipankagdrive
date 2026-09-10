@@ -1,0 +1,89 @@
+╔════════════════════════════════════════════════════════════════╗
+║   ⚠️  MASALAH: Pesan WhatsApp Tidak Muncul                     ║
+║   ✅ SOLUSI: Database Tables Belum Di-Create                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+BUKA SUPABASE → SQL EDITOR → COPY-PASTE KEDUA QUERY BERIKUT:
+
+
+═══ QUERY #1: Excel Upload Messages Table ═══
+
+CREATE TABLE IF NOT EXISTS whatsapp_notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    zona_id INTEGER NOT NULL REFERENCES zonas(id),
+    moderator_id UUID NOT NULL REFERENCES auth.users(id),
+    invoice_count INTEGER NOT NULL,
+    toko_list TEXT[] NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    sent_at TIMESTAMP WITH TIME ZONE,
+    batch_id UUID,
+    CONSTRAINT chk_invoice_count CHECK (invoice_count > 0)
+);
+
+CREATE INDEX IF NOT EXISTS idx_whatsapp_zona_id ON whatsapp_notifications(zona_id);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_moderator_id ON whatsapp_notifications(moderator_id);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_batch_id ON whatsapp_notifications(batch_id);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_sent_at ON whatsapp_notifications(sent_at) WHERE sent_at IS NULL;
+
+
+═══ QUERY #2: Invoice Upload Messages Table ═══
+
+CREATE TABLE IF NOT EXISTS whatsapp_invoice_notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    zona_id INTEGER NOT NULL REFERENCES zonas(id),
+    moderator_id UUID NOT NULL REFERENCES auth.users(id),
+    invoice_count INTEGER NOT NULL,
+    invoice_details JSONB DEFAULT '[]',
+    message TEXT NOT NULL,
+    notification_type TEXT DEFAULT 'invoice_upload',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    sent_at TIMESTAMP WITH TIME ZONE,
+    batch_id UUID,
+    CONSTRAINT chk_invoice_count CHECK (invoice_count > 0),
+    CONSTRAINT chk_notification_type CHECK (notification_type IN ('invoice_upload', 'excel_upload'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_whatsapp_inv_zona_id ON whatsapp_invoice_notifications(zona_id);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_inv_moderator_id ON whatsapp_invoice_notifications(moderator_id);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_inv_batch_id ON whatsapp_invoice_notifications(batch_id);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_inv_sent_at ON whatsapp_invoice_notifications(sent_at) WHERE sent_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_whatsapp_inv_type ON whatsapp_invoice_notifications(notification_type);
+
+
+════════════════════════════════════════════════════════════════
+
+LANGKAH:
+1. Buka: https://supabase.com
+2. Select project: arsipanka
+3. Go to: SQL Editor
+4. Click: New Query
+5. Copy-paste QUERY #1 → Click RUN → Tunggu ✅
+6. Click: New Query
+7. Copy-paste QUERY #2 → Click RUN → Tunggu ✅
+8. Done! Kembali ke web aplikasi
+9. Upload ulang data
+10. Pesan WhatsApp harusnya muncul sekarang!
+
+
+════════════════════════════════════════════════════════════════
+
+VERIFY TABLE CREATED:
+
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_name LIKE 'whatsapp%';
+
+Harus return 2 rows ✅
+
+
+════════════════════════════════════════════════════════════════
+
+SELESAI! 🚀
+
+Sekarang:
+- Upload Excel → WhatsApp messages muncul
+- Upload Invoice → WhatsApp messages muncul
+- Lihat menu: WhatsApp Messages untuk view semua
+
