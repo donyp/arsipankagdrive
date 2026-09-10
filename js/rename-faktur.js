@@ -130,14 +130,20 @@ async function processFiles() {
         // Hide loading modal
         hideLoadingModal();
 
-        // Auto-download successful files
+        // Auto-download successful files - PARALLEL (semua sekaligus)
         const successFiles = results.filter(r => r.success);
         if (successFiles.length > 0) {
+            console.log(`[Rename Faktur] Starting parallel download for ${successFiles.length} files`);
+            const downloadStart = performance.now();
+            
             setTimeout(() => {
+                // Download all files in parallel (browser will manage queuing)
                 successFiles.forEach(r => {
                     downloadFile(r.newName, r.fileData);
                 });
-            }, 500);
+                
+                console.log(`[Rename Faktur] Download triggered in ${(performance.now() - downloadStart).toFixed(2)}ms`);
+            }, 300);
         }
 
         // Show notification summary only (no history)
@@ -172,12 +178,16 @@ async function processFile(file) {
         formData.append('file', file);
 
         console.log(`[Rename Faktur] Uploading file: ${file.name}, size: ${file.size}`);
+        const uploadStart = performance.now();
 
         const response = await fetch('/api/invoice/rename-faktur', {
             method: 'POST',
             body: formData
             // NO Content-Type header - browser will set it with boundary
         });
+
+        const uploadTime = performance.now() - uploadStart;
+        console.log(`[Rename Faktur] Upload took ${uploadTime.toFixed(2)}ms`);
 
         const result = await response.json();
 
@@ -210,40 +220,35 @@ async function processFile(file) {
         if (result.success) {
             console.log(`[Rename Faktur] Success:`, result.newName);
             
-            // Log rename to history
-            try {
-                const token = API.getToken();
-                if (token) {
-                    const logResponse = await fetch('/api/faktur-pajak/log-rename', {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            faktur: result.newName.split('-')[0] || 'unknown',
-                            old_filename: file.name,
-                            new_filename: result.newName,
-                            old_path: '',
-                            new_path: '',
-                            reason: 'Manual rename via UI',
-                            zona_id: null,
-                            notes: `Toko: ${result.namaToko}, Harga: ${result.harga}`
-                        })
-                    });
-                    
-                    if (logResponse.ok) {
-                        const logResult = await logResponse.json();
-                        console.log('[Rename Faktur] History logged:', logResult.history_id);
-                    } else {
-                        console.warn('[Rename Faktur] Failed to log history:', logResponse.status);
+            // Log rename to history - FIRE AND FORGET (don't await)
+            // This runs in background without blocking the UI or download
+            (async () => {
+                try {
+                    const token = API.getToken();
+                    if (token) {
+                        await fetch('/api/faktur-pajak/log-rename', {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                faktur: result.newName.split('-')[0] || 'unknown',
+                                old_filename: file.name,
+                                new_filename: result.newName,
+                                old_path: '',
+                                new_path: '',
+                                reason: 'Manual rename via UI',
+                                zona_id: null,
+                                notes: `Toko: ${result.namaToko}, Harga: ${result.harga}`
+                            })
+                        });
+                        console.log('[Rename Faktur] History logged (background)');
                     }
-                } else {
-                    console.warn('[Rename Faktur] No auth token for logging');
+                } catch (err) {
+                    console.warn('[Rename Faktur] Background history logging error:', err.message);
                 }
-            } catch (err) {
-                console.warn('[Rename Faktur] Error logging history:', err.message);
-            }
+            })();
             
             return {
                 success: true,
