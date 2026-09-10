@@ -299,7 +299,7 @@
                         <select id="filterMonth" onkeydown="if(event.key==='Enter') { event.preventDefault(); applyFilters(); }">
                             <option value="">Semua Bulan</option>
                         </select>
-                        <div id="totalNominalDisplayZona" style="margin-top: 15px; font-weight: 700; color: #27ae60; font-size: 18px;">
+                        <div id="totalNominalDisplayZona" style="margin-top: 15px; font-weight: 700; color: #27ae60; font-size: 20px;">
                             Total: Rp 0
                         </div>
                     </div>
@@ -804,7 +804,7 @@
             
             // Calculate total from admin zona's invoices only
             const total = invoices.reduce((sum, invoice) => {
-                const nominal = parseFloat(invoice.total) || 0;
+                const nominal = parseFloat(invoice.total_jumlah_jual) || 0;
                 return sum + nominal;
             }, 0);
             

@@ -4020,7 +4020,7 @@ function updateTotalNominalDisplay(invoices) {
     
     // Calculate total from all invoices
     const total = invoices.reduce((sum, invoice) => {
-        const nominal = parseFloat(invoice.total) || 0;
+        const nominal = parseFloat(invoice.total_jumlah_jual) || 0;
         return sum + nominal;
     }, 0);
     
