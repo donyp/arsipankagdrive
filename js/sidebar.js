@@ -38,7 +38,7 @@
             ]
         },
 
-        { section: 'System Administration' },
+        { section: 'System Administration', marginTop: 'mt-12' },
         {
             isDropdown: true,
             id: 'dd-system',
@@ -77,7 +77,8 @@
     let navHTML = '';
     for (const item of menuItems) {
         if (item.section) {
-            navHTML += `<p class="text-[10px] text-gray-400 uppercase tracking-widest mt-6 mb-1 px-5 font-bold">${item.section}</p>`;
+            const marginClass = item.marginTop || 'mt-6';
+            navHTML += `<p class="text-[10px] text-gray-400 uppercase tracking-widest ${marginClass} mb-1 px-5 font-bold">${item.section}</p>`;
             continue;
         }
 
