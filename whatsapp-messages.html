@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesan WhatsApp - ARSIP ANKA</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        html, body {
+            zoom: 0.8;
+        }
+        
+        .container {
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            margin-left: 280px;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar select, .filter-bar button {
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .filter-bar select:hover, .filter-bar button:hover {
+            border-color: #25d366;
+            background: #f0f9ff;
+        }
+
+        .messages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .message-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .message-card:hover {
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.15);
+            border-color: #25d366;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+
+        .zona-name {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .zona-badge {
+            background: #25d366;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .invoice-count {
+            background: #ecf0f1;
+            color: #2c3e50;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .message-content {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            border-left: 3px solid #25d366;
+        }
+
+        .message-footer {
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #7f8c8d;
+            padding-top: 10px;
+            border-top: 1px solid #ecf0f1;
+        }
+
+        .timestamp {
+            font-size: 11px;
+            color: #95a5a6;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-sent {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-copy {
+            flex: 1;
+            padding: 8px;
+            background: #25d366;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-copy:hover {
+            background: #1fa857;
+        }
+
+        .btn-sent {
+            flex: 1;
+            padding: 8px;
+            background: #34495e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-sent:hover {
+            background: #2c3e50;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            color: #bdc3c7;
+            margin-bottom: 15px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .empty-state .hint {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+    </style>
+</head>
+<body style="background: #f5f7fa;">
+    <!-- Sidebar -->
+    <div id="sidebar"></div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="header">
+            <h1>
+                <i class="fab fa-whatsapp" style="color: #25d366; font-size: 28px;"></i>
+                Pesan WhatsApp
+            </h1>
+            <p>📱 Kelola dan kirim pesan WhatsApp zona - Pendaftar Invoice & Notifikasi</p>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <select id="filterStatus" onchange="applyFilters()">
+                <option value="">Semua Status</option>
+                <option value="pending">⏳ Belum Dikirim</option>
+                <option value="sent">✅ Sudah Dikirim</option>
+            </select>
+
+            <select id="filterType" onchange="applyFilters()">
+                <option value="">Semua Tipe</option>
+                <option value="invoice_upload">📄 Invoice Upload</option>
+                <option value="excel_upload">📊 Excel Upload</option>
+            </select>
+
+            <button onclick="loadPendingMessages()" style="background: #25d366; color: white; border: 1px solid #25d366;">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+
+        <!-- Messages Grid -->
+        <div id="messagesContainer" class="messages-grid"></div>
+    </div>
+
+    <!-- Sidebar Script -->
+    <script src="js/sidebar.js"></script>
+    
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+
+    <script>
+        let allMessages = [];
+
+        // Load messages on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPendingMessages();
+        });
+
+        /**
+         * Load all pending WhatsApp messages
+         */
+        async function loadPendingMessages() {
+            try {
+                const token = API.getToken() || localStorage.getItem('jwt_token');
+                
+                if (!token) {
+                    showEmptyState('Silakan login terlebih dahulu');
+                    return;
+                }
+
+                // Try both endpoints
+                const invoiceRes = await fetch('/api/whatsapp/pending-invoice-messages', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).catch(() => ({ json: async () => ({ success: false }) }));
+
+                const excelRes = await fetch('/api/whatsapp/pending-messages', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).catch(() => ({ json: async () => ({ success: false }) }));
+
+                const invoiceData = await invoiceRes.json();
+                const excelData = await excelRes.json();
+
+                allMessages = [];
+
+                // Process invoice notifications
+                if (invoiceData.success && invoiceData.notifications) {
+                    Object.entries(invoiceData.notifications).forEach(([zonaName, messages]) => {
+                        messages.forEach(msg => {
+                            allMessages.push({
+                                id: msg.id,
+                                zona_name: zonaName,
+                                message: msg.message,
+                                invoice_count: msg.invoice_count,
+                                created_at: msg.created_at,
+                                sent_at: msg.sent_at,
+                                type: 'invoice_upload',
+                                batch_id: msg.batch_id
+                            });
+                        });
+                    });
+                }
+
+                // Process excel notifications
+                if (excelData.success && excelData.notifications) {
+                    Object.entries(excelData.notifications).forEach(([zonaName, messages]) => {
+                        messages.forEach(msg => {
+                            allMessages.push({
+                                id: msg.id,
+                                zona_name: zonaName,
+                                message: msg.message,
+                                invoice_count: msg.invoice_count,
+                                created_at: msg.created_at,
+                                sent_at: msg.sent_at,
+                                type: 'excel_upload',
+                                batch_id: msg.batch_id
+                            });
+                        });
+                    });
+                }
+
+                console.log('Loaded', allMessages.length, 'messages');
+                renderMessages(allMessages);
+
+            } catch (error) {
+                console.error('Error loading messages:', error);
+                showEmptyState('Gagal memuat pesan');
+            }
+        }
+
+        /**
+         * Apply filters
+         */
+        function applyFilters() {
+            const statusFilter = document.getElementById('filterStatus').value;
+            const typeFilter = document.getElementById('filterType').value;
+
+            let filtered = allMessages;
+
+            if (statusFilter) {
+                filtered = filtered.filter(msg => {
+                    return statusFilter === 'pending' ? !msg.sent_at : !!msg.sent_at;
+                });
+            }
+
+            if (typeFilter) {
+                filtered = filtered.filter(msg => msg.type === typeFilter);
+            }
+
+            renderMessages(filtered);
+        }
+
+        /**
+         * Render messages to UI
+         */
+        function renderMessages(messages) {
+            const container = document.getElementById('messagesContainer');
+
+            if (messages.length === 0) {
+                showEmptyState('Tidak ada pesan WhatsApp yang ditemukan');
+                return;
+            }
+
+            container.innerHTML = messages.map(msg => {
+                const isPending = !msg.sent_at;
+                const createdDate = new Date(msg.created_at);
+                const dateStr = createdDate.toLocaleDateString('id-ID', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const typeLabel = msg.type === 'invoice_upload' ? '📄 Invoice' : '📊 Excel';
+                const statusLabel = isPending ? '⏳ Belum Dikirim' : '✅ Sudah Dikirim';
+                const statusClass = isPending ? 'status-pending' : 'status-sent';
+
+                return `
+                    <div class="message-card">
+                        <div class="message-header">
+                            <div>
+                                <div class="zona-name">📍 ${msg.zona_name}</div>
+                                <div style="font-size: 11px; color: #95a5a6; margin-top: 3px;">${typeLabel}</div>
+                            </div>
+                            <span class="invoice-count">${msg.invoice_count} invoice${msg.invoice_count > 1 ? 's' : ''}</span>
+                        </div>
+
+                        <div class="message-content">${escapeHtml(msg.message)}</div>
+
+                        <div class="message-footer">
+                            <div class="timestamp">${dateStr}</div>
+                            <span class="status-badge ${statusClass}">${statusLabel}</span>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn-copy" onclick="copyMessage('${escapeJsString(msg.message)}', '${msg.zona_name}')">
+                                📋 Salin
+                            </button>
+                            ${isPending ? `
+                                <button class="btn-sent" onclick="markAsSent('${msg.id}', '${msg.type}')">
+                                    ✅ Tandai Terkirim
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /**
+         * Copy message to clipboard
+         */
+        async function copyMessage(message, zonaName) {
+            try {
+                await navigator.clipboard.writeText(message);
+                
+                if (typeof Toast !== 'undefined') {
+                    Toast.success(`✅ Pesan zona ${zonaName} sudah disalin!`);
+                }
+            } catch (error) {
+                console.error('Copy failed:', error);
+                if (typeof Toast !== 'undefined') {
+                    Toast.error('Gagal menyalin pesan');
+                }
+            }
+        }
+
+        /**
+         * Mark message as sent
+         */
+        async function markAsSent(notificationId, type) {
+            try {
+                const token = API.getToken() || localStorage.getItem('jwt_token');
+                const endpoint = type === 'invoice_upload' 
+                    ? '/api/whatsapp/mark-invoice-sent'
+                    : '/api/whatsapp/mark-sent';
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ notificationId })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    if (typeof Toast !== 'undefined') {
+                        Toast.success('✅ Pesan ditandai sudah dikirim!');
+                    }
+                    loadPendingMessages(); // Reload
+                } else {
+                    if (typeof Toast !== 'undefined') {
+                        Toast.error(result.error || 'Gagal menandai pesan');
+                    }
+                }
+            } catch (error) {
+                console.error('Error marking as sent:', error);
+                if (typeof Toast !== 'undefined') {
+                    Toast.error('Terjadi kesalahan');
+                }
+            }
+        }
+
+        /**
+         * Show empty state
+         */
+        function showEmptyState(message) {
+            document.getElementById('messagesContainer').innerHTML = `
+                <div class="empty-state" style="grid-column: 1/-1;">
+                    <i class="fas fa-inbox"></i>
+                    <p>${message}</p>
+                    <p class="hint">Pesan akan muncul setelah Anda upload invoice atau Excel</p>
+                </div>
+            `;
+        }
+
+        /**
+         * Escape HTML special characters
+         */
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        /**
+         * Escape for JavaScript string
+         */
+        function escapeJsString(str) {
+            return str.replace(/\\/g, '\\\\')
+                      .replace(/'/g, "\\'")
+                      .replace(/"/g, '\\"')
+                      .replace(/\n/g, '\\n')
+                      .replace(/\r/g, '\\r');
+        }
+    </script>
+</body>
+</html>
