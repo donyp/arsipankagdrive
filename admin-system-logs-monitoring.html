@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Logs & Monitoring - Pusat Arsip Anka</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .log-level-debug { background-color: #f3f4f6; color: #374151; }
+        .log-level-info { background-color: #dbeafe; color: #0c2d6b; }
+        .log-level-warn { background-color: #fef3c7; color: #92400e; }
+        .log-level-error { background-color: #fee2e2; color: #7f1d1d; }
+        
+        .health-status-healthy { color: #059669; }
+        .health-status-warning { color: #d97706; }
+        .health-status-error { color: #dc2626; }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card.memory { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .metric-card.cpu { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .metric-card.disk { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .metric-card.uptime { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        
+        .log-entry {
+            padding: 0.75rem;
+            border-left: 4px solid #e5e7eb;
+            margin-bottom: 0.5rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+        }
+        
+        .log-entry.debug { border-left-color: #9ca3af; }
+        .log-entry.info { border-left-color: #3b82f6; }
+        .log-entry.warn { border-left-color: #f59e0b; }
+        .log-entry.error { border-left-color: #ef4444; }
+        
+        .modal { display: none; }
+        .modal.active { display: block; }
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.5); }
+        
+        .loading-spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .progress-bar {
+            background-color: #e5e7eb;
+            border-radius: 0.5rem;
+            height: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 0.5rem;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app" class="min-h-screen">
+        <!-- Sidebar will be injected here -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content -->
+        <div class="ml-0 lg:ml-64 transition-all duration-300">
+            <!-- Top Navigation -->
+            <div class="bg-white border-b border-gray-200 sticky top-0 z-40">
+                <div class="px-6 py-4 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">System Logs & Monitoring</h1>
+                        <p class="text-sm text-gray-500 mt-1">Monitor system health, performance, and application logs</p>
+                    </div>
+                    <button onclick="refreshAllData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-6 max-w-7xl">
+                <!-- Tabs -->
+                <div class="flex gap-4 mb-6 border-b border-gray-200">
+                    <button onclick="switchTab('dashboard')" class="tab-btn active px-4 py-3 font-medium text-gray-900 border-b-2 border-blue-600 transition">
+                        <i class="fas fa-chart-line mr-2"></i> Dashboard
+                    </button>
+                    <button onclick="switchTab('logs')" class="tab-btn px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition">
+                        <i class="fas fa-file-alt mr-2"></i> Logs
+                    </button>
+                    <button onclick="switchTab('components')" class="tab-btn px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition">
+                        <i class="fas fa-layer-group mr-2"></i> By Component
+                    </button>
+                </div>
+
+                <!-- Dashboard Tab -->
+                <div id="dashboard" class="tab-content active">
+                    <!-- Health Status -->
+                    <div class="bg-white rounded-lg shadow p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold text-gray-900">System Health</h2>
+                            <div id="healthStatus" class="flex items-center gap-2">
+                                <div class="loading-spinner" style="width: 1.5rem; height: 1.5rem;"></div>
+                                <span class="text-gray-600">Loading...</span>
+                            </div>
+                        </div>
+                        
+                        <div id="healthContent" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Health details will be loaded here -->
+                        </div>
+                        
+                        <div id="healthWarnings" class="mt-4 pt-4 border-t border-gray-200"></div>
+                    </div>
+
+                    <!-- Metrics -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="metric-card memory">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <p class="opacity-80 text-sm">Memory Usage</p>
+                                    <p class="text-2xl font-bold mt-1" id="memoryUsage">--</p>
+                                </div>
+                                <i class="fas fa-microchip opacity-20 text-2xl"></i>
+                            </div>
+                            <div class="progress-bar mt-3">
+                                <div id="memoryBar" class="progress-bar-fill bg-white" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card cpu">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <p class="opacity-80 text-sm">CPU Cores</p>
+                                    <p class="text-2xl font-bold mt-1" id="cpuCores">--</p>
+                                </div>
+                                <i class="fas fa-cogs opacity-20 text-2xl"></i>
+                            </div>
+                            <p class="text-sm opacity-80 mt-3" id="cpuLoad">Load Avg: --</p>
+                        </div>
+
+                        <div class="metric-card disk">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <p class="opacity-80 text-sm">Log Files</p>
+                                    <p class="text-2xl font-bold mt-1" id="logFiles">--</p>
+                                </div>
+                                <i class="fas fa-hdd opacity-20 text-2xl"></i>
+                            </div>
+                            <p class="text-sm opacity-80 mt-3" id="logSize">Total Size: --</p>
+                        </div>
+
+                        <div class="metric-card uptime">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <p class="opacity-80 text-sm">Uptime</p>
+                                    <p class="text-2xl font-bold mt-1" id="uptime">--</p>
+                                </div>
+                                <i class="fas fa-clock opacity-20 text-2xl"></i>
+                            </div>
+                            <p class="text-sm opacity-80 mt-3" id="environment">Environment: --</p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Logs Preview -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold text-gray-900">Recent Logs</h2>
+                            <button onclick="switchTab('logs')" class="text-blue-600 hover:text-blue-800 text-sm">View All →</button>
+                        </div>
+                        <div id="recentLogsPreview" class="space-y-2 max-h-96 overflow-y-auto">
+                            <div class="text-center text-gray-500 py-8">
+                                <div class="loading-spinner mx-auto mb-2"></div>
+                                Loading logs...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs Tab -->
+                <div id="logs" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold text-gray-900">Application Logs</h2>
+                            <div class="flex gap-2">
+                                <select id="logLevelFilter" onchange="applyLogFilters()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">All Levels</option>
+                                    <option value="debug">Debug</option>
+                                    <option value="info">Info</option>
+                                    <option value="warn">Warning</option>
+                                    <option value="error">Error</option>
+                                </select>
+                                <input type="number" id="logLines" placeholder="Lines" value="50" min="10" max="500" class="px-3 py-2 border border-gray-300 rounded-lg text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <button onclick="loadApplicationLogs()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Load</button>
+                                <button onclick="openClearLogsModal()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">Clear</button>
+                            </div>
+                        </div>
+                        
+                        <div id="logsContainer" class="space-y-1 max-h-96 overflow-y-auto font-mono text-xs bg-gray-900 text-gray-100 p-4 rounded-lg">
+                            <div class="text-center text-gray-500 py-8">Click Load to display logs</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Components Tab -->
+                <div id="components" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Logs by Component</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                            <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-400 cursor-pointer transition" onclick="loadComponentLogs('auth', 'info')">
+                                <i class="fas fa-lock text-blue-600 text-xl mb-2"></i>
+                                <p class="font-medium text-gray-900">Authentication</p>
+                                <p class="text-xs text-gray-500 mt-1">Login, sessions, tokens</p>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4 hover:border-green-400 cursor-pointer transition" onclick="loadComponentLogs('file', 'info')">
+                                <i class="fas fa-file text-green-600 text-xl mb-2"></i>
+                                <p class="font-medium text-gray-900">File Operations</p>
+                                <p class="text-xs text-gray-500 mt-1">Upload, download, delete</p>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4 hover:border-purple-400 cursor-pointer transition" onclick="loadComponentLogs('invoice', 'info')">
+                                <i class="fas fa-receipt text-purple-600 text-xl mb-2"></i>
+                                <p class="font-medium text-gray-900">Invoice System</p>
+                                <p class="text-xs text-gray-500 mt-1">Invoice uploads, processing</p>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4 hover:border-red-400 cursor-pointer transition" onclick="loadComponentLogs('database', 'error')">
+                                <i class="fas fa-database text-red-600 text-xl mb-2"></i>
+                                <p class="font-medium text-gray-900">Database</p>
+                                <p class="text-xs text-gray-500 mt-1">Query errors, migrations</p>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4 hover:border-yellow-400 cursor-pointer transition" onclick="loadComponentLogs('backup', 'info')">
+                                <i class="fas fa-save text-yellow-600 text-xl mb-2"></i>
+                                <p class="font-medium text-gray-900">Backup System</p>
+                                <p class="text-xs text-gray-500 mt-1">Backup operations</p>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4 hover:border-cyan-400 cursor-pointer transition" onclick="loadComponentLogs('all', 'info')">
+                                <i class="fas fa-th text-cyan-600 text-xl mb-2"></i>
+                                <p class="font-medium text-gray-900">All Components</p>
+                                <p class="text-xs text-gray-500 mt-1">Recent logs from all</p>
+                            </div>
+                        </div>
+                        
+                        <div id="componentLogsContainer" class="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-xs max-h-96 overflow-y-auto">
+                            <div class="text-center text-gray-500 py-8">Select a component to view logs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear Logs Confirmation Modal -->
+    <div id="clearLogsModal" class="modal fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i> Clear All Logs
+                </h2>
+            </div>
+            <div class="px-6 py-4">
+                <p class="text-gray-700 mb-4">Are you sure you want to delete all log files? This action cannot be undone.</p>
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p class="text-sm text-red-800">This will delete all log entries for debugging purposes.</p>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <button onclick="closeClearLogsModal()" class="px-4 py-2 text-gray-700 hover:text-gray-900">Cancel</button>
+                <button onclick="clearAllLogs()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">Delete All Logs</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 max-w-sm z-50"></div>
+
+    <script src="js/sidebar.js"></script>
+    <script>
+        let currentAllLogs = [];
+        let autoRefreshInterval = null;
+
+        // ============================================================
+        // Initialize Page
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadSidebar('admin-system-logs-monitoring.html');
+            await refreshAllData();
+            
+            // Auto-refresh every 30 seconds
+            autoRefreshInterval = setInterval(async () => {
+                if (document.getElementById('dashboard').classList.contains('active')) {
+                    await refreshAllData();
+                }
+            }, 30000);
+        });
+
+        // ============================================================
+        // Tab Management
+        // ============================================================
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active state from buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-b-2', 'border-blue-600', 'text-gray-900');
+                btn.classList.add('text-gray-600', 'hover:text-gray-900');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Set button active state
+            event.target.closest('.tab-btn').classList.remove('text-gray-600', 'hover:text-gray-900');
+            event.target.closest('.tab-btn').classList.add('border-b-2', 'border-blue-600', 'text-gray-900');
+        }
+
+        // ============================================================
+        // Refresh All Data
+        // ============================================================
+        async function refreshAllData() {
+            try {
+                await loadHealthStatus();
+                await loadSystemMetrics();
+                await loadRecentLogs();
+            } catch (err) {
+                console.error('[Monitoring] Refresh error:', err);
+            }
+        }
+
+        // ============================================================
+        // Load Health Status
+        // ============================================================
+        async function loadHealthStatus() {
+            try {
+                const response = await fetch('/api/system/health', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load health status');
+
+                const data = await response.json();
+                const health = data.health;
+
+                // Update status indicator
+                const statusClass = `health-status-${health.status}`;
+                document.getElementById('healthStatus').innerHTML = `
+                    <i class="fas fa-heartbeat text-lg ${statusClass}"></i>
+                    <span class="font-medium capitalize ${statusClass}">${health.status}</span>
+                `;
+
+                // Update health details
+                const healthContent = document.getElementById('healthContent');
+                healthContent.innerHTML = `
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <p class="text-xs text-gray-600">Database</p>
+                        <p class="font-medium text-gray-900 mt-1">${health.database.status}</p>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <p class="text-xs text-gray-600">Uptime</p>
+                        <p class="font-medium text-gray-900 mt-1">${formatUptime(health.uptime)}</p>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <p class="text-xs text-gray-600">Environment</p>
+                        <p class="font-medium text-gray-900 mt-1 capitalize">${health.environment}</p>
+                    </div>
+                `;
+
+                // Show warnings
+                if (health.warnings && health.warnings.length > 0) {
+                    const warningsHtml = health.warnings.map(w => `
+                        <div class="flex items-center gap-2 text-sm">
+                            <i class="fas fa-exclamation-circle text-yellow-600"></i>
+                            <span class="text-gray-700">${w}</span>
+                        </div>
+                    `).join('');
+                    document.getElementById('healthWarnings').innerHTML = warningsHtml;
+                }
+            } catch (err) {
+                console.error('[Monitoring] Health error:', err);
+                showToast('Failed to load health status', 'error');
+            }
+        }
+
+        // ============================================================
+        // Load System Metrics
+        // ============================================================
+        async function loadSystemMetrics() {
+            try {
+                const response = await fetch('/api/system/metrics', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load metrics');
+
+                const data = await response.json();
+                const metrics = data.metrics;
+                const system = metrics.system;
+                const proc = metrics.process;
+                const logging = metrics.logging;
+
+                // Memory
+                const memPercent = Math.round(((system.totalMemory - system.freeMemory) / system.totalMemory) * 100);
+                document.getElementById('memoryUsage').textContent = `${memPercent}%`;
+                document.getElementById('memoryBar').style.width = memPercent + '%';
+
+                // CPU
+                document.getElementById('cpuCores').textContent = system.cpus;
+                document.getElementById('cpuLoad').textContent = `Load Avg: ${system.loadAverage.map(l => l.toFixed(2)).join(', ')}`;
+
+                // Disk/Logs
+                document.getElementById('logFiles').textContent = logging.totalFiles || 0;
+                document.getElementById('logSize').textContent = `Total Size: ${formatBytes(logging.totalSize)}`;
+
+                // Uptime
+                document.getElementById('uptime').textContent = formatUptime(proc.uptime);
+                document.getElementById('environment').textContent = `Environment: ${proc.version}`;
+            } catch (err) {
+                console.error('[Monitoring] Metrics error:', err);
+                showToast('Failed to load metrics', 'error');
+            }
+        }
+
+        // ============================================================
+        // Load Recent Logs
+        // ============================================================
+        async function loadRecentLogs() {
+            try {
+                const response = await fetch('/api/logs/all/20', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load logs');
+
+                const data = await response.json();
+                currentAllLogs = data.logs || [];
+
+                const container = document.getElementById('recentLogsPreview');
+                if (currentAllLogs.length === 0) {
+                    container.innerHTML = '<div class="text-center text-gray-500 py-8">No logs found</div>';
+                    return;
+                }
+
+                container.innerHTML = currentAllLogs.map(log => `
+                    <div class="log-entry log-level-${log.level?.toLowerCase() || 'info'}">
+                        <div class="flex justify-between">
+                            <span class="font-medium">[${log.component}]</span>
+                            <span class="text-gray-600">${formatDate(log.timestamp)}</span>
+                        </div>
+                        <div class="mt-1 text-gray-700">${log.message}</div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('[Monitoring] Logs error:', err);
+            }
+        }
+
+        // ============================================================
+        // Load Application Logs
+        // ============================================================
+        async function loadApplicationLogs() {
+            try {
+                const lines = document.getElementById('logLines').value || 50;
+                const response = await fetch(`/api/logs/all/${lines}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load logs');
+
+                const data = await response.json();
+                const logs = data.logs || [];
+
+                const container = document.getElementById('logsContainer');
+                if (logs.length === 0) {
+                    container.innerHTML = '<span class="text-gray-500">No logs found</span>';
+                    return;
+                }
+
+                container.innerHTML = logs.map(log => {
+                    const level = log.level?.toLowerCase() || 'info';
+                    const levelColor = {
+                        'debug': '#9ca3af',
+                        'info': '#3b82f6',
+                        'warn': '#f59e0b',
+                        'error': '#ef4444'
+                    }[level] || '#3b82f6';
+
+                    return `<div style="color: ${levelColor}; margin-bottom: 0.5rem;">
+                        <span>[${formatDate(log.timestamp)}]</span>
+                        <span style="color: #22c55e;">[${log.level}]</span>
+                        <span style="color: #60a5fa;">[${log.component}]</span>
+                        <span>${log.message}</span>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                console.error('[Monitoring] Load logs error:', err);
+                showToast('Failed to load logs: ' + err.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // Load Component Logs
+        // ============================================================
+        async function loadComponentLogs(component, level) {
+            try {
+                const response = await fetch(`/api/logs/${component}/${level}?lines=100`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+
+                if (!response.ok && response.status !== 404) throw new Error('Failed to load component logs');
+
+                let logs = [];
+                if (response.ok) {
+                    const data = await response.json();
+                    logs = data.logs || [];
+                }
+
+                const container = document.getElementById('componentLogsContainer');
+                if (logs.length === 0) {
+                    container.innerHTML = '<span class="text-gray-500">No logs found for this component</span>';
+                    return;
+                }
+
+                container.innerHTML = logs.map(log => {
+                    const levelColor = {
+                        'debug': '#9ca3af',
+                        'info': '#3b82f6',
+                        'warn': '#f59e0b',
+                        'error': '#ef4444'
+                    }[log.level?.toLowerCase()] || '#3b82f6';
+
+                    return `<div style="color: ${levelColor}; margin-bottom: 0.5rem;">
+                        <span>[${formatDate(log.timestamp)}]</span>
+                        <span>${log.message}</span>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                console.error('[Monitoring] Component logs error:', err);
+                showToast('Failed to load component logs', 'error');
+            }
+        }
+
+        // ============================================================
+        // Clear Logs
+        // ============================================================
+        function openClearLogsModal() {
+            document.getElementById('clearLogsModal').classList.add('active');
+        }
+
+        function closeClearLogsModal() {
+            document.getElementById('clearLogsModal').classList.remove('active');
+        }
+
+        async function clearAllLogs() {
+            try {
+                const response = await fetch('/api/logs/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ confirmed: true })
+                });
+
+                if (!response.ok) throw new Error('Failed to clear logs');
+
+                const data = await response.json();
+                closeClearLogsModal();
+                showToast(data.message, 'success');
+                
+                // Reload logs
+                await loadApplicationLogs();
+            } catch (err) {
+                console.error('[Monitoring] Clear error:', err);
+                showToast('Failed to clear logs: ' + err.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // Utilities
+        // ============================================================
+        function formatDate(timestamp) {
+            return new Date(timestamp).toLocaleString('id-ID', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        function formatUptime(seconds) {
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            
+            if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function applyLogFilters() {
+            loadApplicationLogs();
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+            const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+
+            toast.innerHTML = `
+                <div class="bg-white rounded-lg shadow-lg p-4 flex items-center gap-3">
+                    <div class="${bgColor} text-white p-2 rounded-full">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-gray-900 font-medium">${message}</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            setTimeout(() => {
+                if (toast.firstChild) {
+                    toast.firstChild.remove();
+                }
+            }, 5000);
+        }
+
+        // Close modals when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'clearLogsModal') closeClearLogsModal();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        });
+    </script>
+</body>
+</html>

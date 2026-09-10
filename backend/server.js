@@ -21,6 +21,8 @@ const { initializeRcloneConnectivity, verifyRcloneConnectivity } = require('./rc
 const { runBackendInitialization } = require('./backendInitializer');
 const { startAutoSync } = require('./gdrive-file-sync');
 const registerFeatureEndpoints = require('./feature-endpoints');
+const registerBackupEndpoints = require('./backup-endpoints');
+const registerLoggingEndpoints = require('./logging-endpoints');
 const { generateRcloneConfig, verifyRcloneConfig } = require('./generate-rclone-config');
 const { startFileCountSyncJob } = require('./file-count-sync-job');
 const { initializeAutoLogoutScheduler } = require('./scheduled-auto-logout');
@@ -84,9 +86,74 @@ console.log(`[CONFIG] SUPABASE_URL: ${process.env.SUPABASE_URL ? 'SET (' + proce
 console.log(`[CONFIG] SUPABASE_SERVICE_ROLE_KEY: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'âŒ NOT SET'}`);
 console.log('[CONFIG] Environment configuration loaded.\n');
 
-app.use(cors());
+// ============================================================
+// SECURITY: CORS Configuration (Non-Breaking)
+// ============================================================
+// Development: Accept localhost and any origin in ALLOWED_ORIGINS
+// Production: Only accept origins specified in ALLOWED_ORIGINS
+const getAllowedOrigins = () => {
+    const isDev = process.env.NODE_ENV !== 'production';
+    const envOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
+    
+    // Always allow localhost for development
+    const localHostOrigins = ['http://localhost:3000', 'http://localhost:5000', 'http://127.0.0.1:3000', 'http://127.0.0.1:5000'];
+    
+    // In production, only allow specified origins; in dev, also allow localhost
+    const allowedOrigins = isDev ? [...localHostOrigins, ...envOrigins] : envOrigins;
+    
+    return allowedOrigins.length > 0 ? allowedOrigins : (isDev ? localHostOrigins : []);
+};
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        const allowedOrigins = getAllowedOrigins();
+        
+        // Allow requests with no origin (mobile apps, curl requests, etc)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS policy: Origin '${origin}' not allowed`));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Session-ID', 'X-Requested-With'],
+    optionsSuccessStatus: 200,
+    maxAge: 86400 // 24 hours
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ============================================================
+// SECURITY: HTTP Security Headers Middleware
+// ============================================================
+app.use((req, res, next) => {
+    // Prevent MIME type sniffing
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    
+    // Prevent clickjacking
+    res.setHeader('X-Frame-Options', 'DENY');
+    
+    // Enable XSS protection in older browsers
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    
+    // Enforce HTTPS in production
+    if (process.env.NODE_ENV === 'production') {
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    }
+    
+    // Prevent referrer leaking
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
+    // Disable caching for sensitive responses
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    next();
+});
 
 // ============================================================
 // SECURITY: Rate Limiting Configuration
@@ -759,6 +826,26 @@ renameFakturEndpoints(app, supabase);
 console.log('[INIT] Phase 2 feature endpoints registered âœ…');
 console.log('  âœ“ Session Management & Device Tracking');
 console.log('  âœ“ FAQ Knowledge Base');
+
+// ============================================================
+// DATABASE BACKUP MANAGEMENT ENDPOINTS
+// ============================================================
+console.log('[INIT] Registering Backup Management endpoints...');
+registerBackupEndpoints(app, supabase, authenticateToken, authorizeRole);
+console.log('[INIT] Backup Management endpoints registered ✔');
+console.log('  ✓ Backup creation, listing, verification');
+console.log('  ✓ Backup restoration & deletion with audit log');
+console.log('  ✓ Automatic retention policy enforcement');
+
+// ============================================================
+// LOGGING & MONITORING ENDPOINTS
+// ============================================================
+console.log('[INIT] Registering Logging & Monitoring endpoints...');
+registerLoggingEndpoints(app, supabase, authenticateToken, authorizeRole);
+console.log('[INIT] Logging & Monitoring endpoints registered ✔');
+console.log('  ✓ Log retrieval and filtering');
+console.log('  ✓ System health and metrics monitoring');
+console.log('  ✓ Automatic log rotation and cleanup');
 
 // ============================================================
 // INVOICE SYSTEM ENDPOINTS (Phase 3 Features)
@@ -6310,3 +6397,8 @@ app.get('/api/auth/check-logout-time', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Failed to check logout time: ' + err.message });
     }
 });
+
+
+// Append: Database Backup endpoints registration (added for backup system)
+// This is registered after Phase 2 endpoints, before INVOICE SYSTEM endpoints
+// The actual registration happens in the code flow above
