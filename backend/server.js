@@ -3,6 +3,7 @@
 // ============================================================
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -85,6 +86,68 @@ console.log('[CONFIG] Environment configuration loaded.\n');
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ============================================================
+// SECURITY: Rate Limiting Configuration
+// ============================================================
+// Rate limit for login endpoint: 5 attempts per 15 minutes per IP
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // max 5 requests per windowMs
+    message: {
+        error: 'Terlalu banyak percobaan login. Silakan coba lagi dalam 15 menit.',
+        retryAfter: '15 menit'
+    },
+    standardHeaders: true, // Return rate limit info in RateLimit-* headers
+    legacyHeaders: false, // Disable X-RateLimit-* headers
+    skip: (req) => {
+        // Don't rate limit requests from localhost (development)
+        return req.ip === '127.0.0.1' || req.ip === '::1';
+    },
+    keyGenerator: (req) => {
+        // Use IP address as the key for rate limiting
+        return req.ip || req.connection.remoteAddress;
+    },
+    handler: (req, res) => {
+        // Custom error response
+        console.warn('[RATE_LIMIT] Login brute force attempt detected:', {
+            ip: req.ip,
+            email: req.body?.email,
+            timestamp: new Date().toISOString()
+        });
+        res.status(429).json({
+            error: 'Terlalu banyak percobaan login. Silakan coba lagi dalam 15 menit.'
+        });
+    }
+});
+
+// Rate limit for share token access: 10 invalid attempts per minute per IP
+const shareLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 10, // max 10 requests per minute (for invalid token enumeration)
+    message: {
+        error: 'Terlalu banyak percobaan akses share. Silakan coba lagi dalam 1 menit.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => {
+        // Don't rate limit requests from localhost (development)
+        return req.ip === '127.0.0.1' || req.ip === '::1';
+    },
+    keyGenerator: (req) => {
+        return req.ip || req.connection.remoteAddress;
+    },
+    handler: (req, res) => {
+        console.warn('[RATE_LIMIT] Share token brute force attempt detected:', {
+            ip: req.ip,
+            token: req.params?.token?.substring(0, 8),
+            timestamp: new Date().toISOString()
+        });
+        res.status(429).json({
+            error: 'Terlalu banyak percobaan akses share. Silakan coba lagi dalam 1 menit.'
+        });
+    }
+});
 
 // ============================================================
 // URL Rewriting: Remove .html extension
@@ -702,7 +765,7 @@ console.log('  âœ“ PDF Upload & Auto-matching');
 // ============================================================
 
 // POST /api/auth/login
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -1566,7 +1629,7 @@ app.delete('/api/files/:id/share/:shareId', authenticateToken, async (req, res) 
 });
 
 // GET /api/share/:token - Access file via share token (PUBLIC - No auth required)
-app.get('/api/share/:token', async (req, res) => {
+app.get('/api/share/:token', shareLimiter, async (req, res) => {
     try {
         const { token } = req.params;
         const clientIp = req.ip || req.connection.remoteAddress;
@@ -1646,7 +1709,7 @@ app.get('/api/share/:token', async (req, res) => {
 });
 
 // GET /api/share/:token/download - Download file via share token (PUBLIC)
-app.get('/api/share/:token/download', async (req, res) => {
+app.get('/api/share/:token/download', shareLimiter, async (req, res) => {
     try {
         const { token } = req.params;
 
@@ -3323,7 +3386,7 @@ app.post('/api/users', authenticateToken, requirePermission('manage_users'), asy
 });
 
 // POST /api/admin/fix-admin-zona-zona-id - Fix admin_zona users with missing zona_id (internal setup endpoint)
-app.post('/api/admin/fix-admin-zona-zona-id', async (req, res) => {
+app.post('/api/admin/fix-admin-zona-zona-id', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
     try {
         console.log('[ADMIN] Fixing admin_zona users with missing zona_id...');
         
@@ -3379,7 +3442,7 @@ app.post('/api/admin/fix-admin-zona-zona-id', async (req, res) => {
 });
 
 // POST /api/admin/migrate-zona-codes - Update zona codes from zona-XX to simplified format
-app.post('/api/admin/migrate-zona-codes', async (req, res) => {
+app.post('/api/admin/migrate-zona-codes', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
     try {
         console.log('[ADMIN] Migrating zona codes...');
         
@@ -3450,7 +3513,7 @@ app.post('/api/admin/migrate-zona-codes', async (req, res) => {
 });
 
 // POST /api/admin/recreate-admin-zona-users - Delete all admin_zona users and recreate with proper zona_id
-app.post('/api/admin/recreate-admin-zona-users', async (req, res) => {
+app.post('/api/admin/recreate-admin-zona-users', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
     try {
         console.log('[ADMIN] Recreating admin_zona users...');
         
@@ -4026,7 +4089,7 @@ async function handleMaintenanceUpdate(req, res) {
 }
 
 // TEMPORARY: Fix NULL ukuran_bytes for existing files
-app.get('/api/debug/fix-sizes', async (req, res) => {
+app.get('/api/debug/fix-sizes', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('files')
