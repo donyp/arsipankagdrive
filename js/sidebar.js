@@ -193,11 +193,6 @@
             mainContent.style.width = 'calc(100% - 16rem)';
         }
 
-        // Show page immediately after sidebar injection
-        console.log('[Sidebar] Showing page after injection');
-        document.documentElement.style.opacity = '1';
-        document.documentElement.classList.remove('auth-loading');
-
         console.log('[Sidebar] Injection complete');
     }
 
