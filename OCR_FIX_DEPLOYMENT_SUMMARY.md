@@ -10,6 +10,8 @@
 ### Problem Solved
 Fixed OCR extraction failing on scanned PDFs for the "Rename Invoice Hijau" feature. The tool now successfully extracts invoice numbers from thousands of scanned PDF files automatically.
 
+**Root Cause Identified:** pdf2pic API was being called incorrectly - used `fromFilePath()` instead of `fromPath()` (correct API for v3.2.0)
+
 ### User Intent (From Previous Conversation)
 > "tujuan saya buat tools ini adalah untuk memudahkan pekerjaan saya melakukan rename nama file manual satu per satu sampai ribuan file, jadi saya mau otomatisasi ini berjalan dengan baik dan membantu"
 > 
@@ -31,7 +33,20 @@ The previous implementation had several issues:
 
 ### Solution Implemented
 
-#### 1. **Improved Tesseract Worker Initialization**
+#### 1. **Fixed pdf2pic API Call** ⚠️ CRITICAL FIX
+```javascript
+// BEFORE (WRONG):
+const converter = pdf2pic.fromFilePath(tmpPdfFile, options);
+
+// AFTER (CORRECT):
+const converter = pdf2pic.fromPath(tmpPdfFile, options);
+```
+
+**Issue:** pdf2pic v3.2.0 exports `fromPath()`, not `fromFilePath()`  
+**Impact:** Was causing "pdf2pic.fromFilePath is not a function" error  
+**Fix:** Use correct method name matching the library API
+
+#### 2. **Improved Tesseract Worker Initialization**
 ```javascript
 async function initTesseractWorker() {
     // Create worker with explicit CDN config
@@ -288,11 +303,10 @@ See **OCR_FIX_TESTING_GUIDE.md** for detailed troubleshooting.
 ## Commits Log
 
 ```
+a3795b3 Fix: Correct pdf2pic API usage - use fromPath instead of fromFilePath (CRITICAL)
+615854d Docs: Add OCR fix testing guide and deployment summary
 4833455 Fix: Improve Tesseract.js worker initialization with runtime language pack download from CDN
 2b28895 Build: Install Tesseract + ImageMagick + Ghostscript + Indonesian language pack for OCR on Railway
-a0dbaa8 Feat: Implement full-auto OCR with pdf2pic + Tesseract (Option 2 - Local, Free)
-b7ef86e Feat: Fallback to manual invoice input for scanned PDFs (OCR not viable without system deps)
-8ea49f5 Fix: Use Tesseract worker directly on PDF file instead of canvas rendering
 ```
 
 ---
