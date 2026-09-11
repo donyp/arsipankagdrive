@@ -120,24 +120,24 @@
                 } else {
                     childrenHTML += `
                         <a href="${child.href}" ${child.guard || ''}
-                            style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0.75rem; margin: 0; border-radius: 0.375rem; font-size: 0.8rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: #eff6ff; font-weight: 600;' : 'color: #6b7280;'} text-decoration: none; width: 100%; box-sizing: border-box; display: flex; align-items: center; min-height: 2rem;">
-                            <svg style="width: 1rem; height: 1rem; flex-shrink: 0; margin-right: -0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            style="display: flex; align-items: center; gap: 0.875rem; padding: 0.6rem 1.5rem; margin: 0.1rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: #eff6ff; font-weight: 600;' : 'color: #6b7280;'} text-decoration: none; width: calc(100% - 1rem); box-sizing: border-box; display: flex; align-items: center; min-height: 2rem;">
+                            <svg style="width: 1rem; height: 1rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 ${renderIcon(child.icon, child.iconPaths)}
                             </svg>
-                            <span style="flex: 1; overflow: visible; line-height: 1.2;">${child.label}</span>
+                            <span style="flex: 1; overflow: visible; line-height: 1.3;">${child.label}</span>
                         </a>
                      `;
                 }
             }
 
             navHTML += `
-                <div id="${item.id}-parent" style="padding: 0 0.5rem; margin: 0;">
-                    <button onclick="toggleSidebarDropdown('${item.id}')" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; color: #374151; border: none; background: transparent; cursor: pointer; font-weight: 500; min-height: 2.2rem;">
-                        <div style="display: flex; align-items: center; gap: 1rem; flex: 1; overflow: visible;">
-                            <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin-right: -0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div id="${item.id}-parent" style="padding: 0.25rem 0.5rem; margin: 0;">
+                    <button onclick="toggleSidebarDropdown('${item.id}')" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 1rem; border-radius: 0.375rem; font-size: 0.8rem; color: #374151; border: none; background: transparent; cursor: pointer; font-weight: 500; min-height: 2.3rem;">
+                        <div style="display: flex; align-items: center; gap: 0.875rem; flex: 1; overflow: visible; min-width: 0;">
+                            <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 ${renderIcon(item.icon, item.iconPaths)}
                             </svg>
-                            <span style="overflow: visible; line-height: 1.2;">${item.label}</span>
+                            <span style="overflow: visible; line-height: 1.3; flex: 1;">${item.label}</span>
                         </div>
                         <svg class="sidebar-dropdown-icon" style="width: 0.875rem; height: 0.875rem; opacity: 0.5; transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; margin-left: 0.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -158,13 +158,13 @@
                 : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50';
 
             navHTML += `
-                <div style="padding: 0.3rem 0.5rem; margin: 0;">
+                <div style="padding: 0.25rem 0.5rem; margin: 0;">
                 <a href="${item.href}" ${item.guard || ''}
-                    style="display: flex; align-items: center; gap: 1rem; padding: 0.6rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: rgba(59, 130, 246, 0.1); font-weight: 600;' : 'color: #374151;'} text-decoration: none; font-weight: 500; width: 100%; box-sizing: border-box; min-height: 2.2rem; display: flex; align-items: center;">
-                    <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin-right: -0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    style="display: flex; align-items: center; gap: 0.875rem; padding: 0.7rem 1rem; border-radius: 0.375rem; font-size: 0.8rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: rgba(59, 130, 246, 0.1); font-weight: 600;' : 'color: #374151;'} text-decoration: none; font-weight: 500; width: 100%; box-sizing: border-box; min-height: 2.3rem; display: flex; align-items: center;">
+                    <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         ${renderIcon(item.icon, item.iconPaths)}
                     </svg>
-                    <span style="flex: 1; overflow: visible; line-height: 1.2;">${item.label}</span>
+                    <span style="flex: 1; overflow: visible; line-height: 1.3;">${item.label}</span>
                 </a>
                 </div>`;
         }
