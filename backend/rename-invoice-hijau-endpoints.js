@@ -619,6 +619,43 @@ module.exports = (app, supabase) => {
     });
 
     // ============================================
+    // GET /api/invoice/rename-history
+    // Get all successful rename history for current user
+    // ============================================
+    app.get('/api/invoice/rename-history', async (req, res) => {
+        try {
+            const userId = req.user?.id;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized - no user token' });
+            }
+
+            const limit = parseInt(req.query.limit) || 100;
+            
+            console.log('[Rename History] Fetching rename history for user:', userId);
+
+            const { data, error } = await supabase
+                .from('rename_history')
+                .select('*')
+                .eq('renamed_by', userId)
+                .order('renamed_at', { ascending: false })
+                .limit(limit);
+
+            if (error) {
+                console.error('[Rename History] Database error:', error);
+                return res.status(500).json({ error: 'Failed to fetch: ' + error.message });
+            }
+
+            console.log('[Rename History] Fetched', data?.length || 0, 'records');
+            res.json({ success: true, history: data || [], total: data?.length || 0 });
+
+        } catch (err) {
+            console.error('[Rename History] Error:', err.message);
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // ============================================
     // DELETE /api/invoice/failed-rename/:id
     // Delete a failed rename attempt record
     // ============================================
