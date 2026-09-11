@@ -14,10 +14,22 @@
         // Get custom headline from localStorage or use default
         const customHeadline = localStorage.getItem('customHeadline') || 'Jika ada kendala, silahkan hubungi admin anka';
         
+        // Calculate animation duration based on text length
+        // Shorter text needs shorter duration, longer text needs more time
+        const textLength = customHeadline.length;
+        const baseDuration = 15; // base seconds for standard length
+        const duration = Math.max(12, Math.ceil((textLength / 45) * 25)); // Scale from 12-30 seconds
+        
+        // Store duration for CSS
+        banner.style.setProperty('--scroll-duration', duration + 's');
+        
+        // Create message with enough repetitions to fill the screen
+        let message = `📢  ${customHeadline}  •  ${customHeadline}  •`;
+        
         banner.innerHTML = `
             <div class="announcement-content">
                 <div class="announcement-text">
-                    <span class="announcement-message">📢  ${customHeadline}  •  ${customHeadline}  •  ${customHeadline}  •</span>
+                    <span class="announcement-message" style="animation-duration: ${duration}s;">${message}</span>
                 </div>
             </div>
         `;
@@ -70,7 +82,7 @@
 
             @keyframes scrollText {
                 0% {
-                    transform: translateX(100%);
+                    transform: translateX(100vw);
                 }
                 100% {
                     transform: translateX(-100%);

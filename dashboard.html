@@ -1211,11 +1211,17 @@
                 // Save to localStorage
                 localStorage.setItem('customHeadline', newText);
                 
+                // Calculate animation duration based on text length
+                const textLength = newText.length;
+                const duration = Math.max(12, Math.ceil((textLength / 45) * 25));
+                
                 // Update the announcement banner immediately
                 const messageElement = document.querySelector('.announcement-message');
                 if (messageElement) {
-                    // Create repeated message for scrolling
-                    messageElement.textContent = `📢  ${newText}  •  ${newText}  •  ${newText}  •`;
+                    // Create message with enough repetitions
+                    const message = `📢  ${newText}  •  ${newText}  •`;
+                    messageElement.textContent = message;
+                    messageElement.style.animationDuration = duration + 's';
                 }
                 
                 // Show success message
