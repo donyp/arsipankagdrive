@@ -45,7 +45,7 @@ async function initTesseractWorker() {
             '',  // langs - will be set by reinitialize()
             TesseractModule.OEM.LSTM_ONLY,  // oem
             {
-                langPath: 'https://tessdata.projectnaptha.com/4.0_best',
+                langPath: 'https://tessdata.projectnaptha.com/4.0_best_int',  // LSTM-only path (has _int suffix)
                 corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.5.0/tesseract-core.wasm.js'
             }
         );
