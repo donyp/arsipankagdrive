@@ -39,12 +39,16 @@ async function initTesseractWorker() {
         
         console.log('[Rename Invoice Hijau] Initializing Tesseract worker...');
         
-        // Create worker with explicit config
-        // Note: logger function removed - cannot be serialized across worker threads in Node.js
-        tesseractWorker = await TesseractModule.createWorker({
-            langPath: 'https://tessdata.projectnaptha.com/4.0_best',
-            corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.5.0/tesseract-core.wasm.js'
-        });
+        // Create worker - Tesseract.js v5 expects: createWorker(langs, oem, options, config)
+        // Pass empty string for langs since we'll use reinitialize() to set it
+        tesseractWorker = await TesseractModule.createWorker(
+            '',  // langs - will be set by reinitialize()
+            TesseractModule.OEM.LSTM_ONLY,  // oem
+            {
+                langPath: 'https://tessdata.projectnaptha.com/4.0_best',
+                corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.5.0/tesseract-core.wasm.js'
+            }
+        );
         
         console.log('[Rename Invoice Hijau] ✅ Tesseract worker created');
         
