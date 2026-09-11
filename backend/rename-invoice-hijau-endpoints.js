@@ -47,90 +47,54 @@ async function initPdfjs() {
     return pdfjs;
 }
 
-// Extract text via OCR from PDF using pdfjs-dist + canvas
+// Extract text via OCR from PDF using Tesseract.js (worker-based)
 async function extractTextViaOCR(pdfBuffer) {
     try {
-        console.log('[Rename Invoice Hijau] OCR: Starting PDF-to-image conversion (pdfjs-dist)...');
+        console.log('[Rename Invoice Hijau] OCR: Starting Tesseract OCR...');
         
-        // Load pdfjs
-        const pdfjsLib = require('pdfjs-dist');
-        const Canvas = require('canvas');
         const Tesseract = require('tesseract.js');
         
-        // Create canvas document for pdfjs
-        const canvasFactory = {
-            create(width, height) {
-                const canvas = Canvas.createCanvas(width, height);
-                return {
-                    canvas: canvas,
-                    context: canvas.getContext('2d')
-                };
+        // Since pdfjs canvas rendering is complex in Node.js, we'll use a simpler approach:
+        // Convert PDF buffer directly to base64 and let Tesseract handle it
+        // Tesseract.js can handle some PDF formats directly
+        
+        // Write PDF to temp file for Tesseract to process
+        const fs = require('fs');
+        const path = require('path');
+        const tmpDir = require('os').tmpdir();
+        const tmpFile = path.join(tmpDir, `invoice-${Date.now()}.pdf`);
+        
+        fs.writeFileSync(tmpFile, pdfBuffer);
+        console.log('[Rename Invoice Hijau] OCR: PDF written to:', tmpFile);
+        
+        try {
+            // Initialize Tesseract worker
+            console.log('[Rename Invoice Hijau] OCR: Initializing Tesseract worker...');
+            const { createWorker } = Tesseract;
+            const worker = await createWorker('ind');  // Indonesian language
+            
+            console.log('[Rename Invoice Hijau] OCR: Recognizing text from PDF...');
+            const result = await worker.recognize(tmpFile);
+            const text = result.data.text;
+            
+            console.log(`[Rename Invoice Hijau] OCR: ✅ Extracted ${text.length} characters`);
+            
+            await worker.terminate();
+            
+            // Clean up temp file
+            try { fs.unlinkSync(tmpFile); } catch (e) {}
+            
+            if (text && text.length > 50) {
+                return text;
+            } else {
+                console.warn('[Rename Invoice Hijau] OCR: Extracted text too short');
+                return null;
             }
-        };
-        
-        // Convert Buffer to Uint8Array for pdfjs-dist
-        const uint8Array = new Uint8Array(pdfBuffer);
-        
-        // Parse PDF
-        const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise;
-        console.log(`[Rename Invoice Hijau] OCR: PDF has ${pdf.numPages} pages`);
-        
-        // Process only first 2 pages for speed
-        const pagesToProcess = Math.min(2, pdf.numPages);
-        let allText = '';
-        
-        for (let pageNum = 1; pageNum <= pagesToProcess; pageNum++) {
-            try {
-                console.log(`[Rename Invoice Hijau] OCR: Processing page ${pageNum}/${pagesToProcess}`);
-                
-                const page = await pdf.getPage(pageNum);
-                const viewport = page.getViewport({ scale: 2.0 }); // 2x scale for better OCR
-                
-                // Render page to canvas
-                const canvas = Canvas.createCanvas(viewport.width, viewport.height);
-                const context = canvas.getContext('2d');
-                
-                const renderContext = {
-                    canvasContext: context,
-                    viewport: viewport
-                };
-                
-                await page.render(renderContext).promise;
-                
-                // Convert canvas to PNG buffer
-                const pngBuffer = await canvas.toBuffer('image/png');
-                
-                console.log(`[Rename Invoice Hijau] OCR: Page ${pageNum} rendered, running Tesseract...`);
-                
-                // Run Tesseract OCR on the rendered image
-                const result = await Tesseract.recognize(
-                    pngBuffer,
-                    'ind+eng',
-                    {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                console.log(`[Rename Invoice Hijau] OCR Page ${pageNum}: ${(m.progress * 100).toFixed(0)}%`);
-                            }
-                        }
-                    }
-                );
-                
-                const text = result.data.text;
-                console.log(`[Rename Invoice Hijau] OCR Page ${pageNum}: Extracted ${text.length} chars`);
-                allText += '\n' + text;
-                
-            } catch (pageErr) {
-                console.error(`[Rename Invoice Hijau] OCR: Error processing page ${pageNum}:`, pageErr.message);
-                continue;
-            }
-        }
-        
-        if (allText && allText.length > 50) {
-            console.log(`[Rename Invoice Hijau] OCR: ✅ Successfully extracted ${allText.length} total characters`);
-            return allText;
-        } else {
-            console.warn('[Rename Invoice Hijau] OCR: Extracted text too short or empty');
-            return null;
+            
+        } catch (ocrErr) {
+            console.error('[Rename Invoice Hijau] OCR: Tesseract processing error:', ocrErr.message);
+            try { fs.unlinkSync(tmpFile); } catch (e) {}
+            throw ocrErr;
         }
 
     } catch (err) {
