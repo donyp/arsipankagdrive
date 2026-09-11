@@ -100,9 +100,13 @@ async function extractTextViaOCR(pdfBuffer) {
             return null;
         }
         
-        // Step 3: Convert PDF to images using pdf2pic
+        // Step 3: Convert PDF to images using pdf2pic + GraphicsMagick enhancement
         console.log('[Rename Invoice Hijau] OCR: Converting PDF to images (pdf2pic)...');
         const pdf2pic = require('pdf2pic');
+        const { exec } = require('child_process');
+        const util = require('util');
+        const execPromise = util.promisify(exec);
+        
         const options = {
             density: 150,           // DPI for better OCR quality
             saveFilename: 'page',
@@ -132,7 +136,7 @@ async function extractTextViaOCR(pdfBuffer) {
             imagePaths = result.map(r => r.path);
             console.log(`[Rename Invoice Hijau] OCR: ✅ Converted ${imagePaths.length} pages to images`);
             
-            // Verify image files exist
+            // Verify image files exist and apply enhancement for low-quality images
             for (let i = 0; i < imagePaths.length; i++) {
                 if (!fs.existsSync(imagePaths[i])) {
                     console.warn(`[Rename Invoice Hijau] OCR: Image file ${i + 1} not found: ${imagePaths[i]}`);
@@ -141,6 +145,41 @@ async function extractTextViaOCR(pdfBuffer) {
                 } else {
                     const stats = fs.statSync(imagePaths[i]);
                     console.log(`[Rename Invoice Hijau] OCR: Image ${i + 1} exists, size: ${stats.size} bytes`);
+                    
+                    // Enhance image for better OCR - especially for low-quality/faded scans
+                    try {
+                        console.log(`[Rename Invoice Hijau] OCR: Enhancing image ${i + 1} for better OCR...`);
+                        
+                        // Use ImageMagick/GraphicsMagick to enhance the image:
+                        // -normalize: enhance contrast
+                        // -threshold: convert to B&W for clarity
+                        // -scale 200%: upscale 2x for better OCR
+                        // -despeckle: remove noise
+                        const enhancedPath = imagePaths[i].replace('.png', '-enhanced.png');
+                        
+                        const enhanceCmd = `convert "${imagePaths[i]}" \\
+                          -normalize \\
+                          -enhance \\
+                          -sharpen 0x1 \\
+                          -scale 200% \\
+                          -colorspace Gray \\
+                          -brightness-contrast 10x20 \\
+                          "${enhancedPath}"`;
+                        
+                        const { stdout, stderr } = await execPromise(enhanceCmd);
+                        
+                        if (fs.existsSync(enhancedPath)) {
+                            console.log(`[Rename Invoice Hijau] OCR: Image ${i + 1} enhanced successfully`);
+                            // Use enhanced image instead
+                            imagePaths[i] = enhancedPath;
+                        } else {
+                            console.warn(`[Rename Invoice Hijau] OCR: Enhancement failed for image ${i + 1}, using original`);
+                        }
+                        
+                    } catch (enhanceErr) {
+                        console.warn(`[Rename Invoice Hijau] OCR: Image enhancement failed (continuing with original): ${enhanceErr.message}`);
+                        // Continue with original image if enhancement fails
+                    }
                 }
             }
             
@@ -243,6 +282,11 @@ async function extractTextViaOCR(pdfBuffer) {
             for (const imgPath of imagePaths) {
                 if (fs.existsSync(imgPath)) {
                     fs.unlinkSync(imgPath);
+                }
+                // Also cleanup enhanced versions
+                const enhancedPath = imgPath.replace('.png', '-enhanced.png');
+                if (fs.existsSync(enhancedPath)) {
+                    fs.unlinkSync(enhancedPath);
                 }
             }
             if (imagePaths.length > 0) {
