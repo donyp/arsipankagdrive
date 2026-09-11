@@ -416,15 +416,12 @@ function updateLoadingModal(current, fileName, total) {
 }
 
 function showHistoryActionButton(successFiles) {
-    // Get latest faktur from success files for history query
+    // Load and display the latest history records
     if (successFiles.length === 0) return;
     
-    const firstFileName = successFiles[0].newName;
-    const parts = firstFileName.split('-');
-    const faktur = parts[0] || successFiles[0].originalName;
-    
-    console.log('[Rename Faktur] Loading history for faktur:', faktur);
-    loadAndDisplayHistory(faktur);
+    console.log('[Rename Faktur] Loading history after successful rename');
+    // Load latest history (not filtered by specific faktur)
+    loadLatestHistory();
 }
 
 async function loadAndDisplayHistory(faktur) {
