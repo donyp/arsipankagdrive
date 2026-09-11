@@ -4,13 +4,22 @@ FROM node:22-slim
 # Set working directory early
 WORKDIR /app
 
-# Update apt and install system dependencies (without Alist - causes build failure on Railway)
+# Update apt and install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     rclone \
     git \
+    tesseract-ocr \
+    libtesseract-dev \
+    imagemagick \
+    ghostscript \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Download Indonesian language pack for Tesseract
+RUN mkdir -p /usr/share/tesseract-ocr-4.00/tessdata && \
+    curl -L -o /usr/share/tesseract-4/tessdata/ind.traineddata https://github.com/UB-Mannheim/tesseract/raw/main/tessdata/ind.traineddata || true
 
 # Copy backend dependencies first (better layer caching)
 # Last updated: 2026-09-04 - Added root package.json for pdf-parse
