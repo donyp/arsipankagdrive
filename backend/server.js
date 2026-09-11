@@ -158,6 +158,18 @@ app.use((req, res, next) => {
 // ============================================================
 // SECURITY: Rate Limiting Configuration
 // ============================================================
+// Helper for IPv6-safe rate limit key
+const getClientIp = (req) => {
+    // Try different sources for IP
+    return (
+        req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+        req.headers['x-real-ip'] ||
+        req.ip ||
+        req.connection.remoteAddress ||
+        'unknown'
+    );
+};
+
 // Rate limit for login endpoint: 5 attempts per 15 minutes per IP
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -173,13 +185,13 @@ const loginLimiter = rateLimit({
         return req.ip === '127.0.0.1' || req.ip === '::1';
     },
     keyGenerator: (req) => {
-        // Use IP address as the key for rate limiting
-        return req.ip || req.connection.remoteAddress;
+        // Use client IP as the key for rate limiting
+        return getClientIp(req);
     },
     handler: (req, res) => {
         // Custom error response
         console.warn('[RATE_LIMIT] Login brute force attempt detected:', {
-            ip: req.ip,
+            ip: getClientIp(req),
             email: req.body?.email,
             timestamp: new Date().toISOString()
         });
@@ -203,11 +215,12 @@ const shareLimiter = rateLimit({
         return req.ip === '127.0.0.1' || req.ip === '::1';
     },
     keyGenerator: (req) => {
-        return req.ip || req.connection.remoteAddress;
+        // Use client IP as the key
+        return getClientIp(req);
     },
     handler: (req, res) => {
         console.warn('[RATE_LIMIT] Share token brute force attempt detected:', {
-            ip: req.ip,
+            ip: getClientIp(req),
             token: req.params?.token?.substring(0, 8),
             timestamp: new Date().toISOString()
         });
