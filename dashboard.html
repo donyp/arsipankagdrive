@@ -9,17 +9,15 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+        /* Set default zoom to 80% for better fit */
         html, body {
-            margin: 0;
-            padding: 0;
+            zoom: 0.8;
         }
         
-        /* Apply zoom only to main content, NOT sidebar */
-        #app > div:last-child {
-            zoom: 0.8;
-            transform-origin: top left;
-            width: 125%;
-            height: 125%;
+        /* Sidebar menu items padding fix */
+        #sidebar a, #sidebar button {
+            padding: 0.75rem 1rem !important;
+            font-size: 0.875rem !important;
         }
         
         /* File list - use Poppins font */
@@ -540,7 +538,6 @@
             overflow-y: auto;
             overflow-x: hidden;
             overscroll-behavior: contain;
-            zoom: 1 !important;
         }
         
         #sidebar::-webkit-scrollbar {
