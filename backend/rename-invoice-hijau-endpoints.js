@@ -431,30 +431,21 @@ module.exports = (app, supabase) => {
                         noInvoice = priority1Number;
                         console.log(`[Rename Invoice Hijau] Selected: Priority 1 (83510031x prefix) - ${noInvoice}`);
                     } else if (priority2Number) {
-                        // Validate P2 result: must not start with 02 (phone prefix)
-                        const p2clean = priority2Number.replace(/[#\-]/g, '');
-                        if (p2clean.startsWith('02') && p2clean.length < 15) {
-                            console.log(`[Rename Invoice Hijau] Pattern 2 rejected: looks like phone number "${priority2Number}"`);
-                            noInvoice = null;
-                        } else {
-                            noInvoice = priority2Number;
-                            console.log(`[Rename Invoice Hijau] Selected: Priority 2 (Invoice: label) - ${noInvoice}`);
-                        }
+                        // Pattern 2 is looking for explicit "Invoice :" or "No. Invoice :" label
+                        // These are usually the actual invoice numbers
+                        noInvoice = priority2Number;
+                        console.log(`[Rename Invoice Hijau] Selected: Priority 2 (Invoice: or No. Invoice: label) - ${noInvoice}`);
                     }
 
-                    // Fallback to Pattern 3 only if P1/P2 both failed or rejected
+                    // Fallback to Pattern 3 only if P1/P2 both failed
                     if (!noInvoice && priority3Number) {
-                        // Cross-check P3 result against known invoice prefix
-                        const p3clean = priority3Number.replace(/[#\-]/g, '');
-                        if (p3clean.startsWith('83510031')) {
-                            noInvoice = priority3Number;
-                            console.log(`[Rename Invoice Hijau] Selected: Priority 3 (ANKA prefix confirmed) - ${noInvoice}`);
-                        } else if (p3clean.startsWith('02') && p3clean.length < 15) {
+                        // Pattern 3 is the longest number found - use with caution
+                        // Reject if it looks like a phone number (starts with 02 and too short)
+                        const p3clean = priority3Number.replace(/[#\-\/\.]/g, '');
+                        if (p3clean.startsWith('02') && p3clean.length < 15) {
                             console.log(`[Rename Invoice Hijau] Pattern 3 rejected: looks like phone number "${priority3Number}"`);
-                            noInvoice = null;
                         } else {
-                            // Use longest match but warn about ambiguous prefix
-                            console.log(`[Rename Invoice Hijau] Selected: Priority 3 (longest number, no ANKA prefix) - ${noInvoice || priority3Number}`);
+                            console.log(`[Rename Invoice Hijau] Selected: Priority 3 (longest number) - ${priority3Number}`);
                             noInvoice = priority3Number;
                         }
                     }
