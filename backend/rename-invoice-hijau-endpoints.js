@@ -394,17 +394,23 @@ module.exports = (app, supabase) => {
                         console.log(`[Rename Invoice Hijau] Priority 1 (ANKA prefix 83510031X): ${priority1Number}`);
                     }
 
-                    // Pattern 2: Look for invoice-like numbers with special chars (# - / .)
-                    // These are more likely to be invoices than plain numbers
-                    // Common patterns: "1002101906#6015", "INV-2024-001", etc.
-                    let pattern2 = /\b([\d]{8,}[\#\-\/\.]+[\d]+)\b/gi;
+                    // Pattern 2: Numbers with special chars in the middle (# - / .)
+                    // Examples: "1002101906#6015", "INV-2024-001"
+                    // Match: digit(s) + special char + digit(s), at least 10 chars total
+                    let pattern2 = /\b(\d+[\#\-\/\.]+\d+)\b/gi;
                     let matches2 = cleanText.match(pattern2);
                     let priority2Number = null;
 
                     if (matches2 && matches2.length > 0) {
                         console.log(`[Rename Invoice Hijau] Pattern2 raw matches: ${matches2.join(' | ')}`);
-                        priority2Number = matches2[0];
-                        console.log(`[Rename Invoice Hijau] Priority 2 (number with special chars): ${priority2Number}`);
+                        // Filter out short ones (like "50.4" from addresses), keep 10+ chars
+                        for (let match of matches2) {
+                            if (match.length >= 10) {
+                                priority2Number = match;
+                                console.log(`[Rename Invoice Hijau] Priority 2 (number with special chars): ${priority2Number}`);
+                                break;
+                            }
+                        }
                     }
 
                     // Pattern 3: Fallback - any number-like sequence with 10+ chars
