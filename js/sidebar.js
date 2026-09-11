@@ -189,9 +189,11 @@
             flex-direction: column;
             background: #ffffff;
             border-right: 1px solid #e5e7eb;
-            z-index: 40;
+            z-index: 9999;
             overflow: hidden;
             box-sizing: border-box;
+            transform: none;
+            transform-origin: 0 0;
         `;
 
         sidebar.innerHTML = `
