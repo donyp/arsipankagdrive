@@ -381,41 +381,54 @@ module.exports = (app, supabase) => {
                     console.log(`[Rename Invoice Hijau] First 500 chars:\n${textContent.substring(0, 500)}`);
                     console.log(`[Rename Invoice Hijau] ============================`);
 
-                    // Extract any 12+ digit number (invoice numbers are typically long)
-                    // Try multiple patterns in priority order
-                    
-                    // Pattern 1: "No. Invoice: XXXXXX..." or "No Invoice: XXXXXX..." or just "No : XXXXXX..."
-                    let pattern1 = /No\.?\s*(?:Invoice)?\s*[:=]?\s*([\d\#\-\/\.]+[\d])/gi;
+                    // Extract invoice number - try patterns in priority order
+
+                    // Pattern 0: Numbers with # separator (e.g. 1002101906#6015)
+                    // Strongest signal: phone numbers, NPWP, and addresses never contain #
+                    let pattern0 = /\b(\d{6,}#\d{2,})\b/g;
+                    let matches0 = cleanText.match(pattern0);
+                    let priority0Number = null;
+
+                    if (matches0 && matches0.length > 0) {
+                        priority0Number = matches0[0];
+                        console.log(`[Rename Invoice Hijau] Priority 0 (number with #): ${priority0Number}`);
+                    }
+
+                    // Pattern 1: "No. Invoice: XXXXXX..." or "No : XXXXXX..."
+                    let pattern1 = /No\.?\s*(?:Invoice)?\s*[:=]\s*([\d][\d\#\-\/\.]*[\d])/gi;
                     let matches1 = cleanText.match(pattern1);
                     let priority1Number = null;
-                    
+
                     if (matches1 && matches1.length > 0) {
                         console.log(`[Rename Invoice Hijau] Pattern1 raw matches: ${matches1.join(' | ')}`);
                         for (let match of matches1) {
-                            // Extract just the alphanumeric/special chars after "No"
-                            const numberMatch = match.split(/No\.?\s*(?:Invoice)?\s*[:=]?\s*/i)[1];
+                            // Extract just the value after "No" - require : or = separator
+                            const numberMatch = match.split(/No\.?\s*(?:Invoice)?\s*[:=]\s*/i)[1];
                             if (numberMatch && numberMatch.trim().length >= 10) {
                                 priority1Number = numberMatch.trim();
-                                console.log(`[Rename Invoice Hijau] Priority 1 (No./No. Invoice) found: ${priority1Number}`);
+                                console.log(`[Rename Invoice Hijau] Priority 1 (No. Invoice :) found: ${priority1Number}`);
                                 break;
                             }
                         }
                     }
 
-                    // Pattern 2: Just find any number-like sequence with 10+ digits/chars
+                    // Pattern 2: Fallback - any number-like sequence with 10+ chars,
+                    // but prefer ones containing # (invoice separator) to skip phone numbers/NPWP
                     let pattern2 = /\b([\d\#\-\/\.]{10,}[\d])\b/g;
                     let matches2 = cleanText.match(pattern2);
                     let priority2Number = null;
-                    
+
                     if (matches2 && matches2.length > 0) {
                         console.log(`[Rename Invoice Hijau] Pattern2 raw matches: ${matches2.join(' | ')}`);
-                        // Take the first 10+ char number found
-                        priority2Number = matches2[0];
+                        priority2Number = matches2.find(m => m.includes('#')) || matches2[0];
                         console.log(`[Rename Invoice Hijau] Priority 2 (10+ char number): ${priority2Number}`);
                     }
 
                     // Matching logic - use first priority that finds something
-                    if (priority1Number) {
+                    if (priority0Number) {
+                        noInvoice = priority0Number;
+                        console.log(`[Rename Invoice Hijau] Selected: Priority 0 - ${noInvoice}`);
+                    } else if (priority1Number) {
                         noInvoice = priority1Number;
                         console.log(`[Rename Invoice Hijau] Selected: Priority 1 - ${noInvoice}`);
                     } else if (priority2Number) {
@@ -443,7 +456,7 @@ module.exports = (app, supabase) => {
                     sendResponse(200, {
                         success: true,
                         originalFileName: fileName,
-                        renamedFileName: renamedFileName,
+                        newName: renamedFileName,
                         noInvoice: noInvoice,
                         fileData: fileData.toString('base64'), // Send as base64 for download
                         message: 'No. Invoice berhasil diextract'
