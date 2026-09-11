@@ -154,6 +154,11 @@ function hideDashboardInitialLoading() {
     } else {
         console.warn('[Dashboard] Initial loading overlay not found when trying to hide');
     }
+    
+    // Show page by resetting opacity
+    console.log('[Dashboard] Showing page (removing opacity: 0)');
+    document.documentElement.style.opacity = '1';
+    document.documentElement.classList.remove('auth-loading');
 }
 
 // ---- Initialize Dashboard ----
