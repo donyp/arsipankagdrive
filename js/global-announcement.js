@@ -23,13 +23,14 @@
         // Store duration for CSS
         banner.style.setProperty('--scroll-duration', duration + 's');
         
-        // Create message with enough repetitions to fill the screen
-        let message = `📢  ${customHeadline}  •  ${customHeadline}  •`;
+        // Single message with separator - will loop infinitely
+        const message = `📢  ${customHeadline}  •  `;
         
         banner.innerHTML = `
             <div class="announcement-content">
                 <div class="announcement-text">
                     <span class="announcement-message" style="animation-duration: ${duration}s;">${message}</span>
+                    <span class="announcement-message" style="animation-duration: ${duration}s; animation-delay: -${duration}s;">${message}</span>
                 </div>
             </div>
         `;
