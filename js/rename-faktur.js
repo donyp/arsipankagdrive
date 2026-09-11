@@ -313,12 +313,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Wait for auth to initialize
     let retries = 0;
-    const maxRetries = 10;
+    const maxRetries = 5;
     
     const waitForAuth = setInterval(async () => {
         retries++;
         if (typeof API === 'undefined') {
-            console.log('[Rename Faktur] API not defined yet... attempt', retries);
+            if (retries % 5 === 1) {
+                console.log('[Rename Faktur] API not defined yet... attempt', retries);
+            }
         } else {
             const token = API.getToken();
             
@@ -333,7 +335,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('[Rename Faktur] Waiting for auth... attempt', retries);
             }
         }
-    }, 200);
+    }, 500);
 });
 
 async function loadLatestHistory() {
