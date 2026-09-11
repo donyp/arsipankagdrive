@@ -490,22 +490,22 @@ function displayHistorySection(histories) {
         const displayName = h.full_name || h.renamed_by || 'Unknown';
         
         const div = document.createElement('div');
-        div.className = 'flex items-center justify-between p-2 hover:bg-red-50 rounded transition-colors text-sm group';
+        div.className = 'flex items-center justify-between py-1.5 px-2 hover:bg-red-50 rounded transition-colors text-xs group';
         div.innerHTML = `
             <div class="flex-1 min-w-0">
                 <span class="text-gray-700">
-                    File asli: <span class="font-mono text-gray-600">${h.old_filename}</span>
+                    <span class="font-mono text-gray-600">${h.old_filename}</span>
                     <span class="text-gray-400 mx-1">›</span>
                     <span class="font-mono text-green-700 font-semibold">${h.new_filename}</span>
-                    <span class="text-gray-400 mx-2">|</span>
-                    Oleh: <span class="font-semibold text-gray-700">${displayName}</span>
-                    <span class="text-gray-400 mx-2">|</span>
+                    <span class="text-gray-400 mx-1">|</span>
+                    <span class="text-gray-600">${displayName}</span>
+                    <span class="text-gray-400 mx-1">|</span>
                     <span class="text-gray-500">${timestamp}</span>
                 </span>
             </div>
-            <button class="ml-2 p-1 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0 delete-history-btn" title="Hapus history ini" data-history-id="${h.id}">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <button class="ml-2 p-0.5 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded transition-all opacity-0 group-hover:opacity-100 flex-shrink-0 delete-history-btn" title="Hapus" data-history-id="${h.id}">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
         `;
