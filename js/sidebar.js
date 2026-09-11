@@ -164,6 +164,7 @@
             z-index: 9999;
             overflow: hidden;
             box-sizing: border-box;
+            min-height: 100vh;
         `;
 
         sidebar.innerHTML = `
@@ -181,7 +182,7 @@
                 </div>
             </div>
 
-            <nav style="padding: 0.5rem 0; overflow-y: auto; overflow-x: hidden; flex: 1; -webkit-overflow-scrolling: touch;">
+            <nav style="padding: 0.5rem 0; overflow-y: auto; overflow-x: hidden; flex: 1; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column;">
                 ${navHTML}
             </nav>
         `;
