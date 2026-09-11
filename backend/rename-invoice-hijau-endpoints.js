@@ -112,13 +112,22 @@ module.exports = (app, supabase) => {
     // Extract No. Invoice from PDF and prepare renamed file
     // ============================================
     app.post('/api/invoice/rename-invoice-hijau', async (req, res) => {
+        let responsesSent = false;
+        
+        const sendResponse = (status, data) => {
+            if (!responsesSent) {
+                responsesSent = true;
+                res.status(status).json(data);
+            }
+        };
+
         try {
             console.log('[Rename Invoice Hijau] POST request received');
             console.log('[Rename Invoice Hijau] Content-Type:', req.headers['content-type']);
 
             // Validate content-type
             if (!req.headers['content-type'] || !req.headers['content-type'].includes('multipart/form-data')) {
-                return res.status(400).json({ error: 'Content-Type must be multipart/form-data' });
+                return sendResponse(400, { error: 'Content-Type must be multipart/form-data' });
             }
 
             // Parse multipart form data
@@ -127,11 +136,12 @@ module.exports = (app, supabase) => {
                 bb = busboy({ headers: req.headers });
             } catch (bberr) {
                 console.error('[Rename Invoice Hijau] Busboy init error:', bberr.message);
-                return res.status(400).json({ error: 'Error initializing form parser: ' + bberr.message });
+                return sendResponse(400, { error: 'Error initializing form parser: ' + bberr.message });
             }
 
             let fileData = null;
             let fileName = null;
+            let processingStarted = false;
 
             bb.on('file', (fieldname, file, info) => {
                 console.log(`[Rename Invoice Hijau] File field: ${fieldname}, filename: ${info.filename}`);
@@ -143,33 +153,49 @@ module.exports = (app, supabase) => {
                 });
 
                 file.on('end', () => {
-                    fileData = Buffer.concat(chunks);
-                    console.log(`[Rename Invoice Hijau] File received: ${fileName}, size: ${fileData.length} bytes`);
+                    try {
+                        fileData = Buffer.concat(chunks);
+                        console.log(`[Rename Invoice Hijau] File received: ${fileName}, size: ${fileData.length} bytes`);
+                    } catch (err) {
+                        console.error('[Rename Invoice Hijau] Buffer concat error:', err.message);
+                    }
+                });
+
+                file.on('error', (err) => {
+                    console.error('[Rename Invoice Hijau] File stream error:', err.message);
                 });
             });
 
             bb.on('error', (err) => {
                 console.error('[Rename Invoice Hijau] Busboy error:', err);
-                return res.status(400).json({ error: 'Error parsing form data: ' + err.message });
+                return sendResponse(400, { error: 'Error parsing form data: ' + err.message });
             });
 
             bb.on('close', async () => {
+                if (processingStarted) return;
+                processingStarted = true;
+
                 try {
                     if (!fileData || !fileName) {
                         console.error('[Rename Invoice Hijau] Missing file data');
-                        return res.status(400).json({ error: 'File PDF wajib diupload' });
+                        return sendResponse(400, { error: 'File PDF wajib diupload' });
                     }
 
                     console.log(`[Rename Invoice Hijau] Processing: ${fileName}`);
 
                     // Initialize pdf-parse
                     const pdf = await initPdfParse();
+                    
+                    if (!pdf) {
+                        console.error('[Rename Invoice Hijau] PDF parser not available');
+                        return sendResponse(503, { error: 'PDF parser not available - sistem sedang diinisialisasi' });
+                    }
 
                     // Parse PDF
                     let textContent = '';
                     try {
                         const pdfData = await pdf(fileData);
-                        textContent = pdfData.text;
+                        textContent = pdfData.text || '';
                         console.log(`[Rename Invoice Hijau] PDF text extracted, length: ${textContent.length}`);
                     } catch (pdfErr) {
                         console.error('[Rename Invoice Hijau] PDF text extraction failed:', pdfErr.message);
@@ -285,7 +311,7 @@ module.exports = (app, supabase) => {
 
                     // If no invoice found, return error
                     if (!noInvoice) {
-                        return res.json({
+                        return sendResponse(400, {
                             success: false,
                             error: 'No. Invoice tidak ditemukan di PDF. Pastikan file berisi No. Invoice yang jelas.'
                         });
@@ -298,7 +324,7 @@ module.exports = (app, supabase) => {
                     console.log(`[Rename Invoice Hijau] New filename: ${renamedFileName}`);
 
                     // Return success with extracted data
-                    res.json({
+                    sendResponse(200, {
                         success: true,
                         originalFileName: fileName,
                         renamedFileName: renamedFileName,
@@ -309,7 +335,7 @@ module.exports = (app, supabase) => {
 
                 } catch (err) {
                     console.error('[Rename Invoice Hijau] Processing error:', err.message, err.stack);
-                    return res.status(500).json({ 
+                    return sendResponse(500, { 
                         error: 'Error processing PDF: ' + err.message 
                     });
                 }
@@ -319,8 +345,8 @@ module.exports = (app, supabase) => {
             req.pipe(bb);
 
         } catch (error) {
-            console.error('[Rename Invoice Hijau] Endpoint error:', error.message);
-            res.status(500).json({ error: 'Server error', details: error.message });
+            console.error('[Rename Invoice Hijau] Endpoint error:', error.message, error.stack);
+            sendResponse(500, { error: 'Server error', details: error.message });
         }
     });
 };
