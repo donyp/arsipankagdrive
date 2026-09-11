@@ -120,31 +120,31 @@
                 } else {
                     childrenHTML += `
                         <a href="${child.href}" ${child.guard || ''}
-                            style="display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; margin-top: 0.125rem; border-radius: 0.75rem; font-size: 0.75rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: #eff6ff; font-weight: 700;' : 'color: #6b7280;'} text-decoration: none; width: 100%;">
+                            style="display: flex; align-items: center; gap: 0.875rem; padding: 0.5rem 1rem; margin: 0; border-radius: 0.5rem; font-size: 0.8125rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: #eff6ff; font-weight: 600;' : 'color: #6b7280;'} text-decoration: none; width: 100%; box-sizing: border-box; white-space: nowrap;">
                             <svg style="width: 1rem; height: 1rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 ${renderIcon(child.icon, child.iconPaths)}
                             </svg>
-                            <span>${child.label}</span>
+                            <span style="flex: 1; overflow: hidden; text-overflow: ellipsis;">${child.label}</span>
                         </a>
                      `;
                 }
             }
 
             navHTML += `
-                <div id="${item.id}-parent" style="margin-top: 0.25rem; margin-bottom: 0.125rem; padding-left: 0.5rem; padding-right: 0.5rem;">
-                    <button onclick="toggleSidebarDropdown('${item.id}')" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 1rem; border-radius: 0.75rem; font-size: 0.75rem; color: #4b5563; border: none; background: transparent; cursor: pointer; font-weight: 700; letter-spacing: 0.05em;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+                <div id="${item.id}-parent" style="padding: 0 0.5rem; margin: 0;">
+                    <button onclick="toggleSidebarDropdown('${item.id}')" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.8125rem; color: #374151; border: none; background: transparent; cursor: pointer; font-weight: 500; letter-spacing: 0.02em;">
+                        <div style="display: flex; align-items: center; gap: 0.875rem; flex: 1; overflow: hidden;">
                             <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 ${renderIcon(item.icon, item.iconPaths)}
                             </svg>
-                            <span>${item.label}</span>
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.label}</span>
                         </div>
-                        <svg class="sidebar-dropdown-icon" style="width: 0.875rem; height: 0.875rem; opacity: 0.4; transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="sidebar-dropdown-icon" style="width: 0.875rem; height: 0.875rem; opacity: 0.5; transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; margin-left: 0.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
                     <div id="${item.id}" class="sidebar-dropdown-content" style="max-height: ${maxH}; overflow: hidden; transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1);">
-                        <div style="padding-top: 0.25rem; padding-bottom: 0.25rem;">
+                        <div style="padding-top: 0.125rem; padding-bottom: 0.125rem;">
                             ${childrenHTML}
                         </div>
                     </div>
@@ -158,13 +158,13 @@
                 : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50';
 
             navHTML += `
-                <div style="padding-left: 0.5rem; padding-right: 0.5rem; margin-top: 0.25rem; margin-bottom: 0.125rem;">
+                <div style="padding: 0.5rem 0.5rem;">
                 <a href="${item.href}" ${item.guard || ''}
-                    style="display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; border-radius: 0.75rem; font-size: 0.75rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: rgba(59, 130, 246, 0.1); font-weight: 700;' : 'color: #6b7280;'} text-decoration: none; font-weight: 700; letter-spacing: 0.05em; width: 100%; box-sizing: border-box;">
+                    style="display: flex; align-items: center; gap: 0.875rem; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.8125rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: rgba(59, 130, 246, 0.1); font-weight: 600;' : 'color: #374151;'} text-decoration: none; font-weight: 500; letter-spacing: 0.02em; width: 100%; box-sizing: border-box; white-space: nowrap;">
                     <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         ${renderIcon(item.icon, item.iconPaths)}
                     </svg>
-                    <span>${item.label}</span>
+                    <span style="flex: 1; overflow: hidden; text-overflow: ellipsis;">${item.label}</span>
                 </a>
                 </div>`;
         }
