@@ -100,7 +100,10 @@
             for (const child of visibleChildren) {
                 const isActive = activePage === child.href;
                 childrenHTML += `
-                    <a href="${child.href}" style="display: flex; align-items: center; padding: 0.6rem 1rem 0.6rem 3.5rem; margin: 0.05rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; ${isActive ? 'color: #2563eb; background: #eff6ff; font-weight: 600;' : 'color: #6b7280;'} text-decoration: none; width: calc(100% - 1rem); box-sizing: border-box; display: flex; align-items: center; min-height: 1.9rem;">
+                    <a href="${child.href}" style="display: flex; align-items: center; padding: 0.6rem 1rem 0.6rem 2.8rem; margin: 0.05rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; ${isActive ? 'color: #2563eb; background: #eff6ff; font-weight: 600;' : 'color: #6b7280;'} text-decoration: none; width: calc(100% - 1rem); box-sizing: border-box; display: flex; align-items: center; min-height: 1.9rem;">
+                        <svg style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; margin-right: 0.6rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            ${renderIcon(child.icon)}
+                        </svg>
                         <span style="flex: 1; overflow: visible; line-height: 1.2;">${child.label}</span>
                     </a>
                 `;
