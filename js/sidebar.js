@@ -151,12 +151,16 @@
 
         console.log('[Sidebar] Injecting...');
 
+        // Check if global announcement banner exists
+        const hasAnnouncement = !!document.getElementById('global-announcement-banner');
+        const topOffset = hasAnnouncement ? '60px' : '0px';
+
         sidebar.style.cssText = `
             position: fixed;
-            top: 0;
+            top: ${topOffset};
             left: 0;
             width: 16rem;
-            height: 100vh;
+            height: ${hasAnnouncement ? 'calc(100vh - 60px)' : '100vh'};
             display: flex;
             flex-direction: column;
             background: #ffffff;
@@ -164,7 +168,7 @@
             z-index: 9999;
             overflow: hidden;
             box-sizing: border-box;
-            min-height: 100vh;
+            min-height: ${hasAnnouncement ? 'calc(100vh - 60px)' : '100vh'};
         `;
 
         sidebar.innerHTML = `
