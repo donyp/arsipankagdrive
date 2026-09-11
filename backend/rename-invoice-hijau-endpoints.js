@@ -394,19 +394,21 @@ module.exports = (app, supabase) => {
                         console.log(`[Rename Invoice Hijau] Priority 0 (number with #): ${priority0Number}`);
                     }
 
-                    // Pattern 1: "No. Invoice: XXXXXX..." or "No : XXXXXX..."
-                    let pattern1 = /No\.?\s*(?:Invoice)?\s*[:=]\s*([\d][\d\#\-\/\.]*[\d])/gi;
+                    // Pattern 1: "Invoice : XXXXXX..." or "No. Invoice: XXXXXX..."
+                    // Require explicit separator (: or =) so we don't match "No.50" from addresses
+                    let pattern1 = /Invoice\s*[:=]\s*([\d][\d\#\-\/\.]*[\d])|No\.?\s*Invoice\s*[:=]\s*([\d][\d\#\-\/\.]*[\d])/gi;
                     let matches1 = cleanText.match(pattern1);
                     let priority1Number = null;
 
                     if (matches1 && matches1.length > 0) {
                         console.log(`[Rename Invoice Hijau] Pattern1 raw matches: ${matches1.join(' | ')}`);
                         for (let match of matches1) {
-                            // Extract just the value after "No" - require : or = separator
-                            const numberMatch = match.split(/No\.?\s*(?:Invoice)?\s*[:=]\s*/i)[1];
+                            // Extract value after "Invoice" or "No. Invoice"
+                            const parts = match.split(/\s*[:=]\s*/i);
+                            const numberMatch = parts[parts.length - 1];
                             if (numberMatch && numberMatch.trim().length >= 10) {
                                 priority1Number = numberMatch.trim();
-                                console.log(`[Rename Invoice Hijau] Priority 1 (No. Invoice :) found: ${priority1Number}`);
+                                console.log(`[Rename Invoice Hijau] Priority 1 (Invoice:) found: ${priority1Number}`);
                                 break;
                             }
                         }
@@ -420,7 +422,9 @@ module.exports = (app, supabase) => {
 
                     if (matches2 && matches2.length > 0) {
                         console.log(`[Rename Invoice Hijau] Pattern2 raw matches: ${matches2.join(' | ')}`);
-                        priority2Number = matches2.find(m => m.includes('#')) || matches2[0];
+                        // Prefer numbers with # (invoice format like 1002101906#6015)
+                        // Otherwise take the longest one (likely invoice, not phone)
+                        priority2Number = matches2.find(m => m.includes('#')) || matches2.reduce((a, b) => a.length >= b.length ? a : b);
                         console.log(`[Rename Invoice Hijau] Priority 2 (10+ char number): ${priority2Number}`);
                     }
 
