@@ -134,8 +134,11 @@ async function processFiles() {
         // Hide loading modal
         hideLoadingModal();
 
-        // Auto-download successful files - PARALLEL (semua sekaligus)
+        // Separate success and failed results
         const successFiles = results.filter(r => r.success);
+        const failedFiles = results.filter(r => !r.success);
+
+        // Auto-download successful files - PARALLEL (semua sekaligus)
         if (successFiles.length > 0) {
             console.log(`[Rename Invoice Hijau] Starting parallel download for ${successFiles.length} files`);
             const downloadStart = performance.now();
@@ -150,13 +153,17 @@ async function processFiles() {
             }, 300);
         }
 
-        // Show notification summary only (no history)
-        const failedCount = results.filter(r => !r.success).length;
-        if (failedCount > 0) {
-            Toast.error(`${failedCount} dari ${results.length} file gagal diproses`);
+        // Show notification summary
+        if (failedFiles.length > 0) {
+            Toast.warning(`${successFiles.length} berhasil, ${failedFiles.length} gagal`);
+            // Show failed files section
+            displayFailedFilesSection(failedFiles);
         } else {
             Toast.success(`${successFiles.length} file berhasil diproses!`);
-            // Show button to view history after 1 second
+        }
+
+        // Show success summary
+        if (successFiles.length > 0) {
             setTimeout(() => {
                 showHistoryActionButton(successFiles);
             }, 1000);
@@ -593,6 +600,44 @@ function formatIndonesianDateTime(isoString) {
         console.error('[Rename Invoice Hijau] Error formatting date:', err);
         return isoString;
     }
+}
+
+function displayFailedFilesSection(failedFiles) {
+    if (!failedFiles || failedFiles.length === 0) return;
+    
+    const failedSection = document.getElementById('failedFilesSection');
+    const failedList = document.getElementById('failedFilesList');
+    const failedCount = document.getElementById('failedFilesCount');
+    
+    if (!failedSection) return;
+    
+    // Show section
+    failedSection.classList.remove('hidden');
+    failedCount.textContent = failedFiles.length;
+    
+    // Clear list
+    failedList.innerHTML = '';
+    
+    // Add each failed file
+    failedFiles.forEach((file, idx) => {
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded p-3 border border-red-200 hover:border-red-400 transition';
+        div.innerHTML = `
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                    <p class="font-mono text-sm text-gray-700 truncate">${file.originalName}</p>
+                    <p class="text-xs text-red-600 mt-1"><i class="fas fa-times-circle mr-1"></i>${file.error}</p>
+                </div>
+                <button title="Download untuk rename manual" class="flex-shrink-0 px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-xs rounded transition">
+                    <i class="fas fa-info-circle"></i>
+                </button>
+            </div>
+        `;
+        failedList.appendChild(div);
+    });
+    
+    // Store failed files for future reference
+    window._failedFiles = failedFiles;
 }
 
 function closeHistorySection() {
