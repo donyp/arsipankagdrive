@@ -317,17 +317,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const waitForAuth = setInterval(async () => {
         retries++;
-        const token = API.getToken();
-        
-        if (token) {
-            clearInterval(waitForAuth);
-            console.log('[Rename Faktur] Auth ready, loading history');
-            loadLatestHistory();
-        } else if (retries >= maxRetries) {
-            clearInterval(waitForAuth);
-            console.warn('[Rename Faktur] Auth failed after', maxRetries, 'retries');
+        if (typeof API === 'undefined') {
+            console.log('[Rename Faktur] API not defined yet... attempt', retries);
         } else {
-            console.log('[Rename Faktur] Waiting for auth... attempt', retries);
+            const token = API.getToken();
+            
+            if (token) {
+                clearInterval(waitForAuth);
+                console.log('[Rename Faktur] Auth ready, loading history');
+                loadLatestHistory();
+            } else if (retries >= maxRetries) {
+                clearInterval(waitForAuth);
+                console.warn('[Rename Faktur] Auth failed after', maxRetries, 'retries');
+            } else {
+                console.log('[Rename Faktur] Waiting for auth... attempt', retries);
+            }
         }
     }, 200);
 });
