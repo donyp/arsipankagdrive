@@ -40,18 +40,10 @@ async function initTesseractWorker() {
         console.log('[Rename Invoice Hijau] Initializing Tesseract worker...');
         
         // Create worker with explicit config
+        // Note: logger function removed - cannot be serialized across worker threads in Node.js
         tesseractWorker = await TesseractModule.createWorker({
             langPath: 'https://tessdata.projectnaptha.com/4.0_best',
-            corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.5.0/tesseract-core.wasm.js',
-            logger: m => {
-                const status = m.status;
-                if (status === 'recognizing text' || status === 'loading language traineddata') {
-                    const pct = Math.round(m.progress * 100);
-                    if (pct % 25 === 0) {
-                        console.log(`[Rename Invoice Hijau] Tesseract worker: ${status} ${pct}%`);
-                    }
-                }
-            }
+            corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.5.0/tesseract-core.wasm.js'
         });
         
         console.log('[Rename Invoice Hijau] ✅ Tesseract worker created, loading language...');
