@@ -46,14 +46,11 @@ async function initTesseractWorker() {
             corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.5.0/tesseract-core.wasm.js'
         });
         
-        console.log('[Rename Invoice Hijau] ✅ Tesseract worker created, loading language...');
+        console.log('[Rename Invoice Hijau] ✅ Tesseract worker created');
         
-        // Load Indonesian language - v5 API uses string not array
-        await tesseractWorker.loadLanguage('ind');
-        console.log('[Rename Invoice Hijau] ✅ Indonesian language loaded');
-        
-        // Initialize - Tesseract.js v5 API uses string parameter
-        await tesseractWorker.initialize('ind');
+        // Tesseract.js v5 API: use reinitialize() instead of initialize()
+        // initialize() and loadLanguage() are both deprecated in v5
+        await tesseractWorker.reinitialize('ind');
         console.log('[Rename Invoice Hijau] ✅ Tesseract worker initialized with Indonesian');
         
         tesseractWorkerInitialized = true;
