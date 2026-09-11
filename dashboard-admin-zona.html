@@ -249,6 +249,13 @@
                         </div>
                     </div>
                 </div>
+                <button onclick="openEditHeadlineModal()" style="padding: 10px 14px; font-weight: 600; white-space: nowrap; background-color: #60a5fa; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-right: 8px;" title="Edit headline banner text">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span>Edit</span>
+                </button>
                 <button onclick="logout()" style="padding: 10px 16px; font-weight: 600; white-space: nowrap; background-color: #f87171; color: white; border: none; border-radius: 6px; cursor: pointer;">
                     Logout
                 </button>
@@ -1716,3 +1723,80 @@
 </body>
 </html>
 
+
+    <!-- Edit Headline Modal -->
+    <div id="edit-headline-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 90%; max-height: 80vh; overflow-y: auto;">
+            <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #2c3e50; font-weight: 600;">Edit Headline Banner</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 13px; color: #7f8c8d; margin-bottom: 8px; font-weight: 600;">Teks Headline:</label>
+                <textarea id="headline-input" style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 100px;" placeholder="Masukkan teks headline..."></textarea>
+                <p style="font-size: 12px; color: #9ca3af; margin-top: 8px;">Teks akan ditampilkan sebagai headline banner yang bergerak di bagian atas setiap halaman.</p>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closeEditHeadlineModal()" style="padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                    Batal
+                </button>
+                <button onclick="saveHeadlineText()" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                    Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openEditHeadlineModal() {
+            const modal = document.getElementById('edit-headline-modal');
+            const input = document.getElementById('headline-input');
+            
+            // Get current headline text from localStorage or default
+            const currentText = localStorage.getItem('customHeadline') || 'Jika ada kendala, silahkan hubungi admin anka';
+            input.value = currentText;
+            
+            modal.style.display = 'flex';
+        }
+        
+        function closeEditHeadlineModal() {
+            const modal = document.getElementById('edit-headline-modal');
+            modal.style.display = 'none';
+        }
+        
+        async function saveHeadlineText() {
+            const input = document.getElementById('headline-input');
+            const newText = input.value.trim();
+            
+            if (!newText) {
+                alert('Teks headline tidak boleh kosong!');
+                return;
+            }
+            
+            try {
+                // Save to localStorage
+                localStorage.setItem('customHeadline', newText);
+                
+                // Update the announcement banner immediately
+                const messageElement = document.querySelector('.announcement-message');
+                if (messageElement) {
+                    // Create repeated message for scrolling
+                    messageElement.textContent = `📢  ${newText}  •  ${newText}  •  ${newText}  •`;
+                }
+                
+                // Show success message
+                alert('Headline berhasil diperbarui!');
+                
+                closeEditHeadlineModal();
+            } catch (err) {
+                console.error('Error saving headline:', err);
+                alert('Gagal menyimpan headline: ' + err.message);
+            }
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('edit-headline-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditHeadlineModal();
+            }
+        });
+    </script>

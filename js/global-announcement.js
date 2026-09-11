@@ -10,10 +10,14 @@
         const banner = document.createElement('div');
         banner.id = 'global-announcement-banner';
         banner.className = 'global-announcement-banner';
+        
+        // Get custom headline from localStorage or use default
+        const customHeadline = localStorage.getItem('customHeadline') || 'Jika ada kendala, silahkan hubungi admin anka';
+        
         banner.innerHTML = `
             <div class="announcement-content">
                 <div class="announcement-text">
-                    <span class="announcement-message">📢  Jika ada kendala, silahkan hubungi admin anka  •  Jika ada kendala, silahkan hubungi admin anka  •  Jika ada kendala, silahkan hubungi admin anka  •</span>
+                    <span class="announcement-message">📢  ${customHeadline}  •  ${customHeadline}  •  ${customHeadline}  •</span>
                 </div>
             </div>
         `;
