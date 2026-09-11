@@ -40,9 +40,9 @@ async function initTesseractWorker() {
         console.log('[Rename Invoice Hijau] Initializing Tesseract worker...');
         
         // Create worker - Tesseract.js v5 expects: createWorker(langs, oem, options, config)
-        // Pass empty string for langs since we'll use reinitialize() to set it
+        // Pass 'ind' directly to createWorker so it loads the language from the start
         tesseractWorker = await TesseractModule.createWorker(
-            '',  // langs - will be set by reinitialize()
+            'ind',  // langs - Indonesian language
             TesseractModule.OEM.LSTM_ONLY,  // oem
             {
                 langPath: 'https://tessdata.projectnaptha.com/4.0.0_best/',  // Trailing slash required; will append {lang}.traineddata.gz
@@ -50,12 +50,7 @@ async function initTesseractWorker() {
             }
         );
         
-        console.log('[Rename Invoice Hijau] ✅ Tesseract worker created');
-        
-        // Tesseract.js v5 API: use reinitialize() instead of initialize()
-        // initialize() and loadLanguage() are both deprecated in v5
-        await tesseractWorker.reinitialize('ind');
-        console.log('[Rename Invoice Hijau] ✅ Tesseract worker initialized with Indonesian');
+        console.log('[Rename Invoice Hijau] ✅ Tesseract worker created and initialized with Indonesian');
         
         tesseractWorkerInitialized = true;
         return tesseractWorker;
