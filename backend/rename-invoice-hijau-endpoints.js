@@ -165,10 +165,11 @@ async function extractTextViaOCR(pdfBuffer) {
             return null;
         }
         
-        // Step 5: Run Tesseract OCR on each image - PROCESS ALL PAGES to find invoice number
+        // Step 5: Run Tesseract OCR on each image - PROCESS PAGES until invoice number found
         console.log('[Rename Invoice Hijau] OCR: Running Tesseract on converted images...');
         let allText = '';
         let pageTexts = [];
+        let invoiceNumberFound = false;
         
         for (let i = 0; i < imagePaths.length; i++) {
             const imgPath = imagePaths[i];
@@ -190,13 +191,18 @@ async function extractTextViaOCR(pdfBuffer) {
                 
                 console.log(`[Rename Invoice Hijau] OCR: Image ${i + 1} recognized in ${elapsedTime}ms`);
                 console.log(`[Rename Invoice Hijau] OCR: Extracted ${text.length} chars, confidence: ${confidence}%`);
-                console.log(`[Rename Invoice Hijau] OCR: Page ${i + 1} content (first 300 chars): ${text.substring(0, 300)}`);
                 
                 pageTexts.push(text);
                 allText += '\n' + text;
                 
-                // Process all 3 pages - don't early stop to ensure we find invoice number
-                // Invoice numbers might be anywhere in the document
+                // Check if invoice number found in this page - if yes, stop processing
+                const pageClean = text.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ');
+                const quickCheck = pageClean.match(/(83510031[01]\d{8,})/);
+                if (quickCheck) {
+                    console.log(`[Rename Invoice Hijau] OCR: ✅ Invoice number found in page ${i + 1}: ${quickCheck[0]} - stopping further pages`);
+                    invoiceNumberFound = true;
+                    break; // Stop processing pages
+                }
                 
             } catch (ocrErr) {
                 console.error(`[Rename Invoice Hijau] OCR: Recognition error on image ${i + 1}:`, ocrErr.message);
