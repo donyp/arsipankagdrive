@@ -50,42 +50,14 @@ async function initPdfjs() {
 // Extract text via OCR from PDF using PDF.js to get canvas
 async function extractTextViaOCR(pdfBuffer) {
     try {
-        const Tesseract = await initTesseract();
+        console.log('[Rename Invoice Hijau] OCR: Attempting text extraction via fallback methods...');
         
-        if (!Tesseract) {
-            console.error('[Rename Invoice Hijau] Tesseract.js not available');
-            return null;
-        }
-
-        console.log('[Rename Invoice Hijau] OCR: Starting Tesseract worker for PDF...');
+        // Note: Tesseract.js requires image input, not PDF buffers directly
+        // Since we already have PDF text extraction, we'll skip OCR for now
+        // OCR would require PDF-to-image conversion which adds complexity
         
-        try {
-            // Initialize Tesseract worker
-            const { createWorker } = Tesseract;
-            const worker = await createWorker('eng', 1, {
-                corePath: require.resolve('tesseract.js-core')
-            });
-
-            try {
-                console.log('[Rename Invoice Hijau] OCR: Processing PDF buffer with Tesseract...');
-                
-                // Tesseract can handle PDF buffers if Ghostscript is available on system
-                // For Node.js, we pass buffer directly and let Tesseract handle it
-                const result = await worker.recognize(pdfBuffer);
-                const extractedText = result.data.text;
-                const confidence = result.data.confidence;
-
-                console.log(`[Rename Invoice Hijau] ✅ OCR success! Text length: ${extractedText.length}, confidence: ${confidence}%`);
-                console.log(`[Rename Invoice Hijau] OCR first 500 chars:\n${extractedText.substring(0, 500)}`);
-                
-                return extractedText;
-            } finally {
-                await worker.terminate();
-            }
-        } catch (tesseractErr) {
-            console.error('[Rename Invoice Hijau] Tesseract processing error:', tesseractErr.message);
-            return null;
-        }
+        console.warn('[Rename Invoice Hijau] OCR: Skipped - use pdf-parse text extraction instead');
+        return null;
 
     } catch (err) {
         console.error('[Rename Invoice Hijau] OCR extraction error:', err.message);
@@ -212,10 +184,12 @@ module.exports = (app, supabase) => {
                                 textContent = ocrText;
                                 console.log(`[Rename Invoice Hijau] ✅ OCR extracted ${textContent.length} characters`);
                             } else {
-                                console.warn('[Rename Invoice Hijau] OCR returned minimal text');
+                                console.warn('[Rename Invoice Hijau] OCR returned minimal text or not available');
+                                // Continue with minimal text - might still extract invoice number
                             }
                         } catch (ocrErr) {
                             console.error('[Rename Invoice Hijau] OCR processing error:', ocrErr.message);
+                            // Continue anyway
                         }
                     }
 
@@ -311,9 +285,10 @@ module.exports = (app, supabase) => {
 
                     // If no invoice found, return error
                     if (!noInvoice) {
+                        console.warn('[Rename Invoice Hijau] No invoice number found in PDF');
                         return sendResponse(400, {
                             success: false,
-                            error: 'No. Invoice tidak ditemukan di PDF. Pastikan file berisi No. Invoice yang jelas.'
+                            error: 'No. Invoice tidak ditemukan di PDF. File mungkin berbasis gambar (scanned). Pastikan PDF memiliki text yang dapat di-extract atau upload file digital.'
                         });
                     }
 
