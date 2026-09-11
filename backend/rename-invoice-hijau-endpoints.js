@@ -128,7 +128,9 @@ async function extractTextViaOCR(pdfBuffer) {
         let result = null;
         try {
             console.log('[Rename Invoice Hijau] OCR: Creating converter for:', tmpPdfFile);
-            const converter = pdf2pic.fromFilePath(tmpPdfFile, options);
+            
+            // pdf2pic v3.2.0 uses fromPath (not fromFilePath)
+            const converter = pdf2pic.fromPath(tmpPdfFile, options);
             
             // Convert first 3 pages
             console.log('[Rename Invoice Hijau] OCR: Converting pages...');
