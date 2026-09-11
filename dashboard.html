@@ -439,6 +439,103 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Broadcast Banner */
+        #broadcast-banner-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .broadcast-message {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            animation: scroll-message 20s linear infinite;
+            white-space: nowrap;
+            width: max-content;
+        }
+
+        @keyframes scroll-message {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .broadcast-icon {
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Premium Loading Animation */
+        .premium-loader {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .loader-rings {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100px;
+            height: 100px;
+        }
+
+        .loader-ring {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: loader-spin 1s linear infinite;
+        }
+
+        .loader-ring:nth-child(2) {
+            width: 40px;
+            height: 40px;
+            animation: loader-spin 1.5s linear infinite;
+            animation-delay: 0.1s;
+        }
+
+        .loader-ring:nth-child(3) {
+            width: 56px;
+            height: 56px;
+            animation: loader-spin 2s linear infinite;
+            animation-delay: 0.2s;
+        }
+
+        @keyframes loader-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -579,12 +676,15 @@
         <!-- Top Bar -->
         <header class="sticky top-0 z-[45] bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-2.5">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
+                <!-- Left side: Broadcast Banner (if exists) -->
+                <div id="broadcast-banner-container" class="flex-1">
+                    <!-- Dynamic broadcast content will be injected here -->
+                </div>
 
-                <div class="flex items-center gap-3">
-                    <!-- Logout Button -->
+                <!-- Right side: Logout Button -->
+                <div class="flex items-center gap-3 ml-4">
                     <button onclick="logout()"
-                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 bg-red-50/50 transition-all">
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 bg-red-50/50 transition-all whitespace-nowrap">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -883,7 +983,54 @@
     <script src="js/auto-logout.js?t=1735689600"></script>
     <script src="js/utils.js?t=1735862400"></script>
     <script src="js/sidebar.js?t=1735864500"></script>
-    <script src="js/dashboard.js?v=1007&t=1735864000"></script>
+    <script src="js/dashboard.js?v=1008&t=1735865000"></script>
+    
+    <!-- Broadcast Banner Loader -->
+    <script>
+        window.loadGlobalBroadcast = async function() {
+            try {
+                const container = document.getElementById('broadcast-banner-container');
+                if (!container) return;
+                
+                // Clear previous content
+                container.innerHTML = '';
+                
+                const token = localStorage.getItem('authToken');
+                if (!token) return;
+                
+                const response = await fetch('/api/broadcasts/latest', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) return;
+                
+                const { broadcast } = await response.json();
+                if (!broadcast || !broadcast.content) return;
+                
+                // Create animated broadcast message
+                const msg = document.createElement('div');
+                msg.className = 'broadcast-message';
+                msg.innerHTML = `
+                    <span class="broadcast-icon">📢</span>
+                    <span>${broadcast.content}</span>
+                `;
+                
+                container.appendChild(msg);
+                console.log('[Broadcast] Loaded:', broadcast.content);
+            } catch (err) {
+                console.warn('[Broadcast] Error loading:', err.message);
+            }
+        };
+        
+        // Load on page ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => window.loadGlobalBroadcast(), 500);
+            });
+        } else {
+            setTimeout(() => window.loadGlobalBroadcast(), 500);
+        }
+    </script>
     
     <script>
         // REDIRECT admin_zona users to their dedicated dashboard
