@@ -48,12 +48,12 @@ async function initTesseractWorker() {
         
         console.log('[Rename Invoice Hijau] ✅ Tesseract worker created, loading language...');
         
-        // Load Indonesian language
+        // Load Indonesian language - v5 API uses string not array
         await tesseractWorker.loadLanguage('ind');
         console.log('[Rename Invoice Hijau] ✅ Indonesian language loaded');
         
-        // Initialize with array of languages
-        await tesseractWorker.initialize(['ind']);
+        // Initialize - Tesseract.js v5 API uses string parameter
+        await tesseractWorker.initialize('ind');
         console.log('[Rename Invoice Hijau] ✅ Tesseract worker initialized with Indonesian');
         
         tesseractWorkerInitialized = true;
