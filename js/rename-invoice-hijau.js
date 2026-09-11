@@ -602,7 +602,7 @@ function formatIndonesianDateTime(isoString) {
     }
 }
 
-function displayFailedFilesSection(failedFiles) {
+async function displayFailedFilesSection(failedFiles) {
     if (!failedFiles || failedFiles.length === 0) return;
     
     const failedSection = document.getElementById('failedFilesSection');
@@ -618,8 +618,11 @@ function displayFailedFilesSection(failedFiles) {
     // Clear list
     failedList.innerHTML = '';
     
+    // Log each failed file to database
+    const token = API.getToken();
+    
     // Add each failed file
-    failedFiles.forEach((file, idx) => {
+    for (const file of failedFiles) {
         const div = document.createElement('div');
         div.className = 'bg-white rounded p-3 border border-red-200 hover:border-red-400 transition';
         div.innerHTML = `
@@ -634,15 +637,87 @@ function displayFailedFilesSection(failedFiles) {
             </div>
         `;
         failedList.appendChild(div);
-    });
+        
+        // Log to database (background)
+        if (token) {
+            try {
+                await fetch('/api/invoice/failed-rename', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        originalFilename: file.originalName,
+                        errorReason: file.error,
+                        fileSizeBytes: null,
+                        notes: 'Auto-logged from batch processing'
+                    })
+                });
+                console.log('[Failed Rename] Logged:', file.originalName);
+            } catch (err) {
+                console.warn('[Failed Rename] Log error:', err.message);
+            }
+        }
+    }
     
     // Store failed files for future reference
     window._failedFiles = failedFiles;
+    
+    // Load failed history from database
+    loadFailedRenameHistory();
 }
 
 function closeHistorySection() {
     const section = document.getElementById('historySection');
     section.classList.add('hidden');
+}
+
+async function loadFailedRenameHistory() {
+    try {
+        const token = API.getToken();
+        if (!token) {
+            console.warn('[Failed Rename] No auth token');
+            return;
+        }
+        
+        console.log('[Failed Rename] Loading history from database...');
+        
+        // Fetch all failed attempts (not just 10)
+        const response = await fetch('/api/invoice/failed-rename?limit=999', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            console.warn('[Failed Rename] Failed to load:', response.status);
+            return;
+        }
+        
+        const data = await response.json();
+        console.log('[Failed Rename] Loaded', data.attempts?.length || 0, 'records');
+        
+        if (data.success && data.attempts && data.attempts.length > 0) {
+            displayFailedRenameHistory(data.attempts);
+        }
+    } catch (err) {
+        console.warn('[Failed Rename] Error loading history:', err.message);
+    }
+}
+
+function displayFailedRenameHistory(attempts) {
+    const failedSection = document.getElementById('failedFilesSection');
+    
+    if (!failedSection || !attempts || attempts.length === 0) return;
+    
+    // Update count
+    const failedCount = document.getElementById('failedFilesCount');
+    failedCount.textContent = attempts.length;
+    
+    console.log('[Failed Rename] Displaying', attempts.length, 'failed attempts');
 }
 
 

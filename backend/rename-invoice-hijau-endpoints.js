@@ -535,3 +535,121 @@ module.exports = (app, supabase) => {
         }
     });
 };
+
+
+    // ============================================
+    // POST /api/invoice/failed-rename
+    // Log failed rename attempt (for manual processing later)
+    // ============================================
+    app.post('/api/invoice/failed-rename', async (req, res) => {
+        try {
+            const { originalFilename, errorReason, fileSizeBytes, notes } = req.body;
+            const userId = req.user?.id;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized - no user token' });
+            }
+            
+            if (!originalFilename || !errorReason) {
+                return res.status(400).json({ error: 'Missing required fields' });
+            }
+
+            console.log('[Failed Rename] Logging failed attempt:', { originalFilename, errorReason, userId });
+
+            const { data, error } = await supabase
+                .from('failed_rename_attempts')
+                .insert({
+                    original_filename: originalFilename,
+                    error_reason: errorReason,
+                    file_size_bytes: fileSizeBytes || null,
+                    user_id: userId,
+                    notes: notes || null
+                })
+                .select();
+
+            if (error) {
+                console.error('[Failed Rename] Database error:', error);
+                return res.status(500).json({ error: 'Failed to log attempt: ' + error.message });
+            }
+
+            console.log('[Failed Rename] Logged successfully:', data);
+            res.json({ success: true, data });
+
+        } catch (err) {
+            console.error('[Failed Rename] Error:', err.message);
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // ============================================
+    // GET /api/invoice/failed-rename
+    // Get all failed rename attempts for current user
+    // ============================================
+    app.get('/api/invoice/failed-rename', async (req, res) => {
+        try {
+            const userId = req.user?.id;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized - no user token' });
+            }
+
+            const limit = parseInt(req.query.limit) || 100; // Default 100, not 10
+            
+            console.log('[Failed Rename] Fetching failed attempts for user:', userId);
+
+            const { data, error } = await supabase
+                .from('failed_rename_attempts')
+                .select('*')
+                .eq('user_id', userId)
+                .order('attempted_at', { ascending: false })
+                .limit(limit);
+
+            if (error) {
+                console.error('[Failed Rename] Database error:', error);
+                return res.status(500).json({ error: 'Failed to fetch: ' + error.message });
+            }
+
+            console.log('[Failed Rename] Fetched', data?.length || 0, 'records');
+            res.json({ success: true, attempts: data || [], total: data?.length || 0 });
+
+        } catch (err) {
+            console.error('[Failed Rename] Error:', err.message);
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // ============================================
+    // DELETE /api/invoice/failed-rename/:id
+    // Delete a failed rename attempt record
+    // ============================================
+    app.delete('/api/invoice/failed-rename/:id', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const userId = req.user?.id;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized - no user token' });
+            }
+
+            console.log('[Failed Rename] Deleting attempt:', id);
+
+            const { error } = await supabase
+                .from('failed_rename_attempts')
+                .delete()
+                .eq('id', id)
+                .eq('user_id', userId);
+
+            if (error) {
+                console.error('[Failed Rename] Database error:', error);
+                return res.status(500).json({ error: 'Failed to delete: ' + error.message });
+            }
+
+            console.log('[Failed Rename] Deleted successfully');
+            res.json({ success: true });
+
+        } catch (err) {
+            console.error('[Failed Rename] Error:', err.message);
+            res.status(500).json({ error: err.message });
+        }
+    });
+};
