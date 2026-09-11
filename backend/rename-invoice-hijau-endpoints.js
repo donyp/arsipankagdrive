@@ -534,8 +534,6 @@ module.exports = (app, supabase) => {
             sendResponse(500, { error: 'Server error', details: error.message });
         }
     });
-};
-
 
     // ============================================
     // POST /api/invoice/failed-rename
