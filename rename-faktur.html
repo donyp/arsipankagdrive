@@ -105,7 +105,7 @@
                     </h2>
 
                     <!-- File Drop Zone -->
-                    <div class="file-drop-zone p-8 text-center cursor-pointer" id="dropZone">
+                    <div class="file-drop-zone p-8 text-center cursor-pointer" id="dropzone">
                         <input type="file" id="fileInput" multiple accept=".pdf" style="display: none;">
                         <i class="fas fa-file-pdf text-4xl text-purple-600 mb-3 block"></i>
                         <p class="text-gray-700 font-medium mb-2">Tarik file PDF ke sini atau klik untuk browse</p>
@@ -115,11 +115,13 @@
                     <!-- File List -->
                     <div id="fileList" class="mt-6 space-y-2 hidden">
                         <h3 class="font-semibold text-gray-700 mb-2">File yang dipilih:</h3>
-                        <div id="selectedFiles"></div>
-                        <button id="btnProcess" class="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
-                            <i class="fas fa-play"></i>
-                            Mulai Proses Rename
-                        </button>
+                        <div id="filesContainer"></div>
+                        <div id="processButtonContainer" class="hidden">
+                            <button id="btnProcess" onclick="processFiles()" class="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
+                                <i class="fas fa-play"></i>
+                                Mulai Proses Rename
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -127,6 +129,38 @@
                 <div id="progressSection" class="hidden">
                     <h2 class="text-lg font-bold text-gray-800 mb-4">Memproses...</h2>
                     <div class="space-y-4" id="progressList"></div>
+                </div>
+
+                <!-- Loading Modal -->
+                <div id="loadingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-lg p-8 shadow-xl max-w-md w-full mx-4">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">Memproses File...</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-2">
+                                    <span id="loadingStatus">Mengscan file...</span>
+                                </p>
+                                <p class="text-xs text-gray-500 mb-2">
+                                    File: <span id="loadingCurrentFile">-</span>
+                                </p>
+                                <div class="progress-bar bg-gray-200 rounded-full overflow-hidden">
+                                    <div id="loadingProgressBar" class="progress-fill bg-gradient-to-r from-purple-600 to-purple-400" style="width: 0%; height: 6px; transition: width 0.3s ease;"></div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2 text-center">
+                                    <span id="loadingProgressText">0</span> / <span id="loadingTotalFiles">0</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Section -->
+                <div id="historySection" class="hidden bg-red-50 rounded-lg shadow-md p-6 mt-6">
+                    <h3 class="text-lg font-bold text-red-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-history text-red-600"></i>
+                        Riwayat Rename Terakhir
+                    </h3>
+                    <div id="recentHistoryList" class="space-y-2 max-h-96 overflow-y-auto"></div>
                 </div>
 
                 <!-- Results Section -->
@@ -151,33 +185,8 @@
     <script src="js/sidebar.js"></script>
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
-    <script>
-        // Basic initialization
-        document.addEventListener('DOMContentLoaded', () => {
-            const dropZone = document.getElementById('dropZone');
-            const fileInput = document.getElementById('fileInput');
-
-            dropZone.addEventListener('click', () => fileInput.click());
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
-            });
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('dragover');
-            });
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-                handleFiles(e.dataTransfer.files);
-            });
-
-            fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-        });
-
-        function handleFiles(files) {
-            console.log('Files selected:', files);
-        }
-    </script>
+    <script src="js/toast.js"></script>
+    <script src="js/rename-faktur.js"></script>
 </body>
 </html>
 
