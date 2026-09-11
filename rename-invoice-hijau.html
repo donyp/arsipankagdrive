@@ -4,35 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rename Invoice Hijau - Pusat Arsip Anka</title>
-    <link rel="stylesheet" href="css/tailwind.generated.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .gradient-header {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
-        
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-        
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(16, 185, 129, 0.15);
-        }
-
-        .success-checkmark {
-            animation: scaleIn 0.5s ease-out;
-        }
-
-        @keyframes scaleIn {
-            from {
-                transform: scale(0);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
         }
 
         .file-drop-zone {
@@ -78,39 +54,11 @@
             background: #fef2f2;
         }
 
-        /* Loading Modal Styles */
-        .loading-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            backdrop-filter: blur(4px);
-        }
-
-        .loading-modal.show {
-            display: flex;
-        }
-
-        .loading-modal-content {
-            background: white;
-            border-radius: 16px;
-            padding: 40px;
-            text-align: center;
-            max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: slideInUp 0.3s ease-out;
-        }
-
-        @keyframes slideInUp {
+        /* Smooth animations */
+        @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(10px);
             }
             to {
                 opacity: 1;
@@ -118,79 +66,88 @@
             }
         }
 
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid #e5e7eb;
-            border-top-color: #10b981;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(400px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        @keyframes slideOutRight {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(400px);
+            }
         }
 
-        .loading-text {
-            color: #2c3e50;
-            font-weight: 600;
-            font-size: 18px;
-            margin-bottom: 10px;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        .loading-subtext {
-            color: #7f8c8d;
-            font-size: 14px;
-            margin-bottom: 20px;
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
-        .loading-progress {
-            width: 100%;
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 10px;
+        /* Toast animations */
+        .animate-slide-in {
+            animation: slideInRight 0.3s ease;
         }
 
-        .loading-progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #34d399);
-            width: 0%;
-            transition: width 0.3s ease;
+        .animate-slide-out {
+            animation: slideOutRight 0.3s ease;
         }
 
-        .loading-counter {
-            color: #7f8c8d;
-            font-size: 12px;
-            font-weight: 600;
+        /* Loading modal */
+        #loadingModal {
+            animation: fadeIn 0.3s ease;
+        }
+
+        #loadingModal > div {
+            animation: scaleIn 0.3s ease;
+        }
+
+        /* History items */
+        #recentHistoryList > div {
+            animation: slideIn 0.3s ease;
         }
     </style>
 </head>
 <body class="bg-gray-50">
     <style>
-        body {
+        html, body {
             zoom: 0.8;
-            transform-origin: top left;
-            overflow-x: hidden;
-        }
-        #app {
-            width: 100%;
+            margin: 0;
+            padding: 0;
         }
     </style>
-    <div id="app">
+    <div id="app" style="width: 100%; display: flex; margin: 0; padding: 0; overflow-x: hidden;">
         <!-- Sidebar -->
         <div id="sidebar"></div>
 
         <!-- Main Content -->
-        <div style="margin-left: 16rem; width: calc(100% - 16rem); transition: all 300ms ease;">
+        <div id="main-content" style="flex: 1; width: 100%; transition: all 300ms ease; display: flex; flex-direction: column;">
             <!-- Header -->
-            <div class="gradient-header text-white sticky top-0 z-30 shadow-lg">
+            <div class="gradient-header text-white sticky top-0 z-30 shadow-lg" style="margin-left: 0;">
                 <div class="px-6 py-8">
                     <div class="flex items-center gap-3">
                         <div class="bg-white/20 p-3 rounded-lg">
-                            <i class="fas fa-file-pdf text-2xl"></i>
+                            <i class="fas fa-file-invoice text-2xl"></i>
                         </div>
                         <div>
                             <h1 class="text-3xl font-bold">Rename Invoice Hijau</h1>
@@ -201,7 +158,7 @@
             </div>
 
             <!-- Main Content Area -->
-            <div class="p-6 max-w-4xl mx-auto">
+            <div class="p-6 w-full flex-1" style="max-width: none; overflow-y: auto;">
                 <!-- Info Box -->
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                     <p class="text-blue-800 text-sm">
@@ -211,14 +168,14 @@
                 </div>
 
                 <!-- Upload Section -->
-                <div class="card-hover bg-white rounded-lg shadow-md p-8 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-8 mb-6">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <i class="fas fa-cloud-upload-alt text-green-600"></i>
                         Upload File Invoice
                     </h2>
 
                     <!-- File Drop Zone -->
-                    <div class="file-drop-zone p-8 text-center cursor-pointer" id="dropZone">
+                    <div class="file-drop-zone p-8 text-center cursor-pointer" id="dropzone">
                         <input type="file" id="fileInput" multiple accept=".pdf" style="display: none;">
                         <i class="fas fa-file-pdf text-4xl text-green-600 mb-3 block"></i>
                         <p class="text-gray-700 font-medium mb-2">Tarik file PDF ke sini atau klik untuk browse</p>
@@ -226,18 +183,64 @@
                     </div>
 
                     <!-- File List -->
-                    <div id="fileList" class="mt-6 space-y-2" style="display: none;">
+                    <div id="fileList" class="mt-6 space-y-2 hidden">
                         <h3 class="font-semibold text-gray-700 mb-2">File yang dipilih:</h3>
-                        <div id="selectedFiles"></div>
-                        <button id="btnProcess" type="button" style="display: block; margin-top: 1rem; width: 100%; background-color: #16a34a; color: white; font-weight: 700; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: all 0.3s; border: none; cursor: pointer; flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                            <i class="fas fa-play"></i>
-                            Mulai Proses Rename
-                        </button>
+                        <div id="filesContainer"></div>
+                        <div id="processButtonContainer" class="hidden">
+                            <button id="btnProcess" onclick="processFiles()" class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
+                                <i class="fas fa-play"></i>
+                                Mulai Proses Rename
+                            </button>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Progress Section -->
+                <div id="progressSection" class="hidden">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4">Memproses...</h2>
+                    <div class="space-y-4" id="progressList"></div>
+                </div>
+
+                <!-- Loading Modal -->
+                <div id="loadingModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50" style="backdrop-filter: blur(4px);">
+                    <div class="bg-white rounded-xl p-8 shadow-2xl max-w-md w-full mx-4" style="min-height: 200px; display: flex; flex-direction: column; justify-content: center;">
+                        <div class="text-center mb-6">
+                            <div class="inline-block">
+                                <div class="w-12 h-12 rounded-full border-4 border-green-200 border-t-green-600 animate-spin mx-auto mb-4"></div>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800">Memproses File...</h3>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-2">
+                                    <span id="loadingStatus">Mengscan file...</span>
+                                </p>
+                                <p class="text-xs text-gray-500 mb-2 truncate">
+                                    File: <span id="loadingCurrentFile">-</span>
+                                </p>
+                                <div class="bg-gray-200 rounded-full overflow-hidden h-2">
+                                    <div id="loadingProgressBar" class="bg-gradient-to-r from-green-600 to-green-400 h-2" style="width: 0%; transition: width 0.2s ease;"></div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2 text-center">
+                                    <span id="loadingProgressText">0</span> / <span id="loadingTotalFiles">0</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Section -->
+                <div id="historySection" class="hidden bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-lg p-6 mt-6 border border-green-100">
+                    <h3 class="text-lg font-bold text-green-800 mb-3 flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-green-600"></div>
+                        <i class="fas fa-history text-green-600"></i>
+                        Riwayat Rename Terbaru
+                    </h3>
+                    <div id="recentHistoryList" class="space-y-0.5 max-h-96 overflow-y-auto"></div>
+                </div>
+
                 <!-- Results Section -->
-                <div id="resultsSection" style="display: none;">
+                <div id="resultsSection" class="hidden">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <i class="fas fa-check-circle text-green-600"></i>
                         Hasil Proses
@@ -254,335 +257,18 @@
         </div>
     </div>
 
-    <!-- Loading Modal -->
-    <div class="loading-modal" id="loadingModal">
-        <div class="loading-modal-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Memproses File</div>
-            <div class="loading-subtext" id="loadingMessage">Sedang memproses...</div>
-            <div class="loading-progress">
-                <div class="loading-progress-bar" id="loadingProgressBar"></div>
-            </div>
-            <div class="loading-counter">
-                <span id="loadingCurrent">0</span> / <span id="loadingTotal">0</span> file
-            </div>
-        </div>
-    </div>
+    <!-- Toast Notification -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-[999] space-y-3 pointer-events-none"></div>
 
     <!-- Scripts -->
-    <script src="js/sidebar.js"></script>
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
-
-    <script>
-        // ============================================
-        // Rename Invoice Hijau - Main Logic
-        // ============================================
-
-        let selectedFiles = [];
-        const maxFiles = 15;
-
-        // File input handling
-        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
-        document.getElementById('dropZone').addEventListener('click', () => {
-            document.getElementById('fileInput').click();
-        });
-
-        // Drag and drop
-        const dropZone = document.getElementById('dropZone');
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            handleFiles(e.dataTransfer.files);
-        });
-
-        function handleFileSelect(e) {
-            handleFiles(e.target.files);
-        }
-
-        function handleFiles(files) {
-            selectedFiles = Array.from(files).filter(f => f.type === 'application/pdf').slice(0, 15);
-            
-            if (selectedFiles.length === 0) {
-                alert('Silakan pilih file PDF');
-                return;
-            }
-
-            if (selectedFiles.length > 15) {
-                alert('Maksimal 15 file dapat diproses sekaligus');
-                selectedFiles = selectedFiles.slice(0, 15);
-            }
-
-            const fileListDiv = document.getElementById('selectedFiles');
-            fileListDiv.innerHTML = selectedFiles.map((f, i) => `
-                <div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg">
-                    <span class="text-sm text-gray-700">
-                        <i class="fas fa-file-pdf text-red-500 mr-2"></i>
-                        ${f.name}
-                    </span>
-                    <button onclick="removeFile(${i})" class="text-red-500 hover:text-red-700">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-            `).join('');
-
-            const fileList = document.getElementById('fileList');
-            if (fileList) {
-                fileList.style.display = 'block';
-            }
-        }
-
-        function removeFile(index) {
-            selectedFiles.splice(index, 1);
-            if (selectedFiles.length === 0) {
-                const fileList = document.getElementById('fileList');
-                if (fileList) {
-                    fileList.style.display = 'none';
-                }
-            } else {
-                handleFiles(selectedFiles);
-            }
-        }
-
-        // Process button
-        document.getElementById('btnProcess').addEventListener('click', processFiles);
-
-        async function processFiles() {
-            if (selectedFiles.length === 0) return;
-
-            const fileList = document.getElementById('fileList');
-            if (fileList) {
-                fileList.style.display = 'none';
-            }
-
-            const resultsSection = document.getElementById('resultsSection');
-            if (resultsSection) {
-                resultsSection.style.display = 'none';
-            }
-
-            // Show loading modal
-            const loadingModal = document.getElementById('loadingModal');
-            if (loadingModal) {
-                loadingModal.classList.add('show');
-            }
-            document.getElementById('loadingTotal').textContent = selectedFiles.length;
-
-            const token = API.getToken() || localStorage.getItem('jwt_token');
-            const results = [];
-
-            for (let i = 0; i < selectedFiles.length; i++) {
-                const file = selectedFiles[i];
-
-                // Update loading modal
-                document.getElementById('loadingCurrent').textContent = i + 1;
-                const progress = ((i + 1) / selectedFiles.length) * 100;
-                document.getElementById('loadingProgressBar').style.width = progress + '%';
-                document.getElementById('loadingMessage').textContent = `${file.name}...`;
-
-                try {
-                    // Upload and process
-                    const formData = new FormData();
-                    formData.append('file', file);
-
-                    const response = await fetch('/api/invoice/rename-invoice-hijau', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: formData
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok && result.success) {
-                        results.push({
-                            originalName: result.originalFileName,
-                            renamedName: result.renamedFileName,
-                            noInvoice: result.noInvoice,
-                            fileData: result.fileData,
-                            success: true
-                        });
-                    } else {
-                        results.push({
-                            originalName: result.originalFileName || file.name,
-                            error: result.error,
-                            success: false
-                        });
-                    }
-                } catch (err) {
-                    results.push({
-                        originalName: file.name,
-                        error: err.message,
-                        success: false
-                    });
-                }
-
-                // Add delay between requests
-                if (i < selectedFiles.length - 1) {
-                    await new Promise(r => setTimeout(r, 300));
-                }
-            }
-
-            // Hide loading modal
-            if (loadingModal) {
-                loadingModal.classList.remove('show');
-            }
-
-            // Show results
-            showResults(results);
-        }
-
-        function showResults(results) {
-            // Hide loading modal
-            const loadingModal = document.getElementById('loadingModal');
-            if (loadingModal) {
-                loadingModal.classList.remove('show');
-            }
-
-            const resultsList = document.getElementById('resultsList');
-            if (!resultsList) {
-                console.error('resultsList element not found');
-                return;
-            }
-
-            resultsList.innerHTML = results.map((r, i) => {
-                if (r.success) {
-                    return `
-                        <div class="result-card p-4 rounded-lg">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="font-medium text-green-700">
-                                        <i class="fas fa-check-circle mr-2"></i>
-                                        ${r.originalName}
-                                    </p>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        <strong>No. Invoice:</strong> ${r.noInvoice}
-                                    </p>
-                                    <p class="text-sm text-gray-600">
-                                        <strong>Rename ke:</strong> ${r.renamedName}
-                                    </p>
-                                </div>
-                                <button onclick="downloadFile('${r.renamedName}', '${r.fileData}')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
-                                    <i class="fas fa-download"></i> Download
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    return `
-                        <div class="error-card p-4 rounded-lg">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="font-medium text-red-700">
-                                        <i class="fas fa-times-circle mr-2"></i>
-                                        ${r.originalName}
-                                    </p>
-                                    <p class="text-sm text-red-600 mt-1">${r.error}</p>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-            }).join('');
-
-            // Show results section
-            const resultsSection = document.getElementById('resultsSection');
-            if (resultsSection) {
-                resultsSection.style.display = 'block';
-            }
-
-            // Hide file list
-            const fileList = document.getElementById('fileList');
-            if (fileList) {
-                fileList.style.display = 'none';
-            }
-
-            // Auto-download all successful files
-            const successfulResults = results.filter(r => r.success);
-            if (successfulResults.length > 0) {
-                // Add small delay between each download
-                successfulResults.forEach((result, index) => {
-                    setTimeout(() => {
-                        downloadFile(result.renamedName, result.fileData);
-                    }, index * 500); // 500ms delay between downloads
-                });
-            }
-
-            // Store results for batch download
-            window.processedResults = successfulResults;
-        }
-
-        // Download functions
-        function downloadFile(filename, base64Data) {
-            const binary = atob(base64Data);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            const blob = new Blob([bytes], { type: 'application/pdf' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        }
-
-        document.getElementById('btnDownloadAll').addEventListener('click', () => {
-            if (window.processedResults && window.processedResults.length > 0) {
-                window.processedResults.forEach(r => {
-                    setTimeout(() => {
-                        downloadFile(r.renamedName, r.fileData);
-                    }, 300);
-                });
-            }
-        });
-
-        // Auth check
-        window.addEventListener('load', async () => {
-            const token = localStorage.getItem('jwt_token');
-            if (!token) {
-                window.location.href = '/login';
-                return;
-            }
-            
-            // Check user role - only moderator and super_admin
-            try {
-                const response = await fetch('/api/auth/me', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                if (!response.ok) {
-                    window.location.href = '/login';
-                    return;
-                }
-                
-                const data = await response.json();
-                const userRole = data.user?.role;
-                
-                if (!['super_admin', 'moderator'].includes(userRole)) {
-                    alert('Access denied. Only moderator and super_admin can access this page.');
-                    window.location.href = '/dashboard';
-                }
-            } catch (err) {
-                console.error('Auth check error:', err);
-                window.location.href = '/login';
-            }
-        });
-    </script>
-</body>
+    <script src="js/utils.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/rename-invoice-hijau.js"></script>
+    </body>
 </html>
 
 
