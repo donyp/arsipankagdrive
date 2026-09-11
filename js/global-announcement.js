@@ -42,7 +42,7 @@
                 color: white;
                 font-size: 16px;
                 font-weight: 800;
-                letter-spacing: 0.3px;
+                letter-spacing: 2.5px;
                 width: 100%;
                 overflow: hidden;
             }
@@ -61,7 +61,7 @@
                 padding-right: 50px;
                 font-weight: 800;
                 font-size: 16px;
-                letter-spacing: 0.5px;
+                letter-spacing: 2.5px;
             }
 
             @keyframes scrollText {
