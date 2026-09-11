@@ -205,13 +205,6 @@ async function processFile(file) {
                 details: result
             });
             
-            // Handle scanned PDF - show manual input modal
-            if (response.status === 400 && result.manualInput) {
-                console.log('[Rename Invoice Hijau] Scanned PDF detected - requesting manual invoice number');
-                const manualResult = await showManualInputModal(file, result);
-                return manualResult;
-            }
-            
             // Check if it's a "not ready yet" error
             if (response.status === 500 && result.error && result.error.includes('not ready')) {
                 return {
@@ -609,88 +602,3 @@ function closeHistorySection() {
 
 
 
-// ============================================
-// Manual Input Modal for Scanned PDFs
-// ============================================
-async function showManualInputModal(file, errorResponse) {
-    return new Promise((resolve) => {
-        const modalHTML = `
-            <div id="manualInputModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div class="bg-white rounded-lg shadow-lg p-6 w-96 max-w-full mx-4">
-                    <div class="mb-4">
-                        <h3 class="text-lg font-bold text-gray-800 mb-2">📋 Input Manual - File Scan</h3>
-                        <p class="text-sm text-gray-600 mb-3">File ini adalah hasil scan. Silakan masukkan nomor invoice untuk melanjutkan.</p>
-                        <p class="text-xs text-gray-500 bg-blue-50 p-2 rounded border-l-2 border-blue-400">
-                            <strong>File:</strong> ${file.name}
-                        </p>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            No. Invoice <span class="text-red-500">*</span>
-                        </label>
-                        <input 
-                            type="text" 
-                            id="manualInvoiceInput" 
-                            placeholder="Contoh: 835100310001234" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                            autocomplete="off"
-                        />
-                        <p class="text-xs text-gray-500 mt-1">Minimal 12 angka</p>
-                    </div>
-                    
-                    <div class="flex gap-2 justify-end">
-                        <button id="manualInputCancel" class="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300 transition">
-                            Batal
-                        </button>
-                        <button id="manualInputConfirm" class="px-4 py-2 text-white bg-green-500 rounded hover:bg-green-600 transition">
-                            Konfirmasi
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        const modal = document.getElementById('manualInputModal');
-        const input = document.getElementById('manualInvoiceInput');
-        const confirmBtn = document.getElementById('manualInputConfirm');
-        const cancelBtn = document.getElementById('manualInputCancel');
-        
-        input.focus();
-        
-        confirmBtn.addEventListener('click', () => {
-            const invoiceNumber = input.value.trim().replace(/\s/g, '').replace(/-/g, '');
-            
-            if (!invoiceNumber || invoiceNumber.length < 12 || !/^\d+$/.test(invoiceNumber)) {
-                Toast.error('Nomor invoice harus minimal 12 angka');
-                return;
-            }
-            
-            console.log('[Rename Invoice Hijau] Manual input:', invoiceNumber);
-            modal.remove();
-            
-            resolve({
-                success: true,
-                originalName: file.name,
-                newName: `${invoiceNumber}.pdf`,
-                noInvoice: invoiceNumber,
-                fileData: null,
-                isManualInput: true
-            });
-        });
-        
-        cancelBtn.addEventListener('click', () => {
-            modal.remove();
-            resolve({
-                success: false,
-                originalName: file.name,
-                error: 'Dibatalkan oleh user'
-            });
-        });
-        
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') confirmBtn.click();
-        });
-    });
-}

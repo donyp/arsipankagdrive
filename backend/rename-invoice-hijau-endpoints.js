@@ -47,15 +47,122 @@ async function initPdfjs() {
     return pdfjs;
 }
 
-// Extract text via OCR - simplified fallback
+// Extract text via OCR from PDF using pdf2pic + Tesseract
 async function extractTextViaOCR(pdfBuffer) {
+    const fs = require('fs');
+    const path = require('path');
+    const tmpDir = require('os').tmpdir();
+    const Tesseract = require('tesseract.js');
+    
+    let tmpPdfFile = null;
+    let imagePaths = [];
+    
     try {
-        console.log('[Rename Invoice Hijau] OCR: Tesseract.js cannot process PDFs directly');
-        console.log('[Rename Invoice Hijau] OCR: Would need system-level PDF-to-image converter');
-        return null;
+        console.log('[Rename Invoice Hijau] OCR: Starting OCR process with pdf2pic...');
+        
+        // Step 1: Write PDF to temp file (pdf2pic needs file path, not buffer)
+        tmpPdfFile = path.join(tmpDir, `invoice-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.pdf`);
+        fs.writeFileSync(tmpPdfFile, pdfBuffer);
+        console.log(`[Rename Invoice Hijau] OCR: PDF written to ${tmpPdfFile}`);
+        
+        // Step 2: Convert PDF to images using pdf2pic
+        console.log('[Rename Invoice Hijau] OCR: Converting PDF to images (pdf2pic)...');
+        const pdf2pic = require('pdf2pic');
+        const options = {
+            density: 120,           // DPI for quality
+            saveFilename: 'page',
+            savePath: tmpDir,
+            format: 'png',
+            width: 1440,            // Good resolution for OCR
+            height: 1920
+        };
+        
+        try {
+            const converter = pdf2pic.fromFilePath(tmpPdfFile, options);
+            const result = await converter.bulk(-1, { start: 1, end: 3 }); // First 3 pages max
+            
+            if (result && result.length > 0) {
+                imagePaths = result.map(r => r.path);
+                console.log(`[Rename Invoice Hijau] OCR: ✅ Converted ${imagePaths.length} pages to images`);
+            } else {
+                console.warn('[Rename Invoice Hijau] OCR: No pages converted by pdf2pic');
+                return null;
+            }
+        } catch (convErr) {
+            console.error('[Rename Invoice Hijau] OCR: pdf2pic conversion failed:', convErr.message);
+            return null;
+        }
+        
+        // Step 3: Run Tesseract OCR on each image
+        console.log('[Rename Invoice Hijau] OCR: Running Tesseract on converted images...');
+        let allText = '';
+        
+        for (let i = 0; i < imagePaths.length; i++) {
+            const imgPath = imagePaths[i];
+            try {
+                console.log(`[Rename Invoice Hijau] OCR: Processing image ${i + 1}/${imagePaths.length}...`);
+                
+                const result = await Tesseract.recognize(
+                    imgPath,
+                    'ind',  // Indonesian only (faster than ind+eng)
+                    {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                const pct = Math.round(m.progress * 100);
+                                if (pct % 25 === 0) { // Log every 25%
+                                    console.log(`[Rename Invoice Hijau] OCR: Image ${i + 1} progress: ${pct}%`);
+                                }
+                            }
+                        }
+                    }
+                );
+                
+                const text = result.data.text;
+                console.log(`[Rename Invoice Hijau] OCR: Image ${i + 1} extracted ${text.length} chars`);
+                allText += '\n' + text;
+                
+                // Stop if we got good text already
+                if (allText.length > 500) {
+                    console.log('[Rename Invoice Hijau] OCR: Got enough text, stopping further pages');
+                    break;
+                }
+                
+            } catch (ocrErr) {
+                console.error(`[Rename Invoice Hijau] OCR: Tesseract error on image ${i + 1}:`, ocrErr.message);
+                continue;
+            }
+        }
+        
+        if (allText.length > 50) {
+            console.log(`[Rename Invoice Hijau] OCR: ✅ Successfully extracted ${allText.length} total characters`);
+            return allText;
+        } else {
+            console.warn('[Rename Invoice Hijau] OCR: Extracted text too short');
+            return null;
+        }
+        
     } catch (err) {
         console.error('[Rename Invoice Hijau] OCR extraction error:', err.message);
         return null;
+    } finally {
+        // Cleanup
+        try {
+            if (tmpPdfFile && fs.existsSync(tmpPdfFile)) {
+                fs.unlinkSync(tmpPdfFile);
+                console.log('[Rename Invoice Hijau] OCR: Cleaned up temp PDF');
+            }
+        } catch (e) {}
+        
+        try {
+            for (const imgPath of imagePaths) {
+                if (fs.existsSync(imgPath)) {
+                    fs.unlinkSync(imgPath);
+                }
+            }
+            if (imagePaths.length > 0) {
+                console.log('[Rename Invoice Hijau] OCR: Cleaned up temp images');
+            }
+        } catch (e) {}
     }
 }
 
@@ -241,15 +348,13 @@ module.exports = (app, supabase) => {
                         console.log(`[Rename Invoice Hijau] Selected: Priority 2 - ${noInvoice}`);
                     }
 
-                    // If no invoice found, return error with manualInput flag
+                    // If no invoice found, log and return error
                     if (!noInvoice) {
-                        console.warn('[Rename Invoice Hijau] No invoice number found - PDF is scanned');
+                        console.error('[Rename Invoice Hijau] Failed to extract invoice number from scanned PDF');
                         return sendResponse(400, {
                             success: false,
-                            error: 'Tidak bisa ekstrak nomor invoice otomatis',
-                            details: 'File PDF hasil scan tidak memiliki teks yang dapat dibaca. Sistem memerlukan manual input untuk melanjutkan.',
-                            manualInput: true,
-                            originalFileName: fileName
+                            error: 'Gagal ekstrak nomor invoice dari PDF scan',
+                            details: 'OCR tidak dapat membaca teks dari file ini. Kemungkinan kualitas scan terlalu rendah atau nomor invoice tidak terlihat jelas.'
                         });
                     }
 
