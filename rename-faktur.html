@@ -53,6 +53,53 @@
             border-left: 4px solid #ef4444;
             background: #fef2f2;
         }
+
+        /* Smooth animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Loading modal */
+        #loadingModal {
+            animation: fadeIn 0.3s ease;
+        }
+
+        #loadingModal > div {
+            animation: scaleIn 0.3s ease;
+        }
+
+        /* Toast animations */
+        .toast {
+            animation: slideIn 0.3s ease;
+        }
+
+        /* History items */
+        #recentHistoryList > div {
+            animation: slideIn 0.3s ease;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -129,19 +176,24 @@
                 </div>
 
                 <!-- Loading Modal -->
-                <div id="loadingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div class="bg-white rounded-lg p-8 shadow-xl max-w-md w-full mx-4">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Memproses File...</h3>
+                <div id="loadingModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50" style="backdrop-filter: blur(4px);">
+                    <div class="bg-white rounded-xl p-8 shadow-2xl max-w-md w-full mx-4" style="min-height: 200px; display: flex; flex-direction: column; justify-content: center;">
+                        <div class="text-center mb-6">
+                            <div class="inline-block">
+                                <div class="w-12 h-12 rounded-full border-4 border-purple-200 border-t-purple-600 animate-spin mx-auto mb-4"></div>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800">Memproses File...</h3>
+                        </div>
                         <div class="space-y-4">
                             <div>
                                 <p class="text-sm text-gray-600 mb-2">
                                     <span id="loadingStatus">Mengscan file...</span>
                                 </p>
-                                <p class="text-xs text-gray-500 mb-2">
+                                <p class="text-xs text-gray-500 mb-2 truncate">
                                     File: <span id="loadingCurrentFile">-</span>
                                 </p>
-                                <div class="progress-bar bg-gray-200 rounded-full overflow-hidden">
-                                    <div id="loadingProgressBar" class="progress-fill bg-gradient-to-r from-purple-600 to-purple-400" style="width: 0%; height: 6px; transition: width 0.3s ease;"></div>
+                                <div class="bg-gray-200 rounded-full overflow-hidden h-2">
+                                    <div id="loadingProgressBar" class="bg-gradient-to-r from-purple-600 to-purple-400 h-2" style="width: 0%; transition: width 0.2s ease;"></div>
                                 </div>
                                 <p class="text-xs text-gray-500 mt-2 text-center">
                                     <span id="loadingProgressText">0</span> / <span id="loadingTotalFiles">0</span>
@@ -152,12 +204,13 @@
                 </div>
 
                 <!-- History Section -->
-                <div id="historySection" class="hidden bg-red-50 rounded-lg shadow-md p-6 mt-6">
+                <div id="historySection" class="hidden bg-gradient-to-br from-red-50 to-orange-50 rounded-xl shadow-lg p-6 mt-6 border border-red-100">
                     <h3 class="text-lg font-bold text-red-800 mb-4 flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-red-600"></div>
                         <i class="fas fa-history text-red-600"></i>
-                        Riwayat Rename Terakhir
+                        Riwayat Rename Terbaru
                     </h3>
-                    <div id="recentHistoryList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                    <div id="recentHistoryList" class="space-y-3 max-h-96 overflow-y-auto"></div>
                 </div>
 
                 <!-- Results Section -->
@@ -183,7 +236,6 @@
     <script src="js/auth.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/sidebar.js"></script>
-    <script src="js/toast.js"></script>
     <script src="js/rename-faktur.js"></script>
 </body>
 </html>
