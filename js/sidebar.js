@@ -1,6 +1,6 @@
 // ============================================================
-// Shared Sidebar Component
-// Version 3.3.0 - Complete Rewrite
+// Shared Sidebar Component - Perfect Left Alignment
+// Version 3.4.0 - All items aligned left
 // ============================================================
 
 (function() {
@@ -100,23 +100,20 @@
             for (const child of visibleChildren) {
                 const isActive = activePage === child.href;
                 childrenHTML += `
-                    <a href="${child.href}" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1.5rem; margin: 0.1rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; ${isActive ? 'color: #2563eb; background: #eff6ff; font-weight: 600;' : 'color: #6b7280;'} text-decoration: none; width: calc(100% - 1rem); box-sizing: border-box; display: flex; align-items: center; min-height: 2rem;">
-                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            ${renderIcon(child.icon)}
-                        </svg>
-                        <span style="flex: 1; overflow: visible; line-height: 1.3;">${child.label}</span>
+                    <a href="${child.href}" style="display: flex; align-items: center; padding: 0.6rem 1rem 0.6rem 3.5rem; margin: 0.05rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; ${isActive ? 'color: #2563eb; background: #eff6ff; font-weight: 600;' : 'color: #6b7280;'} text-decoration: none; width: calc(100% - 1rem); box-sizing: border-box; display: flex; align-items: center; min-height: 1.9rem;">
+                        <span style="flex: 1; overflow: visible; line-height: 1.2;">${child.label}</span>
                     </a>
                 `;
             }
 
             navHTML += `
                 <div id="${item.id}-parent" style="padding: 0.25rem 0.5rem; margin: 0;">
-                    <button onclick="toggleSidebarDropdown('${item.id}')" style="width: 100%; display: flex; align-items: center; padding: 0.7rem 1rem; border-radius: 0.375rem; font-size: 0.8rem; color: #374151; border: none; background: transparent; cursor: pointer; font-weight: 500; min-height: 2.3rem; line-height: 1.3;">
-                        <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button onclick="toggleSidebarDropdown('${item.id}')" style="width: 100%; display: flex; align-items: center; padding: 0.65rem 1rem; border-radius: 0.375rem; font-size: 0.8rem; color: #374151; border: none; background: transparent; cursor: pointer; font-weight: 500; min-height: 2.3rem; line-height: 1.2;">
+                        <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin-right: 0.875rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             ${renderIcon(item.icon)}
                         </svg>
-                        <span style="flex: 1; overflow: visible; margin-left: 0.875rem;">${item.label}</span>
-                        <svg class="sidebar-dropdown-icon" style="width: 0.875rem; height: 0.875rem; opacity: 0.5; transition: transform 300ms; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span style="flex: 1; overflow: visible; text-align: left;">${item.label}</span>
+                        <svg class="sidebar-dropdown-icon" style="width: 0.875rem; height: 0.875rem; opacity: 0.5; transition: transform 300ms; flex-shrink: 0; margin-left: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
@@ -131,11 +128,11 @@
             const isActive = activePage === item.href;
             navHTML += `
                 <div style="padding: 0.25rem 0.5rem; margin: 0;">
-                    <a href="${item.href}" style="display: flex; align-items: center; padding: 0.7rem 1rem; border-radius: 0.375rem; font-size: 0.8rem; ${isActive ? 'color: #2563eb; background: rgba(59, 130, 246, 0.1); font-weight: 600;' : 'color: #374151;'} text-decoration: none; font-weight: 500; width: 100%; box-sizing: border-box; min-height: 2.3rem; line-height: 1.3;">
-                        <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="${item.href}" style="display: flex; align-items: center; padding: 0.65rem 1rem; border-radius: 0.375rem; font-size: 0.8rem; ${isActive ? 'color: #2563eb; background: rgba(59, 130, 246, 0.1); font-weight: 600;' : 'color: #374151;'} text-decoration: none; font-weight: 500; width: 100%; box-sizing: border-box; min-height: 2.3rem; display: flex; align-items: center; line-height: 1.2;">
+                        <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin-right: 0.875rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             ${renderIcon(item.icon)}
                         </svg>
-                        <span style="flex: 1; overflow: visible; margin-left: 0.875rem;">${item.label}</span>
+                        <span style="flex: 1; overflow: visible; text-align: left;">${item.label}</span>
                     </a>
                 </div>
             `;
@@ -149,7 +146,7 @@
             return;
         }
 
-        console.log('[Sidebar] Injecting sidebar...');
+        console.log('[Sidebar] Injecting...');
 
         sidebar.style.cssText = `
             position: fixed;
@@ -201,7 +198,7 @@
             inject();
         });
     } else {
-        console.log('[Sidebar] Document ready, injecting');
+        console.log('[Sidebar] Document ready');
         inject();
     }
 
