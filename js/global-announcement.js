@@ -1,6 +1,6 @@
 // ============================================================
 // Global Announcement Banner - Appears on all pages
-// Version 1.0.0
+// Version 2.0.0 - Full width scrolling, permanent banner
 // ============================================================
 
 (function() {
@@ -12,15 +12,9 @@
         banner.className = 'global-announcement-banner';
         banner.innerHTML = `
             <div class="announcement-content">
-                <div class="announcement-icon">📢</div>
                 <div class="announcement-text">
-                    <span class="announcement-message">Jika ada kendala, silahkan hubungi admin anka</span>
+                    <span class="announcement-message">📢  Jika ada kendala, silahkan hubungi admin anka  •  Jika ada kendala, silahkan hubungi admin anka  •  Jika ada kendala, silahkan hubungi admin anka  •</span>
                 </div>
-                <button class="announcement-close" onclick="document.getElementById('global-announcement-banner').remove()">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
             </div>
         `;
 
@@ -38,92 +32,56 @@
                 padding: 0;
                 margin: 0;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                animation: slideDown 0.4s ease-out;
-            }
-
-            @keyframes slideDown {
-                from {
-                    transform: translateY(-100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
+                overflow: hidden;
             }
 
             .announcement-content {
                 display: flex;
                 align-items: center;
-                justify-content: center;
-                gap: 12px;
-                padding: 12px 20px;
+                padding: 14px 0;
                 color: white;
-                font-size: 14px;
-                font-weight: 600;
-                letter-spacing: 0.5px;
-            }
-
-            .announcement-icon {
-                font-size: 18px;
-                flex-shrink: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                font-size: 16px;
+                font-weight: 800;
+                letter-spacing: 0.3px;
+                width: 100%;
+                overflow: hidden;
             }
 
             .announcement-text {
-                flex: 1;
                 display: flex;
                 align-items: center;
+                width: 100%;
                 overflow: hidden;
             }
 
             .announcement-message {
                 display: inline-block;
-                animation: scrollText 15s linear infinite;
+                animation: scrollText 25s linear infinite;
                 white-space: nowrap;
-                padding-left: 20px;
+                padding-right: 50px;
+                font-weight: 800;
+                font-size: 16px;
+                letter-spacing: 0.5px;
             }
 
             @keyframes scrollText {
                 0% {
-                    transform: translateX(0);
+                    transform: translateX(100%);
                 }
                 100% {
                     transform: translateX(-100%);
                 }
             }
 
-            .announcement-close {
-                background: rgba(255, 255, 255, 0.2);
-                border: none;
-                color: white;
-                width: 32px;
-                height: 32px;
-                border-radius: 6px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.2s;
-                flex-shrink: 0;
-            }
-
-            .announcement-close:hover {
-                background: rgba(255, 255, 255, 0.3);
-                transform: scale(1.05);
-            }
-
             /* Adjust page layout when banner is present */
             body.has-announcement {
-                padding-top: 60px;
+                padding-top: 52px;
             }
 
             /* Ensure sidebar accounts for banner */
             #sidebar {
-                top: 60px !important;
-                height: calc(100vh - 60px) !important;
+                top: 52px !important;
+                height: calc(100vh - 52px) !important;
             }
 
             /* Adjust main content for banner */
@@ -133,27 +91,43 @@
 
             @media (max-width: 768px) {
                 .announcement-content {
-                    padding: 10px 12px;
-                    font-size: 12px;
-                    gap: 8px;
+                    padding: 12px 0;
+                    font-size: 13px;
                 }
 
-                .announcement-icon {
-                    font-size: 16px;
-                }
-
-                .announcement-close {
-                    width: 28px;
-                    height: 28px;
+                .announcement-message {
+                    font-size: 13px;
+                    padding-right: 40px;
                 }
 
                 body.has-announcement {
-                    padding-top: 50px;
+                    padding-top: 48px;
                 }
 
                 #sidebar {
-                    top: 50px !important;
-                    height: calc(100vh - 50px) !important;
+                    top: 48px !important;
+                    height: calc(100vh - 48px) !important;
+                }
+            }
+
+            @media (max-width: 480px) {
+                .announcement-content {
+                    padding: 10px 0;
+                    font-size: 11px;
+                }
+
+                .announcement-message {
+                    font-size: 11px;
+                    padding-right: 30px;
+                }
+
+                body.has-announcement {
+                    padding-top: 44px;
+                }
+
+                #sidebar {
+                    top: 44px !important;
+                    height: calc(100vh - 44px) !important;
                 }
             }
         `;
