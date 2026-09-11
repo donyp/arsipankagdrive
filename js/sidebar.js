@@ -159,7 +159,6 @@
 
             navHTML += `
                 <div style="padding-left: 0.5rem; padding-right: 0.5rem; margin-top: 0.25rem; margin-bottom: 0.125rem;">
-                <div style="padding-left: 0.5rem; padding-right: 0.5rem; margin-top: 0.25rem; margin-bottom: 0.125rem;">
                 <a href="${item.href}" ${item.guard || ''}
                     style="display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; border-radius: 0.75rem; font-size: 0.75rem; transition: all 0.2s ease; ${isActive ? 'color: #2563eb; background: rgba(59, 130, 246, 0.1); font-weight: 700;' : 'color: #6b7280;'} text-decoration: none; font-weight: 700; letter-spacing: 0.05em; width: 100%; box-sizing: border-box;">
                     <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,7 +166,6 @@
                     </svg>
                     <span>${item.label}</span>
                 </a>
-                </div>`;
                 </div>`;
         }
     }
