@@ -1216,28 +1216,12 @@
                 const duration = Math.max(12, Math.ceil((textLength / 45) * 25));
                 
                 // Update the announcement banner immediately
-                const textContainer = document.querySelector('.announcement-text');
-                if (textContainer) {
-                    // Clear existing messages
-                    textContainer.innerHTML = '';
-                    
-                    // Create message
+                const messageElement = document.querySelector('.announcement-message');
+                if (messageElement) {
+                    // Create single message with bullet separator
                     const message = `📢  ${newText}  •  `;
-                    
-                    // Create two spans for seamless looping
-                    const span1 = document.createElement('span');
-                    span1.className = 'announcement-message';
-                    span1.textContent = message;
-                    span1.style.animationDuration = duration + 's';
-                    
-                    const span2 = document.createElement('span');
-                    span2.className = 'announcement-message';
-                    span2.textContent = message;
-                    span2.style.animationDuration = duration + 's';
-                    span2.style.animationDelay = '-' + duration + 's';
-                    
-                    textContainer.appendChild(span1);
-                    textContainer.appendChild(span2);
+                    messageElement.textContent = message;
+                    messageElement.style.animationDuration = duration + 's';
                 }
                 
                 // Show success message

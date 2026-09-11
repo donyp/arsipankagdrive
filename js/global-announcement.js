@@ -15,22 +15,16 @@
         const customHeadline = localStorage.getItem('customHeadline') || 'Jika ada kendala, silahkan hubungi admin anka';
         
         // Calculate animation duration based on text length
-        // Shorter text needs shorter duration, longer text needs more time
         const textLength = customHeadline.length;
-        const baseDuration = 15; // base seconds for standard length
-        const duration = Math.max(12, Math.ceil((textLength / 45) * 25)); // Scale from 12-30 seconds
+        const duration = Math.max(12, Math.ceil((textLength / 45) * 25));
         
-        // Store duration for CSS
-        banner.style.setProperty('--scroll-duration', duration + 's');
-        
-        // Single message with separator - will loop infinitely
+        // Single message - will loop infinitely with just the text
         const message = `📢  ${customHeadline}  •  `;
         
         banner.innerHTML = `
             <div class="announcement-content">
                 <div class="announcement-text">
                     <span class="announcement-message" style="animation-duration: ${duration}s;">${message}</span>
-                    <span class="announcement-message" style="animation-duration: ${duration}s; animation-delay: -${duration}s;">${message}</span>
                 </div>
             </div>
         `;
@@ -73,7 +67,7 @@
 
             .announcement-message {
                 display: inline-block;
-                animation: scrollText 25s linear infinite;
+                animation: scrollText linear infinite;
                 white-space: nowrap;
                 padding-right: 50px;
                 font-weight: 800;
