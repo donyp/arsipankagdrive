@@ -381,67 +381,16 @@ module.exports = (app, supabase) => {
                     console.log(`[Rename Invoice Hijau] First 500 chars:\n${textContent.substring(0, 500)}`);
                     console.log(`[Rename Invoice Hijau] ============================`);
 
-                    // Extract invoice number - try patterns in priority order
+                    // Extract invoice number - ONLY accept numbers starting with 835100310 or 835100311
+                    // Format: 835100310XXXXXXXX or 835100311XXXXXXXX (at least 18 digits total)
+                    let pattern = /\b(83510031[01]\d{8,})\b/g;
+                    let matches = cleanText.match(pattern);
 
-                    // Pattern 1: ANKA invoice format - always starts with 835100311 or 835100310
-                    // This is the definitive identifier: all real invoices begin with these prefixes
-                    let pattern1 = /\b(83510031[01]\d{8,})\b/g;
-                    let matches1 = cleanText.match(pattern1);
-                    let priority1Number = null;
-
-                    if (matches1 && matches1.length > 0) {
-                        priority1Number = matches1[0];
-                        console.log(`[Rename Invoice Hijau] Priority 1 (ANKA prefix 83510031X): ${priority1Number}`);
-                    }
-
-                    // Pattern 2: Numbers with special chars in the middle (# - / .)
-                    // Examples: "1002101906#6015", "INV-2024-001"
-                    // Match: digit(s) + special char + digit(s), at least 10 chars total
-                    let pattern2 = /\b(\d+[\#\-\/\.]+\d+)\b/gi;
-                    let matches2 = cleanText.match(pattern2);
-                    let priority2Number = null;
-
-                    if (matches2 && matches2.length > 0) {
-                        console.log(`[Rename Invoice Hijau] Pattern2 raw matches: ${matches2.join(' | ')}`);
-                        // Filter out short ones (like "50.4" from addresses), keep 10+ chars
-                        for (let match of matches2) {
-                            if (match.length >= 10) {
-                                priority2Number = match;
-                                console.log(`[Rename Invoice Hijau] Priority 2 (number with special chars): ${priority2Number}`);
-                                break;
-                            }
-                        }
-                    }
-
-                    // Pattern 3: Fallback - any number-like sequence with 10+ chars
-                    // Prefer longest match (likely invoice, not phone number)
-                    let pattern3 = /\b([\d\#\-\/\.]{10,}[\d])\b/g;
-                    let matches3 = cleanText.match(pattern3);
-                    let priority3Number = null;
-
-                    if (matches3 && matches3.length > 0) {
-                        console.log(`[Rename Invoice Hijau] Pattern3 raw matches: ${matches3.join(' | ')}`);
-                        priority3Number = matches3.reduce((a, b) => a.length >= b.length ? a : b);
-                        console.log(`[Rename Invoice Hijau] Priority 3 (10+ char number): ${priority3Number}`);
-                    }
-
-                    // Matching logic - use first priority that finds something
-                    if (priority1Number) {
-                        noInvoice = priority1Number;
-                        console.log(`[Rename Invoice Hijau] Selected: Priority 1 (83510031x prefix) - ${noInvoice}`);
-                    } else if (priority2Number) {
-                        // Pattern 2 numbers with special chars are very likely to be invoices
-                        noInvoice = priority2Number;
-                        console.log(`[Rename Invoice Hijau] Selected: Priority 2 (number with # - / .) - ${noInvoice}`);
-                    } else if (priority3Number) {
-                        // Pattern 3 is fallback - reject if looks like phone number
-                        const p3clean = priority3Number.replace(/[#\-\/\.]/g, '');
-                        if (p3clean.startsWith('02') && p3clean.length < 15) {
-                            console.log(`[Rename Invoice Hijau] Pattern 3 rejected: looks like phone number "${priority3Number}"`);
-                        } else {
-                            noInvoice = priority3Number;
-                            console.log(`[Rename Invoice Hijau] Selected: Priority 3 (longest number) - ${noInvoice}`);
-                        }
+                    if (matches && matches.length > 0) {
+                        noInvoice = matches[0];
+                        console.log(`[Rename Invoice Hijau] ✅ Found ANKA invoice number: ${noInvoice}`);
+                    } else {
+                        console.log(`[Rename Invoice Hijau] ❌ No valid ANKA invoice number (835100310/835100311) found`);
                     }
 
                     // If no invoice found, log and return error
