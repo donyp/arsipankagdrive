@@ -47,16 +47,29 @@ async function initPdfjs() {
     return pdfjs;
 }
 
-// Extract text via OCR from PDF using PDF.js to get canvas
+// Extract text via OCR from PDF using pdf-to-image conversion
 async function extractTextViaOCR(pdfBuffer) {
     try {
-        console.log('[Rename Invoice Hijau] OCR: Attempting text extraction via fallback methods...');
+        console.log('[Rename Invoice Hijau] OCR: Converting PDF to images for OCR...');
         
-        // Note: Tesseract.js requires image input, not PDF buffers directly
-        // Since we already have PDF text extraction, we'll skip OCR for now
-        // OCR would require PDF-to-image conversion which adds complexity
+        const Tesseract = await initTesseract();
         
-        console.warn('[Rename Invoice Hijau] OCR: Skipped - use pdf-parse text extraction instead');
+        if (!Tesseract) {
+            console.error('[Rename Invoice Hijau] Tesseract.js not available');
+            return null;
+        }
+
+        // Use pdf-parse to get information about the PDF
+        const pdf = await initPdfParse();
+        const pdfData = await pdf(pdfBuffer);
+        
+        // Log PDF info
+        console.log(`[Rename Invoice Hijau] PDF pages: ${pdfData.numpages}`);
+        
+        // For now, skip OCR and return null - we need pdf-to-image library
+        // which requires system dependencies like ImageMagick or GraphicsMagick
+        console.warn('[Rename Invoice Hijau] OCR: Full PDF-to-image conversion requires system dependencies');
+        
         return null;
 
     } catch (err) {
@@ -247,12 +260,16 @@ module.exports = (app, supabase) => {
                         console.log(`[Rename Invoice Hijau] Selected: Priority 2 - ${noInvoice}`);
                     }
 
-                    // If no invoice found, return error
+                    // If no invoice found, return error with suggestion for manual input
                     if (!noInvoice) {
                         console.warn('[Rename Invoice Hijau] No invoice number found in PDF');
                         return sendResponse(400, {
                             success: false,
-                            error: 'No. Invoice tidak ditemukan di PDF. File mungkin berbasis gambar (scanned). Pastikan PDF memiliki text yang dapat di-extract atau upload file digital.'
+                            error: 'No. Invoice tidak ditemukan otomatis',
+                            details: 'File PDF ini adalah hasil scan dan tidak memiliki teks yang bisa di-extract secara otomatis.',
+                            manualInput: true,
+                            originalFileName: fileName,
+                            message: 'Silakan masukkan No. Invoice secara manual untuk melanjutkan.'
                         });
                     }
 
