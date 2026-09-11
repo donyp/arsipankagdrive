@@ -375,6 +375,9 @@ module.exports = (app, supabase) => {
                     // Remove common PDF artifacts and normalize spaces
                     const cleanText = textContent.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ');
                     
+                    console.log(`[Rename Invoice Hijau] ===== FULL OCR TEXT =====`);
+                    console.log(`[Rename Invoice Hijau] ${cleanText}`);
+                    console.log(`[Rename Invoice Hijau] ===== END FULL TEXT =====`);
                     console.log(`[Rename Invoice Hijau] Cleaned text (first 1000 chars):\n${cleanText.substring(0, 1000)}`);
                     console.log(`[Rename Invoice Hijau] ===== EXTRACTION SUMMARY =====`);
                     console.log(`[Rename Invoice Hijau] Raw text length: ${textContent.length}`);
@@ -385,12 +388,18 @@ module.exports = (app, supabase) => {
                     // Format: 835100310XXXXXXXX or 835100311XXXXXXXX (at least 18 digits total)
                     let pattern = /\b(83510031[01]\d{8,})\b/g;
                     let matches = cleanText.match(pattern);
+                    
+                    console.log(`[Rename Invoice Hijau] Pattern: /\\b(83510031[01]\\d{8,})\\b/g`);
+                    console.log(`[Rename Invoice Hijau] Matches: ${matches ? matches.join(', ') : 'NONE'}`);
 
                     if (matches && matches.length > 0) {
                         noInvoice = matches[0];
                         console.log(`[Rename Invoice Hijau] ✅ Found ANKA invoice number: ${noInvoice}`);
                     } else {
                         console.log(`[Rename Invoice Hijau] ❌ No valid ANKA invoice number (835100310/835100311) found`);
+                        console.log(`[Rename Invoice Hijau] Searching for ALL numbers in text...`);
+                        const allNumbers = cleanText.match(/\b\d+\b/g);
+                        console.log(`[Rename Invoice Hijau] All numbers found: ${allNumbers ? allNumbers.join(', ') : 'NONE'}`);
                     }
 
                     // If no invoice found, log and return error
