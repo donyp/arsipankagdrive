@@ -52,8 +52,8 @@ async function initTesseractWorker() {
         await tesseractWorker.loadLanguage('ind');
         console.log('[Rename Invoice Hijau] ✅ Indonesian language loaded');
         
-        // Initialize
-        await tesseractWorker.initialize('ind');
+        // Initialize with array of languages
+        await tesseractWorker.initialize(['ind']);
         console.log('[Rename Invoice Hijau] ✅ Tesseract worker initialized with Indonesian');
         
         tesseractWorkerInitialized = true;
