@@ -68,8 +68,11 @@ async function extractTextViaOCR(pdfBuffer) {
             }
         };
         
+        // Convert Buffer to Uint8Array for pdfjs-dist
+        const uint8Array = new Uint8Array(pdfBuffer);
+        
         // Parse PDF
-        const pdf = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
+        const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise;
         console.log(`[Rename Invoice Hijau] OCR: PDF has ${pdf.numPages} pages`);
         
         // Process only first 2 pages for speed
