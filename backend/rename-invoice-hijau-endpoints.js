@@ -165,9 +165,10 @@ async function extractTextViaOCR(pdfBuffer) {
             return null;
         }
         
-        // Step 5: Run Tesseract OCR on each image
+        // Step 5: Run Tesseract OCR on each image - PROCESS ALL PAGES to find invoice number
         console.log('[Rename Invoice Hijau] OCR: Running Tesseract on converted images...');
         let allText = '';
+        let pageTexts = [];
         
         for (let i = 0; i < imagePaths.length; i++) {
             const imgPath = imagePaths[i];
@@ -189,14 +190,13 @@ async function extractTextViaOCR(pdfBuffer) {
                 
                 console.log(`[Rename Invoice Hijau] OCR: Image ${i + 1} recognized in ${elapsedTime}ms`);
                 console.log(`[Rename Invoice Hijau] OCR: Extracted ${text.length} chars, confidence: ${confidence}%`);
+                console.log(`[Rename Invoice Hijau] OCR: Page ${i + 1} content (first 300 chars): ${text.substring(0, 300)}`);
                 
+                pageTexts.push(text);
                 allText += '\n' + text;
                 
-                // Stop if we got good text already
-                if (allText.length > 500) {
-                    console.log('[Rename Invoice Hijau] OCR: Got enough text (>500 chars), stopping further pages');
-                    break;
-                }
+                // Process all 3 pages - don't early stop to ensure we find invoice number
+                // Invoice numbers might be anywhere in the document
                 
             } catch (ocrErr) {
                 console.error(`[Rename Invoice Hijau] OCR: Recognition error on image ${i + 1}:`, ocrErr.message);
@@ -204,6 +204,12 @@ async function extractTextViaOCR(pdfBuffer) {
                 continue;
             }
         }
+        
+        // Log each page separately for debugging
+        console.log(`[Rename Invoice Hijau] OCR: Processing complete - ${pageTexts.length} pages extracted`);
+        pageTexts.forEach((text, idx) => {
+            console.log(`[Rename Invoice Hijau] OCR: PAGE ${idx + 1} LENGTH: ${text.length} chars`);
+        });
         
         if (allText.length > 50) {
             console.log(`[Rename Invoice Hijau] OCR: ✅ Successfully extracted ${allText.length} total characters`);
@@ -368,39 +374,73 @@ module.exports = (app, supabase) => {
                         }
                     }
 
-                    // Extract No. Invoice using priority patterns with confidence matching
+                    // Extract No. Invoice using multiple pattern strategies
                     let noInvoice = null;
-                    let confidence = 'low';
 
                     // Remove common PDF artifacts and normalize spaces
                     const cleanText = textContent.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ');
                     
                     console.log(`[Rename Invoice Hijau] ===== FULL OCR TEXT =====`);
-                    console.log(`[Rename Invoice Hijau] ${cleanText}`);
+                    console.log(`[Rename Invoice Hijau] ${cleanText.substring(0, 2000)}`);
                     console.log(`[Rename Invoice Hijau] ===== END FULL TEXT =====`);
-                    console.log(`[Rename Invoice Hijau] Cleaned text (first 1000 chars):\n${cleanText.substring(0, 1000)}`);
+                    console.log(`[Rename Invoice Hijau] Total length: ${cleanText.length} chars`);
                     console.log(`[Rename Invoice Hijau] ===== EXTRACTION SUMMARY =====`);
-                    console.log(`[Rename Invoice Hijau] Raw text length: ${textContent.length}`);
-                    console.log(`[Rename Invoice Hijau] First 500 chars:\n${textContent.substring(0, 500)}`);
-                    console.log(`[Rename Invoice Hijau] ============================`);
 
-                    // Extract invoice number - ONLY accept numbers starting with 835100310 or 835100311
+                    // Strategy 1: Strict ANKA pattern with word boundaries
                     // Format: 835100310XXXXXXXX or 835100311XXXXXXXX (at least 18 digits total)
                     let pattern = /\b(83510031[01]\d{8,})\b/g;
                     let matches = cleanText.match(pattern);
                     
-                    console.log(`[Rename Invoice Hijau] Pattern: /\\b(83510031[01]\\d{8,})\\b/g`);
+                    console.log(`[Rename Invoice Hijau] Strategy 1 - Strict pattern /\\b(83510031[01]\\d{8,})\\b/g`);
                     console.log(`[Rename Invoice Hijau] Matches: ${matches ? matches.join(', ') : 'NONE'}`);
 
                     if (matches && matches.length > 0) {
                         noInvoice = matches[0];
-                        console.log(`[Rename Invoice Hijau] ✅ Found ANKA invoice number: ${noInvoice}`);
+                        console.log(`[Rename Invoice Hijau] ✅ Found ANKA invoice number (Strategy 1): ${noInvoice}`);
                     } else {
-                        console.log(`[Rename Invoice Hijau] ❌ No valid ANKA invoice number (835100310/835100311) found`);
-                        console.log(`[Rename Invoice Hijau] Searching for ALL numbers in text...`);
-                        const allNumbers = cleanText.match(/\b\d+\b/g);
-                        console.log(`[Rename Invoice Hijau] All numbers found: ${allNumbers ? allNumbers.join(', ') : 'NONE'}`);
+                        // Strategy 2: Looser pattern - no word boundaries (OCR might add spaces/characters)
+                        console.log(`[Rename Invoice Hijau] Strategy 1 failed, trying Strategy 2...`);
+                        pattern = /(83510031[01]\d{8,})/g;
+                        matches = cleanText.match(pattern);
+                        console.log(`[Rename Invoice Hijau] Strategy 2 - Loose pattern /(83510031[01]\\d{8,})/g`);
+                        console.log(`[Rename Invoice Hijau] Matches: ${matches ? matches.join(', ') : 'NONE'}`);
+                        
+                        if (matches && matches.length > 0) {
+                            // Filter for longest match (most likely correct)
+                            noInvoice = matches.reduce((a, b) => a.length >= b.length ? a : b);
+                            console.log(`[Rename Invoice Hijau] ✅ Found ANKA invoice number (Strategy 2): ${noInvoice}`);
+                        }
                     }
+
+                    // Strategy 3: If still not found, search for any sequence starting with 835100310 or 835100311
+                    if (!noInvoice) {
+                        console.log(`[Rename Invoice Hijau] Strategy 2 failed, trying Strategy 3 (prefix search)...`);
+                        const prefixPattern = /(83510031[01][\d\s]{16,})/g;
+                        const prefixMatches = cleanText.match(prefixPattern);
+                        console.log(`[Rename Invoice Hijau] Strategy 3 - Prefix search /(83510031[01][\\d\\s]{16,})/g`);
+                        console.log(`[Rename Invoice Hijau] Matches: ${prefixMatches ? prefixMatches.join(', ') : 'NONE'}`);
+                        
+                        if (prefixMatches && prefixMatches.length > 0) {
+                            // Clean spaces from the match
+                            const cleaned = prefixMatches[0].replace(/\s/g, '');
+                            if (cleaned.match(/^83510031[01]\d{8,}$/)) {
+                                noInvoice = cleaned;
+                                console.log(`[Rename Invoice Hijau] ✅ Found ANKA invoice number (Strategy 3): ${noInvoice}`);
+                            }
+                        }
+                    }
+
+                    // Log ALL numbers found for diagnostic purposes
+                    console.log(`[Rename Invoice Hijau] Searching for all numbers in text...`);
+                    const allNumbers = cleanText.match(/\d+/g);
+                    console.log(`[Rename Invoice Hijau] All numbers found: ${allNumbers ? allNumbers.join(', ') : 'NONE'}`);
+                    
+                    // Look for sequences that start with 835100310 or 835100311
+                    console.log(`[Rename Invoice Hijau] Looking for sequences starting with 835100310 or 835100311...`);
+                    const ankaMatches = cleanText.match(/835100310[0-9]*/g);
+                    const anka2Matches = cleanText.match(/835100311[0-9]*/g);
+                    if (ankaMatches) console.log(`[Rename Invoice Hijau] 835100310* sequences: ${ankaMatches.join(', ')}`);
+                    if (anka2Matches) console.log(`[Rename Invoice Hijau] 835100311* sequences: ${anka2Matches.join(', ')}`);
 
                     // If no invoice found, log and return error
                     if (!noInvoice) {
