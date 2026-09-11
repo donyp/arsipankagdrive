@@ -394,24 +394,17 @@ module.exports = (app, supabase) => {
                         console.log(`[Rename Invoice Hijau] Priority 1 (ANKA prefix 83510031X): ${priority1Number}`);
                     }
 
-                    // Pattern 2: "Invoice : XXXXXX..." or "No. Invoice: XXXXXX..."
-                    // Require explicit separator (: or =) so we don't match "No.50" from addresses
-                    let pattern2 = /Invoice\s*[:=]\s*([\d][\d\#\-\/\.]*[\d])|No\.?\s*Invoice\s*[:=]\s*([\d][\d\#\-\/\.]*[\d])/gi;
+                    // Pattern 2: Look for invoice-like numbers with special chars (# - / .)
+                    // These are more likely to be invoices than plain numbers
+                    // Common patterns: "1002101906#6015", "INV-2024-001", etc.
+                    let pattern2 = /\b([\d]{8,}[\#\-\/\.]+[\d]+)\b/gi;
                     let matches2 = cleanText.match(pattern2);
                     let priority2Number = null;
 
                     if (matches2 && matches2.length > 0) {
                         console.log(`[Rename Invoice Hijau] Pattern2 raw matches: ${matches2.join(' | ')}`);
-                        for (let match of matches2) {
-                            // Extract value after "Invoice" or "No. Invoice"
-                            const parts = match.split(/\s*[:=]\s*/i);
-                            const numberMatch = parts[parts.length - 1];
-                            if (numberMatch && numberMatch.trim().length >= 10) {
-                                priority2Number = numberMatch.trim();
-                                console.log(`[Rename Invoice Hijau] Priority 2 (Invoice:) found: ${priority2Number}`);
-                                break;
-                            }
-                        }
+                        priority2Number = matches2[0];
+                        console.log(`[Rename Invoice Hijau] Priority 2 (number with special chars): ${priority2Number}`);
                     }
 
                     // Pattern 3: Fallback - any number-like sequence with 10+ chars
@@ -431,22 +424,17 @@ module.exports = (app, supabase) => {
                         noInvoice = priority1Number;
                         console.log(`[Rename Invoice Hijau] Selected: Priority 1 (83510031x prefix) - ${noInvoice}`);
                     } else if (priority2Number) {
-                        // Pattern 2 is looking for explicit "Invoice :" or "No. Invoice :" label
-                        // These are usually the actual invoice numbers
+                        // Pattern 2 numbers with special chars are very likely to be invoices
                         noInvoice = priority2Number;
-                        console.log(`[Rename Invoice Hijau] Selected: Priority 2 (Invoice: or No. Invoice: label) - ${noInvoice}`);
-                    }
-
-                    // Fallback to Pattern 3 only if P1/P2 both failed
-                    if (!noInvoice && priority3Number) {
-                        // Pattern 3 is the longest number found - use with caution
-                        // Reject if it looks like a phone number (starts with 02 and too short)
+                        console.log(`[Rename Invoice Hijau] Selected: Priority 2 (number with # - / .) - ${noInvoice}`);
+                    } else if (priority3Number) {
+                        // Pattern 3 is fallback - reject if looks like phone number
                         const p3clean = priority3Number.replace(/[#\-\/\.]/g, '');
                         if (p3clean.startsWith('02') && p3clean.length < 15) {
                             console.log(`[Rename Invoice Hijau] Pattern 3 rejected: looks like phone number "${priority3Number}"`);
                         } else {
-                            console.log(`[Rename Invoice Hijau] Selected: Priority 3 (longest number) - ${priority3Number}`);
                             noInvoice = priority3Number;
+                            console.log(`[Rename Invoice Hijau] Selected: Priority 3 (longest number) - ${noInvoice}`);
                         }
                     }
 
