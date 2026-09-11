@@ -47,58 +47,14 @@ async function initPdfjs() {
     return pdfjs;
 }
 
-// Extract text via OCR from PDF using Tesseract.js (worker-based)
+// Extract text via OCR - simplified fallback
 async function extractTextViaOCR(pdfBuffer) {
     try {
-        console.log('[Rename Invoice Hijau] OCR: Starting Tesseract OCR...');
-        
-        const Tesseract = require('tesseract.js');
-        
-        // Since pdfjs canvas rendering is complex in Node.js, we'll use a simpler approach:
-        // Convert PDF buffer directly to base64 and let Tesseract handle it
-        // Tesseract.js can handle some PDF formats directly
-        
-        // Write PDF to temp file for Tesseract to process
-        const fs = require('fs');
-        const path = require('path');
-        const tmpDir = require('os').tmpdir();
-        const tmpFile = path.join(tmpDir, `invoice-${Date.now()}.pdf`);
-        
-        fs.writeFileSync(tmpFile, pdfBuffer);
-        console.log('[Rename Invoice Hijau] OCR: PDF written to:', tmpFile);
-        
-        try {
-            // Initialize Tesseract worker
-            console.log('[Rename Invoice Hijau] OCR: Initializing Tesseract worker...');
-            const { createWorker } = Tesseract;
-            const worker = await createWorker('ind');  // Indonesian language
-            
-            console.log('[Rename Invoice Hijau] OCR: Recognizing text from PDF...');
-            const result = await worker.recognize(tmpFile);
-            const text = result.data.text;
-            
-            console.log(`[Rename Invoice Hijau] OCR: ✅ Extracted ${text.length} characters`);
-            
-            await worker.terminate();
-            
-            // Clean up temp file
-            try { fs.unlinkSync(tmpFile); } catch (e) {}
-            
-            if (text && text.length > 50) {
-                return text;
-            } else {
-                console.warn('[Rename Invoice Hijau] OCR: Extracted text too short');
-                return null;
-            }
-            
-        } catch (ocrErr) {
-            console.error('[Rename Invoice Hijau] OCR: Tesseract processing error:', ocrErr.message);
-            try { fs.unlinkSync(tmpFile); } catch (e) {}
-            throw ocrErr;
-        }
-
+        console.log('[Rename Invoice Hijau] OCR: Tesseract.js cannot process PDFs directly');
+        console.log('[Rename Invoice Hijau] OCR: Would need system-level PDF-to-image converter');
+        return null;
     } catch (err) {
-        console.error('[Rename Invoice Hijau] OCR extraction error:', err.message, err.stack);
+        console.error('[Rename Invoice Hijau] OCR extraction error:', err.message);
         return null;
     }
 }
@@ -285,13 +241,15 @@ module.exports = (app, supabase) => {
                         console.log(`[Rename Invoice Hijau] Selected: Priority 2 - ${noInvoice}`);
                     }
 
-                    // If no invoice found, return error - but OCR should have gotten it
+                    // If no invoice found, return error with manualInput flag
                     if (!noInvoice) {
-                        console.warn('[Rename Invoice Hijau] No invoice number found even after OCR');
+                        console.warn('[Rename Invoice Hijau] No invoice number found - PDF is scanned');
                         return sendResponse(400, {
                             success: false,
-                            error: 'Nomor Invoice tidak ditemukan',
-                            details: 'Meski sudah diproses dengan OCR, nomor invoice tidak terdeteksi dalam PDF ini. File mungkin kualitas sangat rendah atau tidak memiliki informasi invoice yang jelas.'
+                            error: 'Tidak bisa ekstrak nomor invoice otomatis',
+                            details: 'File PDF hasil scan tidak memiliki teks yang dapat dibaca. Sistem memerlukan manual input untuk melanjutkan.',
+                            manualInput: true,
+                            originalFileName: fileName
                         });
                     }
 
