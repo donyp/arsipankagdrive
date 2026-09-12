@@ -16,8 +16,13 @@
     <style>
         html, body {
             zoom: 0.8;
-            /* Reserve space for scrollbar to prevent layout shift */
-            scrollbar-gutter: stable;
+            /* Compensate for zoom: scale body to 125% to fill viewport */
+            width: 125%;
+            height: 125%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            transform-origin: 0 0;
         }
 
         /* Hide sidebar initially to prevent flash */
