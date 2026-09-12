@@ -27,10 +27,13 @@
         #main-content {
             margin-left: 0;
             transition: margin-left 0.3s ease-in-out;
+            width: 100%;
+            overflow-x: hidden;
         }
 
         #main-content.with-sidebar {
             margin-left: 16rem; /* ml-64 = 16rem */
+            width: calc(100% - 16rem);
         }
 
         .invoice-table {
@@ -42,6 +45,7 @@
             width: 100%;
             margin: 0;
             box-sizing: border-box;
+            max-width: 100%;
         }
 
         .invoice-header {
