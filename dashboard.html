@@ -1213,16 +1213,17 @@
                 
                 // Calculate animation duration based on text length
                 const textLength = newText.length;
-                const duration = Math.max(12, Math.ceil((textLength / 45) * 25));
+                const duration = Math.max(20, Math.ceil((textLength / 45) * 35));
                 
-                // Update the announcement banner immediately
-                const messageElement = document.querySelector('.announcement-message');
-                if (messageElement) {
-                    // Create single message with bullet separator
-                    const message = `📢  ${newText}  •  `;
-                    messageElement.textContent = message;
-                    messageElement.style.animationDuration = duration + 's';
-                }
+                // Create single message with bullet separator (for both spans)
+                const message = `📢  ${newText}  •  `;
+                
+                // Update ALL announcement-message elements (there are 2 for seamless loop)
+                const messageElements = document.querySelectorAll('.announcement-message');
+                messageElements.forEach(element => {
+                    element.textContent = message;
+                    element.style.animationDuration = duration + 's';
+                });
                 
                 // Show success message
                 if (typeof Toast !== 'undefined') {
