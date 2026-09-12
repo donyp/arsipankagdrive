@@ -25,18 +25,12 @@
             display: none !important;
         }
 
-        /* Main content stretches full width initially, then adjusts when sidebar shows */
+        /* Main content - no sidebar for admin zona, always full width */
         #main-content {
             margin-left: 0;
-            transition: transform 0.3s ease-in-out;
             width: 100%;
             overflow-x: hidden;
-            transform: translateX(0);
-        }
-
-        #main-content.with-sidebar {
-            margin-left: 0;
-            transform: translateX(16rem);
+            transform: translateX(0) !important;
         }
 
         .invoice-table {
@@ -567,8 +561,7 @@
                     document.getElementById('user-name').textContent = 'Unknown';
                     document.getElementById('user-zona').textContent = 'Zona: -';
                     // Still show the page even without user
-                    document.getElementById('sidebar').style.display = 'block';
-                    document.getElementById('main-content').classList.add('with-sidebar');
+                    document.getElementById('sidebar').style.display = 'none';
                     return;
                 }
                 
@@ -620,8 +613,7 @@
                 }, 50);
 
                 // Show sidebar and main content now that initialization is complete
-                document.getElementById('sidebar').style.display = 'block';
-                document.getElementById('main-content').classList.add('with-sidebar');
+                document.getElementById('sidebar').style.display = 'none';
 
                 // Load all data first to populate filters
                 console.log('[AdminZona] Starting loadAllInvoices...');
@@ -638,8 +630,7 @@
             } catch (err) {
                 console.error('[AdminZona] Init error:', err);
                 // Still show the page even if there's an error
-                document.getElementById('sidebar').style.display = 'block';
-                document.getElementById('main-content').classList.add('with-sidebar');
+                document.getElementById('sidebar').style.display = 'none';
             }
         });
 
@@ -1701,12 +1692,6 @@
 
         function viewDetail(id) {
             Toast.info('Detail invoice: ' + id);
-        }
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('main-content');
-            mainContent.classList.toggle('with-sidebar');
         }
     </script>
 
