@@ -16,13 +16,8 @@
     <style>
         html, body {
             zoom: 0.8;
-            /* Compensate for zoom: scale body to 125% to fill viewport */
-            width: 125%;
-            height: 125%;
             margin: 0;
             padding: 0;
-            overflow-x: hidden;
-            transform-origin: 0 0;
         }
 
         /* Hide sidebar initially to prevent flash */
@@ -34,6 +29,7 @@
         #main-content {
             margin-left: 0;
             width: 100%;
+            min-width: 100vw;
             overflow-x: hidden;
             transform: translateX(0) !important;
         }
