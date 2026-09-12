@@ -16,6 +16,8 @@
     <style>
         html, body {
             zoom: 0.8;
+            /* Reserve space for scrollbar to prevent layout shift */
+            scrollbar-gutter: stable;
         }
 
         /* Hide sidebar initially to prevent flash */
@@ -26,14 +28,15 @@
         /* Main content stretches full width initially, then adjusts when sidebar shows */
         #main-content {
             margin-left: 0;
-            transition: margin-left 0.3s ease-in-out;
+            transition: transform 0.3s ease-in-out;
             width: 100%;
             overflow-x: hidden;
+            transform: translateX(0);
         }
 
         #main-content.with-sidebar {
-            margin-left: 16rem; /* ml-64 = 16rem */
-            width: calc(100% - 16rem);
+            margin-left: 0;
+            transform: translateX(16rem);
         }
 
         .invoice-table {
