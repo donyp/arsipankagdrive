@@ -587,6 +587,8 @@ module.exports = (app, supabase) => {
         try {
             // Extract user dari Authorization header
             const authHeader = req.headers['authorization'];
+            console.log('[Failed Rename] Auth header:', authHeader ? 'present' : 'missing');
+            
             const token = authHeader && authHeader.split(' ')[1];
             
             if (!token) {
@@ -594,18 +596,26 @@ module.exports = (app, supabase) => {
                 return res.status(401).json({ error: 'Unauthorized - missing token' });
             }
             
+            console.log('[Failed Rename] Token received, verifying...');
+            
             // Decode token untuk dapatkan user info
             let userIdFromToken = null;
             try {
                 const jwt = require('jsonwebtoken');
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+                const secret = process.env.JWT_SECRET || 'your-secret-key';
+                console.log('[Failed Rename] Using JWT secret:', secret.substring(0, 10) + '...');
+                
+                const decoded = jwt.verify(token, secret);
+                console.log('[Failed Rename] Token decoded successfully:', JSON.stringify(decoded));
                 userIdFromToken = decoded.userId || decoded.id;
             } catch (err) {
                 console.error('[Failed Rename] Token decode error:', err.message);
-                return res.status(401).json({ error: 'Invalid token' });
+                console.error('[Failed Rename] Token:', token.substring(0, 50) + '...');
+                return res.status(401).json({ error: 'Invalid token: ' + err.message });
             }
             
             if (!userIdFromToken) {
+                console.warn('[Failed Rename] No user ID in token');
                 return res.status(401).json({ error: 'Invalid token - no user ID' });
             }
 
