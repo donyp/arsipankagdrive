@@ -333,6 +333,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 clearInterval(waitForAuth);
                 console.log('[Rename Invoice Hijau] Auth ready, loading history');
                 loadLatestHistory();
+                loadFailedRenameHistory();  // Load failed history from awal
             } else if (retries >= maxRetries) {
                 clearInterval(waitForAuth);
                 console.warn('[Rename Invoice Hijau] Auth failed after', maxRetries, 'retries');
