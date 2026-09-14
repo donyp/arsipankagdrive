@@ -585,20 +585,38 @@ module.exports = (app, supabase) => {
     // ============================================
     app.get('/api/invoice/failed-rename', async (req, res) => {
         try {
-            const userId = req.user?.id;
+            // Extract user dari Authorization header
+            const authHeader = req.headers['authorization'];
+            const token = authHeader && authHeader.split(' ')[1];
             
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized - no user token' });
+            if (!token) {
+                console.warn('[Failed Rename] No token provided');
+                return res.status(401).json({ error: 'Unauthorized - missing token' });
+            }
+            
+            // Decode token untuk dapatkan user info
+            let userIdFromToken = null;
+            try {
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+                userIdFromToken = decoded.userId || decoded.id;
+            } catch (err) {
+                console.error('[Failed Rename] Token decode error:', err.message);
+                return res.status(401).json({ error: 'Invalid token' });
+            }
+            
+            if (!userIdFromToken) {
+                return res.status(401).json({ error: 'Invalid token - no user ID' });
             }
 
-            const limit = parseInt(req.query.limit) || 100; // Default 100, not 10
+            const limit = Math.min(parseInt(req.query.limit) || 100, 1000);
             
-            console.log('[Failed Rename] Fetching failed attempts for user:', userId);
+            console.log('[Failed Rename] Fetching failed attempts for user:', userIdFromToken);
 
             const { data, error } = await supabase
                 .from('failed_rename_attempts')
                 .select('*')
-                .eq('user_id', userId)
+                .eq('user_id', userIdFromToken)
                 .order('attempted_at', { ascending: false })
                 .limit(limit);
 
@@ -622,20 +640,38 @@ module.exports = (app, supabase) => {
     // ============================================
     app.get('/api/invoice/rename-history', async (req, res) => {
         try {
-            const userId = req.user?.id;
+            // Extract user dari Authorization header
+            const authHeader = req.headers['authorization'];
+            const token = authHeader && authHeader.split(' ')[1];
             
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized - no user token' });
+            if (!token) {
+                console.warn('[Rename History] No token provided');
+                return res.status(401).json({ error: 'Unauthorized - missing token' });
+            }
+            
+            // Decode token untuk dapatkan user info
+            let userIdFromToken = null;
+            try {
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+                userIdFromToken = decoded.userId || decoded.id;
+            } catch (err) {
+                console.error('[Rename History] Token decode error:', err.message);
+                return res.status(401).json({ error: 'Invalid token' });
+            }
+            
+            if (!userIdFromToken) {
+                return res.status(401).json({ error: 'Invalid token - no user ID' });
             }
 
             const limit = parseInt(req.query.limit) || 100;
             
-            console.log('[Rename History] Fetching rename history for user:', userId);
+            console.log('[Rename History] Fetching rename history for user:', userIdFromToken);
 
             const { data, error } = await supabase
                 .from('rename_history')
                 .select('*')
-                .eq('renamed_by', userId)
+                .eq('renamed_by', userIdFromToken)
                 .order('renamed_at', { ascending: false })
                 .limit(limit);
 
@@ -659,12 +695,31 @@ module.exports = (app, supabase) => {
     // ============================================
     app.delete('/api/invoice/failed-rename/:id', async (req, res) => {
         try {
-            const { id } = req.params;
-            const userId = req.user?.id;
+            // Extract user dari Authorization header
+            const authHeader = req.headers['authorization'];
+            const token = authHeader && authHeader.split(' ')[1];
             
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized - no user token' });
+            if (!token) {
+                console.warn('[Failed Rename] No token provided');
+                return res.status(401).json({ error: 'Unauthorized - missing token' });
             }
+            
+            // Decode token untuk dapatkan user info
+            let userIdFromToken = null;
+            try {
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+                userIdFromToken = decoded.userId || decoded.id;
+            } catch (err) {
+                console.error('[Failed Rename] Token decode error:', err.message);
+                return res.status(401).json({ error: 'Invalid token' });
+            }
+            
+            if (!userIdFromToken) {
+                return res.status(401).json({ error: 'Invalid token - no user ID' });
+            }
+
+            const { id } = req.params;
 
             console.log('[Failed Rename] Deleting attempt:', id);
 
@@ -672,7 +727,7 @@ module.exports = (app, supabase) => {
                 .from('failed_rename_attempts')
                 .delete()
                 .eq('id', id)
-                .eq('user_id', userId);
+                .eq('user_id', userIdFromToken);
 
             if (error) {
                 console.error('[Failed Rename] Database error:', error);
