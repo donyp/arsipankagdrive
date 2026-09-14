@@ -631,9 +631,6 @@ async function displayFailedFilesSection(failedFiles) {
                     <p class="font-mono text-sm text-gray-700 truncate">${file.originalName}</p>
                     <p class="text-xs text-red-600 mt-1"><i class="fas fa-times-circle mr-1"></i>${file.error}</p>
                 </div>
-                <button title="Download untuk rename manual" class="flex-shrink-0 px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-xs rounded transition">
-                    <i class="fas fa-info-circle"></i>
-                </button>
             </div>
         `;
         failedList.appendChild(div);
