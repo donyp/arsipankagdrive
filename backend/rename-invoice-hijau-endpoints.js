@@ -108,12 +108,12 @@ async function extractTextViaOCR(pdfBuffer) {
         const execPromise = util.promisify(exec);
         
         const options = {
-            density: 150,           // DPI for better OCR quality
+            density: 100,           // Reduced from 150 - still good for OCR, faster
             saveFilename: 'page',
             savePath: tmpDir,
             format: 'png',
-            width: 1600,            // Higher resolution for OCR accuracy
-            height: 2200,
+            width: 1200,            // Reduced from 1600 - sufficient for OCR
+            height: 1600,           // Reduced from 2200
             preserveAspectRatio: true
         };
         
@@ -124,9 +124,9 @@ async function extractTextViaOCR(pdfBuffer) {
             // pdf2pic v3.2.0 uses fromPath (not fromFilePath)
             const converter = pdf2pic.fromPath(tmpPdfFile, options);
             
-            // Convert first 3 pages
-            console.log('[Rename Invoice Hijau] OCR: Converting pages...');
-            result = await converter.bulk(-1, { start: 1, end: 3 });
+            // Convert first 2 pages - invoice biasanya di halaman 1-2
+            console.log('[Rename Invoice Hijau] OCR: Converting pages 1-2...');
+            result = await converter.bulk(-1, { start: 1, end: 2 });
             
             if (!result || result.length === 0) {
                 console.warn('[Rename Invoice Hijau] OCR: pdf2pic returned empty result');
