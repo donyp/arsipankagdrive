@@ -210,4 +210,11 @@
         inject();
     }
 
+    // Export loadSidebar function for manual sidebar loading
+    window.loadSidebar = async function(currentPage) {
+        console.log(`[Sidebar] loadSidebar called for page: ${currentPage}`);
+        inject();
+        return Promise.resolve();
+    };
+
 })();
