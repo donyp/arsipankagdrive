@@ -648,6 +648,12 @@ function authenticateToken(req, res, next) {
 
     jwt.verify(token, JWT_SECRET, (err, decoded) => {
         if (err) {
+            console.error('[AUTH] JWT verify error:', {
+                error: err.message,
+                JWT_SECRET_LENGTH: JWT_SECRET.length,
+                TOKEN_SAMPLE: token.substring(0, 50) + '...',
+                ALGO: err.header?.alg
+            });
             return res.status(403).json({ error: 'Token tidak valid atau sudah expired.' });
         }
         // --- BYPASS CONSTRAINT CHECK: Elevate to moderator dynamically ---
