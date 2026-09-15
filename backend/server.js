@@ -4103,7 +4103,7 @@ app.get('/api/sync/statuses', authenticateToken, async (req, res) => {
 
 
 
-app.get('/api/system/health', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+app.get('/api/system/health', authenticateToken, async (req, res) => {
     const queue = RcloneStorage.getSyncQueueSnapshot();
     const services = {
         backend: { healthy: true, detail: 'Backend merespons.' },
