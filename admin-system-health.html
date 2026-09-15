@@ -315,7 +315,7 @@
             try {
                 // Load health status
                 const healthResponse = await fetch('/api/system/health', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
                 });
 
                 if (!healthResponse.ok) throw new Error('Failed to get health status');
@@ -325,7 +325,7 @@
 
                 // Load metrics
                 const metricsResponse = await fetch('/api/system/metrics', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
                 });
 
                 if (!metricsResponse.ok) throw new Error('Failed to get metrics');
