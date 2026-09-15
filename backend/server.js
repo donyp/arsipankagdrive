@@ -6241,7 +6241,7 @@ app.post('/api/whatsapp/delete-invoice-message', authenticateToken, async (req, 
         const HOST = process.env.HOST || '0.0.0.0';
 
         // Register missing admin endpoints
-        app.get('/api/system/metrics', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+        app.get('/api/system/metrics', authenticateToken, async (req, res) => {
             try {
                 const queue = RcloneStorage.getSyncQueueSnapshot();
                 const { data: fileStats, error: fileError } = await supabase
@@ -6277,7 +6277,7 @@ app.post('/api/whatsapp/delete-invoice-message', authenticateToken, async (req, 
             }
         });
 
-        app.get('/api/logs/all/:limit', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+        app.get('/api/logs/all/:limit', authenticateToken, async (req, res) => {
             try {
                 const limit = Math.min(parseInt(req.params.limit) || 20, 1000);
                 return res.status(200).json({

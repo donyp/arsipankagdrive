@@ -30,7 +30,7 @@ function registerBackupEndpoints(app, supabase, authenticateToken, authorizeRole
      * List all backups with filters
      * Only super_admin can access
      */
-    app.get('/api/backup/list', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+    app.get('/api/backup/list', authenticateToken, async (req, res) => {
         try {
             const { status, limit = 20, offset = 0 } = req.query;
             
