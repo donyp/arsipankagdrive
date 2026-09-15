@@ -124,12 +124,13 @@
 
         /* Smooth loading spinner */
         .loading-spinner-custom {
-            animation: smoothSpin 2s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+            animation: smoothSpin 2s linear infinite;
         }
 
         @keyframes smoothSpin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
         /* History items */
         #recentHistoryList > div {
