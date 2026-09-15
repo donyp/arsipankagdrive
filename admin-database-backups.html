@@ -282,7 +282,7 @@
 
                 // Load stats
                 const statsResponse = await fetch('/api/backup/stats', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
                 });
 
                 if (statsResponse.ok) {
@@ -395,7 +395,7 @@
             try {
                 const response = await fetch(`/api/backup/verify/${backupId}`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
                 });
 
                 if (!response.ok) throw new Error('Failed to verify backup');
@@ -414,7 +414,7 @@
         async function viewDetails(backupId) {
             try {
                 const response = await fetch(`/api/backup/info/${backupId}`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
                 });
 
                 if (!response.ok) throw new Error('Failed to load backup details');

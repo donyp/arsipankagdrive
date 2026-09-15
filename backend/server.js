@@ -9,6 +9,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { spawn } = require('child_process');
 const { createClient } = require('@supabase/supabase-js');
 const WebSocket = require('ws');
@@ -4131,10 +4132,47 @@ app.get('/api/system/health', authenticateToken, async (req, res) => {
     } catch (err) {
         services.backupStorage = { healthy: false, detail: err.message };
     }
-    const healthy = Object.values(services).every(service => service.healthy);
-    // Keep the diagnostic payload readable by the UI even when one service is
-    // degraded; the page itself presents the overall unhealthy state.
-    res.status(200).json({ healthy, checkedAt: new Date().toISOString(), services, queue: queue.summary });
+    
+    const allHealthy = Object.values(services).every(service => service.healthy);
+    const health = {
+        timestamp: new Date().toISOString(),
+        status: allHealthy ? 'healthy' : 'warning',
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'development',
+        nodeVersion: process.version,
+        platform: process.platform,
+        memory: {
+            total: os.totalmem(),
+            free: os.freemem(),
+            used: os.totalmem() - os.freemem(),
+            percentUsed: Math.round(((os.totalmem() - os.freemem()) / os.totalmem()) * 100)
+        },
+        cpu: {
+            cores: os.cpus().length,
+            model: os.cpus()[0]?.model || 'Unknown',
+            loadAverage: os.loadavg()
+        },
+        disk: {
+            path: process.env.LOG_PATH || '/app/logs',
+            logStats: logger.getStats()
+        },
+        database: {
+            status: services.database.healthy ? 'connected' : 'disconnected',
+            lastCheck: new Date().toISOString()
+        },
+        warnings: []
+    };
+    
+    if (health.memory.percentUsed > 80) {
+        health.warnings.push('High memory usage');
+        health.status = 'warning';
+    }
+    if (health.cpu.loadAverage[0] > os.cpus().length * 2) {
+        health.warnings.push('High CPU load');
+        health.status = 'warning';
+    }
+    
+    res.status(200).json({ success: true, health });
 });
 
 // GET /api/system/maintenance â€” Get current system status (Public, no auth required)
@@ -6242,29 +6280,27 @@ app.post('/api/whatsapp/delete-invoice-message', authenticateToken, async (req, 
         // Register missing admin endpoints
         app.get('/api/system/metrics', authenticateToken, async (req, res) => {
             try {
-                const queue = RcloneStorage.getSyncQueueSnapshot();
-                const { data: fileStats, error: fileError } = await supabase
-                    .from('files')
-                    .select('status, size_bytes');
-
-                let totalFiles = 0;
-                let totalSize = 0;
-                if (!fileError && fileStats) {
-                    totalFiles = fileStats.length;
-                    totalSize = fileStats.reduce((sum, f) => sum + (f.size_bytes || 0), 0);
-                }
+                const metrics = {
+                    timestamp: new Date().toISOString(),
+                    process: {
+                        uptime: process.uptime(),
+                        pid: process.pid,
+                        memory: process.memoryUsage(),
+                        cpuUsage: process.cpuUsage()
+                    },
+                    system: {
+                        uptime: os.uptime(),
+                        loadAverage: os.loadavg(),
+                        totalMemory: os.totalmem(),
+                        freeMemory: os.freemem(),
+                        cpus: os.cpus().length
+                    },
+                    logging: logger.getStats()
+                };
 
                 return res.status(200).json({
                     success: true,
-                    timestamp: new Date().toISOString(),
-                    metrics: {
-                        syncQueue: queue.summary,
-                        storage: {
-                            totalFiles,
-                            totalSizeBytes: totalSize,
-                            totalSizeGB: (totalSize / (1024 * 1024 * 1024)).toFixed(2)
-                        }
-                    }
+                    metrics
                 });
             } catch (err) {
                 console.error('[METRICS] Error:', err);
