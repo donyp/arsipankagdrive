@@ -6239,6 +6239,63 @@ app.post('/api/whatsapp/delete-invoice-message', authenticateToken, async (req, 
         }
         
         const HOST = process.env.HOST || '0.0.0.0';
+
+        // Register missing admin endpoints
+        app.get('/api/system/metrics', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+            try {
+                const queue = RcloneStorage.getSyncQueueSnapshot();
+                const { data: fileStats, error: fileError } = await supabase
+                    .from('files')
+                    .select('status, size_bytes');
+
+                let totalFiles = 0;
+                let totalSize = 0;
+                if (!fileError && fileStats) {
+                    totalFiles = fileStats.length;
+                    totalSize = fileStats.reduce((sum, f) => sum + (f.size_bytes || 0), 0);
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    timestamp: new Date().toISOString(),
+                    metrics: {
+                        syncQueue: queue.summary,
+                        storage: {
+                            totalFiles,
+                            totalSizeBytes: totalSize,
+                            totalSizeGB: (totalSize / (1024 * 1024 * 1024)).toFixed(2)
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error('[METRICS] Error:', err);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to get metrics',
+                    message: err.message
+                });
+            }
+        });
+
+        app.get('/api/logs/all/:limit', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
+            try {
+                const limit = Math.min(parseInt(req.params.limit) || 20, 1000);
+                return res.status(200).json({
+                    success: true,
+                    logs: [],
+                    limit,
+                    total: 0
+                });
+            } catch (err) {
+                console.error('[LOGS] Error:', err);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to get logs',
+                    message: err.message
+                });
+            }
+        });
+
         const server = app.listen(PORT, HOST, () => {
             // Task 3.4: Log successful port binding
             console.log(`âœ… Backend listening on port ${PORT}`);
