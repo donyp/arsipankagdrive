@@ -603,8 +603,7 @@ if (ENABLE_CHUNKED_UPLOAD) {
 }
 
 // JWT Secret
-const JWT_SECRET = process.env.JWT_SECRET || 'change-this-to-a-very-long-random-string';
-const JWT_EXPIRES_IN = '8h';
+const JWT_SECRET = process.env.JWT_SECRET || '12d3f1aa32abfc3ff4c19da3ad692a898bc7163bc38dbdeec715e24b295b00d5';const JWT_EXPIRES_IN = '8h';
 
 // Maintenance Mode Helper (Persistent via Supabase + Fallback File)
 // Task 3.5: Improved async error handling with comprehensive logging
