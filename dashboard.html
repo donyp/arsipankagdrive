@@ -430,21 +430,28 @@
         }
 
         .loading-spinner i {
-            font-size: 48px;
-            color: #3498db;
-            animation: spinSmooth 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
-            display: inline-block;
+            display: none;
         }
 
-        @keyframes spinSmooth {
+        .loading-spinner::after {
+            content: '';
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle at 30% 30%, #3498db, #2980b9);
+            border-radius: 50%;
+            animation: loadingPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes loadingPulse {
             0% { 
-                transform: rotate(0deg) scale(1);
+                box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.7);
             }
             50% { 
-                transform: rotate(180deg) scale(1.05);
+                box-shadow: 0 0 0 15px rgba(52, 152, 219, 0);
             }
             100% { 
-                transform: rotate(360deg) scale(1);
+                box-shadow: 0 0 0 0 rgba(52, 152, 219, 0);
             }
         }
 
