@@ -36,7 +36,7 @@ function registerBackupEndpoints(app, supabase, authenticateToken, authorizeRole
             
             let query = supabase
                 .from('database_backups')
-                .select('*, initiated_by:users(name, email)', { count: 'exact' })
+                .select('*, users!database_backups_initiated_by_fkey(name, email)', { count: 'exact' })
                 .order('backup_timestamp', { ascending: false })
                 .range(offset, offset + limit - 1);
 
