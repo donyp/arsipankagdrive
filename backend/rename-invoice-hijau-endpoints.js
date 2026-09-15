@@ -108,12 +108,12 @@ async function extractTextViaOCR(pdfBuffer) {
         const execPromise = util.promisify(exec);
         
         const options = {
-            density: 100,           // Reduced from 150 - still good for OCR, faster
+            density: 80,            // Lower DPI = faster, still readable for invoice
             saveFilename: 'page',
             savePath: tmpDir,
             format: 'png',
-            width: 1200,            // Reduced from 1600 - sufficient for OCR
-            height: 1600,           // Reduced from 2200
+            width: 900,             // Reduced - still sufficient for invoice numbers
+            height: 1200,           // Reduced
             preserveAspectRatio: true
         };
         
@@ -124,9 +124,9 @@ async function extractTextViaOCR(pdfBuffer) {
             // pdf2pic v3.2.0 uses fromPath (not fromFilePath)
             const converter = pdf2pic.fromPath(tmpPdfFile, options);
             
-            // Convert first 2 pages - invoice biasanya di halaman 1-2
-            console.log('[Rename Invoice Hijau] OCR: Converting pages 1-2...');
-            result = await converter.bulk(-1, { start: 1, end: 2 });
+            // Convert first page ONLY - invoice number biasanya di halaman 1
+            console.log('[Rename Invoice Hijau] OCR: Converting first page only...');
+            result = await converter.bulk(-1, { start: 1, end: 1 });
             
             if (!result || result.length === 0) {
                 console.warn('[Rename Invoice Hijau] OCR: pdf2pic returned empty result');
@@ -602,7 +602,7 @@ module.exports = (app, supabase) => {
             let userIdFromToken = null;
             try {
                 const jwt = require('jsonwebtoken');
-                const secret = process.env.JWT_SECRET || 'your-secret-key';
+                const secret = process.env.JWT_SECRET || 'change-this-to-a-very-long-random-string';
                 console.log('[Failed Rename] Using JWT secret:', secret.substring(0, 10) + '...');
                 
                 const decoded = jwt.verify(token, secret);
@@ -663,7 +663,7 @@ module.exports = (app, supabase) => {
             let userIdFromToken = null;
             try {
                 const jwt = require('jsonwebtoken');
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'change-this-to-a-very-long-random-string');
                 userIdFromToken = decoded.userId || decoded.id;
             } catch (err) {
                 console.error('[Rename History] Token decode error:', err.message);
@@ -718,7 +718,7 @@ module.exports = (app, supabase) => {
             let userIdFromToken = null;
             try {
                 const jwt = require('jsonwebtoken');
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'change-this-to-a-very-long-random-string');
                 userIdFromToken = decoded.userId || decoded.id;
             } catch (err) {
                 console.error('[Failed Rename] Token decode error:', err.message);
