@@ -122,6 +122,15 @@
             animation: scaleIn 0.3s ease;
         }
 
+        /* Smooth loading spinner */
+        .loading-spinner-custom {
+            animation: smoothSpin 2s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+        }
+
+        @keyframes smoothSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+
         /* History items */
         #recentHistoryList > div {
             animation: slideIn 0.3s ease;
@@ -206,7 +215,7 @@
                     <div class="bg-white rounded-xl p-8 shadow-2xl max-w-md w-full mx-4" style="min-height: 200px; display: flex; flex-direction: column; justify-content: center;">
                         <div class="text-center mb-6">
                             <div class="inline-block">
-                                <div class="w-12 h-12 rounded-full border-4 border-green-200 border-t-green-600 animate-spin mx-auto mb-4"></div>
+                                <div class="w-12 h-12 rounded-full border-4 border-green-200 border-t-green-600 loading-spinner-custom mx-auto mb-4"></div>
                             </div>
                             <h3 class="text-lg font-bold text-gray-800">Memproses File...</h3>
                         </div>
