@@ -426,17 +426,26 @@
             padding: 30px;
             border-radius: 12px;
             text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
         .loading-spinner i {
             font-size: 48px;
             color: #3498db;
-            animation: spin 1s linear infinite;
+            animation: spinSmooth 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+            display: inline-block;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes spinSmooth {
+            0% { 
+                transform: rotate(0deg) scale(1);
+            }
+            50% { 
+                transform: rotate(180deg) scale(1.05);
+            }
+            100% { 
+                transform: rotate(360deg) scale(1);
+            }
         }
 
         /* Broadcast Banner */
