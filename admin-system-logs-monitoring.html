@@ -366,6 +366,7 @@
                 if (!response.ok) throw new Error('Failed to load health status');
 
                 const data = await response.json();
+                console.log('[DEBUG] Health response:', JSON.stringify(data, null, 2));
                 const health = data.health;
 
                 // Update status indicator
@@ -420,6 +421,7 @@
                 if (!response.ok) throw new Error('Failed to load metrics');
 
                 const data = await response.json();
+                console.log('[DEBUG] Metrics response:', JSON.stringify(data, null, 2));
                 const metrics = data.metrics;
                 const system = metrics.system;
                 const proc = metrics.process;
