@@ -30,7 +30,7 @@ function registerBackupEndpoints(app, supabase, authenticateToken, authorizeRole
      * List all backups with filters
      * Only super_admin can access
      */
-    app.get('/api/backup/list', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
+    app.get('/api/backup/list', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
         try {
             const { status, limit = 20, offset = 0 } = req.query;
             
@@ -70,7 +70,7 @@ function registerBackupEndpoints(app, supabase, authenticateToken, authorizeRole
      * Create a new manual backup
      * Only super_admin can initiate
      */
-    app.post('/api/backup/create', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
+    app.post('/api/backup/create', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
         try {
             const { notes } = req.body;
             const backupName = `backup-${getCurrentTimestamp()}`;
@@ -123,7 +123,7 @@ function registerBackupEndpoints(app, supabase, authenticateToken, authorizeRole
      * Verify backup integrity
      * Only super_admin can verify
      */
-    app.post('/api/backup/verify/:backupId', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
+    app.post('/api/backup/verify/:backupId', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
         try {
             const { backupId } = req.params;
 
@@ -166,7 +166,7 @@ function registerBackupEndpoints(app, supabase, authenticateToken, authorizeRole
      * GET /api/backup/info/:backupId
      * Get detailed backup information
      */
-    app.get('/api/backup/info/:backupId', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
+    app.get('/api/backup/info/:backupId', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
         try {
             const { backupId } = req.params;
 
@@ -216,7 +216,7 @@ function registerBackupEndpoints(app, supabase, authenticateToken, authorizeRole
      * Requires confirmation and super_admin role
      * DANGEROUS - should trigger audit alert
      */
-    app.post('/api/backup/restore/:backupId', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
+    app.post('/api/backup/restore/:backupId', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
         try {
             const { backupId } = req.params;
             const { confirmationCode } = req.body;
@@ -273,7 +273,7 @@ function registerBackupEndpoints(app, supabase, authenticateToken, authorizeRole
      * Delete old backup
      * Only super_admin can delete
      */
-    app.delete('/api/backup/delete/:backupId', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
+    app.delete('/api/backup/delete/:backupId', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
         try {
             const { backupId } = req.params;
             const { reason } = req.body;
@@ -329,7 +329,7 @@ function registerBackupEndpoints(app, supabase, authenticateToken, authorizeRole
      * GET /api/backup/stats
      * Get backup statistics and summary
      */
-    app.get('/api/backup/stats', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
+    app.get('/api/backup/stats', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
         try {
             // Get all backups for stats
             const { data: backups, error } = await supabase
@@ -369,7 +369,7 @@ function registerBackupEndpoints(app, supabase, authenticateToken, authorizeRole
      * Remove old backups based on retention policy
      * Only super_admin can execute
      */
-    app.post('/api/backup/cleanup', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
+    app.post('/api/backup/cleanup', authenticateToken, authorizeRole('super_admin', 'moderator'), async (req, res) => {
         try {
             const retentionCount = Number(process.env.BACKUP_RETENTION_COUNT) || 30;
 
