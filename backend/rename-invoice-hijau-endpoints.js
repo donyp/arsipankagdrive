@@ -124,9 +124,9 @@ async function extractTextViaOCR(pdfBuffer) {
             // pdf2pic v3.2.0 uses fromPath (not fromFilePath)
             const converter = pdf2pic.fromPath(tmpPdfFile, options);
             
-            // Convert first page ONLY - invoice number biasanya di halaman 1
-            console.log('[Rename Invoice Hijau] OCR: Converting first page only...');
-            result = await converter.bulk(-1, { start: 1, end: 1 });
+            // Convert pages 1-2 only - invoice number usually on page 1-2
+            console.log('[Rename Invoice Hijau] OCR: Converting pages 1-2...');
+            result = await converter.bulk(-1, { start: 1, end: 2 });
             
             if (!result || result.length === 0) {
                 console.warn('[Rename Invoice Hijau] OCR: pdf2pic returned empty result');
@@ -136,7 +136,7 @@ async function extractTextViaOCR(pdfBuffer) {
             imagePaths = result.map(r => r.path);
             console.log(`[Rename Invoice Hijau] OCR: ✅ Converted ${imagePaths.length} pages to images`);
             
-            // Verify image files exist and apply enhancement for low-quality images
+            // Verify image files exist
             for (let i = 0; i < imagePaths.length; i++) {
                 if (!fs.existsSync(imagePaths[i])) {
                     console.warn(`[Rename Invoice Hijau] OCR: Image file ${i + 1} not found: ${imagePaths[i]}`);
@@ -145,41 +145,6 @@ async function extractTextViaOCR(pdfBuffer) {
                 } else {
                     const stats = fs.statSync(imagePaths[i]);
                     console.log(`[Rename Invoice Hijau] OCR: Image ${i + 1} exists, size: ${stats.size} bytes`);
-                    
-                    // Enhance image for better OCR - especially for low-quality/faded scans
-                    try {
-                        console.log(`[Rename Invoice Hijau] OCR: Enhancing image ${i + 1} for better OCR...`);
-                        
-                        // Use ImageMagick/GraphicsMagick to enhance the image:
-                        // -normalize: enhance contrast
-                        // -threshold: convert to B&W for clarity
-                        // -scale 200%: upscale 2x for better OCR
-                        // -despeckle: remove noise
-                        const enhancedPath = imagePaths[i].replace('.png', '-enhanced.png');
-                        
-                        const enhanceCmd = `convert "${imagePaths[i]}" \\
-                          -normalize \\
-                          -enhance \\
-                          -sharpen 0x1 \\
-                          -scale 200% \\
-                          -colorspace Gray \\
-                          -brightness-contrast 10x20 \\
-                          "${enhancedPath}"`;
-                        
-                        const { stdout, stderr } = await execPromise(enhanceCmd);
-                        
-                        if (fs.existsSync(enhancedPath)) {
-                            console.log(`[Rename Invoice Hijau] OCR: Image ${i + 1} enhanced successfully`);
-                            // Use enhanced image instead
-                            imagePaths[i] = enhancedPath;
-                        } else {
-                            console.warn(`[Rename Invoice Hijau] OCR: Enhancement failed for image ${i + 1}, using original`);
-                        }
-                        
-                    } catch (enhanceErr) {
-                        console.warn(`[Rename Invoice Hijau] OCR: Image enhancement failed (continuing with original): ${enhanceErr.message}`);
-                        // Continue with original image if enhancement fails
-                    }
                 }
             }
             
