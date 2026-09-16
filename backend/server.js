@@ -10,6 +10,8 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const http = require('http');
+const https = require('https');
 const { spawn } = require('child_process');
 const { createClient } = require('@supabase/supabase-js');
 const WebSocket = require('ws');
@@ -71,7 +73,21 @@ initializeSecretManager();
 const app = express();
 const DEFAULT_PORT = 5000;
 const port = Number(process.env.PORT) || DEFAULT_PORT;
-const BACKUP_DIR = path.join(__dirname, '..', 'data', 'backups');
+
+// ============================================================
+// HTTP Agent Configuration - Increase connection pool limits
+// Default Node.js limit is 6 connections per host, which causes
+// batch operations (25+ files) to timeout around file 10-15
+// ============================================================
+http.globalAgent.maxSockets = 100;
+http.globalAgent.maxFreeSockets = 10;
+http.globalAgent.keepAliveTimeout = 30000;
+
+https.globalAgent.maxSockets = 100;
+https.globalAgent.maxFreeSockets = 10;
+https.globalAgent.keepAliveTimeout = 30000;
+
+console.log('[CONFIG] HTTP Agent: maxSockets=100, maxFreeSockets=10, keepAliveTimeout=30s');
 const BACKUP_RETENTION_COUNT = Math.max(1, Number(process.env.BACKUP_RETENTION_COUNT) || 30);
 
 console.log('================================================');
@@ -126,6 +142,22 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ============================================================
+// Request Timeout Middleware - Prevent hanging requests
+// from monopolizing connections during batch processing
+// ============================================================
+app.use((req, res, next) => {
+    // Set timeout to 60 seconds for normal requests, 120 seconds for batch operations
+    const timeout = req.path.includes('/api/invoice/rename') ? 120000 : 60000;
+    req.setTimeout(timeout, () => {
+        console.error(`[TIMEOUT] Request to ${req.method} ${req.path} exceeded ${timeout}ms`);
+        if (!res.headersSent) {
+            res.status(408).json({ error: 'Request timeout' });
+        }
+    });
+    next();
+});
 
 // ============================================================
 // SECURITY: HTTP Security Headers Middleware
