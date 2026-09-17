@@ -86,16 +86,21 @@
         async function loadMessages() {
             try {
                 const [msgs, invoiceMsgs] = await Promise.all([
-                    API.get('/api/whatsapp/pending-messages'),
-                    API.get('/api/whatsapp/pending-invoice-messages')
+                    API.get('/api/whatsapp/pending-messages').catch(() => ({})),
+                    API.get('/api/whatsapp/pending-invoice-messages').catch(() => ({}))
                 ]);
                 
-                currentMessages = msgs.notifications || [];
-                currentInvoiceMessages = invoiceMsgs.notifications || [];
+                // Handle both array and object formats
+                currentMessages = Array.isArray(msgs) ? msgs : (msgs.notifications || msgs || []);
+                currentInvoiceMessages = Array.isArray(invoiceMsgs) ? invoiceMsgs : (invoiceMsgs.notifications || invoiceMsgs || []);
+                
+                // Ensure they're arrays
+                if (!Array.isArray(currentMessages)) currentMessages = [];
+                if (!Array.isArray(currentInvoiceMessages)) currentInvoiceMessages = [];
                 
                 // Update stats
-                const totalSent = currentMessages.filter(m => m.sent_at).length;
-                const totalPending = currentMessages.filter(m => !m.sent_at).length;
+                const totalSent = currentMessages.filter(m => m && m.sent_at).length;
+                const totalPending = currentMessages.filter(m => m && !m.sent_at).length;
                 
                 document.getElementById('stat-total-messages').textContent = currentMessages.length;
                 document.getElementById('stat-sent-messages').textContent = totalSent;
@@ -105,7 +110,9 @@
                 renderMessages();
             } catch (err) {
                 console.error('Error loading messages:', err);
-                alert('Error: ' + err.message);
+                // Show empty state instead of alert
+                document.getElementById('messages-body').innerHTML = '<div class="px-6 py-8 text-center text-gray-500">Gagal memuat pesan</div>';
+                document.getElementById('invoice-messages-body').innerHTML = '<div class="px-6 py-8 text-center text-gray-500">Gagal memuat pesan</div>';
             }
         }
 
