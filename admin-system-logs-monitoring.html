@@ -299,6 +299,7 @@
     <div id="toast" class="fixed bottom-6 right-6 max-w-sm z-50"></div>
 
     <script src="js/sidebar.js"></script>
+    <script src="js/auth.js"></script>
     <script>
         let currentAllLogs = [];
         let autoRefreshInterval = null;
@@ -307,6 +308,26 @@
         // Initialize Page
         // ============================================================
         document.addEventListener('DOMContentLoaded', async () => {
+            // Check authentication and authorization
+            const user = await initAuth();
+            
+            if (!user) {
+                // Not authenticated - redirect to login
+                window.location.href = '/index.html';
+                return;
+            }
+            
+            // Check role - only moderator and super_admin allowed
+            const isAllowed = user.role === 'super_admin' || user.role === 'moderator';
+            if (!isAllowed) {
+                // Not authorized - redirect to dashboard
+                showToast('Access denied. Only moderators and super admins can view logs.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 2000);
+                return;
+            }
+
             await loadSidebar('admin-system-logs-monitoring.html');
             await refreshAllData();
             
