@@ -81,7 +81,7 @@ function handleFileSelected(file) {
     // Show file info
     document.getElementById('fileName').textContent = file.name;
     document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
-    document.getElementById('fileInfo').classList.add('show');
+    document.getElementById('fileInfo').style.display = 'block';
 
     // Enable check button
     document.getElementById('btnCheck').disabled = false;
@@ -93,7 +93,7 @@ async function checkData() {
     console.log('[Upload] Checking data...');
     document.getElementById('card1').style.display = 'none';
     document.getElementById('card2').style.display = 'block';
-    document.getElementById('loadingValidation').classList.add('show');
+    document.getElementById('loadingValidation').style.display = 'block';
     updateStep(2);
 
     try {
@@ -189,8 +189,8 @@ async function checkData() {
         // Show validation results
         document.getElementById('totalRows').textContent = parsed.length;
         document.getElementById('uniqueFakturs').textContent = parsedData.length;
-        document.getElementById('loadingValidation').classList.remove('show');
-        document.getElementById('validationResult').classList.add('show');
+        document.getElementById('loadingValidation').style.display = 'none';
+        document.getElementById('validationResult').style.display = 'block';
 
     } catch (error) {
         console.error('[Upload] Error:', error);
