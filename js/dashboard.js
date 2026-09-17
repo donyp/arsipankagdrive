@@ -404,7 +404,18 @@ function setCurrentDate() {
         });
     }
 
-    // 4. Auto-fill filter-date-end to today
+    // 4. Current Time Display (for new greeting card)
+    const currentTimeEl = document.getElementById('current-time');
+    if (currentTimeEl) {
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        currentTimeEl.textContent = `${hours}:${minutes}`;
+        
+        // Update every minute
+        setTimeout(setCurrentDate, 60000);
+    }
+
+    // 5. Auto-fill filter-date-end to today
     const endDate = document.getElementById('filter-date-end');
     if (endDate) {
         endDate.value = now.toISOString().split('T')[0];
