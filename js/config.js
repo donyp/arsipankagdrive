@@ -4,10 +4,10 @@
 
 const CONFIG = {
     // Backend API URL
-    // For production (Railway/Replit): use empty string for relative URLs (same domain)
+    // For production (Railway/Replit/Custom Domain): use empty string for relative URLs (same domain)
     // For local development: use http://localhost:5000
-    // Detect environment: if URL contains railway.app or replit, use relative
-    API_URL: (typeof window !== 'undefined' && (window.location.hostname.includes('railway') || window.location.hostname.includes('replit'))) 
+    // Detect environment: if URL is not localhost/127.0.0.1, use relative URL
+    API_URL: (typeof window !== 'undefined' && !window.location.hostname.match(/^(localhost|127\.0\.0\.1)$/)) 
         ? '' 
         : 'http://localhost:5000',
 
