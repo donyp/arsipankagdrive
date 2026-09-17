@@ -858,28 +858,28 @@
                                 }
                             </style>
 
-                            <div style="margin-bottom: 24px; display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
-                                <!-- Search Bar (Left) -->
-                                <div style="flex: 1; min-width: 250px;">
+                            <div style="margin-bottom: 24px; background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                <!-- Row 1: Search Bar -->
+                                <div style="margin-bottom: 12px;">
                                     <input type="text" id="filterSearch" placeholder="Cari faktur, nomor, atau kategori..." style="width: 100%; padding: 11px 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; transition: all 0.2s; font-weight: 500;">
                                 </div>
 
-                                <!-- Filter Dropdowns (Right) -->
-                                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                                <!-- Row 2: Filter Dropdowns -->
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px;">
                                     <!-- Status filter -->
                                     <div style="display: flex; flex-direction: column;">
-                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Filter Status</label>
-                                        <select id="filterStatus" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; min-width: 140px; font-weight: 500; color: #2c3e50;">
+                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Status Bayar</label>
+                                        <select id="filterStatus" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; font-weight: 500; color: #2c3e50;">
                                             <option value="">Semua Status</option>
                                             <option value="Belum Lunas">Belum Lunas</option>
                                             <option value="Lunas">Lunas</option>
                                         </select>
                                     </div>
                                     
-                                    <!-- Keterangan filter -->
+                                    <!-- Kategori filter -->
                                     <div style="display: flex; flex-direction: column;">
                                         <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Kategori</label>
-                                        <select id="filterKeterangan" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; min-width: 140px; font-weight: 500; color: #2c3e50;">
+                                        <select id="filterKeterangan" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; font-weight: 500; color: #2c3e50;">
                                             <option value="">Semua</option>
                                             <option value="PPN">PPN</option>
                                             <option value="NON PPN">NON PPN</option>
@@ -887,14 +887,35 @@
                                         </select>
                                     </div>
                                     
-                                    <!-- Tampilkan dropdown -->
+                                    <!-- Toko filter -->
                                     <div style="display: flex; flex-direction: column;">
-                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Tampilkan</label>
-                                        <select style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; min-width: 100px; font-weight: 500; color: #2c3e50;">
-                                            <option>10</option>
-                                            <option>20</option>
-                                            <option>50</option>
+                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Toko</label>
+                                        <select id="filterToko" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; font-weight: 500; color: #2c3e50;">
+                                            <option value="">Semua Toko</option>
+                                            <option value="Anka Pemalang">Anka Pemalang</option>
+                                            <option value="Anka Bekasi">Anka Bekasi</option>
                                         </select>
+                                    </div>
+
+                                    <!-- Tahun filter -->
+                                    <div style="display: flex; flex-direction: column;">
+                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Tahun</label>
+                                        <select id="filterYear" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; font-weight: 500; color: #2c3e50;">
+                                            <option value="">Semua Tahun</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Bulan filter -->
+                                    <div style="display: flex; flex-direction: column;">
+                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Bulan</label>
+                                        <select id="filterMonth" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; font-weight: 500; color: #2c3e50;">
+                                            <option value="">Semua Bulan</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Reset button -->
+                                    <div style="display: flex; flex-direction: column; justify-content: flex-end;">
+                                        <button onclick="resetInvoiceFilters()" style="background: #ef4444; color: white; border: none; padding: 10px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#dc2626'" onmouseout="this.style.backgroundColor='#ef4444'">Reset</button>
                                     </div>
                                 </div>
                             </div>

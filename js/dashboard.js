@@ -1986,7 +1986,7 @@ function setupEventListeners() {
     });
     
     // Invoice filters - Enter key support for regular dashboard (moderator/super_admin)
-    const invoiceFilterInputs = ['filterStatus', 'filterKeterangan', 'filterYear', 'filterMonth', 'filterSearch'];
+    const invoiceFilterInputs = ['filterStatus', 'filterKeterangan', 'filterYear', 'filterMonth', 'filterSearch', 'filterToko'];
     const handleInvoiceFilterEnter = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -1997,6 +1997,10 @@ function setupEventListeners() {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('keydown', handleInvoiceFilterEnter);
+            // Also add change event for select dropdowns (triggers immediately on selection)
+            if (el.tagName === 'SELECT') {
+                el.addEventListener('change', applyInvoiceFilters);
+            }
         }
     });
     
