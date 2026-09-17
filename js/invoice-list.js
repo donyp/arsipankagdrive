@@ -390,7 +390,7 @@ function renderInvoiceTable(invoices = null) {
     }
     
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: #7f8c8d;">Belum ada data invoice</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: #6b7280; font-size: 14px;">Belum ada data invoice</td></tr>';
         return;
     }
     
@@ -408,19 +408,23 @@ function renderInvoiceTable(invoices = null) {
         const statusDisplay = `${filesUploaded}/${filesRequired}`;
         const isComplete = filesUploaded >= filesRequired;
         
-        // Status color based on progress
-        let statusBgColor, statusClass;
+        // Status color and dot based on progress
+        let statusDotColor, statusTextColor, statusClass;
         if (isComplete) {
-            statusBgColor = '#d4edda'; // Green - complete
+            statusDotColor = '#10b981'; // Green - complete
+            statusTextColor = '#059669';
             statusClass = 'uploaded';
-        } else if (filesUploaded > 0 && filesUploaded === requiredFiles - 1) {
-            statusBgColor = '#ffe8cc'; // Orange - almost complete (1 file left)
+        } else if (filesUploaded > 0 && filesUploaded === filesRequired - 1) {
+            statusDotColor = '#f59e0b'; // Orange - almost complete (1 file left)
+            statusTextColor = '#d97706';
             statusClass = 'almost-complete';
         } else if (filesUploaded > 0) {
-            statusBgColor = '#fff3cd'; // Yellow - partial
+            statusDotColor = '#eab308'; // Yellow - partial
+            statusTextColor = '#ca8a04';
             statusClass = 'partial';
         } else {
-            statusBgColor = '#f8d7da'; // Red - no files uploaded
+            statusDotColor = '#ef4444'; // Red - no files uploaded
+            statusTextColor = '#dc2626';
             statusClass = 'pending';
         }
         
@@ -453,39 +457,40 @@ function renderInvoiceTable(invoices = null) {
         // Combine button if complete
         if (isComplete) {
             actionButtons = `
-                <div style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; align-items: center;">
-                    ${downloadButtons.length > 0 ? `<button onclick="showInvoiceDownloadMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">⋮</button>` : ''}
-                    <button class="btn-combine" onclick="combinePDF('${inv.faktur}')" title="Combine & Download All">📦 Combine</button>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                    ${downloadButtons.length > 0 ? `<button onclick="showInvoiceDownloadMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #6b7280; font-size: 18px; padding: 6px 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.color='#374151';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#6b7280';" title="Aksi">⋮</button>` : ''}
+                    <button class="btn-combine" onclick="combinePDF('${inv.faktur}')" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#2563eb'" onmouseout="this.style.backgroundColor='#3b82f6'" title="Combine & Download All">📦 Combine</button>
                 </div>
             `;
         } else if (downloadButtons.length > 0) {
             // Show three-dots menu for download buttons
             actionButtons = `
-                <div style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: center;">
-                    <button onclick="showInvoiceDownloadMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 20px; padding: 8px 12px; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'; this.style.color='#2c3e50';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#7f8c8d';" title="Aksi">⋮</button>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;">
+                    <button onclick="showInvoiceDownloadMenu('${inv.faktur}', '${inv.id}')" style="background: none; border: none; cursor: pointer; color: #6b7280; font-size: 18px; padding: 6px 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.color='#374151';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#6b7280';" title="Aksi">⋮</button>
                 </div>
             `;
         } else {
             // Show upload button
-            actionButtons = `<button class="btn-upload-pdf" onclick="openPdfUploadModal('${inv.faktur}')">Upload PDF</button>`;
+            actionButtons = `<button class="btn-upload-pdf" onclick="openPdfUploadModal('${inv.faktur}')" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#059669'" onmouseout="this.style.backgroundColor='#10b981'">Upload PDF</button>`;
         }
         
         return `
-        <tr>
-            <td style="font-size: 15px !important; font-weight: 900 !important;">
-                <span style="color: #000000 !important; background-color: ${statusBgColor} !important; padding: 6px 12px !important; border-radius: 4px !important; display: inline-block !important; margin: 0 !important;">
-                    ${statusDisplay}
-                </span>
+        <tr style="border-bottom: 1px solid #e5e7eb; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='white'">
+            <td style="padding: 12px 16px; font-size: 13px; font-weight: 600;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: ${statusDotColor}; display: inline-block;"></span>
+                    <span style="color: ${statusTextColor};">${statusDisplay}</span>
+                </div>
             </td>
-            <td>${formattedDate}</td>
-            <td><strong>${inv.faktur || '-'}</strong></td>
-            <td>${inv.metode_bayar || '-'}</td>
-            <td>${capitalizedTipe}</td>
-            <td>${konsumenText}</td>
-            <td>${tokoText}</td>
-            <td>${formatCurrency(inv.total_jumlah_jual)}</td>
-            <td>${inv.keterangan || '-'}</td>
-            <td>
+            <td style="padding: 12px 16px; font-size: 13px; color: #374151;">${formattedDate}</td>
+            <td style="padding: 12px 16px; font-size: 13px; font-weight: 600; color: #1f2937;"><strong>${inv.faktur || '-'}</strong></td>
+            <td style="padding: 12px 16px; font-size: 13px; color: #374151;">${inv.metode_bayar || '-'}</td>
+            <td style="padding: 12px 16px; font-size: 13px; color: #374151;">${capitalizedTipe}</td>
+            <td style="padding: 12px 16px; font-size: 13px; color: #374151;">${konsumenText}</td>
+            <td style="padding: 12px 16px; font-size: 13px; color: #374151;">${tokoText}</td>
+            <td style="padding: 12px 16px; font-size: 13px; font-weight: 600; color: #059669;">${formatCurrency(inv.total_jumlah_jual)}</td>
+            <td style="padding: 12px 16px; font-size: 13px; color: #6b7280;">${inv.keterangan || '-'}</td>
+            <td style="padding: 12px 16px; text-align: center;">
                 ${actionButtons}
             </td>
         </tr>

@@ -817,23 +817,69 @@
 
                         <!-- Invoice Table - HIDDEN FOR ADMIN_ZONA -->
                         <div id="invoiceTableSection" style="padding: 10px; overflow-x: auto;">
-                            <!-- Filters -->
-                            <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
-                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
-                                    <!-- STATUS filter -->
-                                    <div>
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Status</label>
-                                        <select id="filterStatus" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                            <!-- Modern Filter Section with Custom Dropdown Styling -->
+                            <style>
+                                /* Custom Select Styling */
+                                select {
+                                    appearance: none;
+                                    -webkit-appearance: none;
+                                    -moz-appearance: none;
+                                    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+                                    background-repeat: no-repeat;
+                                    background-position: right 10px center;
+                                    background-size: 20px;
+                                    padding-right: 36px;
+                                }
+                                
+                                select:hover {
+                                    border-color: #3b82f6 !important;
+                                    background-color: white !important;
+                                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                                }
+                                
+                                select:focus {
+                                    outline: none;
+                                    border-color: #3b82f6 !important;
+                                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                                }
+                                
+                                /* Option styling */
+                                select option {
+                                    background: white;
+                                    color: #2c3e50;
+                                    padding: 10px;
+                                    font-size: 14px;
+                                }
+                                
+                                select option:checked {
+                                    background: linear-gradient(#3b82f6, #3b82f6);
+                                    background-color: #3b82f6 !important;
+                                    color: white;
+                                }
+                            </style>
+
+                            <div style="margin-bottom: 24px; display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                <!-- Search Bar (Left) -->
+                                <div style="flex: 1; min-width: 250px;">
+                                    <input type="text" id="filterSearch" placeholder="Cari faktur, nomor, atau kategori..." style="width: 100%; padding: 11px 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; transition: all 0.2s; font-weight: 500;">
+                                </div>
+
+                                <!-- Filter Dropdowns (Right) -->
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                                    <!-- Status filter -->
+                                    <div style="display: flex; flex-direction: column;">
+                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Filter Status</label>
+                                        <select id="filterStatus" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; min-width: 140px; font-weight: 500; color: #2c3e50;">
                                             <option value="">Semua Status</option>
                                             <option value="Belum Lunas">Belum Lunas</option>
                                             <option value="Lunas">Lunas</option>
                                         </select>
                                     </div>
                                     
-                                    <!-- KETERANGAN filter -->
-                                    <div>
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Keterangan</label>
-                                        <select id="filterKeterangan" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                                    <!-- Keterangan filter -->
+                                    <div style="display: flex; flex-direction: column;">
+                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Kategori</label>
+                                        <select id="filterKeterangan" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; min-width: 140px; font-weight: 500; color: #2c3e50;">
                                             <option value="">Semua</option>
                                             <option value="PPN">PPN</option>
                                             <option value="NON PPN">NON PPN</option>
@@ -841,75 +887,54 @@
                                         </select>
                                     </div>
                                     
-                                    <!-- TAHUN filter -->
-                                    <div>
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Tahun</label>
-                                        <select id="filterYear" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
-                                            <option value="">Semua Tahun</option>
+                                    <!-- Tampilkan dropdown -->
+                                    <div style="display: flex; flex-direction: column;">
+                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Tampilkan</label>
+                                        <select style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; min-width: 100px; font-weight: 500; color: #2c3e50;">
+                                            <option>10</option>
+                                            <option>20</option>
+                                            <option>50</option>
                                         </select>
                                     </div>
-                                    
-                                    <!-- BULAN filter -->
-                                    <div>
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Bulan</label>
-                                        <select id="filterMonth" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
-                                            <option value="">Semua Bulan</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <!-- CARI filter -->
-                                    <div>
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Cari (Faktur/Nomor/Kode)</label>
-                                        <input type="text" id="filterSearch" placeholder="Cari..." style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
-                                        <div id="totalNominalDisplay" style="margin-top: 15px; font-weight: 700; color: #27ae60; font-size: 20px;">
-                                            Total: Rp 0
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style="display: flex; gap: 10px; margin-top: 12px;">
-                                    <button onclick="applyInvoiceFilters()" style="background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;">
-                                        <i class="fas fa-filter"></i> Terapkan Filter
-                                    </button>
-                                    <button onclick="resetInvoiceFilters()" style="background: #95a5a6; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;">
-                                        <i class="fas fa-redo"></i> Reset
-                                    </button>
                                 </div>
                             </div>
 
-                            <!-- Table -->
-                            <table class="invoice-table" style="width: 100%; border-collapse: collapse;">
+                            <!-- Modern Table Section -->
+                            <table class="invoice-table" style="width: 100%; border-collapse: collapse; background: white;">
                                 <thead>
-                                    <tr style="background: #34495e;">
-                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 10%; vertical-align: middle;">STATUS</th>
-                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 7%; vertical-align: middle;">TANGGAL</th>
-                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 13%; vertical-align: middle;">NO FAKTUR</th>
-                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 9%; vertical-align: middle;">STATUS BAYAR</th>
-                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 6%; vertical-align: middle;">TIPE</th>
-                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 15%; vertical-align: middle;">NAMA KONSUMEN</th>
-                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 10%; vertical-align: middle;">NAMA TOKO</th>
-                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 9%; vertical-align: middle;">TOTAL</th>
-                                        <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 8%; vertical-align: middle;">KETERANGAN</th>
-                                        <th style="padding: 15px 12px; text-align: center; font-weight: 600; font-size: 14px; text-transform: uppercase; color: white; width: 7%; vertical-align: middle;">AKSI</th>
+                                    <tr style="background: white; border-bottom: 2px solid #e5e7eb;">
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 10%;">Status</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 7%;">Tanggal</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 13%;">No Faktur</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 9%;">Status Bayar</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 6%;">Tipe</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 15%;">Nama Konsumen</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 10%;">Nama Toko</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 9%;">Total</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 8%;">Keterangan</th>
+                                        <th style="padding: 14px 16px; text-align: center; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 7%;">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody id="invoiceTableBody">
+                                <tbody id="invoiceTableBody" style="border-top: 1px solid #e5e7eb;">
                                     <tr>
-                                        <td colspan="10" style="text-align: center; padding: 40px; color: #7f8c8d;">Memuat data invoice...</td>
+                                        <td colspan="10" style="text-align: center; padding: 40px; color: #9ca3af;">Memuat data invoice...</td>
                                     </tr>
                                 </tbody>
                             </table>
                             
                             <!-- Pagination -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-top: 1px solid #ecf0f1;">
-                                <div style="color: #7f8c8d; font-size: 13px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
+                                <div style="color: #6b7280; font-size: 13px; font-weight: 500;">
                                     <span id="paginationInfo">Menampilkan 0 - 0 dari 0 invoice</span>
                                 </div>
-                                <div style="display: flex; gap: 10px;">
-                                    <button id="prevPageBtn" onclick="previousInvoicePage()" style="background: #95a5a6; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;" disabled>
-                                        <i class="fas fa-chevron-left"></i> Sebelumnya
+                                <div style="display: flex; gap: 8px;">
+                                    <button id="prevPageBtn" onclick="previousInvoicePage()" style="background: white; color: #3b82f6; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.borderColor='#3b82f6'" onmouseout="this.style.backgroundColor='white'; this.style.borderColor='#d1d5db'" disabled>
+                                        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                        Sebelumnya
                                     </button>
-                                    <button id="nextPageBtn" onclick="nextInvoicePage()" style="background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;">
-                                        Selanjutnya <i class="fas fa-chevron-right"></i>
+                                    <button id="nextPageBtn" onclick="nextInvoicePage()" style="background: #3b82f6; color: white; border: 1px solid #3b82f6; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.backgroundColor='#2563eb'; this.style.borderColor='#2563eb'" onmouseout="this.style.backgroundColor='#3b82f6'; this.style.borderColor='#3b82f6'">
+                                        Selanjutnya
+                                        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                     </button>
                                 </div>
                             </div>
