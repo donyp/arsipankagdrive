@@ -135,21 +135,24 @@ function showDashboardInitialLoading() {
     loader.className = 'absolute inset-0 z-[60] flex items-center justify-center bg-gray-950/80 backdrop-blur-sm';
     loader.innerHTML = `
         <style>
-            @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
-            @keyframes bounce-dot { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+            @keyframes rotateSpinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            @keyframes rotateDots { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         </style>
         <div class="premium-loader">
-            <div style="position: relative; width: 80px; height: 80px; margin-bottom: 10px;">
-                <div style="position: absolute; width: 60px; height: 60px; border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #3b82f6; border-radius: 50%; top: 10px; left: 10px; animation: spin 1s linear infinite;" class="loader-ring"></div>
-                <div style="position: absolute; width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-right: 3px solid #60a5fa; border-radius: 50%; top: 20px; left: 20px; animation: spin 1.5s linear infinite reverse;"></div>
-                <div style="position: absolute; width: 20px; height: 20px; background: #3b82f6; border-radius: 50%; top: 30px; left: 30px;"></div>
+            <div style="position: relative; width: 100px; height: 100px; margin-bottom: 20px;">
+                <!-- Outer rotating ring -->
+                <div style="position: absolute; width: 100%; height: 100%; border: 4px solid rgba(59, 130, 246, 0.2); border-top: 4px solid #3b82f6; border-right: 4px solid #60a5fa; border-radius: 50%; animation: rotateSpinner 2s linear infinite;"></div>
+                <!-- Middle rotating ring -->
+                <div style="position: absolute; width: 75%; height: 75%; top: 12.5%; left: 12.5%; border: 3px solid rgba(96, 165, 250, 0.2); border-bottom: 3px solid #60a5fa; border-left: 3px solid #93c5fd; border-radius: 50%; animation: rotateSpinner 1.5s linear infinite reverse;"></div>
+                <!-- Inner dot -->
+                <div style="position: absolute; width: 20px; height: 20px; background: linear-gradient(135deg, #3b82f6, #60a5fa); border-radius: 50%; top: 40px; left: 40px; box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);"></div>
             </div>
-            <div style="display: flex; gap: 6px; margin: 20px 0;">
-                <div style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; animation: bounce-dot 1.4s infinite; animation-delay: 0s;"></div>
-                <div style="width: 8px; height: 8px; background: #60a5fa; border-radius: 50%; animation: bounce-dot 1.4s infinite; animation-delay: 0.2s;"></div>
-                <div style="width: 8px; height: 8px; background: #93c5fd; border-radius: 50%; animation: bounce-dot 1.4s infinite; animation-delay: 0.4s;"></div>
+            <div style="display: flex; gap: 6px; margin: 15px 0; justify-content: center;">
+                <div style="width: 6px; height: 6px; background: #3b82f6; border-radius: 50%; animation: rotateDots 1.4s infinite; animation-delay: 0s; box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);"></div>
+                <div style="width: 6px; height: 6px; background: #60a5fa; border-radius: 50%; animation: rotateDots 1.4s infinite; animation-delay: 0.2s; box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);"></div>
+                <div style="width: 6px; height: 6px; background: #93c5fd; border-radius: 50%; animation: rotateDots 1.4s infinite; animation-delay: 0.4s; box-shadow: 0 0 8px rgba(147, 197, 253, 0.5);"></div>
             </div>
-            <span class="loader-text" style="color: white; font-size: 14px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 10px;">Menyiapkan dashboard...</span>
+            <span class="loader-text" style="color: white; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 15px; display: block; color: rgba(255,255,255,0.9);">Menyiapkan dashboard...</span>
         </div>
     `;
     target.appendChild(loader);
