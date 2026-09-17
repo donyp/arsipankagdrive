@@ -85,7 +85,7 @@
 
     for (const item of menuItems) {
         if (item.section) {
-            navHTML += `<p style="font-size: 0.625rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin: 0; padding: 0.75rem 1rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.25rem;">${item.section}</p>`;
+            navHTML += `<p style="font-size: 0.65rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin: 0; padding: 1rem 1rem 0.5rem 1rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0;">${item.section}</p>`;
             continue;
         }
 
@@ -98,28 +98,28 @@
             for (const child of visibleChildren) {
                 const isActive = activePage === child.href;
                 childrenHTML += `
-                    <a href="${child.href}" style="display: flex; align-items: center; padding: 0.6rem 1rem 0.6rem 2.8rem; margin: 0.05rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; ${isActive ? 'color: #2563eb; background: #eff6ff; font-weight: 600;' : 'color: #6b7280;'} text-decoration: none; width: calc(100% - 1rem); box-sizing: border-box; display: flex; align-items: center; min-height: 1.9rem;">
-                        <svg style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; margin-right: 0.6rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="${child.href}" style="display: flex; align-items: center; padding: 0.5rem 1rem 0.5rem 3rem; margin: 0.05rem 0; border-radius: 0; font-size: 0.8rem; ${isActive ? 'color: #2563eb; background: #eff6ff; border-left: 3px solid #2563eb; padding-left: 2.75rem; font-weight: 600;' : 'color: #6b7280;'} text-decoration: none; width: 100%; box-sizing: border-box; display: flex; align-items: center; min-height: 2rem; transition: all 0.2s;">
+                        <svg style="width: 0.85rem; height: 0.85rem; flex-shrink: 0; margin-right: 0.6rem; opacity: 0.7;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             ${renderIcon(child.icon)}
                         </svg>
-                        <span style="flex: 1; overflow: visible; line-height: 1.2;">${child.label}</span>
+                        <span style="flex: 1; overflow: visible; line-height: 1.3;">${child.label}</span>
                     </a>
                 `;
             }
 
             navHTML += `
-                <div id="${item.id}-parent" style="padding: 0.25rem 0.5rem; margin: 0;">
-                    <button onclick="toggleSidebarDropdown('${item.id}')" style="width: 100%; display: flex; align-items: center; padding: 0.65rem 1rem; border-radius: 0.375rem; font-size: 0.8rem; color: #374151; border: none; background: transparent; cursor: pointer; font-weight: 500; min-height: 2.3rem; line-height: 1.2;">
-                        <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin-right: 0.875rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div id="${item.id}-parent" style="padding: 0; margin: 0;">
+                    <button onclick="toggleSidebarDropdown('${item.id}')" style="width: 100%; display: flex; align-items: center; padding: 0.6rem 1rem; border-radius: 0; font-size: 0.85rem; color: #374151; border: none; background: transparent; cursor: pointer; font-weight: 500; min-height: 2.5rem; line-height: 1.3; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='transparent'">
+                        <svg style="width: 1.1rem; height: 1.1rem; flex-shrink: 0; margin-right: 0.75rem; opacity: 0.7;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             ${renderIcon(item.icon)}
                         </svg>
-                        <span style="flex: 1; overflow: visible; text-align: left;">${item.label}</span>
-                        <svg class="sidebar-dropdown-icon" style="width: 0.875rem; height: 0.875rem; opacity: 0.5; transition: transform 300ms; flex-shrink: 0; margin-left: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span style="flex: 1; overflow: visible; text-align: left; font-weight: 500;">${item.label}</span>
+                        <svg class="sidebar-dropdown-icon" style="width: 0.8rem; height: 0.8rem; opacity: 0.4; transition: transform 300ms; flex-shrink: 0; margin-left: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
                     <div id="${item.id}" class="sidebar-dropdown-content" style="max-height: ${maxH}; overflow: hidden; transition: max-height 300ms;">
-                        <div style="padding: 0;">
+                        <div style="padding: 0; background: #fafbfc;">
                             ${childrenHTML}
                         </div>
                     </div>
@@ -128,12 +128,12 @@
         } else {
             const isActive = activePage === item.href;
             navHTML += `
-                <div style="padding: 0.25rem 0.5rem; margin: 0;">
-                    <a href="${item.href}" style="display: flex; align-items: center; padding: 0.65rem 1rem; border-radius: 0.375rem; font-size: 0.8rem; ${isActive ? 'color: #2563eb; background: rgba(59, 130, 246, 0.1); font-weight: 600;' : 'color: #374151;'} text-decoration: none; font-weight: 500; width: 100%; box-sizing: border-box; min-height: 2.3rem; display: flex; align-items: center; line-height: 1.2;">
-                        <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin-right: 0.875rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div style="padding: 0; margin: 0;">
+                    <a href="${item.href}" style="display: flex; align-items: center; padding: 0.6rem 1rem; border-radius: 0; font-size: 0.85rem; color: ${isActive ? '#2563eb' : '#374151'}; background: ${isActive ? '#eff6ff' : 'transparent'}; border-left: ${isActive ? '3px solid #2563eb' : '3px solid transparent'}; text-decoration: none; font-weight: ${isActive ? '600' : '500'}; width: 100%; box-sizing: border-box; min-height: 2.5rem; display: flex; align-items: center; line-height: 1.3; transition: all 0.2s;" onmouseover="this.style.backgroundColor='${isActive ? '#eff6ff' : '#f9fafb'}'" onmouseout="this.style.backgroundColor='${isActive ? '#eff6ff' : 'transparent'}'">
+                        <svg style="width: 1.1rem; height: 1.1rem; flex-shrink: 0; margin-right: 0.75rem; opacity: ${isActive ? '1' : '0.7'};" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             ${renderIcon(item.icon)}
                         </svg>
-                        <span style="flex: 1; overflow: visible; text-align: left;">${item.label}</span>
+                        <span style="flex: 1; overflow: visible; text-align: left; font-weight: ${isActive ? '600' : '500'};">${item.label}</span>
                     </a>
                 </div>
             `;
@@ -170,23 +170,32 @@
         `;
 
         sidebar.innerHTML = `
-            <div style="padding: 1.5rem; border-bottom: 1px solid #f3f4f6; flex-shrink: 0;">
+            <!-- Header Logo Section -->
+            <div style="padding: 1.25rem 1rem; border-bottom: 1px solid #e5e7eb; flex-shrink: 0;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div style="width: 2.5rem; height: 2.5rem; border-radius: 1rem; background: #2563eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        <svg style="width: 1.25rem; height: 1.25rem; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    <!-- Logo -->
+                    <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">
+                        <svg style="width: 1.25rem; height: 1.25rem; color: white;" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9h10v2H7z"/>
                         </svg>
                     </div>
-                    <div>
-                        <h1 style="font-size: 0.8125rem; font-weight: 900; color: #111827; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Pusat Arsip Anka</h1>
-                        <span style="font-size: 0.625rem; color: #3b82f6; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; display: block;">Multi-Zona v3.1</span>
+                    <!-- Company Name -->
+                    <div style="flex: 1;">
+                        <h1 style="font-size: 0.85rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2;">Arsip Anka</h1>
+                        <span style="font-size: 0.65rem; color: #9ca3af; font-weight: 600; text-transform: capitalize; letter-spacing: 0.03em; display: block; line-height: 1.2;">Member Area</span>
                     </div>
                 </div>
             </div>
 
+            <!-- Navigation Menu -->
             <nav style="padding: 0.5rem 0; overflow-y: auto; overflow-x: hidden; flex: 1; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column;">
                 ${navHTML}
             </nav>
+
+            <!-- Footer Area (Optional) -->
+            <div style="padding: 1rem; border-top: 1px solid #e5e7eb; flex-shrink: 0; font-size: 0.7rem; color: #9ca3af; text-align: center;">
+                <p style="margin: 0; font-weight: 500;">v3.1</p>
+            </div>
         `;
 
         const mainContent = document.getElementById('main-content');
