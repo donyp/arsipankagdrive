@@ -175,8 +175,10 @@ function registerLoggingEndpoints(app, supabase, authenticateToken, authorizeRol
     });
 
     /**
-     * GET /api/logs/all/:lines?
-     * Get all recent logs
+     * GET /api/logs/all
+     * Get all recent logs (default 50 lines)
+     * GET /api/logs/all/:lines
+     * Get all recent logs with specified number of lines
      * Only super_admin and moderator can access
      * Rate limited to 15 requests per minute per user
      * Input validation: lines capped at 1000 maximum
@@ -191,8 +193,21 @@ function registerLoggingEndpoints(app, supabase, authenticateToken, authorizeRol
                 });
             }
 
-            // Validate and cap lines
-            const lines = validateLines(req.params.lines || 50);
+            // Validate and cap lines - handle both numeric and non-numeric params
+            let lines = 50; // default
+            if (req.params.lines && req.params.lines !== '') {
+                // Only validate if it's actually provided
+                const parsed = parseInt(req.params.lines);
+                if (!isNaN(parsed)) {
+                    lines = validateLines(parsed);
+                } else {
+                    // Non-numeric param like 'all' - return 400
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid lines parameter. Must be a number between 1 and 1000.'
+                    });
+                }
+            }
 
             // Read from all.log
             const logs = logger.readLogs('all', null, lines);
