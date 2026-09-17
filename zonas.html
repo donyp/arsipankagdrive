@@ -6,68 +6,40 @@
     <title>Manajemen Zona - Pusat Arsip Anka</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        html, body {
-            zoom: 0.8;
-        }
-    </style>
+    <style>html, body { zoom: 0.8; }</style>
 </head>
 <body class="bg-gray-50">
-    <style>
-        body {
-            zoom: 0.8;
-            transform-origin: top left;
-            overflow-x: hidden;
-        }
-        #app {
-            width: 100%;
-        }
-    </style>
     <div id="app">
-        <!-- Sidebar -->
         <div id="sidebar"></div>
-
-        <!-- Main Content -->
         <div style="margin-left: 16rem; width: calc(100% - 16rem); transition: all 300ms ease;">
-            <!-- Header -->
             <div class="bg-white sticky top-0 z-30 shadow-sm border-b border-gray-100">
-                <div class="px-6 py-4">
-                    <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Manajemen Zona</h2>
-                </div>
+                <div class="px-6 py-4"><h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Manajemen Zona</h2></div>
             </div>
-
-            <!-- Main Content -->
             <div class="p-6">
                 <div class="space-y-6">
-                    <!-- Page Header -->
                     <div class="flex items-center justify-between">
                         <div>
                             <h1 class="text-3xl font-bold text-gray-900">Manajemen Zona</h1>
                             <p class="text-gray-500 font-medium mt-1">Kelola zona dan alokasi pengguna</p>
                         </div>
                         <button onclick="openZonaModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition flex items-center gap-2 shadow-lg">
-                            <i class="fas fa-plus"></i>
-                            Tambah Zona
+                            <i class="fas fa-plus"></i> Tambah Zona
                         </button>
                     </div>
-
-                    <!-- Stats Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
                             <p class="text-gray-500 text-sm font-medium mb-2">Total Zona</p>
                             <p id="stat-total-zonas" class="text-3xl font-bold text-gray-900">0</p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                            <p class="text-gray-500 text-sm font-medium mb-2">Admin Zona</p>
-                            <p id="stat-admin-zonas" class="text-3xl font-bold text-blue-600">0</p>
+                            <p class="text-gray-500 text-sm font-medium mb-2">Total Toko</p>
+                            <p id="stat-total-tokos" class="text-3xl font-bold text-blue-600">0</p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                            <p class="text-gray-500 text-sm font-medium mb-2">Zona Aktif</p>
-                            <p id="stat-active-zonas" class="text-3xl font-bold text-green-600">0</p>
+                            <p class="text-gray-500 text-sm font-medium mb-2">Total User</p>
+                            <p id="stat-total-users" class="text-3xl font-bold text-green-600">0</p>
                         </div>
                     </div>
-
-                    <!-- Zonas Table -->
                     <div class="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm">
@@ -75,15 +47,12 @@
                                     <tr>
                                         <th class="px-6 py-3 font-bold text-gray-700">Nama Zona</th>
                                         <th class="px-6 py-3 font-bold text-gray-700">Kode Zona</th>
-                                        <th class="px-6 py-3 font-bold text-gray-700">Admin</th>
-                                        <th class="px-6 py-3 font-bold text-gray-700">Status</th>
+                                        <th class="px-6 py-3 font-bold text-gray-700">Toko</th>
                                         <th class="px-6 py-3 text-right font-bold text-gray-700">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="zonas-body">
-                                    <tr class="border-b border-gray-200">
-                                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">Memuat data...</td>
-                                    </tr>
+                                    <tr class="border-b border-gray-200"><td colspan="4" class="px-6 py-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -93,10 +62,106 @@
         </div>
     </div>
 
+    <div id="zonaModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900" id="zonaModalTitle">Tambah Zona</h2>
+                <button onclick="closeZonaModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="px-6 py-4 space-y-4">
+                <input type="hidden" id="editZonaId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Zona</label>
+                    <input type="text" id="zonaNama" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Zona 1">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                    <input type="text" id="zonaDeskripsi" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Deskripsi zona">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">No. WhatsApp (opsional)</label>
+                    <input type="text" id="zonaWA" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="+62812345678">
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+                <button onclick="closeZonaModal()" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Batal</button>
+                <button onclick="saveZona()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><i class="fas fa-save mr-2"></i>Simpan</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/sidebar.js"></script>
+    <script>
+        let currentZonas = [], currentTokos = [];
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initAuth(); await loadSidebar('zonas.html'); await loadData();
+        });
+        async function loadData() {
+            try {
+                const [z, t] = await Promise.all([API.get('/api/zonas'), API.get('/api/toko')]);
+                currentZonas = z.zonas || []; currentTokos = t.tokos || t || [];
+                document.getElementById('stat-total-zonas').textContent = currentZonas.length;
+                document.getElementById('stat-total-tokos').textContent = currentTokos.length;
+                renderZonasTable();
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+        function renderZonasTable() {
+            const tbody = document.getElementById('zonas-body');
+            if (currentZonas.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">Tidak ada data zona</td></tr>'; return; }
+            tbody.innerHTML = currentZonas.map(zona => {
+                const tokoCount = currentTokos.filter(t => t.zona_id === zona.id).length;
+                return `<tr class="border-b border-gray-200 hover:bg-gray-50">
+                    <td class="px-6 py-4 font-medium text-gray-900">${zona.nama}</td>
+                    <td class="px-6 py-4 text-gray-600">${zona.kode}</td>
+                    <td class="px-6 py-4 text-blue-600">${tokoCount} toko</td>
+                    <td class="px-6 py-4 text-right space-x-2">
+                        <button onclick="editZona('${zona.id}')" class="px-3 py-1 text-blue-600 hover:bg-blue-50 rounded transition"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteZona('${zona.id}')" class="px-3 py-1 text-red-600 hover:bg-red-50 rounded transition"><i class="fas fa-trash"></i></button>
+                    </td></tr>`;
+            }).join('');
+        }
+        function openZonaModal() {
+            document.getElementById('editZonaId').value = '';
+            document.getElementById('zonaNama').value = '';
+            document.getElementById('zonaDeskripsi').value = '';
+            document.getElementById('zonaWA').value = '';
+            document.getElementById('zonaModalTitle').textContent = 'Tambah Zona';
+            document.getElementById('zonaModal').classList.remove('hidden');
+        }
+        function editZona(zonaId) {
+            const zona = currentZonas.find(z => z.id == zonaId);
+            if (!zona) return;
+            document.getElementById('editZonaId').value = zona.id;
+            document.getElementById('zonaNama').value = zona.nama;
+            document.getElementById('zonaDeskripsi').value = zona.deskripsi || '';
+            document.getElementById('zonaWA').value = zona.wa_recipient || '';
+            document.getElementById('zonaModalTitle').textContent = 'Edit Zona';
+            document.getElementById('zonaModal').classList.remove('hidden');
+        }
+        async function saveZona() {
+            const id = document.getElementById('editZonaId').value;
+            const nama = document.getElementById('zonaNama').value;
+            const deskripsi = document.getElementById('zonaDeskripsi').value;
+            const wa_recipient = document.getElementById('zonaWA').value;
+            if (!nama) { alert('Nama zona wajib diisi'); return; }
+            try {
+                const data = { nama, deskripsi, wa_recipient };
+                if (id) await API.put(`/api/zonas/${id}`, data);
+                else await API.post('/api/zonas', data);
+                closeZonaModal(); await loadData();
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+        async function deleteZona(zonaId) {
+            if (!confirm('Hapus zona ini?')) return;
+            try {
+                await API.post(`/api/zonas/${zonaId}`, null, { method: 'DELETE' });
+                await loadData();
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+        function closeZonaModal() { document.getElementById('zonaModal').classList.add('hidden'); }
+    </script>
 </body>
 </html>
-
-

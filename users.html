@@ -82,7 +82,7 @@
                                 </thead>
                                 <tbody id="users-body">
                                     <tr class="border-b border-gray-200 hover:bg-gray-50">
-                                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">Memuat data...</td>
+                                        <td colspan="5" class="px-6 py-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -93,9 +93,194 @@
         </div>
     </div>
 
+    <!-- User Modal -->
+    <div id="userModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900" id="userModalTitle">Tambah User</h2>
+                <button onclick="closeUserModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="px-6 py-4 space-y-4">
+                <input type="hidden" id="editUserId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="userEmail" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="user@example.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+                    <input type="text" id="userName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama User">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="userPassword" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Password">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <select id="userRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="super_admin">Super Admin</option>
+                        <option value="moderator">Moderator</option>
+                        <option value="admin_zona">Admin Zona</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="userActive" checked class="rounded">
+                        <span class="text-sm text-gray-700">Aktif</span>
+                    </label>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+                <button onclick="closeUserModal()" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Batal</button>
+                <button onclick="saveUser()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><i class="fas fa-save mr-2"></i>Simpan</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/sidebar.js"></script>
+    <script>
+        let currentUsers = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initAuth();
+            await loadSidebar('users.html');
+            await loadUsers();
+        });
+
+        // Load users
+        async function loadUsers() {
+            try {
+                const response = await API.get('/api/users');
+                currentUsers = response.users || [];
+                
+                // Update stats
+                document.getElementById('stat-total-users').textContent = currentUsers.length;
+                document.getElementById('stat-admin-users').textContent = currentUsers.filter(u => u.role === 'super_admin' && u.is_active).length;
+                document.getElementById('stat-mod-users').textContent = currentUsers.filter(u => u.role === 'moderator' && u.is_active).length;
+                
+                // Render table
+                renderUsersTable();
+            } catch (err) {
+                console.error('[Users] Load error:', err);
+                alert('Gagal memuat data user: ' + err.message);
+            }
+        }
+
+        // Render users table
+        function renderUsersTable() {
+            const tbody = document.getElementById('users-body');
+            if (currentUsers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">Tidak ada data user</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = currentUsers.map(user => `
+                <tr class="border-b border-gray-200 hover:bg-gray-50">
+                    <td class="px-6 py-4 font-medium text-gray-900">${user.name || user.email}</td>
+                    <td class="px-6 py-4 text-gray-600">${user.email}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${user.role === 'super_admin' ? 'bg-indigo-100 text-indigo-800' : user.role === 'moderator' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">
+                            ${user.role === 'super_admin' ? 'Super Admin' : user.role === 'moderator' ? 'Moderator' : 'Admin Zona'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${user.is_active ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right space-x-2">
+                        <button onclick="editUser('${user.id}')" class="px-3 py-1 text-blue-600 hover:bg-blue-50 rounded transition"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteUser('${user.id}')" class="px-3 py-1 text-red-600 hover:bg-red-50 rounded transition"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Open user modal for create
+        function openUserModal() {
+            document.getElementById('editUserId').value = '';
+            document.getElementById('userEmail').value = '';
+            document.getElementById('userName').value = '';
+            document.getElementById('userPassword').value = '';
+            document.getElementById('userRole').value = 'moderator';
+            document.getElementById('userActive').checked = true;
+            document.getElementById('userModalTitle').textContent = 'Tambah User';
+            document.getElementById('userPassword').required = true;
+            document.getElementById('userModal').classList.remove('hidden');
+        }
+
+        // Edit user
+        function editUser(userId) {
+            const user = currentUsers.find(u => u.id === userId);
+            if (!user) return;
+            
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('userEmail').value = user.email;
+            document.getElementById('userName').value = user.name || '';
+            document.getElementById('userPassword').value = '';
+            document.getElementById('userRole').value = user.role;
+            document.getElementById('userActive').checked = user.is_active;
+            document.getElementById('userModalTitle').textContent = 'Edit User';
+            document.getElementById('userPassword').required = false;
+            document.getElementById('userPassword').placeholder = 'Kosongkan untuk tidak mengubah password';
+            document.getElementById('userModal').classList.remove('hidden');
+        }
+
+        // Save user
+        async function saveUser() {
+            const id = document.getElementById('editUserId').value;
+            const email = document.getElementById('userEmail').value;
+            const name = document.getElementById('userName').value;
+            const password = document.getElementById('userPassword').value;
+            const role = document.getElementById('userRole').value;
+            const is_active = document.getElementById('userActive').checked;
+
+            if (!email || !name) {
+                alert('Email dan Nama wajib diisi');
+                return;
+            }
+
+            try {
+                const data = { email, name, role, is_active };
+                if (password) data.password = password;
+
+                if (id) {
+                    await API.put(`/api/users/${id}`, data);
+                } else {
+                    if (!password) {
+                        alert('Password wajib diisi untuk user baru');
+                        return;
+                    }
+                    await API.post('/api/users', data);
+                }
+
+                closeUserModal();
+                await loadUsers();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        // Delete user
+        async function deleteUser(userId) {
+            if (!confirm('Hapus user ini?')) return;
+            
+            try {
+                await API.post(`/api/users/${userId}`, null, { method: 'DELETE' });
+                await loadUsers();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        // Close modal
+        function closeUserModal() {
+            document.getElementById('userModal').classList.add('hidden');
+        }
+    </script>
 </body>
 </html>
 
