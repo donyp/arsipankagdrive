@@ -103,10 +103,7 @@
             <div class="p-6 max-w-7xl">
                 <!-- Tabs -->
                 <div class="flex gap-4 mb-6 border-b border-gray-200">
-                    <button onclick="switchTab('dashboard')" class="tab-btn active px-4 py-3 font-medium text-gray-900 border-b-2 border-blue-600 transition">
-                        <i class="fas fa-chart-line mr-2"></i> Dashboard
-                    </button>
-                    <button onclick="switchTab('logs')" class="tab-btn px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition">
+                    <button onclick="switchTab('logs')" class="tab-btn active px-4 py-3 font-medium text-gray-900 border-b-2 border-blue-600 transition">
                         <i class="fas fa-file-alt mr-2"></i> Logs
                     </button>
                     <button onclick="switchTab('components')" class="tab-btn px-4 py-3 font-medium text-gray-600 hover:text-gray-900 transition">
@@ -114,91 +111,8 @@
                     </button>
                 </div>
 
-                <!-- Dashboard Tab -->
-                <div id="dashboard" class="tab-content active">
-                    <!-- Health Status -->
-                    <div class="bg-white rounded-lg shadow p-6 mb-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-semibold text-gray-900">System Health</h2>
-                            <div id="healthStatus" class="flex items-center gap-2">
-                                <div class="loading-spinner" style="width: 1.5rem; height: 1.5rem;"></div>
-                                <span class="text-gray-600">Loading...</span>
-                            </div>
-                        </div>
-                        
-                        <div id="healthContent" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <!-- Health details will be loaded here -->
-                        </div>
-                        
-                        <div id="healthWarnings" class="mt-4 pt-4 border-t border-gray-200"></div>
-                    </div>
-
-                    <!-- Metrics -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                        <div class="metric-card memory">
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <p class="opacity-80 text-sm">Memory Usage</p>
-                                    <p class="text-2xl font-bold mt-1" id="memoryUsage">--</p>
-                                </div>
-                                <i class="fas fa-microchip opacity-20 text-2xl"></i>
-                            </div>
-                            <div class="progress-bar mt-3">
-                                <div id="memoryBar" class="progress-bar-fill bg-white" style="width: 0%"></div>
-                            </div>
-                        </div>
-
-                        <div class="metric-card cpu">
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <p class="opacity-80 text-sm">CPU Cores</p>
-                                    <p class="text-2xl font-bold mt-1" id="cpuCores">--</p>
-                                </div>
-                                <i class="fas fa-cogs opacity-20 text-2xl"></i>
-                            </div>
-                            <p class="text-sm opacity-80 mt-3" id="cpuLoad">Load Avg: --</p>
-                        </div>
-
-                        <div class="metric-card disk">
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <p class="opacity-80 text-sm">Log Files</p>
-                                    <p class="text-2xl font-bold mt-1" id="logFiles">--</p>
-                                </div>
-                                <i class="fas fa-hdd opacity-20 text-2xl"></i>
-                            </div>
-                            <p class="text-sm opacity-80 mt-3" id="logSize">Total Size: --</p>
-                        </div>
-
-                        <div class="metric-card uptime">
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <p class="opacity-80 text-sm">Uptime</p>
-                                    <p class="text-2xl font-bold mt-1" id="uptime">--</p>
-                                </div>
-                                <i class="fas fa-clock opacity-20 text-2xl"></i>
-                            </div>
-                            <p class="text-sm opacity-80 mt-3" id="environment">Environment: --</p>
-                        </div>
-                    </div>
-
-                    <!-- Recent Logs Preview -->
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-semibold text-gray-900">Recent Logs</h2>
-                            <button onclick="switchTab('logs')" class="text-blue-600 hover:text-blue-800 text-sm">View All →</button>
-                        </div>
-                        <div id="recentLogsPreview" class="space-y-2 max-h-96 overflow-y-auto">
-                            <div class="text-center text-gray-500 py-8">
-                                <div class="loading-spinner mx-auto mb-2"></div>
-                                Loading logs...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Logs Tab -->
-                <div id="logs" class="tab-content">
+                <div id="logs" class="tab-content active">
                     <div class="bg-white rounded-lg shadow p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-lg font-semibold text-gray-900">Application Logs</h2>
@@ -335,7 +249,7 @@
             
             // Auto-refresh every 30 seconds
             autoRefreshInterval = setInterval(async () => {
-                if (document.getElementById('dashboard').classList.contains('active')) {
+                if (document.getElementById('logs').classList.contains('active')) {
                     await refreshAllData();
                 }
             }, 30000);
@@ -369,106 +283,9 @@
         // ============================================================
         async function refreshAllData() {
             try {
-                await loadHealthStatus();
-                await loadSystemMetrics();
                 await loadRecentLogs();
             } catch (err) {
                 console.error('[Monitoring] Refresh error:', err);
-            }
-        }
-
-        // ============================================================
-        // Load Health Status
-        // ============================================================
-        async function loadHealthStatus() {
-            try {
-                const response = await fetch('/api/system/health', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
-                });
-
-                if (!response.ok) throw new Error('Failed to load health status');
-
-                const data = await response.json();
-                console.log('[DEBUG] Health response:', JSON.stringify(data, null, 2));
-                const health = data.health;
-
-                // Update status indicator
-                const statusClass = `health-status-${health.status}`;
-                document.getElementById('healthStatus').innerHTML = `
-                    <i class="fas fa-heartbeat text-lg ${statusClass}"></i>
-                    <span class="font-medium capitalize ${statusClass}">${health.status}</span>
-                `;
-
-                // Update health details
-                const healthContent = document.getElementById('healthContent');
-                healthContent.innerHTML = `
-                    <div class="p-3 bg-gray-50 rounded-lg">
-                        <p class="text-xs text-gray-600">Database</p>
-                        <p class="font-medium text-gray-900 mt-1">${health.database.status}</p>
-                    </div>
-                    <div class="p-3 bg-gray-50 rounded-lg">
-                        <p class="text-xs text-gray-600">Uptime</p>
-                        <p class="font-medium text-gray-900 mt-1">${formatUptime(health.uptime)}</p>
-                    </div>
-                    <div class="p-3 bg-gray-50 rounded-lg">
-                        <p class="text-xs text-gray-600">Environment</p>
-                        <p class="font-medium text-gray-900 mt-1 capitalize">${health.environment}</p>
-                    </div>
-                `;
-
-                // Show warnings
-                if (health.warnings && health.warnings.length > 0) {
-                    const warningsHtml = health.warnings.map(w => `
-                        <div class="flex items-center gap-2 text-sm">
-                            <i class="fas fa-exclamation-circle text-yellow-600"></i>
-                            <span class="text-gray-700">${w}</span>
-                        </div>
-                    `).join('');
-                    document.getElementById('healthWarnings').innerHTML = warningsHtml;
-                }
-            } catch (err) {
-                console.error('[Monitoring] Health error:', err);
-                showToast('Failed to load health status', 'error');
-            }
-        }
-
-        // ============================================================
-        // Load System Metrics
-        // ============================================================
-        async function loadSystemMetrics() {
-            try {
-                const response = await fetch('/api/system/metrics', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
-                });
-
-                if (!response.ok) throw new Error('Failed to load metrics');
-
-                const data = await response.json();
-                console.log('[DEBUG] Metrics response:', JSON.stringify(data, null, 2));
-                const metrics = data.metrics;
-                const system = metrics.system;
-                const proc = metrics.process;
-                const logging = metrics.logging;
-
-                // Memory
-                const memPercent = Math.round(((system.totalMemory - system.freeMemory) / system.totalMemory) * 100);
-                document.getElementById('memoryUsage').textContent = `${memPercent}%`;
-                document.getElementById('memoryBar').style.width = memPercent + '%';
-
-                // CPU
-                document.getElementById('cpuCores').textContent = system.cpus;
-                document.getElementById('cpuLoad').textContent = `Load Avg: ${system.loadAverage.map(l => l.toFixed(2)).join(', ')}`;
-
-                // Disk/Logs
-                document.getElementById('logFiles').textContent = logging.totalFiles || 0;
-                document.getElementById('logSize').textContent = `Total Size: ${formatBytes(logging.totalSize)}`;
-
-                // Uptime
-                document.getElementById('uptime').textContent = formatUptime(proc.uptime);
-                document.getElementById('environment').textContent = `Environment: ${proc.version}`;
-            } catch (err) {
-                console.error('[Monitoring] Metrics error:', err);
-                showToast('Failed to load metrics', 'error');
             }
         }
 
@@ -485,22 +302,6 @@
 
                 const data = await response.json();
                 currentAllLogs = data.logs || [];
-
-                const container = document.getElementById('recentLogsPreview');
-                if (currentAllLogs.length === 0) {
-                    container.innerHTML = '<div class="text-center text-gray-500 py-8">No logs found</div>';
-                    return;
-                }
-
-                container.innerHTML = currentAllLogs.map(log => `
-                    <div class="log-entry log-level-${log.level?.toLowerCase() || 'info'}">
-                        <div class="flex justify-between">
-                            <span class="font-medium">[${log.component}]</span>
-                            <span class="text-gray-600">${formatDate(log.timestamp)}</span>
-                        </div>
-                        <div class="mt-1 text-gray-700">${log.message}</div>
-                    </div>
-                `).join('');
             } catch (err) {
                 console.error('[Monitoring] Logs error:', err);
             }
