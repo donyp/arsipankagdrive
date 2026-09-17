@@ -134,13 +134,22 @@ function showDashboardInitialLoading() {
     loader.id = 'dashboard-initial-loading';
     loader.className = 'absolute inset-0 z-[60] flex items-center justify-center bg-gray-950/80 backdrop-blur-sm';
     loader.innerHTML = `
+        <style>
+            @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+            @keyframes bounce-dot { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        </style>
         <div class="premium-loader">
-            <div class="loader-rings">
-                <div class="loader-ring"></div>
-                <div class="loader-ring"></div>
-                <div class="loader-ring"></div>
+            <div style="position: relative; width: 80px; height: 80px; margin-bottom: 10px;">
+                <div style="position: absolute; width: 60px; height: 60px; border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #3b82f6; border-radius: 50%; top: 10px; left: 10px; animation: spin 1s linear infinite;" class="loader-ring"></div>
+                <div style="position: absolute; width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-right: 3px solid #60a5fa; border-radius: 50%; top: 20px; left: 20px; animation: spin 1.5s linear infinite reverse;"></div>
+                <div style="position: absolute; width: 20px; height: 20px; background: #3b82f6; border-radius: 50%; top: 30px; left: 30px;"></div>
             </div>
-            <span class="loader-text">Menyiapkan dashboard...</span>
+            <div style="display: flex; gap: 6px; margin: 20px 0;">
+                <div style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; animation: bounce-dot 1.4s infinite; animation-delay: 0s;"></div>
+                <div style="width: 8px; height: 8px; background: #60a5fa; border-radius: 50%; animation: bounce-dot 1.4s infinite; animation-delay: 0.2s;"></div>
+                <div style="width: 8px; height: 8px; background: #93c5fd; border-radius: 50%; animation: bounce-dot 1.4s infinite; animation-delay: 0.4s;"></div>
+            </div>
+            <span class="loader-text" style="color: white; font-size: 14px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 10px;">Menyiapkan dashboard...</span>
         </div>
     `;
     target.appendChild(loader);
