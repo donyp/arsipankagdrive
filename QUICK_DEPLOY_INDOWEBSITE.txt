@@ -1,0 +1,252 @@
+═══════════════════════════════════════════════════════════════════
+          🚀 QUICK DEPLOY INDOWEBSITE - CHECKLIST CEPAT
+═══════════════════════════════════════════════════════════════════
+
+⏱️ Perkiraan waktu: 30-60 menit (tergantung kecepatan setup)
+
+═══════════════════════════════════════════════════════════════════
+STEP 1: DATABASE SETUP (10 menit)
+═══════════════════════════════════════════════════════════════════
+
+[ ] 1. Buka https://app.supabase.com
+[ ] 2. Create New Project
+    - Name: arsiphosting / pusat-arsip-anka
+    - Region: Singapore
+    - Password: (buat yang kuat)
+[ ] 3. Tunggu project ready
+[ ] 4. Ambil Credentials:
+    - Settings → API Keys
+    - Copy: Project URL → SUPABASE_URL
+    - Copy: Service Role Key → SUPABASE_SERVICE_ROLE_KEY
+[ ] 5. Simpan credentials di notepad sementara
+
+═══════════════════════════════════════════════════════════════════
+STEP 2: UPLOAD KE HOSTING (5 menit)
+═══════════════════════════════════════════════════════════════════
+
+[ ] 1. SSH ke hosting atau buka File Manager di cPanel
+    
+    SSH command:
+    ssh username@your-hosting.com
+    
+[ ] 2. Clone aplikasi:
+    
+    cd ~
+    git clone https://github.com/your-username/ARSIPHOST.git
+    cd ARSIPHOST
+    
+[ ] 3. Install dependencies:
+    
+    npm install
+
+═══════════════════════════════════════════════════════════════════
+STEP 3: SETUP ENVIRONMENT VARIABLES (5 menit)
+═══════════════════════════════════════════════════════════════════
+
+[ ] 1. Buat .env file:
+    
+    cd backend
+    cp .env.example .env
+    nano .env
+    
+[ ] 2. Generate JWT_SECRET:
+    
+    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+    (copy output → paste di JWT_SECRET)
+    
+[ ] 3. Generate SESSION_SECRET:
+    
+    node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+    (copy output → paste di SESSION_SECRET)
+    
+[ ] 4. Edit .env dengan nilai-nilai:
+
+    PORT=8080
+    NODE_ENV=production
+    SUPABASE_URL=https://your-project.supabase.co
+    SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
+    JWT_SECRET=[dari command di atas]
+    SESSION_SECRET=[dari command di atas]
+    ALLOWED_ORIGINS=https://your-domain.com,https://www.your-domain.com
+    
+[ ] 5. Save .env (Ctrl+X → Y → Enter di nano)
+
+═══════════════════════════════════════════════════════════════════
+STEP 4: TEST APLIKASI (5 menit)
+═══════════════════════════════════════════════════════════════════
+
+[ ] 1. Test jalankan aplikasi:
+    
+    npm start
+    
+    Harus lihat: "Server running on port 8080" atau similar
+    
+[ ] 2. Test koneksi database:
+    
+    Di terminal lain:
+    curl http://localhost:8080/api/status
+    
+    Harus return response (tidak error)
+    
+[ ] 3. Stop aplikasi:
+    
+    Ctrl+C di terminal pertama
+
+═══════════════════════════════════════════════════════════════════
+STEP 5: SETUP PM2 (AUTO-RESTART) (10 menit)
+═══════════════════════════════════════════════════════════════════
+
+[ ] 1. Install PM2:
+    
+    npm install -g pm2
+    
+[ ] 2. Buat ecosystem.config.js:
+    
+    Simpan file ini di root folder ARSIPHOST:
+    
+    module.exports = {
+      apps: [{
+        name: 'arsiphost',
+        script: './backend/server.js',
+        instances: 1,
+        exec_mode: 'cluster',
+        env: {
+          NODE_ENV: 'production',
+          PORT: 8080
+        }
+      }]
+    };
+    
+[ ] 3. Start dengan PM2:
+    
+    pm2 start ecosystem.config.js
+    
+[ ] 4. Setup auto-start on boot:
+    
+    pm2 startup
+    pm2 save
+    
+[ ] 5. Verify:
+    
+    pm2 status
+    (harus lihat: arsiphost → online)
+
+═══════════════════════════════════════════════════════════════════
+STEP 6: SETUP DOMAIN (10 menit)
+═══════════════════════════════════════════════════════════════════
+
+[ ] 1. Buka cPanel Indowebsite
+    
+    URL: https://your-cpanel-url.com:2083
+    atau melalui hosting control panel
+    
+[ ] 2. Addon Domains:
+    
+    - Addon Domains → Add Domain
+    - Domain: your-domain.com
+    - Document Root: /public_html/your-domain.com
+    - Click "Add Domain"
+    
+[ ] 3. Setup SSL Certificate:
+    
+    - AutoSSL / Let's Encrypt
+    - Force HTTPS
+    
+[ ] 4. Setup Reverse Proxy (.htaccess):
+    
+    Create file: /public_html/your-domain.com/.htaccess
+    
+    Content:
+    <IfModule mod_rewrite.c>
+      RewriteEngine On
+      RewriteCond %{REQUEST_URI} !^/public/
+      RewriteRule ^(.*)$ http://localhost:8080/$1 [P,L]
+    </IfModule>
+
+═══════════════════════════════════════════════════════════════════
+STEP 7: VERIFY DEPLOYMENT (5 menit)
+═══════════════════════════════════════════════════════════════════
+
+[ ] 1. Check PM2 status:
+    
+    pm2 status
+    
+[ ] 2. Check logs:
+    
+    pm2 logs arsiphost
+    
+    (Harus ada: "Server running on port 8080", no errors)
+    
+[ ] 3. Test API dari browser:
+    
+    https://your-domain.com/api/status
+    
+    Harus return response (JSON atau text)
+    
+[ ] 4. Akses aplikasi:
+    
+    https://your-domain.com
+    
+    Harus muncul interface aplikasi
+
+═══════════════════════════════════════════════════════════════════
+✅ DEPLOY COMPLETE!
+═══════════════════════════════════════════════════════════════════
+
+Aplikasi sekarang live di: https://your-domain.com
+
+═══════════════════════════════════════════════════════════════════
+⚠️ PENTING - DATABASE TERPISAH
+═══════════════════════════════════════════════════════════════════
+
+✅ Gunakan Supabase (cloud-hosted, reliable)
+❌ Jangan DB lokal (akan hilang saat reboot)
+
+Database credentials di: /backend/.env
+- SUPABASE_URL
+- SUPABASE_SERVICE_ROLE_KEY
+
+═══════════════════════════════════════════════════════════════════
+🔧 MONITORING & MAINTENANCE
+═══════════════════════════════════════════════════════════════════
+
+Daily:
+  pm2 logs arsiphost          # Lihat logs
+
+Weekly:
+  git pull origin main        # Update aplikasi
+  npm install                 # Install dependencies
+  pm2 restart arsiphost       # Restart aplikasi
+
+═══════════════════════════════════════════════════════════════════
+❓ QUICK TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════
+
+Apps offline?
+  → pm2 logs arsiphost (lihat error)
+  → pm2 restart arsiphost
+
+Database not connecting?
+  → Check SUPABASE_URL di backend/.env
+  → Check SUPABASE_SERVICE_ROLE_KEY
+  → Test: curl https://your-domain.com/api/status
+
+Domain not working?
+  → Check SSL certificate setup di cPanel
+  → Check .htaccess reverse proxy
+  → Check domain pointing to correct IP
+
+═══════════════════════════════════════════════════════════════════
+📞 HOSTING SUPPORT
+═══════════════════════════════════════════════════════════════════
+
+Indowebsite Support:
+- Email: support@indowebsite.com
+- Chat: Via cPanel control panel
+- Docs: https://indowebsite.com/kb
+
+═══════════════════════════════════════════════════════════════════
+
+Selamat deploy! 🚀
+
+═══════════════════════════════════════════════════════════════════

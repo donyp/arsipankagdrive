@@ -1,0 +1,376 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                 📦 PANDUAN DEPLOY KE INDOWEBSITE                         ║
+║                     Supabase Database (Terpisah)                          ║
+║                         September 2026                                    ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+
+📋 DOKUMENTASI YANG SUDAH DISIAPKAN
+═════════════════════════════════════════════════════════════════════════════
+
+📘 PANDUAN LENGKAP:
+   └─ DEPLOY_KE_INDOWEBSITE.md
+      (Baca ini untuk step-by-step penjelasan detail)
+      
+📝 REFERENSI CEPAT:
+   └─ QUICK_DEPLOY_INDOWEBSITE.txt
+      (Untuk yang sudah pengalaman, langsung copy command)
+      
+🔧 TROUBLESHOOTING:
+   └─ TROUBLESHOOTING_INDOWEBSITE.md
+      (Jika ada error/masalah)
+      
+📊 OVERVIEW:
+   └─ DEPLOY_SUMMARY.md
+      (Architecture, timeline, checklist)
+      
+🚀 START HERE:
+   └─ START_DEPLOY_HERE.md
+      (File ini - gateway ke file-file lain)
+
+
+⚙️ CONFIGURATION FILES (SIAP PAKAI)
+═════════════════════════════════════════════════════════════════════════════
+
+ecosystem.config.js
+├─ PM2 configuration untuk auto-restart
+├─ Logging setup
+└─ Production ready ✅
+
+htaccess-template
+├─ Reverse proxy setup
+├─ Force HTTPS
+└─ Compression
+
+setup-hosting.sh
+├─ Automatic setup script
+├─ Clone + install dependencies
+└─ Generate secrets
+
+
+🎯 3 LANGKAH UTAMA DEPLOYMENT
+═════════════════════════════════════════════════════════════════════════════
+
+STEP 1: DATABASE SETUP (10 menit)
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ✓ Buka: https://app.supabase.com                                        │
+│ ✓ Create New Project (Indonesia/Singapore region)                       │
+│ ✓ Ambil credentials:                                                    │
+│   - SUPABASE_URL (Project URL)                                          │
+│   - SUPABASE_SERVICE_ROLE_KEY (Service Role Key)                        │
+│ ✓ Simpan untuk langkah berikutnya                                       │
+└─────────────────────────────────────────────────────────────────────────┘
+
+STEP 2: UPLOAD & CONFIGURE (20 menit)
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ✓ SSH ke hosting                                                        │
+│ ✓ Clone aplikasi: git clone https://github.com/...                     │
+│ ✓ npm install                                                           │
+│ ✓ Setup .env file di backend/ dengan credentials dari Step 1           │
+│ ✓ Test: npm start (harus connected ke Supabase)                        │
+└─────────────────────────────────────────────────────────────────────────┘
+
+STEP 3: DOMAIN & GO LIVE (20 menit)
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ✓ Setup PM2 (pm2 start ecosystem.config.js)                            │
+│ ✓ Setup domain di cPanel                                               │
+│ ✓ Create .htaccess untuk reverse proxy                                 │
+│ ✓ Setup SSL certificate                                                │
+│ ✓ Verify: https://your-domain.com (harus live!)                        │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+⚠️ DATABASE CONFIGURATION - PENTING!
+═════════════════════════════════════════════════════════════════════════════
+
+❌ JANGAN GUNAKAN DATABASE LOKAL:
+   ├─ Akan hilang saat server reboot
+   ├─ Sulit di-backup
+   ├─ Tidak scalable
+   └─ Risky untuk production
+
+✅ GUNAKAN SUPABASE (Cloud Database):
+   ├─ Reliable & secure
+   ├─ Auto-backup setiap hari
+   ├─ Accessible dari mana saja
+   └─ Professional grade
+   
+Environment Variables di backend/.env:
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
+
+
+📂 STRUKTUR FOLDER
+═════════════════════════════════════════════════════════════════════════════
+
+ARSIPHOST/ (Root Directory)
+│
+├── 📘 DOKUMENTASI
+│   ├── DEPLOY_KE_INDOWEBSITE.md           ← BACA INI DULU
+│   ├── QUICK_DEPLOY_INDOWEBSITE.txt       ← Quick reference
+│   ├── TROUBLESHOOTING_INDOWEBSITE.md    ← Problem solving
+│   ├── DEPLOY_SUMMARY.md                  ← Overview
+│   ├── START_DEPLOY_HERE.md               ← Gateway
+│   └── PANDUAN_INDOWEBSITE_VISUAL.txt     ← File ini
+│
+├── ⚙️ CONFIGURATION
+│   ├── ecosystem.config.js                ← PM2 config (NEW)
+│   ├── htaccess-template                  ← .htaccess template (NEW)
+│   ├── setup-hosting.sh                   ← Setup script (NEW)
+│   └── .env.example                       ← Environment template
+│
+├── 🔧 APPLICATION
+│   ├── backend/
+│   │   ├── server.js                      ← Main app
+│   │   ├── .env                           ← Fill this manually
+│   │   └── (other backend files)
+│   │
+│   ├── js/                                ← Frontend JavaScript
+│   ├── css/                               ← Frontend Styles
+│   ├── package.json                       ← Dependencies
+│   └── (other app files)
+│
+└── 📜 (Other documentation files)
+
+
+🔑 ENVIRONMENT VARIABLES CHECKLIST
+═════════════════════════════════════════════════════════════════════════════
+
+Sebelum deploy, pastikan ini sudah diisi di backend/.env:
+
+✓ SUPABASE_URL
+  └─ Dari: Settings → API Keys (Project URL)
+
+✓ SUPABASE_SERVICE_ROLE_KEY
+  └─ Dari: Settings → API Keys (Service Role Key)
+
+✓ JWT_SECRET
+  └─ Generate dengan: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+✓ SESSION_SECRET
+  └─ Generate dengan: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+
+✓ PORT
+  └─ Set ke: 8080
+
+✓ NODE_ENV
+  └─ Set ke: production
+
+✓ ALLOWED_ORIGINS
+  └─ Set ke: https://your-domain.com,https://www.your-domain.com
+
+
+🚀 QUICK COMMANDS
+═════════════════════════════════════════════════════════════════════════════
+
+SSH ke Hosting:
+  $ ssh username@your-hosting.com
+
+Clone Aplikasi:
+  $ cd ~
+  $ git clone https://github.com/username/ARSIPHOST.git
+  $ cd ARSIPHOST
+
+Install Dependencies:
+  $ npm install
+
+Setup .env:
+  $ cd backend
+  $ cp .env.example .env
+  $ nano .env
+  (Edit dengan values dari Supabase)
+
+Test Aplikasi:
+  $ npm start
+  (Harus ada: "Server running on port 8080")
+
+Setup PM2:
+  $ npm install -g pm2
+  $ pm2 start ecosystem.config.js
+  $ pm2 startup
+  $ pm2 save
+
+Monitor:
+  $ pm2 status
+  $ pm2 logs arsiphost
+  $ pm2 monit
+
+
+📊 DEPLOYMENT TIMELINE
+═════════════════════════════════════════════════════════════════════════════
+
+Phase 1: Database Setup
+├─ Create Supabase project          5 min
+├─ Wait for project ready           5 min
+└─ Get credentials                  ✓ 10 min total
+
+Phase 2: Hosting Setup
+├─ SSH & clone repository           5 min
+├─ npm install                      5 min
+├─ Setup .env                       5 min
+└─ Test locally                     ✓ 15 min total
+
+Phase 3: PM2 & Domain
+├─ Setup PM2                        5 min
+├─ Setup domain (cPanel)            5 min
+├─ Create .htaccess                 5 min
+└─ Verify deployment                ✓ 15 min total
+
+TOTAL ESTIMATED TIME: ~40-60 minutes
+
+
+✅ SUCCESS INDICATORS
+═════════════════════════════════════════════════════════════════════════════
+
+Deployment berhasil jika:
+
+✓ pm2 status
+  └─ Shows: arsiphost → online
+
+✓ curl https://your-domain.com
+  └─ Returns content (tidak error)
+
+✓ Browser: https://your-domain.com
+  └─ Menampilkan aplikasi interface
+
+✓ pm2 logs arsiphost
+  └─ Tidak ada critical errors
+
+✓ Login/features
+  └─ Berfungsi normal
+
+
+🔍 TROUBLESHOOTING QUICK LINKS
+═════════════════════════════════════════════════════════════════════════════
+
+Problem                          File
+═══════════════════════════════════════════════════════════════════════════
+Application not starting         TROUBLESHOOTING_INDOWEBSITE.md
+Database connection error        TROUBLESHOOTING_INDOWEBSITE.md
+Domain not working              TROUBLESHOOTING_INDOWEBSITE.md
+CORS errors                     TROUBLESHOOTING_INDOWEBSITE.md
+Port already in use             TROUBLESHOOTING_INDOWEBSITE.md
+App crash after reboot          TROUBLESHOOTING_INDOWEBSITE.md
+SSL certificate error           TROUBLESHOOTING_INDOWEBSITE.md
+
+
+📞 SUPPORT RESOURCES
+═════════════════════════════════════════════════════════════════════════════
+
+Indowebsite Support
+├─ Email: support@indowebsite.com
+├─ Website: https://indowebsite.com
+└─ Help: Built-in cPanel support
+
+Supabase Support
+├─ Website: https://app.supabase.com
+├─ Docs: https://supabase.com/docs
+└─ Discord: https://discord.supabase.com
+
+Node.js & npm
+├─ Docs: https://nodejs.org/docs/
+└─ npm: https://www.npmjs.com/
+
+
+🎓 RECOMMENDED READING ORDER
+═════════════════════════════════════════════════════════════════════════════
+
+1️⃣ Baca file ini (PANDUAN_INDOWEBSITE_VISUAL.txt)
+   └─ Untuk understand overview
+
+2️⃣ Baca: DEPLOY_SUMMARY.md
+   └─ Untuk understand architecture & timeline
+
+3️⃣ Pilih salah satu:
+   
+   Option A - Full Detail:
+   └─ DEPLOY_KE_INDOWEBSITE.md
+      (Penjelasan lengkap setiap step)
+   
+   Option B - Quick Deploy:
+   └─ QUICK_DEPLOY_INDOWEBSITE.txt
+      (Command langsung copy-paste)
+
+4️⃣ Jika ada masalah:
+   └─ TROUBLESHOOTING_INDOWEBSITE.md
+
+
+💡 TIPS & TRICKS
+═════════════════════════════════════════════════════════════════════════════
+
+✓ Keep terminal log:
+  pm2 logs arsiphost | tee app.log
+
+✓ Monitor real-time:
+  pm2 monit
+
+✓ Auto-restart on crash:
+  PM2 sudah configured di ecosystem.config.js
+
+✓ Watch updates:
+  pm2 save (save current state)
+
+✓ Backup database:
+  Supabase auto-backup setiap hari
+
+
+🔐 SECURITY NOTES
+═════════════════════════════════════════════════════════════════════════════
+
+✓ Jangan commit .env ke Git
+  └─ Sudah di .gitignore
+
+✓ Jangan share JWT_SECRET atau SESSION_SECRET
+  └─ Regenerate jika terekspos
+
+✓ Selalu gunakan HTTPS
+  └─ Setup SSL certificate di cPanel
+
+✓ Batasi ALLOWED_ORIGINS
+  └─ Jangan pakai * (wildcard) di production
+
+✓ Keep npm packages updated
+  └─ npm update (weekly)
+
+
+🎉 SELAMAT!
+═════════════════════════════════════════════════════════════════════════════
+
+Panduan lengkap sudah disiapkan. Sekarang Anda siap untuk:
+
+1. Setup Supabase database terpisah
+2. Upload aplikasi ke Indowebsite
+3. Configure environment variables
+4. Setup PM2 untuk auto-restart
+5. Point domain ke aplikasi
+6. Go live! 🚀
+
+Aplikasi Anda akan accessible di:
+  https://your-domain.com
+
+
+📚 NEXT STEP
+═════════════════════════════════════════════════════════════════════════════
+
+Pilih salah satu untuk memulai:
+
+👉 UNTUK DETAIL LENGKAP:
+   Buka: DEPLOY_KE_INDOWEBSITE.md
+
+👉 UNTUK QUICK REFERENCE:
+   Buka: QUICK_DEPLOY_INDOWEBSITE.txt
+
+👉 UNTUK OVERVIEW:
+   Buka: DEPLOY_SUMMARY.md
+
+👉 JIKA ADA ERROR:
+   Buka: TROUBLESHOOTING_INDOWEBSITE.md
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+GOOD LUCK! 🚀
+
+Questions? Check documentation atau contact Indowebsite support.
+
+═════════════════════════════════════════════════════════════════════════════
