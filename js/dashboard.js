@@ -3044,7 +3044,7 @@ async function renderInvoiceTable(invoices) {
                     </span>
                 </td>
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${formattedDate}</td>
-                <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;"><strong>${inv.faktur || '-'}</strong></td>
+                <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle; letter-spacing: 0.05em;"><strong>${inv.faktur || '-'}</strong></td>
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${inv.metode_bayar || '-'}</td>
                 <td style="padding: 15px 12px; font-size: 14px; color: #2c3e50; vertical-align: middle;">${tipe}</td>
                 <td style="padding: 15px 12px; font-size: ${konsumenFontSize}; color: #2c3e50; vertical-align: middle;">${konsumenText}</td>

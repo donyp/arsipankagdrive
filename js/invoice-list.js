@@ -483,7 +483,7 @@ function renderInvoiceTable(invoices = null) {
                 </div>
             </td>
             <td style="padding: 12px 16px; font-size: 13px; color: #374151;">${formattedDate}</td>
-            <td style="padding: 12px 16px; font-size: 13px; font-weight: 600; color: #1f2937;"><strong>${inv.faktur || '-'}</strong></td>
+            <td style="padding: 12px 16px; font-size: 13px; font-weight: 600; color: #1f2937; letter-spacing: 0.05em;"><strong>${inv.faktur || '-'}</strong></td>
             <td style="padding: 12px 16px; font-size: 13px; color: #374151;">${inv.metode_bayar || '-'}</td>
             <td style="padding: 12px 16px; font-size: 13px; color: #374151;">${capitalizedTipe}</td>
             <td style="padding: 12px 16px; font-size: 13px; color: #374151;">${konsumenText}</td>
