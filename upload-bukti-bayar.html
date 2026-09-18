@@ -71,7 +71,7 @@
                     <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" multiple style="display: none;">
 
                     <!-- Stats -->
-                    <div id="stats" style="display: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 30px 0;">
+                    <div id="stats" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 30px 0;">
                         <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; text-align: center;">
                             <div style="font-size: 28px; font-weight: 700; color: #2c3e50;" id="totalFiles">0</div>
                             <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-top: 5px;">Total File</div>
@@ -109,7 +109,182 @@
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/sidebar.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const btnUpload = document.getElementById('btnUpload');
+            const stats = document.getElementById('stats');
+            const filesList = document.getElementById('filesList');
+            const filesContainer = document.getElementById('filesContainer');
+            
+            let selectedFiles = [];
+
+            // Prevent default drag behaviors on the document
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                document.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            // Drag over
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.style.borderColor = '#059669';
+                dropZone.style.backgroundColor = '#dcfce7';
+            });
+
+            // Drag leave
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.style.borderColor = '#10b981';
+                dropZone.style.backgroundColor = '#f0fdf4';
+            });
+
+            // Drop
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.style.borderColor = '#10b981';
+                dropZone.style.backgroundColor = '#f0fdf4';
+                
+                if (e.dataTransfer.files.length > 0) {
+                    console.log('[Bukti Bayar] Files dropped:', e.dataTransfer.files.length);
+                    handleFilesSelected(e.dataTransfer.files);
+                }
+            });
+
+            // Click to select
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            // File input change
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    console.log('[Bukti Bayar] Files selected via input:', e.target.files.length);
+                    handleFilesSelected(e.target.files);
+                }
+            });
+
+            function handleFilesSelected(files) {
+                console.log('[Bukti Bayar] Processing files...');
+                selectedFiles = [];
+                
+                // Validate files
+                const validExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
+                let validCount = 0;
+                let invalidCount = 0;
+
+                Array.from(files).forEach(file => {
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    
+                    if (validExtensions.includes(ext) && file.size > 0) {
+                        selectedFiles.push(file);
+                        validCount++;
+                    } else {
+                        invalidCount++;
+                        console.warn('[Bukti Bayar] Invalid file:', file.name);
+                    }
+                });
+
+                // Update stats
+                document.getElementById('totalFiles').textContent = files.length;
+                document.getElementById('validFiles').textContent = validCount;
+                document.getElementById('invalidFiles').textContent = invalidCount;
+
+                // Show file list and stats
+                if (selectedFiles.length > 0) {
+                    stats.style.display = 'grid';
+                    filesList.style.display = 'block';
+                    btnUpload.disabled = false;
+                    
+                    // Render files list
+                    filesContainer.innerHTML = selectedFiles.map((file, idx) => `
+                        <div style="background: #f8f9fa; padding: 12px 15px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                                <i class="fas fa-file" style="font-size: 18px; color: #10b981;"></i>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 13px; font-weight: 600; color: #2c3e50;">${file.name}</div>
+                                    <div style="font-size: 11px; color: #7f8c8d; margin-top: 2px;">${(file.size / 1024).toFixed(2)} KB</div>
+                                </div>
+                            </div>
+                            <button onclick="removeFile(${idx})" style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">✕ Remove</button>
+                        </div>
+                    `).join('');
+                } else {
+                    stats.style.display = 'none';
+                    filesList.style.display = 'none';
+                    btnUpload.disabled = true;
+                }
+            }
+
+            window.removeFile = function(idx) {
+                selectedFiles.splice(idx, 1);
+                handleFilesSelected(selectedFiles);
+            };
+
+            window.resetUpload = function() {
+                selectedFiles = [];
+                fileInput.value = '';
+                dropZone.style.borderColor = '#10b981';
+                dropZone.style.backgroundColor = '#f0fdf4';
+                stats.style.display = 'none';
+                filesList.style.display = 'none';
+                btnUpload.disabled = true;
+                console.log('[Bukti Bayar] Reset completed');
+            };
+
+            document.getElementById('btnUpload').addEventListener('click', async () => {
+                if (selectedFiles.length === 0) {
+                    alert('Pilih file terlebih dahulu');
+                    return;
+                }
+
+                const btn = document.getElementById('btnUpload');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+                try {
+                    const token = localStorage.getItem('jwt_token') || localStorage.getItem('access_token');
+                    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+                    for (const file of selectedFiles) {
+                        const formData = new FormData();
+                        formData.append('bukti_bayar', file);
+
+                        const response = await fetch('/api/bukti-bayar/upload', {
+                            method: 'POST',
+                            headers: headers,
+                            body: formData
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`Upload failed for ${file.name}`);
+                        }
+
+                        console.log('[Bukti Bayar] Uploaded:', file.name);
+                    }
+
+                    alert('✅ Bukti Bayar berhasil diupload!');
+                    window.resetUpload();
+                } catch (error) {
+                    console.error('[Bukti Bayar] Upload error:', error);
+                    alert('❌ Upload gagal: ' + error.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            });
+        });
+    </script>
 </body>
 </html>
+
 
 

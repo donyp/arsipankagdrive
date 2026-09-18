@@ -1385,7 +1385,8 @@
     </div>
 
     <script>
-        // PDF Upload Modal Drag & Drop
+        // Setup drag-drop listeners using event delegation
+        // This approach works even when modals are hidden/shown
         if (typeof document !== 'undefined') {
             document.addEventListener('DOMContentLoaded', function() {
                 setupPdfUploadDragDrop();
@@ -1397,88 +1398,110 @@
             const dropZone = document.getElementById('pdfDropZone');
             const fileInput = document.getElementById('pdfFileInput');
             
-            if (dropZone && fileInput) {
-                // Click to select
-                dropZone.addEventListener('click', () => fileInput.click());
-                
-                // Drag over
-                dropZone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
+            if (!dropZone || !fileInput) return;
+            
+            // Prevent default drag behaviors on the document
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                document.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // Highlight drop zone when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
                     dropZone.style.borderColor = '#2563eb';
                     dropZone.style.backgroundColor = '#dbeafe';
-                });
-                
-                // Drag leave
-                dropZone.addEventListener('dragleave', () => {
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
                     dropZone.style.borderColor = '#3b82f6';
                     dropZone.style.backgroundColor = '#eff6ff';
-                });
+                }, false);
+            });
+            
+            // Handle dropped files
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
                 
-                // Drop
-                dropZone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropZone.style.borderColor = '#3b82f6';
-                    dropZone.style.backgroundColor = '#eff6ff';
-                    
-                    if (e.dataTransfer.files.length > 0) {
-                        const dt = new DataTransfer();
-                        dt.items.add(e.dataTransfer.files[0]);
-                        fileInput.files = dt.files;
-                        console.log('[PDF Upload] File selected via drag-drop:', e.dataTransfer.files[0].name);
-                    }
-                });
-                
-                // File input change
-                fileInput.addEventListener('change', (e) => {
-                    if (e.target.files.length > 0) {
-                        console.log('[PDF Upload] File selected via input:', e.target.files[0].name);
-                    }
-                });
-            }
+                if (files.length > 0) {
+                    const newDt = new DataTransfer();
+                    newDt.items.add(files[0]);
+                    fileInput.files = newDt.files;
+                    console.log('[PDF Upload] File selected via drag-drop:', files[0].name);
+                }
+            }, false);
+            
+            // Click to select
+            dropZone.addEventListener('click', () => fileInput.click());
+            
+            // File input change
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    console.log('[PDF Upload] File selected via input:', e.target.files[0].name);
+                }
+            });
         }
         
         function setupBuktiBayarUploadDragDrop() {
             const dropZone = document.getElementById('buktiBayarDropZone');
             const fileInput = document.getElementById('buktiBayarFileInput');
             
-            if (dropZone && fileInput) {
-                // Click to select
-                dropZone.addEventListener('click', () => fileInput.click());
-                
-                // Drag over
-                dropZone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
+            if (!dropZone || !fileInput) return;
+            
+            // Prevent default drag behaviors on the document
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                document.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // Highlight drop zone when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
                     dropZone.style.borderColor = '#059669';
                     dropZone.style.backgroundColor = '#dcfce7';
-                });
-                
-                // Drag leave
-                dropZone.addEventListener('dragleave', () => {
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
                     dropZone.style.borderColor = '#27ae60';
                     dropZone.style.backgroundColor = '#f0fdf4';
-                });
+                }, false);
+            });
+            
+            // Handle dropped files
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
                 
-                // Drop
-                dropZone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropZone.style.borderColor = '#27ae60';
-                    dropZone.style.backgroundColor = '#f0fdf4';
-                    
-                    if (e.dataTransfer.files.length > 0) {
-                        const dt = new DataTransfer();
-                        dt.items.add(e.dataTransfer.files[0]);
-                        fileInput.files = dt.files;
-                        console.log('[Bukti Bayar Upload] File selected via drag-drop:', e.dataTransfer.files[0].name);
-                    }
-                });
-                
-                // File input change
-                fileInput.addEventListener('change', (e) => {
-                    if (e.target.files.length > 0) {
-                        console.log('[Bukti Bayar Upload] File selected via input:', e.target.files[0].name);
-                    }
-                });
-            }
+                if (files.length > 0) {
+                    const newDt = new DataTransfer();
+                    newDt.items.add(files[0]);
+                    fileInput.files = newDt.files;
+                    console.log('[Bukti Bayar Upload] File selected via drag-drop:', files[0].name);
+                }
+            }, false);
+            
+            // Click to select
+            dropZone.addEventListener('click', () => fileInput.click());
+            
+            // File input change
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    console.log('[Bukti Bayar Upload] File selected via input:', e.target.files[0].name);
+                }
+            });
         }
     </script>
 </body>
