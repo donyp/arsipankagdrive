@@ -1345,53 +1345,140 @@
         </div>
     </div>
 
+    <!-- Bukti Bayar Upload Modal -->
+    <div id="buktiBayarUploadModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4 animate-scale-in">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">Upload Bukti Bayar</h2>
+                <button onclick="closeBuktiBayarUploadModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+
+            <!-- Input untuk menyimpan faktur -->
+            <input type="hidden" id="buktiBayarFaktur">
+
+            <!-- Drop Zone untuk Drag & Drop -->
+            <div id="buktiBayarDropZone" style="
+                border: 2px dashed #27ae60;
+                border-radius: 8px;
+                padding: 40px 20px;
+                text-align: center;
+                cursor: pointer;
+                background: #f0fdf4;
+                transition: all 0.3s;
+                margin-bottom: 16px;
+            ">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #27ae60; margin-bottom: 12px; display: block;"></i>
+                <p style="margin: 0; color: #1f2937; font-weight: 600; font-size: 14px;">Drag & drop PDF Bukti Bayar di sini</p>
+                <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 13px;">atau klik untuk memilih</p>
+            </div>
+
+            <!-- File Input (Hidden) -->
+            <input type="file" id="buktiBayarFileInput" accept=".pdf" style="display: none;">
+
+            <!-- Upload Button -->
+            <div style="display: flex; gap: 8px;">
+                <button onclick="closeBuktiBayarUploadModal()" style="flex: 1; background: #e5e7eb; color: #1f2937; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#d1d5db'" onmouseout="this.style.backgroundColor='#e5e7eb'">Batal</button>
+                <button id="buktiBayarUploadBtn" onclick="uploadBuktiBayarFile()" style="flex: 1; background: #27ae60; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#229954'" onmouseout="this.style.backgroundColor='#27ae60'">Upload</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // PDF Upload Modal Drag & Drop
         if (typeof document !== 'undefined') {
             document.addEventListener('DOMContentLoaded', function() {
-                const dropZone = document.getElementById('pdfDropZone');
-                const fileInput = document.getElementById('pdfFileInput');
-                
-                if (dropZone && fileInput) {
-                    // Click to select
-                    dropZone.addEventListener('click', () => fileInput.click());
-                    
-                    // Drag over
-                    dropZone.addEventListener('dragover', (e) => {
-                        e.preventDefault();
-                        dropZone.style.borderColor = '#2563eb';
-                        dropZone.style.backgroundColor = '#dbeafe';
-                    });
-                    
-                    // Drag leave
-                    dropZone.addEventListener('dragleave', () => {
-                        dropZone.style.borderColor = '#3b82f6';
-                        dropZone.style.backgroundColor = '#eff6ff';
-                    });
-                    
-                    // Drop
-                    dropZone.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        dropZone.style.borderColor = '#3b82f6';
-                        dropZone.style.backgroundColor = '#eff6ff';
-                        
-                        if (e.dataTransfer.files.length > 0) {
-                            // Set files to input
-                            const dt = new DataTransfer();
-                            dt.items.add(e.dataTransfer.files[0]);
-                            fileInput.files = dt.files;
-                            console.log('[PDF Upload] File selected via drag-drop:', e.dataTransfer.files[0].name);
-                        }
-                    });
-                    
-                    // File input change
-                    fileInput.addEventListener('change', (e) => {
-                        if (e.target.files.length > 0) {
-                            console.log('[PDF Upload] File selected via input:', e.target.files[0].name);
-                        }
-                    });
-                }
+                setupPdfUploadDragDrop();
+                setupBuktiBayarUploadDragDrop();
             });
+        }
+        
+        function setupPdfUploadDragDrop() {
+            const dropZone = document.getElementById('pdfDropZone');
+            const fileInput = document.getElementById('pdfFileInput');
+            
+            if (dropZone && fileInput) {
+                // Click to select
+                dropZone.addEventListener('click', () => fileInput.click());
+                
+                // Drag over
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = '#2563eb';
+                    dropZone.style.backgroundColor = '#dbeafe';
+                });
+                
+                // Drag leave
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.style.borderColor = '#3b82f6';
+                    dropZone.style.backgroundColor = '#eff6ff';
+                });
+                
+                // Drop
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = '#3b82f6';
+                    dropZone.style.backgroundColor = '#eff6ff';
+                    
+                    if (e.dataTransfer.files.length > 0) {
+                        const dt = new DataTransfer();
+                        dt.items.add(e.dataTransfer.files[0]);
+                        fileInput.files = dt.files;
+                        console.log('[PDF Upload] File selected via drag-drop:', e.dataTransfer.files[0].name);
+                    }
+                });
+                
+                // File input change
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        console.log('[PDF Upload] File selected via input:', e.target.files[0].name);
+                    }
+                });
+            }
+        }
+        
+        function setupBuktiBayarUploadDragDrop() {
+            const dropZone = document.getElementById('buktiBayarDropZone');
+            const fileInput = document.getElementById('buktiBayarFileInput');
+            
+            if (dropZone && fileInput) {
+                // Click to select
+                dropZone.addEventListener('click', () => fileInput.click());
+                
+                // Drag over
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = '#059669';
+                    dropZone.style.backgroundColor = '#dcfce7';
+                });
+                
+                // Drag leave
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.style.borderColor = '#27ae60';
+                    dropZone.style.backgroundColor = '#f0fdf4';
+                });
+                
+                // Drop
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = '#27ae60';
+                    dropZone.style.backgroundColor = '#f0fdf4';
+                    
+                    if (e.dataTransfer.files.length > 0) {
+                        const dt = new DataTransfer();
+                        dt.items.add(e.dataTransfer.files[0]);
+                        fileInput.files = dt.files;
+                        console.log('[Bukti Bayar Upload] File selected via drag-drop:', e.dataTransfer.files[0].name);
+                    }
+                });
+                
+                // File input change
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        console.log('[Bukti Bayar Upload] File selected via input:', e.target.files[0].name);
+                    }
+                });
+            }
         }
     </script>
 </body>

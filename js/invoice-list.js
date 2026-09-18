@@ -574,6 +574,102 @@ function closePdfUploadModal() {
     if (input) input.value = '';
 }
 
+function openBuktiBayarUploadModal(faktur) {
+    console.log('[Bukti Bayar Upload] Opening modal for faktur:', faktur);
+    
+    const modal = document.getElementById('buktiBayarUploadModal');
+    if (!modal) {
+        console.error('[Bukti Bayar Upload] Modal not found!');
+        return;
+    }
+    
+    // Store faktur for upload
+    document.getElementById('buktiBayarFaktur').value = faktur;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeBuktiBayarUploadModal() {
+    const modal = document.getElementById('buktiBayarUploadModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    const input = document.getElementById('buktiBayarFileInput');
+    if (input) input.value = '';
+}
+
+async function uploadBuktiBayarFile() {
+    const faktur = document.getElementById('buktiBayarFaktur').value;
+    const fileInput = document.getElementById('buktiBayarFileInput');
+    const uploadBtn = document.getElementById('buktiBayarUploadBtn');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Pilih file PDF terlebih dahulu');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    console.log('[Bukti Bayar] Uploading:', file.name, 'for faktur:', faktur);
+    
+    // Check file extension
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        alert('Hanya file PDF yang diizinkan');
+        return;
+    }
+    
+    const originalText = uploadBtn.textContent;
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = 'Uploading...';
+    
+    try {
+        const formData = new FormData();
+        formData.append('pdf', file);
+        formData.append('faktur', faktur);
+        formData.append('type', 'bukti_bayar');
+        
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        console.log('[Bukti Bayar] Posting to /api/invoice/upload-pdf');
+        const response = await fetch('/api/invoice/upload-pdf', {
+            method: 'POST',
+            headers: headers,
+            body: formData
+        });
+        
+        const result = await response.json();
+        console.log('[Bukti Bayar] Response:', result);
+        
+        if (response.ok && result.success) {
+            console.log('[Bukti Bayar] SUCCESS');
+            alert('✅ Bukti Bayar Uploaded!\n\nFaktur: ' + faktur + '\nKonsumen: ' + result.konsumen);
+            closeBuktiBayarUploadModal();
+            
+            // Reload table
+            setTimeout(() => {
+                console.log('[Bukti Bayar] Reloading invoice table...');
+                currentPage = 1;
+                loadInvoices();
+            }, 1000);
+        } else {
+            const errMsg = result.error || 'Upload failed';
+            console.log('[Bukti Bayar] FAILED:', errMsg);
+            alert('❌ Error: ' + errMsg);
+        }
+    } catch (error) {
+        console.error('[Bukti Bayar] Exception:', error);
+        alert('❌ Error: ' + error.message);
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = originalText;
+    }
+}
+
 async function uploadPdfFile() {
     const faktur = document.getElementById('pdfFaktur').value;
     const fileInput = document.getElementById('pdfFileInput');
