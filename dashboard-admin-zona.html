@@ -49,6 +49,129 @@
             overflow-x: hidden !important;
         }
 
+        /* CUSTOM DROPDOWN STYLING (FROM MODERATOR DASHBOARD) */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-trigger {
+            width: 100%;
+            padding: 8px 10px;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            font-size: 13px;
+            font-weight: 500;
+            color: #2c3e50;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s;
+        }
+
+        .dropdown-trigger:hover {
+            border-color: #3b82f6;
+        }
+
+        .dropdown-trigger.active {
+            border-color: #3b82f6;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .dropdown-label {
+            flex: 1;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .dropdown-icon {
+            transition: transform 0.3s;
+            color: #9ca3af;
+            margin-left: 8px;
+        }
+
+        .dropdown-trigger.active .dropdown-icon {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #3b82f6;
+            border-top: none;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            z-index: 1000;
+            overflow: hidden;
+            display: none;
+        }
+
+        .dropdown-options {
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .dropdown-options::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .dropdown-options::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .dropdown-options::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .dropdown-options::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .dropdown-option {
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: #2c3e50;
+            font-size: 13px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .dropdown-option:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-option:hover {
+            background: #f8f9fa;
+        }
+
+        .dropdown-option.selected {
+            background: #eff6ff;
+            color: #1e40af;
+            font-weight: 500;
+        }
+
+        .checkmark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            color: #3b82f6;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
         /* HEADER */
         header {
             background: white;
@@ -121,8 +244,7 @@
             text-transform: uppercase;
         }
 
-        .filter-group input,
-        .filter-group select {
+        .filter-group input {
             padding: 8px 10px;
             border: 2px solid #d1d5db;
             border-radius: 6px;
@@ -132,8 +254,7 @@
             transition: border-color 0.3s;
         }
 
-        .filter-group input:focus,
-        .filter-group select:focus {
+        .filter-group input:focus {
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -380,37 +501,102 @@
 
                     <!-- Supplier Dropdown -->
                     <div class="filter-group">
-                        <label for="filterSupplier">Supplier</label>
-                        <select id="filterSupplier">
-                            <option value="">Semua Supplier</option>
-                        </select>
+                        <label>Supplier</label>
+                        <div class="custom-dropdown" id="supplierDropdown">
+                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'supplierDropdown')">
+                                <span class="dropdown-label">Semua Supplier</span>
+                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-options">
+                                    <div class="dropdown-option selected" onclick="selectOption(event, 'supplierDropdown', '', 'Semua Supplier')">
+                                        <span class="checkmark">✓</span>
+                                        <span>Semua Supplier</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="filterSupplier" value="">
                     </div>
 
                     <!-- Keterangan Dropdown -->
                     <div class="filter-group">
-                        <label for="filterKeterangan">Keterangan</label>
-                        <select id="filterKeterangan">
-                            <option value="">Semua</option>
-                            <option value="PPN">PPN</option>
-                            <option value="NON PPN">NON PPN</option>
-                            <option value="GUNGGUNG">GUNGGUNG</option>
-                        </select>
+                        <label>Keterangan</label>
+                        <div class="custom-dropdown" id="keteranganDropdown">
+                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'keteranganDropdown')">
+                                <span class="dropdown-label">Semua</span>
+                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-options">
+                                    <div class="dropdown-option selected" onclick="selectOption(event, 'keteranganDropdown', '', 'Semua')">
+                                        <span class="checkmark">✓</span>
+                                        <span>Semua</span>
+                                    </div>
+                                    <div class="dropdown-option" onclick="selectOption(event, 'keteranganDropdown', 'PPN', 'PPN')">
+                                        <span class="checkmark"></span>
+                                        <span>PPN</span>
+                                    </div>
+                                    <div class="dropdown-option" onclick="selectOption(event, 'keteranganDropdown', 'NON PPN', 'NON PPN')">
+                                        <span class="checkmark"></span>
+                                        <span>NON PPN</span>
+                                    </div>
+                                    <div class="dropdown-option" onclick="selectOption(event, 'keteranganDropdown', 'GUNGGUNG', 'GUNGGUNG')">
+                                        <span class="checkmark"></span>
+                                        <span>GUNGGUNG</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="filterKeterangan" value="">
                     </div>
 
                     <!-- Year Dropdown -->
                     <div class="filter-group">
-                        <label for="filterYear">Tahun</label>
-                        <select id="filterYear">
-                            <option value="">Semua Tahun</option>
-                        </select>
+                        <label>Tahun</label>
+                        <div class="custom-dropdown" id="yearDropdown">
+                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'yearDropdown')">
+                                <span class="dropdown-label">Semua Tahun</span>
+                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-options">
+                                    <div class="dropdown-option selected" onclick="selectOption(event, 'yearDropdown', '', 'Semua Tahun')">
+                                        <span class="checkmark">✓</span>
+                                        <span>Semua Tahun</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="filterYear" value="">
                     </div>
 
                     <!-- Month Dropdown -->
                     <div class="filter-group">
-                        <label for="filterMonth">Bulan</label>
-                        <select id="filterMonth">
-                            <option value="">Semua Bulan</option>
-                        </select>
+                        <label>Bulan</label>
+                        <div class="custom-dropdown" id="monthDropdown">
+                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'monthDropdown')">
+                                <span class="dropdown-label">Semua Bulan</span>
+                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-options">
+                                    <div class="dropdown-option selected" onclick="selectOption(event, 'monthDropdown', '', 'Semua Bulan')">
+                                        <span class="checkmark">✓</span>
+                                        <span>Semua Bulan</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="filterMonth" value="">
                     </div>
                 </div>
 
@@ -506,6 +692,82 @@
         }
 
         // ============================================
+        // CUSTOM DROPDOWN FUNCTIONS
+        // ============================================
+        function toggleCustomDropdown(event, dropdownId) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const dropdown = document.getElementById(dropdownId);
+            if (!dropdown) return;
+            
+            const trigger = dropdown.querySelector('.dropdown-trigger');
+            const menu = dropdown.querySelector('.dropdown-menu');
+            
+            if (!trigger || !menu) return;
+            
+            // Close other dropdowns
+            document.querySelectorAll('.dropdown-menu').forEach(m => {
+                if (m !== menu) m.style.display = 'none';
+                const t = m.parentElement.querySelector('.dropdown-trigger');
+                if (t) t.classList.remove('active');
+            });
+            
+            // Toggle current dropdown
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                menu.style.display = 'block';
+                trigger.classList.add('active');
+            } else {
+                menu.style.display = 'none';
+                trigger.classList.remove('active');
+            }
+        }
+
+        function selectOption(event, dropdownId, value, label) {
+            event.stopPropagation();
+            
+            const dropdown = document.getElementById(dropdownId);
+            if (!dropdown) return;
+            
+            const trigger = dropdown.querySelector('.dropdown-trigger .dropdown-label');
+            const menu = dropdown.querySelector('.dropdown-menu');
+            const hiddenInput = dropdown.parentElement.querySelector('input[type="hidden"]');
+            
+            // Update trigger label
+            if (trigger) trigger.textContent = label;
+            
+            // Update hidden input value
+            if (hiddenInput) hiddenInput.value = value;
+            
+            // Update selected state
+            dropdown.querySelectorAll('.dropdown-option').forEach(opt => {
+                opt.classList.remove('selected');
+                const checkmark = opt.querySelector('.checkmark');
+                if (checkmark) checkmark.textContent = '';
+            });
+            
+            const selectedOption = event.currentTarget;
+            selectedOption.classList.add('selected');
+            const checkmark = selectedOption.querySelector('.checkmark');
+            if (checkmark) checkmark.textContent = '✓';
+            
+            // Close dropdown
+            if (menu) menu.style.display = 'none';
+            dropdown.querySelector('.dropdown-trigger').classList.remove('active');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.custom-dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                    const trigger = menu.parentElement.querySelector('.dropdown-trigger');
+                    if (trigger) trigger.classList.remove('active');
+                });
+            }
+        });
+
+        // ============================================
         // GLOBAL STATE
         // ============================================
         let currentPage = 1;
@@ -597,42 +859,43 @@
                 });
 
                 // Populate year dropdown
-                const yearSelect = document.getElementById('filterYear');
+                const yearDropdown = document.getElementById('yearDropdown');
+                const yearOptions = yearDropdown.querySelector('.dropdown-options');
                 const years = Array.from(yearsSet).sort((a, b) => b - a);
-                yearSelect.innerHTML = '<option value="">Semua Tahun</option>';
+                
+                let yearHTML = '<div class="dropdown-option selected" onclick="selectOption(event, \'yearDropdown\', \'\', \'Semua Tahun\')"><span class="checkmark">✓</span><span>Semua Tahun</span></div>';
                 years.forEach(year => {
-                    const opt = document.createElement('option');
-                    opt.value = year;
-                    opt.textContent = year;
-                    yearSelect.appendChild(opt);
+                    yearHTML += `<div class="dropdown-option" onclick="selectOption(event, 'yearDropdown', '${year}', '${year}')"><span class="checkmark"></span><span>${year}</span></div>`;
                 });
+                yearOptions.innerHTML = yearHTML;
 
                 // Populate month dropdown
-                const monthSelect = document.getElementById('filterMonth');
+                const monthDropdown = document.getElementById('monthDropdown');
+                const monthOptions = monthDropdown.querySelector('.dropdown-options');
                 const monthNames = {
                     '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
                     '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
                     '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
                 };
-                monthSelect.innerHTML = '<option value="">Semua Bulan</option>';
+                
+                let monthHTML = '<div class="dropdown-option selected" onclick="selectOption(event, \'monthDropdown\', \'\', \'Semua Bulan\')"><span class="checkmark">✓</span><span>Semua Bulan</span></div>';
                 const months = Array.from(monthsSet).sort();
                 months.forEach(month => {
-                    const opt = document.createElement('option');
-                    opt.value = month;
-                    opt.textContent = monthNames[month];
-                    monthSelect.appendChild(opt);
+                    monthHTML += `<div class="dropdown-option" onclick="selectOption(event, 'monthDropdown', '${month}', '${monthNames[month]}')"><span class="checkmark"></span><span>${monthNames[month]}</span></div>`;
                 });
+                monthOptions.innerHTML = monthHTML;
 
                 // Populate supplier dropdown
                 const suppliers = [...new Set(invoices.map(inv => inv.toko).filter(Boolean))].sort();
-                const supplierSelect = document.getElementById('filterSupplier');
-                supplierSelect.innerHTML = '<option value="">Semua Supplier</option>';
+                const supplierDropdown = document.getElementById('supplierDropdown');
+                const supplierOptions = supplierDropdown.querySelector('.dropdown-options');
+                
+                let supplierHTML = '<div class="dropdown-option selected" onclick="selectOption(event, \'supplierDropdown\', \'\', \'Semua Supplier\')"><span class="checkmark">✓</span><span>Semua Supplier</span></div>';
                 suppliers.forEach(supplier => {
-                    const opt = document.createElement('option');
-                    opt.value = supplier;
-                    opt.textContent = supplier;
-                    supplierSelect.appendChild(opt);
+                    const escaped = supplier.replace(/'/g, "\\'");
+                    supplierHTML += `<div class="dropdown-option" onclick="selectOption(event, 'supplierDropdown', '${escaped}', '${escaped}')"><span class="checkmark"></span><span>${supplier}</span></div>`;
                 });
+                supplierOptions.innerHTML = supplierHTML;
 
                 console.log('Loaded', invoices.length, 'invoices for filter options');
             } catch (err) {
@@ -777,11 +1040,45 @@
         }
 
         function resetFilters() {
+            // Reset search input
             document.getElementById('filterSearch').value = '';
+            
+            // Reset hidden inputs
             document.getElementById('filterSupplier').value = '';
             document.getElementById('filterKeterangan').value = '';
             document.getElementById('filterYear').value = '';
             document.getElementById('filterMonth').value = '';
+            
+            // Reset custom dropdown displays
+            const supplierTrigger = document.querySelector('#supplierDropdown .dropdown-label');
+            if (supplierTrigger) supplierTrigger.textContent = 'Semua Supplier';
+            
+            const keteranganTrigger = document.querySelector('#keteranganDropdown .dropdown-label');
+            if (keteranganTrigger) keteranganTrigger.textContent = 'Semua';
+            
+            const yearTrigger = document.querySelector('#yearDropdown .dropdown-label');
+            if (yearTrigger) yearTrigger.textContent = 'Semua Tahun';
+            
+            const monthTrigger = document.querySelector('#monthDropdown .dropdown-label');
+            if (monthTrigger) monthTrigger.textContent = 'Semua Bulan';
+            
+            // Reset selected states in all dropdowns
+            document.querySelectorAll('.dropdown-option').forEach(opt => {
+                opt.classList.remove('selected');
+                const checkmark = opt.querySelector('.checkmark');
+                if (checkmark) checkmark.textContent = '';
+            });
+            
+            // Set first option as selected in each dropdown
+            document.querySelectorAll('.custom-dropdown').forEach(dropdown => {
+                const firstOption = dropdown.querySelector('.dropdown-option');
+                if (firstOption) {
+                    firstOption.classList.add('selected');
+                    const checkmark = firstOption.querySelector('.checkmark');
+                    if (checkmark) checkmark.textContent = '✓';
+                }
+            });
+            
             document.getElementById('totalNominalDisplay').textContent = 'Total: Rp 0';
 
             invoiceFilterState.hasFiltered = false;
