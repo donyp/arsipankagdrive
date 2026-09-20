@@ -45,7 +45,7 @@
         
         .table-row {
             display: grid;
-            grid-template-columns: 1fr 2fr 1fr 1fr 1fr 100px;
+            grid-template-columns: 0.8fr 2fr 1.2fr 1fr 1.5fr 80px;
             gap: 15px;
             padding: 15px;
             border-bottom: 1px solid #e5e7eb;
@@ -320,16 +320,16 @@
                     <div class="table-row border-b-2 font-bold text-gray-700 bg-gray-50 cursor-default">
                         <div>TIKET</div>
                         <div>SUBJEK</div>
-                        <div>KATEGORI</div>
-                        <div>PRIORITAS</div>
+                        <div>DEPARTMENT</div>
                         <div>STATUS</div>
+                        <div>BALASAN TERAKHIR</div>
                         <div>AKSI</div>
                     </div>
 
                     <!-- Table Body -->
                     <div id="ticketsContainer">
                         <div class="table-row cursor-default">
-                            <div class="col-span-6 text-center text-gray-500">
+                            <div style="grid-column: 1 / -1; text-align: center; color: #6b7280;">
                                 <div class="loading-spinner" style="margin: 20px auto;"></div>
                                 Loading tickets...
                             </div>

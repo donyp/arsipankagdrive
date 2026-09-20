@@ -134,7 +134,7 @@ function renderTickets(tickets) {
     if (tickets.length === 0) {
         container.innerHTML = `
             <div class="table-row cursor-default">
-                <div class="col-span-6 text-center text-gray-500 py-12">
+                <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #6b7280;">
                     <div class="text-4xl mb-3">📭</div>
                     <div>Tidak ada tiket ditemukan</div>
                 </div>
@@ -147,20 +147,15 @@ function renderTickets(tickets) {
         <div class="table-row" onclick="goToTicket('${ticket.id}')">
             <div>
                 <div class="font-bold text-gray-800">${ticket.ticket_number}</div>
-                <div class="text-xs text-gray-500">${formatDate(ticket.created_at)}</div>
             </div>
-            <div class="truncate">${ticket.subject}</div>
-            <div>${ticket.category}</div>
-            <div>
-                <span class="priority-badge priority-${ticket.priority.toLowerCase()}">
-                    ${ticket.priority}
-                </span>
-            </div>
+            <div class="truncate text-gray-800">${ticket.subject}</div>
+            <div class="text-gray-700">${ticket.category || '-'}</div>
             <div>
                 <span class="status-badge status-${ticket.status.toLowerCase().replace(/\s+/g, '-')}">
                     ${ticket.status}
                 </span>
             </div>
+            <div class="text-sm text-gray-600">${formatDate(ticket.updated_at)}</div>
             <div class="text-center">
                 <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); goToTicket('${ticket.id}')">
                     <i class="fas fa-arrow-right"></i>
