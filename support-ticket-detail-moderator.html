@@ -539,6 +539,9 @@
                 
                 console.log('[Ticket-Detail-Moderator] Ticket loaded:', ticketData);
                 
+                // Load zona name
+                await loadZonaName();
+                
                 renderTicketDetail();
             } catch (error) {
                 console.error('[Ticket-Detail-Moderator] Error loading ticket:', error);
@@ -553,15 +556,45 @@
             }
         }
 
+        async function loadZonaName() {
+            try {
+                const token = localStorage.getItem('jwt_token');
+                const response = await fetch('/api/zonas', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const zonas = data.zonas || data.data || [];
+                    
+                    // Find zona by ID
+                    const zona = zonas.find(z => z.id === ticketData.zona_id);
+                    if (zona) {
+                        ticketData.zona_name = zona.nama;
+                        console.log('[Ticket-Detail-Moderator] Zona name:', zona.nama);
+                    }
+                }
+            } catch (error) {
+                console.warn('[Ticket-Detail-Moderator] Error loading zona:', error);
+            }
+        }
+
         function renderTicketDetail() {
             // Set header
             document.getElementById('ticketNumber').textContent = ticketData.ticket_number;
             document.getElementById('ticketSubject').textContent = ticketData.subject;
             
-            // Get zona name
-            const zonaId = ticketData.zona_id;
-            // For now, just show the ID - we can fetch zona name if needed
-            document.getElementById('ticketZona').textContent = `Zona ${zonaId}`;
+            // Get zona name - display with clean format
+            let zonaDisplay = 'N/A';
+            if (ticketData.zona_name) {
+                const match = ticketData.zona_name.match(/(\d+)/);
+                if (match) {
+                    zonaDisplay = 'Zona ' + (match[1].replace(/^0+/, '') || '0');
+                } else {
+                    zonaDisplay = ticketData.zona_name;
+                }
+            }
+            document.getElementById('ticketZona').textContent = `${zonaDisplay}`;
 
             // Set status dropdown with current status
             const statusSelect = document.getElementById('statusSelect');
@@ -591,8 +624,8 @@
                         </div>
                         <div class="message-content">
                             <div class="message-header-row">
-                                <span class="message-author">${ticketData.created_by_username || 'Customer'}</span>
-                                <span class="message-role">CUSTOMER</span>
+                                <span class="message-author">${ticketData.created_by_username || 'Toko'}</span>
+                                <span class="message-role">TOKO</span>
                                 <span class="message-time">${formatDateTimeWIB(ticketData.created_at)}</span>
                             </div>
                             <div class="message-body">${escapeHtml(ticketData.description)}</div>
@@ -623,8 +656,8 @@
                             </div>
                             <div class="message-content">
                                 <div class="message-header-row">
-                                    <span class="message-author">${isSupport ? 'Tim Support' : 'Customer'}</span>
-                                    <span class="message-role">${isSupport ? 'SUPPORT' : 'CUSTOMER'}</span>
+                                    <span class="message-author">${isSupport ? 'Tim Support' : 'Toko'}</span>
+                                    <span class="message-role">${isSupport ? 'SUPPORT' : 'TOKO'}</span>
                                     <span class="message-time">${formatDateTimeWIB(msg.created_at)}</span>
                                 </div>
                                 <div class="message-body">${escapeHtml(msg.message)}</div>
