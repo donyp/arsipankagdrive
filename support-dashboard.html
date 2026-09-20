@@ -22,6 +22,7 @@
             gap: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
             transition: all 0.2s;
+            border: 1px solid #f3f4f6;
         }
         
         .stat-card:hover {
@@ -63,23 +64,25 @@
         .tab-nav {
             display: flex;
             gap: 8px;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 0 0 12px 0;
+            border-bottom: 2px solid #e5e7eb;
+            padding: 0 0 0 0;
             margin-bottom: 20px;
         }
         
         .tab-btn {
-            padding: 8px 16px;
+            padding: 12px 16px;
             background: none;
             border: none;
             color: #6b7280;
             font-weight: 500;
             cursor: pointer;
             font-size: 14px;
-            border-bottom: 2px solid transparent;
+            border-bottom: 3px solid transparent;
             transition: all 0.2s;
-            margin-bottom: -13px;
-            padding-bottom: 13px;
+            margin-bottom: -2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         
         .tab-btn:hover {
@@ -89,6 +92,44 @@
         .tab-btn.active {
             color: #e74c3c;
             border-bottom-color: #e74c3c;
+        }
+        
+        .filter-bar {
+            background: white;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .search-input, .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        
+        .search-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+        }
+        
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .filter-select {
+            min-width: 140px;
+            cursor: pointer;
         }
         
         .table-header {
@@ -141,42 +182,13 @@
             height: 20px;
             border-radius: 2px;
             display: inline-block;
-            margin-right: 4px;
+            margin-right: 6px;
         }
         
         .priority-low { background: #3b82f6; }
         .priority-medium { background: #f59e0b; }
         .priority-high { background: #ef4444; }
         .priority-urgent { background: #7c3aed; }
-        
-        .filter-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 16px;
-            align-items: center;
-        }
-        
-        .search-input, .filter-select {
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 14px;
-            background: white;
-        }
-        
-        .search-input {
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        .search-input::placeholder {
-            color: #9ca3af;
-        }
-        
-        .filter-select {
-            min-width: 120px;
-        }
         
         .btn {
             padding: 8px 16px;
@@ -216,7 +228,7 @@
         
         .empty-state {
             text-align: center;
-            padding: 40px 20px;
+            padding: 48px 20px;
             color: #6b7280;
         }
         
@@ -270,16 +282,14 @@
         <div style="margin-left: 16rem; width: calc(100% - 16rem);">
             <!-- Header -->
             <div class="gradient-header text-white sticky top-0 z-30 shadow">
-                <div class="px-6 py-6">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-white/20 p-2.5 rounded-lg">
-                                <i class="fas fa-headset text-xl"></i>
-                            </div>
-                            <div>
-                                <h1 class="text-2xl font-bold">Support Ticketing</h1>
-                                <p class="text-red-100 text-xs mt-0.5">Kelola tiket support dari semua zona</p>
-                            </div>
+                <div class="px-6 py-5">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-white/20 p-2.5 rounded-lg">
+                            <i class="fas fa-headset text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold">Support Ticketing</h1>
+                            <p class="text-red-100 text-xs mt-0.5">Kelola tiket support dari semua zona</p>
                         </div>
                     </div>
                 </div>
@@ -288,7 +298,7 @@
             <!-- Main Content -->
             <div class="p-6">
                 <!-- Statistics -->
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
                     <div class="stat-card">
                         <div class="stat-icon stat-total">
                             <i class="fas fa-list-check"></i>
@@ -342,16 +352,16 @@
 
                 <!-- Tab Navigation -->
                 <div class="tab-nav">
-                    <button class="tab-btn active" onclick="switchTab('all')">
+                    <button class="tab-btn active" onclick="switchTab(event, 'all')">
                         <i class="fas fa-list"></i> Semua Tiket
                     </button>
-                    <button class="tab-btn" onclick="switchTab('my-tickets')">
+                    <button class="tab-btn" onclick="switchTab(event, 'my-tickets')">
                         <i class="fas fa-user-clock"></i> Tiket Saya
                     </button>
                 </div>
 
                 <!-- Filters -->
-                <div class="filter-group">
+                <div class="filter-bar">
                     <input type="text" class="search-input" id="searchInput" placeholder="Cari nomor tiket atau subjek...">
                     
                     <select id="filterStatus" class="filter-select">
@@ -365,9 +375,6 @@
                     
                     <select id="filterZona" class="filter-select">
                         <option value="">Semua Zona</option>
-                        <option value="1">Zona 1</option>
-                        <option value="2">Zona 2</option>
-                        <option value="3">Zona 3</option>
                     </select>
                 </div>
 

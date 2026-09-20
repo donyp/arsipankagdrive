@@ -9,6 +9,7 @@ let currentStatus = 'all';
 let currentZona = '';
 let currentSearch = '';
 let totalPages = 1;
+let zonaList = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Support-Moderator] Initializing moderator dashboard...');
@@ -29,6 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Load zona list for dropdown
+    await loadZonaList();
+    
     // Load initial data
     await loadStats();
     await loadTickets();
@@ -67,7 +71,35 @@ function debounce(func, wait) {
     };
 }
 
-function switchTab(tab) {
+async function loadZonaList() {
+    try {
+        const token = localStorage.getItem('jwt_token');
+        const response = await fetch('/api/zonas', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load zonas');
+
+        const data = await response.json();
+        const zonas = data.zonas || data.data || [];
+        
+        const filterZona = document.getElementById('filterZona');
+        
+        zonas.forEach(zona => {
+            const option = document.createElement('option');
+            option.value = zona.id;
+            option.textContent = zona.nama || `Zona ${zona.id}`;
+            filterZona.appendChild(option);
+        });
+
+        console.log('[Support-Moderator] Loaded', zonas.length, 'zonas');
+    } catch (error) {
+        console.error('[Support-Moderator] Error loading zonas:', error);
+        // Fallback: zones will be populated from ticket data
+    }
+}
+
+function switchTab(event, tab) {
     currentTab = tab;
     currentPage = 1;
     
@@ -128,17 +160,47 @@ async function loadTickets() {
         renderTickets(tickets);
         updatePagination();
 
+        // Auto-populate zona dropdown from ticket data if not already done
+        if (zonaList.length === 0 && tickets.length > 0) {
+            populateZonaFromTickets(tickets);
+        }
+
         console.log('[Support-Moderator] Loaded', tickets.length, 'tickets');
     } catch (error) {
         console.error('[Support-Moderator] Error loading tickets:', error);
         document.getElementById('ticketsContainer').innerHTML = `
             <div class="table-row">
                 <div style="grid-column: 1 / -1; text-align: center; color: #ef4444; padding: 24px;">
-                    Error loading tickets: ${error.message}
+                    <i class="fas fa-exclamation-triangle"></i> Error loading tickets
                 </div>
             </div>
         `;
     }
+}
+
+function populateZonaFromTickets(tickets) {
+    const uniqueZonas = new Set();
+    tickets.forEach(ticket => {
+        if (ticket.zona_id) {
+            uniqueZonas.add(ticket.zona_id);
+        }
+    });
+
+    const filterZona = document.getElementById('filterZona');
+    const existingOptions = new Set();
+    
+    filterZona.querySelectorAll('option').forEach(opt => {
+        existingOptions.add(opt.value);
+    });
+
+    Array.from(uniqueZonas).forEach(zonaId => {
+        if (!existingOptions.has(zonaId.toString())) {
+            const option = document.createElement('option');
+            option.value = zonaId;
+            option.textContent = `Zona ${zonaId}`;
+            filterZona.appendChild(option);
+        }
+    });
 }
 
 function renderTickets(tickets) {
@@ -161,8 +223,8 @@ function renderTickets(tickets) {
     container.innerHTML = tickets.map(ticket => `
         <div class="table-row" onclick="openTicket('${ticket.id}')">
             <div class="font-medium text-gray-900">${ticket.ticket_number}</div>
-            <div class="text-gray-700 truncate">${ticket.subject}</div>
-            <div class="text-gray-600 text-sm">${ticket.zona_id || '-'}</div>
+            <div class="text-gray-700 truncate" title="${ticket.subject}">${ticket.subject}</div>
+            <div class="text-gray-600 text-sm">Zona ${ticket.zona_id || '-'}</div>
             <div>
                 <span class="priority-indicator priority-${ticket.priority.toLowerCase()}"></span>
                 <span class="text-xs text-gray-700">${ticket.priority}</span>
@@ -172,7 +234,7 @@ function renderTickets(tickets) {
                     ${ticket.status}
                 </span>
             </div>
-            <div class="text-sm text-gray-600">${ticket.user_id?.substring(0, 8) || '-'}</div>
+            <div class="text-sm text-gray-600">${formatUserId(ticket.user_id)}</div>
             <div>
                 <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openTicket('${ticket.id}')">
                     <i class="fas fa-arrow-right"></i>
@@ -208,4 +270,9 @@ function previousPage() {
 
 function openTicket(ticketId) {
     window.location.href = `/support-ticket-detail.html?id=${ticketId}`;
+}
+
+function formatUserId(userId) {
+    if (!userId) return '-';
+    return userId.substring(0, 8);
 }
