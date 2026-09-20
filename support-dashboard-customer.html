@@ -20,6 +20,9 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
             border: 1px solid #f3f4f6;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
         
         .stat-card:hover {
@@ -37,7 +40,6 @@
             font-size: 24px;
             color: white;
             flex-shrink: 0;
-            margin-bottom: 16px;
         }
         
         .stat-total { background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); }
@@ -45,18 +47,22 @@
         .stat-answered { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); }
         .stat-closed { background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%); }
         
+        .stat-content {
+            flex: 1;
+        }
+        
         .stat-number {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 800;
             color: #1f2937;
-            margin-bottom: 6px;
+            margin-bottom: 2px;
+            line-height: 1;
         }
         
         .stat-label {
-            font-size: 13px;
+            font-size: 12px;
             color: #6b7280;
-            font-weight: 600;
-            margin-bottom: 10px;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -421,11 +427,9 @@
                         <div class="stat-icon stat-total">
                             <i class="fas fa-envelope"></i>
                         </div>
-                        <div class="stat-number" id="statTotal">0</div>
-                        <div class="stat-label">Total Tickets</div>
-                        <div class="stat-info">
-                            <i class="fas fa-check" style="color: #4f46e5;"></i>
-                            <span>Semua tiket Anda</span>
+                        <div class="stat-content">
+                            <div class="stat-number" id="statTotal">0</div>
+                            <div class="stat-label">Total Tickets</div>
                         </div>
                     </div>
                     
@@ -433,11 +437,9 @@
                         <div class="stat-icon stat-open">
                             <i class="fas fa-circle-exclamation"></i>
                         </div>
-                        <div class="stat-number" id="statOpen">0</div>
-                        <div class="stat-label">Open</div>
-                        <div class="stat-info open">
-                            <i class="fas fa-spinner"></i>
-                            <span>Menunggu respon</span>
+                        <div class="stat-content">
+                            <div class="stat-number" id="statOpen">0</div>
+                            <div class="stat-label">Open</div>
                         </div>
                     </div>
                     
@@ -445,11 +447,9 @@
                         <div class="stat-icon stat-answered">
                             <i class="fas fa-reply"></i>
                         </div>
-                        <div class="stat-number" id="statAnswered">0</div>
-                        <div class="stat-label">Answered</div>
-                        <div class="stat-info">
-                            <i class="fas fa-check"></i>
-                            <span>Sudah direspon</span>
+                        <div class="stat-content">
+                            <div class="stat-number" id="statAnswered">0</div>
+                            <div class="stat-label">Answered</div>
                         </div>
                     </div>
                     
@@ -457,11 +457,9 @@
                         <div class="stat-icon stat-closed">
                             <i class="fas fa-check-circle"></i>
                         </div>
-                        <div class="stat-number" id="statClosed">0</div>
-                        <div class="stat-label">Closed</div>
-                        <div class="stat-info">
-                            <i class="fas fa-lock"></i>
-                            <span>Sudah ditutup</span>
+                        <div class="stat-content">
+                            <div class="stat-number" id="statClosed">0</div>
+                            <div class="stat-label">Closed</div>
                         </div>
                     </div>
                 </div>
