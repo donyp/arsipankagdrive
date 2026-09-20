@@ -7,21 +7,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        * { box-sizing: border-box; }
+        
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f7fa;
+            background: linear-gradient(135deg, #f5f7fa 0%, #eef2f9 100%);
+            margin: 0;
+            padding: 0;
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
         
         .form-label {
             display: block;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #1f2937;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #111827;
             font-size: 14px;
+            letter-spacing: 0.3px;
         }
         
         .form-required {
@@ -30,72 +35,99 @@
         
         .form-input, .form-select, .form-textarea {
             width: 100%;
-            padding: 11px 14px;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
+            padding: 12px 16px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
             font-size: 14px;
             font-family: inherit;
             background: white;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:hover, .form-select:hover, .form-textarea:hover {
+            border-color: #d1d5db;
         }
         
         .form-input:focus, .form-select:focus, .form-textarea:focus {
             outline: none;
             border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
+            background: #fafbff;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
         }
         
         .form-textarea {
-            min-height: 140px;
+            min-height: 150px;
             resize: vertical;
         }
         
         .upload-area {
-            border: 2px dashed #d1d5db;
-            border-radius: 12px;
-            padding: 32px 20px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 14px;
+            padding: 40px 24px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.2s;
-            background: #fafbfc;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f8fafc 0%, #f0f4ff 100%);
         }
         
         .upload-area:hover {
             border-color: #4f46e5;
-            background: #f0f4ff;
+            background: linear-gradient(135deg, #f0f4ff 0%, #ede9fe 100%);
+            transform: translateY(-1px);
         }
         
         .upload-area.active {
             border-color: #4f46e5;
-            background: #f0f4ff;
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.15);
         }
         
         .upload-icon {
-            font-size: 32px;
-            margin-bottom: 8px;
-            color: #9ca3af;
+            font-size: 40px;
+            margin-bottom: 12px;
+            color: #6366f1;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-4px); }
         }
         
         .upload-text {
-            font-size: 13px;
-            color: #6b7280;
-            font-weight: 500;
+            font-size: 14px;
+            color: #1f2937;
+            font-weight: 600;
+            margin-bottom: 4px;
         }
         
         .upload-hint {
             font-size: 12px;
-            color: #9ca3af;
-            margin-top: 6px;
+            color: #6b7280;
+            margin-top: 8px;
         }
         
         .file-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 12px;
-            background: #f3f4f6;
-            border-radius: 8px;
-            margin-bottom: 8px;
+            padding: 12px 14px;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .file-item:hover {
+            border-color: #d1d5db;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .file-item-icon {
+            color: #6366f1;
+            margin-right: 10px;
             font-size: 13px;
         }
         
@@ -105,78 +137,94 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            font-weight: 500;
         }
         
         .file-item-size {
             color: #9ca3af;
-            margin-left: 8px;
+            margin-left: 10px;
             font-size: 12px;
+            background: white;
+            padding: 2px 8px;
+            border-radius: 6px;
         }
         
         .file-remove-btn {
             background: none;
             border: none;
-            color: #6b7280;
+            color: #9ca3af;
             cursor: pointer;
-            padding: 4px 6px;
-            margin-left: 8px;
-            transition: color 0.2s;
+            padding: 6px 8px;
+            margin-left: 10px;
+            transition: all 0.2s;
+            font-size: 14px;
         }
         
         .file-remove-btn:hover {
             color: #ef4444;
+            background: rgba(239, 68, 68, 0.08);
+            border-radius: 6px;
         }
         
         .button-group {
             display: flex;
-            gap: 12px;
-            margin-top: 32px;
+            gap: 14px;
+            margin-top: 36px;
         }
         
         .btn {
-            padding: 11px 24px;
+            padding: 13px 28px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
             font-size: 14px;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+            flex: 1;
         }
         
         .btn-primary {
-            background: #4f46e5;
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
             color: white;
-            flex: 1;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
         }
         
         .btn-primary:hover {
-            background: #4338ca;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            background: linear-gradient(135deg, #4338ca 0%, #3f2fc7 100%);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0px);
         }
         
         .btn-secondary {
-            background: #e5e7eb;
+            background: white;
             color: #374151;
-            flex: 1;
+            border: 1.5px solid #d1d5db;
         }
         
         .btn-secondary:hover {
-            background: #d1d5db;
+            background: #f9fafb;
+            border-color: #9ca3af;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
         
         .back-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             color: #6b7280;
             background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s;
             font-size: 16px;
@@ -186,53 +234,76 @@
         .back-btn:hover {
             background: #f9fafb;
             color: #1f2937;
+            border-color: #d1d5db;
         }
         
         .two-column {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 20px;
         }
         
         .divider {
             height: 1px;
-            background: #e5e7eb;
-            margin: 24px 0;
+            background: linear-gradient(90deg, transparent 0%, #e5e7eb 50%, transparent 100%);
+            margin: 28px 0;
         }
         
         .form-hint {
             font-size: 12px;
             color: #6b7280;
-            margin-top: 6px;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 14px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e7eb;
+        }
+        
+        .header-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #818cf8 100%);
         }
         
         @media (max-width: 768px) {
             .two-column {
                 grid-template-columns: 1fr;
             }
+            
+            .form-card {
+                padding: 24px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <div style="min-height: 100vh; background: #f5f7fa;">
-        <!-- Header -->
-        <div style="background: white; border-bottom: 1px solid #e5e7eb; padding: 20px 0;">
-            <div class="max-w-3xl mx-auto px-6">
-                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-                    <a href="/support-dashboard-customer" class="back-btn" title="Back">
+    <div style="min-height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #eef2f9 100%);">
+        <!-- Header with Gradient -->
+        <div class="header-bg">
+            <div style="padding: 32px 24px;">
+                <div style="display: flex; align-items: center; gap: 16px; max-width: 100%;">
+                    <a href="/support-dashboard-customer" class="back-btn" title="Back" style="background: rgba(255,255,255,0.2); color: white; border: 1.5px solid rgba(255,255,255,0.3);">
                         <i class="fas fa-arrow-left"></i>
                     </a>
                     <div>
-                        <h1 style="font-size: 24px; font-weight: 700; color: #1f2937; margin: 0;">Buka Tiket Support</h1>
-                        <p style="color: #6b7280; font-size: 13px; margin: 6px 0 0 0;">Isi form di bawah untuk menghubungi tim support kami</p>
+                        <h1 style="font-size: 28px; font-weight: 800; color: white; margin: 0; letter-spacing: -0.5px;">Buka Tiket Support</h1>
+                        <p style="color: rgba(255,255,255,0.9); font-size: 13px; margin: 8px 0 0 0; font-weight: 500;">Hubungi tim support kami untuk bantuan lebih lanjut</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="max-w-3xl mx-auto px-6 py-8">
-            <form id="createTicketForm" onsubmit="submitTicket(event)">
+        <div style="padding: 32px 24px; display: flex; justify-content: center;">
+            <form id="createTicketForm" onsubmit="submitTicket(event)" class="form-card" style="width: 100%; max-width: 100%;">
+
                 <!-- Department & Priority -->
                 <div class="two-column">
                     <div class="form-group">
@@ -291,7 +362,7 @@
                         <div class="upload-hint">Max. 5 file, 2MB per file (JPG, PNG, PDF)</div>
                         <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.pdf" style="display: none;" onchange="handleFileSelect(event)">
                     </div>
-                    <div id="fileList" style="margin-top: 12px;"></div>
+                    <div id="fileList" style="margin-top: 14px;"></div>
                 </div>
 
                 <!-- Divider before buttons -->
@@ -300,7 +371,7 @@
                 <!-- Buttons -->
                 <div class="button-group">
                     <button type="button" class="btn btn-secondary" onclick="window.location.href='/support-dashboard-customer';">
-                        Batal
+                        <i class="fas fa-times"></i> Batal
                     </button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-paper-plane"></i> Kirim Tiket
@@ -365,7 +436,7 @@
             
             fileList.innerHTML = selectedFiles.map((file, idx) => `
                 <div class="file-item">
-                    <i class="fas fa-file" style="color: #6b7280; margin-right: 8px;"></i>
+                    <span class="file-item-icon"><i class="fas fa-file-alt"></i></span>
                     <span class="file-item-name">${file.name}</span>
                     <span class="file-item-size">${(file.size / 1024).toFixed(1)}KB</span>
                     <button type="button" class="file-remove-btn" onclick="removeFile(${idx});" title="Hapus">
