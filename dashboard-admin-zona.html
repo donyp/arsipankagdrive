@@ -938,11 +938,26 @@
                 // Client-side filtering by year/month
                 if (year || month) {
                     console.log('loadInvoices - Applying client-side year/month filter');
+                    console.log('loadInvoices - Filter params:', { year, month });
+                    
                     invoices = invoices.filter(inv => {
-                        if (!inv.tanggal) return false;
+                        if (!inv.tanggal) {
+                            console.log('loadInvoices - Invoice without tanggal:', inv.faktur);
+                            return false;
+                        }
                         const date = new Date(inv.tanggal);
                         const invYear = date.getFullYear().toString();
                         const invMonth = String(date.getMonth() + 1).padStart(2, '0');
+
+                        console.log('loadInvoices - Comparing:', { 
+                            faktur: inv.faktur,
+                            invYear, 
+                            invMonth, 
+                            filterYear: year, 
+                            filterMonth: month,
+                            yearMatch: !year || invYear === year,
+                            monthMatch: !month || invMonth === month
+                        });
 
                         if (year && invYear !== year) return false;
                         if (month && invMonth !== month) return false;
