@@ -175,6 +175,137 @@
             background: white;
         }
 
+        /* Custom Dropdown Styling */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-trigger {
+            width: 100%;
+            padding: 11px 14px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            font-weight: 500;
+            color: #2c3e50;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s;
+        }
+
+        .dropdown-trigger:hover {
+            border-color: #3b82f6;
+        }
+
+        .dropdown-trigger.active {
+            border-color: #3b82f6;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .dropdown-label {
+            flex: 1;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .dropdown-icon {
+            transition: transform 0.3s;
+            color: #9ca3af;
+            margin-left: 8px;
+        }
+
+        .dropdown-trigger.active .dropdown-icon {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #3b82f6;
+            border-top: none;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .dropdown-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f9fafb;
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 14px;
+        }
+
+        .dropdown-options {
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .dropdown-options::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .dropdown-options::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .dropdown-options::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .dropdown-options::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .dropdown-option {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: #2c3e50;
+            font-size: 14px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .dropdown-option:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-option:hover {
+            background: #f8f9fa;
+        }
+
+        .dropdown-option.selected {
+            background: #eff6ff;
+            color: #1e40af;
+            font-weight: 500;
+        }
+
+        .checkmark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            color: #3b82f6;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
         /* Filter buttons */
         .filter-button-group {
             display: flex;
@@ -428,39 +559,104 @@
                         <input type="text" id="filterSearch" placeholder="Cari faktur atau konsumen..." onkeydown="if(event.key==='Enter') { event.preventDefault(); applyFilters(); }">
                     </div>
 
-                    <!-- Supplier -->
+                    <!-- Supplier Custom Dropdown -->
                     <div class="filter-group">
-                        <label for="filterSupplier">Supplier</label>
-                        <select id="filterSupplier" onkeydown="if(event.key==='Enter') { event.preventDefault(); applyFilters(); }">
-                            <option value="">Semua Supplier</option>
-                        </select>
+                        <label>Supplier</label>
+                        <div class="custom-dropdown" id="supplierDropdown">
+                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'supplierDropdown')">
+                                <span class="dropdown-label">Semua Supplier</span>
+                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu" style="display: none;">
+                                <div class="dropdown-options">
+                                    <div class="dropdown-option selected" onclick="selectOption(event, 'supplierDropdown', '', 'Semua Supplier')">
+                                        <span class="checkmark">✓</span>
+                                        <span>Semua Supplier</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="filterSupplier" value="">
+                        </div>
                     </div>
 
-                    <!-- Keterangan -->
+                    <!-- Keterangan Custom Dropdown -->
                     <div class="filter-group">
-                        <label for="filterKeterangan">Keterangan</label>
-                        <select id="filterKeterangan" onkeydown="if(event.key==='Enter') { event.preventDefault(); applyFilters(); }">
-                            <option value="">Semua</option>
-                            <option value="PPN">PPN</option>
-                            <option value="NON PPN">NON PPN</option>
-                            <option value="GUNGGUNG">GUNGGUNG</option>
-                        </select>
+                        <label>Keterangan</label>
+                        <div class="custom-dropdown" id="keteranganDropdown">
+                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'keteranganDropdown')">
+                                <span class="dropdown-label">Semua</span>
+                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu" style="display: none;">
+                                <div class="dropdown-options">
+                                    <div class="dropdown-option selected" onclick="selectOption(event, 'keteranganDropdown', '', 'Semua')">
+                                        <span class="checkmark">✓</span>
+                                        <span>Semua</span>
+                                    </div>
+                                    <div class="dropdown-option" onclick="selectOption(event, 'keteranganDropdown', 'PPN', 'PPN')">
+                                        <span class="checkmark"></span>
+                                        <span>PPN</span>
+                                    </div>
+                                    <div class="dropdown-option" onclick="selectOption(event, 'keteranganDropdown', 'NON PPN', 'NON PPN')">
+                                        <span class="checkmark"></span>
+                                        <span>NON PPN</span>
+                                    </div>
+                                    <div class="dropdown-option" onclick="selectOption(event, 'keteranganDropdown', 'GUNGGUNG', 'GUNGGUNG')">
+                                        <span class="checkmark"></span>
+                                        <span>GUNGGUNG</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="filterKeterangan" value="">
+                        </div>
                     </div>
 
-                    <!-- Tahun -->
+                    <!-- Tahun Custom Dropdown -->
                     <div class="filter-group">
-                        <label for="filterYear">Tahun</label>
-                        <select id="filterYear" onkeydown="if(event.key==='Enter') { event.preventDefault(); applyFilters(); }">
-                            <option value="">Semua Tahun</option>
-                        </select>
+                        <label>Tahun</label>
+                        <div class="custom-dropdown" id="tahunDropdown">
+                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'tahunDropdown')">
+                                <span class="dropdown-label">Semua Tahun</span>
+                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu" style="display: none;">
+                                <div class="dropdown-options">
+                                    <div class="dropdown-option selected" onclick="selectOption(event, 'tahunDropdown', '', 'Semua Tahun')">
+                                        <span class="checkmark">✓</span>
+                                        <span>Semua Tahun</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="filterYear" value="">
+                        </div>
                     </div>
 
-                    <!-- Bulan -->
+                    <!-- Bulan Custom Dropdown -->
                     <div class="filter-group">
-                        <label for="filterMonth">Bulan</label>
-                        <select id="filterMonth" onkeydown="if(event.key==='Enter') { event.preventDefault(); applyFilters(); }">
-                            <option value="">Semua Bulan</option>
-                        </select>
+                        <label>Bulan</label>
+                        <div class="custom-dropdown" id="bulanDropdown">
+                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'bulanDropdown')">
+                                <span class="dropdown-label">Semua Bulan</span>
+                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu" style="display: none;">
+                                <div class="dropdown-options">
+                                    <div class="dropdown-option selected" onclick="selectOption(event, 'bulanDropdown', '', 'Semua Bulan')">
+                                        <span class="checkmark">✓</span>
+                                        <span>Semua Bulan</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="filterMonth" value="">
+                        </div>
                         <div id="totalNominalDisplayZona" style="margin-top: 15px; font-weight: 700; color: #27ae60; font-size: 20px;">
                             Total: Rp 0
                         </div>
@@ -533,6 +729,162 @@
     <script src="js/sidebar.js?t=1735862500"></script>
 
     <script>
+        // ============================================
+        // CUSTOM DROPDOWN FUNCTIONS (from moderator dashboard)
+        // ============================================
+        function toggleCustomDropdown(event, dropdownId) {
+            event.preventDefault();
+            const dropdown = document.getElementById(dropdownId);
+            if (!dropdown) {
+                console.error('[ToggleDropdown] Dropdown not found:', dropdownId);
+                return;
+            }
+            
+            const trigger = dropdown.querySelector('.dropdown-trigger');
+            const menu = dropdown.querySelector('.dropdown-menu');
+            
+            if (!trigger || !menu) {
+                console.error('[ToggleDropdown] Trigger or menu not found for:', dropdownId);
+                return;
+            }
+            
+            // Close other dropdowns
+            document.querySelectorAll('.dropdown-menu').forEach(m => {
+                if (m !== menu) m.style.display = 'none';
+                const t = m.parentElement.querySelector('.dropdown-trigger');
+                if (t) t.classList.remove('active');
+            });
+            
+            // Toggle current dropdown
+            if (menu.style.display === 'none') {
+                menu.style.display = 'block';
+                trigger.classList.add('active');
+            } else {
+                menu.style.display = 'none';
+                trigger.classList.remove('active');
+            }
+        }
+
+        function selectOption(event, dropdownId, value, label) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const dropdown = document.getElementById(dropdownId);
+            
+            // Find hidden input - Priority: look by ID mapping first
+            let hiddenInput = null;
+            
+            if (dropdownId === 'supplierDropdown') {
+                hiddenInput = document.getElementById('filterSupplier');
+            } else if (dropdownId === 'keteranganDropdown') {
+                hiddenInput = document.getElementById('filterKeterangan');
+            } else if (dropdownId === 'tahunDropdown') {
+                hiddenInput = document.getElementById('filterYear');
+            } else if (dropdownId === 'bulanDropdown') {
+                hiddenInput = document.getElementById('filterMonth');
+            }
+            
+            // Fallback: look inside dropdown
+            if (!hiddenInput) {
+                hiddenInput = dropdown.querySelector('input[type="hidden"]');
+            }
+            
+            if (!hiddenInput) {
+                console.error('[SelectOption] Could not find hidden input for dropdown:', dropdownId);
+                return;
+            }
+            
+            const trigger = dropdown.querySelector('.dropdown-trigger .dropdown-label');
+            const menu = dropdown.querySelector('.dropdown-menu');
+            
+            // Update hidden input value
+            hiddenInput.value = value;
+            
+            // Update trigger label
+            if (trigger) {
+                trigger.textContent = label;
+            }
+            
+            // Update checkmarks - remove all first, then add to matching option
+            dropdown.querySelectorAll('.dropdown-option').forEach(opt => {
+                opt.classList.remove('selected');
+                const checkmark = opt.querySelector('.checkmark');
+                if (checkmark) {
+                    checkmark.textContent = '';
+                }
+            });
+            
+            // Find the clicked option by matching the label text and mark it as selected
+            let foundOption = false;
+            dropdown.querySelectorAll('.dropdown-option').forEach(opt => {
+                const optLabel = opt.querySelector('span:last-child').textContent.trim();
+                if (optLabel === label) {
+                    opt.classList.add('selected');
+                    const checkmark = opt.querySelector('.checkmark');
+                    if (checkmark) {
+                        checkmark.textContent = '✓';
+                    }
+                    foundOption = true;
+                }
+            });
+            
+            if (!foundOption) {
+                console.warn('[SelectOption] Could not find option with label:', label, 'in dropdown:', dropdownId);
+            }
+            
+            // Close menu
+            if (menu) {
+                menu.style.display = 'none';
+            }
+            dropdown.querySelector('.dropdown-trigger').classList.remove('active');
+            
+            // Trigger change event on hidden input so filters work
+            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.custom-dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                    menu.parentElement.querySelector('.dropdown-trigger').classList.remove('active');
+                });
+            }
+        });
+
+        // Populate custom dropdown options
+        function populateCustomDropdownOptions(dropdownId, options, optionFormatter) {
+            const dropdown = document.getElementById(dropdownId);
+            if (!dropdown) return;
+            
+            const optionsContainer = dropdown.querySelector('.dropdown-options');
+            if (!optionsContainer) return;
+            
+            // Clear existing options except first (default "Semua")
+            const firstOption = optionsContainer.querySelector('.dropdown-option');
+            optionsContainer.innerHTML = '';
+            if (firstOption) {
+                optionsContainer.appendChild(firstOption);
+            }
+            
+            // Add new options
+            options.forEach((option) => {
+                const optionEl = document.createElement('div');
+                optionEl.className = 'dropdown-option';
+                
+                const value = typeof option === 'object' ? option.value : option;
+                const label = typeof option === 'object' ? option.label : optionFormatter ? optionFormatter(option) : option;
+                
+                optionEl.innerHTML = `
+                    <span class="checkmark"></span>
+                    <span>${label}</span>
+                `;
+                
+                optionEl.onclick = (e) => selectOption(e, dropdownId, value, label);
+                optionsContainer.appendChild(optionEl);
+            });
+        }
+        
         // ============================================
         // TOASTR CONFIGURATION FOR DASHBOARD
         // ============================================
@@ -811,14 +1163,9 @@
                 const yearSelect = document.getElementById('filterYear');
                 const years = Array.from(yearsSet).sort((a, b) => b - a); // Newest first
                 
-                // Clear and rebuild year dropdown
-                yearSelect.innerHTML = '<option value="">Semua Tahun</option>';
-                years.forEach(year => {
-                    const opt = document.createElement('option');
-                    opt.value = year;
-                    opt.textContent = year;
-                    yearSelect.appendChild(opt);
-                });
+                // Build options for custom dropdown
+                const yearOptions = years.map(year => ({ value: year, label: year }));
+                populateCustomDropdownOptions('tahunDropdown', yearOptions);
                 
                 console.log('[AdminZona] Year filter populated with:', years.length, 'years:', years);
 
@@ -830,61 +1177,48 @@
                     '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
                 };
                 
-                // Clear ALL existing options
-                monthSelect.innerHTML = '<option value="">Semua Bulan</option>';
-                
                 // Only add months that have data
                 const months = Array.from(monthsSet).sort();
-                months.forEach(month => {
-                    const opt = document.createElement('option');
-                    opt.value = month;
-                    opt.textContent = monthNames[month];
-                    monthSelect.appendChild(opt);
-                });
+                const monthOptions = months.map(month => ({ value: month, label: monthNames[month] }));
+                populateCustomDropdownOptions('bulanDropdown', monthOptions);
                 
                 console.log('[AdminZona] Month filter populated with:', months.length, 'months:', months);
 
                 // Get unique suppliers and populate dropdown
                 const suppliers = [...new Set(invoices.map(inv => inv.toko).filter(Boolean))].sort();
-                const supplierSelect = document.getElementById('filterSupplier');
+                const supplierOptions = suppliers.map(supplier => ({ value: supplier, label: supplier }));
+                populateCustomDropdownOptions('supplierDropdown', supplierOptions);
                 
-                // Clear and rebuild supplier dropdown
-                supplierSelect.innerHTML = '<option value="">Semua Supplier</option>';
-                suppliers.forEach(supplier => {
-                    const opt = document.createElement('option');
-                    opt.value = supplier;
-                    opt.textContent = supplier;
-                    supplierSelect.appendChild(opt);
-                });
-                
-                // Get unique keterangan (description) and populate dropdown
-                const keterangans = [...new Set(invoices.map(inv => inv.keterangan).filter(Boolean))].sort();
-                const keteranganSelect = document.getElementById('filterKeterangan');
-                
-                // Clear and rebuild keterangan dropdown
-                keteranganSelect.innerHTML = '<option value="">Semua Keterangan</option>';
-                keterangans.forEach(keterangan => {
-                    const opt = document.createElement('option');
-                    opt.value = keterangan;
-                    opt.textContent = keterangan;
-                    keteranganSelect.appendChild(opt);
-                });
-                
-                console.log('[AdminZona] Loaded', invoices.length, 'invoices - Years:', years.length, 'Months:', months.length, 'Suppliers:', suppliers.length, 'Keterangans:', keterangans.length);
+                console.log('[AdminZona] Supplier filter populated with:', suppliers.length, 'suppliers');
                 
                 // Restore saved filters from localStorage
                 if (invoiceFilterState.year) {
-                    const yearSelect = document.getElementById('filterYear');
-                    if (yearSelect) {
-                        yearSelect.value = invoiceFilterState.year;
+                    const yearInput = document.getElementById('filterYear');
+                    if (yearInput) {
+                        yearInput.value = invoiceFilterState.year;
+                        // Update dropdown trigger label to show selected year
+                        const yearTrigger = document.querySelector('#tahunDropdown .dropdown-label');
+                        if (yearTrigger) {
+                            yearTrigger.textContent = invoiceFilterState.year;
+                        }
                         console.log('[AdminZonaFilter] ✅ Restored saved year:', invoiceFilterState.year);
                     }
                 }
                 
                 if (invoiceFilterState.month) {
-                    const monthSelect = document.getElementById('filterMonth');
-                    if (monthSelect) {
-                        monthSelect.value = invoiceFilterState.month;
+                    const monthInput = document.getElementById('filterMonth');
+                    if (monthInput) {
+                        monthInput.value = invoiceFilterState.month;
+                        // Update dropdown trigger label to show selected month
+                        const monthTrigger = document.querySelector('#bulanDropdown .dropdown-label');
+                        if (monthTrigger) {
+                            const monthNames = {
+                                '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
+                                '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
+                                '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
+                            };
+                            monthTrigger.textContent = monthNames[invoiceFilterState.month] || invoiceFilterState.month;
+                        }
                         console.log('[AdminZonaFilter] ✅ Restored saved month:', invoiceFilterState.month);
                     }
                 }
