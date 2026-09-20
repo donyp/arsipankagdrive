@@ -7,99 +7,57 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+        }
         
         .form-group {
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
         
         .form-label {
             display: block;
-            font-weight: 600;
+            font-weight: 500;
             margin-bottom: 8px;
             color: #1f2937;
             font-size: 14px;
         }
         
         .form-required {
-            color: #dc2626;
+            color: #ef4444;
         }
         
         .form-input, .form-select, .form-textarea {
             width: 100%;
-            padding: 10px 14px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
+            padding: 11px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
             font-size: 14px;
             font-family: inherit;
             background: white;
+            transition: all 0.2s;
         }
         
         .form-input:focus, .form-select:focus, .form-textarea:focus {
             outline: none;
             border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
         }
         
         .form-textarea {
-            min-height: 200px;
+            min-height: 140px;
             resize: vertical;
-        }
-        
-        .form-info {
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 6px;
-        }
-        
-        .editor-toolbar {
-            display: flex;
-            gap: 4px;
-            padding: 10px;
-            border: 1px solid #d1d5db;
-            border-bottom: none;
-            border-radius: 6px 6px 0 0;
-            background: #f9fafb;
-            flex-wrap: wrap;
-        }
-        
-        .editor-btn {
-            width: 32px;
-            height: 32px;
-            border: 1px solid #d1d5db;
-            background: white;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-        
-        .editor-btn:hover {
-            background: #e5e7eb;
-        }
-        
-        .editor-content {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 0 0 6px 6px;
-            min-height: 200px;
-            font-size: 14px;
-            font-family: inherit;
-            background: white;
         }
         
         .upload-area {
             border: 2px dashed #d1d5db;
-            border-radius: 8px;
-            padding: 40px 20px;
+            border-radius: 12px;
+            padding: 32px 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
-            background: #f9fafb;
+            background: #fafbfc;
         }
         
         .upload-area:hover {
@@ -107,21 +65,66 @@
             background: #f0f4ff;
         }
         
+        .upload-area.active {
+            border-color: #4f46e5;
+            background: #f0f4ff;
+        }
+        
         .upload-icon {
             font-size: 32px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             color: #9ca3af;
         }
         
         .upload-text {
-            font-size: 14px;
+            font-size: 13px;
             color: #6b7280;
+            font-weight: 500;
         }
         
         .upload-hint {
             font-size: 12px;
             color: #9ca3af;
-            margin-top: 8px;
+            margin-top: 6px;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .file-item-name {
+            color: #1f2937;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .file-item-size {
+            color: #9ca3af;
+            margin-left: 8px;
+            font-size: 12px;
+        }
+        
+        .file-remove-btn {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 4px 6px;
+            margin-left: 8px;
+            transition: color 0.2s;
+        }
+        
+        .file-remove-btn:hover {
+            color: #ef4444;
         }
         
         .button-group {
@@ -131,9 +134,9 @@
         }
         
         .btn {
-            padding: 10px 24px;
+            padding: 11px 24px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             font-size: 14px;
@@ -151,6 +154,7 @@
         
         .btn-primary:hover {
             background: #4338ca;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
         }
         
         .btn-secondary {
@@ -163,25 +167,43 @@
             background: #d1d5db;
         }
         
-        .back-link {
+        .back-btn {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
             color: #6b7280;
-            text-decoration: none;
-            font-size: 14px;
-            margin-bottom: 24px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
             cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+            text-decoration: none;
         }
         
-        .back-link:hover {
+        .back-btn:hover {
+            background: #f9fafb;
             color: #1f2937;
         }
         
         .two-column {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 16px;
+        }
+        
+        .divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 24px 0;
+        }
+        
+        .form-hint {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 6px;
         }
         
         @media (max-width: 768px) {
@@ -191,140 +213,100 @@
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <div style="width: 100%;">
+<body>
+    <div style="min-height: 100vh; background: #f5f7fa;">
         <!-- Header -->
-        <div style="background: white; border-bottom: 1px solid #e5e7eb;">
-            <div class="px-6 py-6">
-                <a href="/support-dashboard-customer" class="back-link">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-                <div>
-                    <h1 style="font-size: 24px; font-weight: 700; color: #1f2937; margin: 0;">Buka Tiket Baru</h1>
-                    <p style="color: #6b7280; font-size: 13px; margin: 6px 0 0 0;">Isi form berikut untuk menghubungi tim support kami</p>
+        <div style="background: white; border-bottom: 1px solid #e5e7eb; padding: 20px 0;">
+            <div class="max-w-3xl mx-auto px-6">
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                    <a href="/support-dashboard-customer" class="back-btn" title="Back">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h1 style="font-size: 24px; font-weight: 700; color: #1f2937; margin: 0;">Buka Tiket Support</h1>
+                        <p style="color: #6b7280; font-size: 13px; margin: 6px 0 0 0;">Isi form di bawah untuk menghubungi tim support kami</p>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="px-6 py-8">
-            <div style="max-width: 900px;">
-                <form id="createTicketForm" onsubmit="submitTicket(event)">
-                    <!-- Department & Priority Row -->
-                    <div class="two-column">
-                        <div class="form-group">
-                            <label class="form-label">
-                                Department <span class="form-required">*</span>
-                            </label>
-                            <select id="formCategory" class="form-select" required>
-                                <option value="">Pilih department...</option>
-                                <option value="General">General</option>
-                                <option value="Technical">Technical Support</option>
-                                <option value="Billing">Billing</option>
-                                <option value="Data">Data Issue</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Prioritas</label>
-                            <select id="formPriority" class="form-select">
-                                <option value="Low">Low</option>
-                                <option value="Medium" selected>Medium</option>
-                                <option value="High">High</option>
-                                <option value="Urgent">Urgent</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Service Type / Domain -->
-                    <div class="form-group">
-                        <label class="form-label">Layanan Terkait</label>
-                        <div style="position: relative;">
-                            <input type="text" id="formService" class="form-input" placeholder="Ketik untuk mencari layanan atau domain..." style="padding-right: 40px;">
-                            <button type="button" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer;">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                        <div class="form-info">Opsional — pilih jika tiket terkait layanan atau domain tertentu</div>
-                    </div>
-
-                    <!-- Subject -->
+        <div class="max-w-3xl mx-auto px-6 py-8">
+            <form id="createTicketForm" onsubmit="submitTicket(event)">
+                <!-- Department & Priority -->
+                <div class="two-column">
                     <div class="form-group">
                         <label class="form-label">
-                            Subjek <span class="form-required">*</span>
+                            Departemen <span class="form-required">*</span>
                         </label>
-                        <input type="text" id="formSubject" class="form-input" placeholder="Ringkasan masalah Anda" required>
+                        <select id="formCategory" class="form-select" required>
+                            <option value="">Pilih departemen...</option>
+                            <option value="General">General</option>
+                            <option value="Technical">Technical Support</option>
+                            <option value="Billing">Billing</option>
+                            <option value="Data">Data Issue</option>
+                        </select>
                     </div>
-
-                    <!-- Description / Message -->
+                    
                     <div class="form-group">
-                        <label class="form-label">
-                            Pesan <span class="form-required">*</span>
-                        </label>
-                        <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" title="Bold" onclick="document.execCommand('bold');">
-                                <i class="fas fa-bold"></i>
-                            </button>
-                            <button type="button" class="editor-btn" title="Italic" onclick="document.execCommand('italic');">
-                                <i class="fas fa-italic"></i>
-                            </button>
-                            <button type="button" class="editor-btn" title="Underline" onclick="document.execCommand('underline');">
-                                <i class="fas fa-underline"></i>
-                            </button>
-                            <div style="width: 1px; height: 20px; background: #d1d5db;"></div>
-                            <button type="button" class="editor-btn" title="Heading 1" onclick="document.execCommand('formatblock', false, 'h1');">H1</button>
-                            <button type="button" class="editor-btn" title="Heading 2" onclick="document.execCommand('formatblock', false, 'h2');">H2</button>
-                            <button type="button" class="editor-btn" title="Heading 3" onclick="document.execCommand('formatblock', false, 'h3');">H3</button>
-                            <div style="width: 1px; height: 20px; background: #d1d5db;"></div>
-                            <button type="button" class="editor-btn" title="Unordered List" onclick="document.execCommand('insertUnorderedList');">
-                                <i class="fas fa-list-ul"></i>
-                            </button>
-                            <button type="button" class="editor-btn" title="Ordered List" onclick="document.execCommand('insertOrderedList');">
-                                <i class="fas fa-list-ol"></i>
-                            </button>
-                            <button type="button" class="editor-btn" title="Blockquote" onclick="document.execCommand('formatblock', false, 'blockquote');">
-                                <i class="fas fa-quote-left"></i>
-                            </button>
-                            <div style="width: 1px; height: 20px; background: #d1d5db;"></div>
-                            <button type="button" class="editor-btn" title="Code" onclick="document.execCommand('formatblock', false, 'pre');">
-                                <i class="fas fa-code"></i>
-                            </button>
-                            <button type="button" class="editor-btn" title="Link" onclick="insertLink();">
-                                <i class="fas fa-link"></i>
-                            </button>
-                        </div>
-                        <div id="formDescription" class="editor-content" contenteditable="true" placeholder="Jelaskan masalah atau pertanyaan Anda secara detail..."></div>
-                        <div style="text-align: right; font-size: 12px; color: #6b7280; margin-top: 8px;">
-                            <span id="charCount">0</span> kata - <span id="charCountDetail">0</span> karakter
-                        </div>
+                        <label class="form-label">Prioritas</label>
+                        <select id="formPriority" class="form-select">
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                            <option value="Urgent">Urgent</option>
+                        </select>
                     </div>
+                </div>
 
-                    <!-- File Upload -->
-                    <div class="form-group">
-                        <label class="form-label">Lampiran</label>
-                        <div class="upload-area" onclick="document.getElementById('fileInput').click();">
-                            <div class="upload-icon">
-                                <i class="fas fa-paperclip"></i>
-                            </div>
-                            <div class="upload-text">Drag & drop atau pilih file</div>
-                            <div class="upload-hint">JPG, JPEG, PNG, GIF, PDF maks. 2MB per file - maks. 5 file</div>
-                            <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.pdf" style="display: none;" onchange="handleFileSelect(event)">
-                        </div>
-                        <div id="fileList" style="margin-top: 12px;"></div>
-                        <div class="form-info">Opsional — JPG, JPEG, PNG, GIF, PDF. 2MB per file</div>
-                    </div>
+                <div class="divider"></div>
 
-                    <!-- Buttons -->
-                    <div class="button-group">
-                        <button type="button" class="btn btn-secondary" onclick="window.location.href='/support-dashboard-customer';">
-                            Batal
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i> Kirim Tiket
-                        </button>
+                <!-- Subject -->
+                <div class="form-group">
+                    <label class="form-label">
+                        Subjek <span class="form-required">*</span>
+                    </label>
+                    <input type="text" id="formSubject" class="form-input" placeholder="Ringkas masalah Anda" required>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label class="form-label">
+                        Penjelasan <span class="form-required">*</span>
+                    </label>
+                    <textarea id="formDescription" class="form-textarea" placeholder="Jelaskan masalah atau pertanyaan Anda secara detail..." required></textarea>
+                    <div class="form-hint">Tulis penjelasan yang jelas dan detail agar kami dapat membantu lebih baik</div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- File Upload -->
+                <div class="form-group">
+                    <label class="form-label">Lampiran (Opsional)</label>
+                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click();">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-arrow-up"></i>
+                        </div>
+                        <div class="upload-text">Drag & drop atau klik untuk upload file</div>
+                        <div class="upload-hint">Max. 5 file, 2MB per file (JPG, PNG, PDF)</div>
+                        <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.pdf" style="display: none;" onchange="handleFileSelect(event)">
                     </div>
-                </form>
-            </div>
+                    <div id="fileList" style="margin-top: 12px;"></div>
+                </div>
+
+                <!-- Divider before buttons -->
+                <div class="divider"></div>
+
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/support-dashboard-customer';">
+                        Batal
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Kirim Tiket
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -348,22 +330,29 @@
                 return;
             }
 
-            // Character counter
-            const editor = document.getElementById('formDescription');
-            editor.addEventListener('input', updateCharCount);
+            // Drag and drop
+            const uploadArea = document.getElementById('uploadArea');
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('active');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('active');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('active');
+                const files = Array.from(e.dataTransfer.files);
+                selectedFiles = [...selectedFiles, ...files].slice(0, 5);
+                displayFileList();
+            });
         });
-
-        function updateCharCount() {
-            const text = document.getElementById('formDescription').innerText || '';
-            const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
-            const chars = text.length;
-            document.getElementById('charCount').textContent = words;
-            document.getElementById('charCountDetail').textContent = chars;
-        }
 
         function handleFileSelect(e) {
             const files = Array.from(e.target.files);
-            selectedFiles = [...selectedFiles, ...files].slice(0, 5); // Max 5 files
+            selectedFiles = [...selectedFiles, ...files].slice(0, 5);
             displayFileList();
         }
 
@@ -375,15 +364,11 @@
             }
             
             fileList.innerHTML = selectedFiles.map((file, idx) => `
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px; background: #f3f4f6; border-radius: 6px; margin-bottom: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
-                        <i class="fas fa-file" style="color: #6b7280;"></i>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="font-size: 13px; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</div>
-                            <div style="font-size: 11px; color: #9ca3af;">${(file.size / 1024).toFixed(1)} KB</div>
-                        </div>
-                    </div>
-                    <button type="button" style="background: none; border: none; color: #6b7280; cursor: pointer; padding: 4px;" onclick="removeFile(${idx});">
+                <div class="file-item">
+                    <i class="fas fa-file" style="color: #6b7280; margin-right: 8px;"></i>
+                    <span class="file-item-name">${file.name}</span>
+                    <span class="file-item-size">${(file.size / 1024).toFixed(1)}KB</span>
+                    <button type="button" class="file-remove-btn" onclick="removeFile(${idx});" title="Hapus">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -395,20 +380,13 @@
             displayFileList();
         }
 
-        function insertLink() {
-            const url = prompt('Masukkan URL:');
-            if (url) {
-                document.execCommand('createLink', false, url);
-            }
-        }
-
         async function submitTicket(e) {
             e.preventDefault();
             
             try {
                 const token = localStorage.getItem('jwt_token');
                 const subject = document.getElementById('formSubject').value;
-                const description = document.getElementById('formDescription').innerHTML;
+                const description = document.getElementById('formDescription').value;
                 const category = document.getElementById('formCategory').value;
                 const priority = document.getElementById('formPriority').value;
 
