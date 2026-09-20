@@ -459,40 +459,61 @@
 
         function renderMessages() {
             const messages = ticketData.messages || [];
+            let html = '';
             
-            if (messages.length === 0) {
-                document.getElementById('messagesContainer').innerHTML = `
-                    <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
-                        <div style="font-size: 24px; margin-bottom: 8px;"><i class="fas fa-inbox"></i></div>
-                        <div>Tidak ada pesan</div>
-                    </div>
-                `;
-                return;
-            }
-
-            const html = messages.map(msg => {
-                const isSupport = msg.user_id !== currentUser.userId;
-                const role = isSupport ? 'support' : 'customer';
-                const roleText = isSupport ? 'Support' : 'Anda';
-                
-                return `
+            // Always show ticket description as first message
+            if (ticketData.description) {
+                html += `
                     <div class="message">
                         <div class="message-header">
-                            <div class="message-avatar ${role}">
-                                ${isSupport ? '<i class="fas fa-headset"></i>' : '<i class="fas fa-user"></i>'}
+                            <div class="message-avatar customer">
+                                <i class="fas fa-user"></i>
                             </div>
                             <div>
                                 <span class="message-name">
-                                    ${isSupport ? 'Tim Support' : 'Anda'}
-                                    <span class="message-role ${role}">${roleText}</span>
+                                    Anda
+                                    <span class="message-role customer">Customer</span>
                                 </span>
-                                <span class="message-time">${formatRelativeTime(msg.created_at)}</span>
+                                <span class="message-time">${formatRelativeTime(ticketData.created_at)}</span>
                             </div>
                         </div>
-                        <div class="message-body">${escapeHtml(msg.message)}</div>
+                        <div class="message-body">${escapeHtml(ticketData.description)}</div>
                     </div>
                 `;
-            }).join('');
+            }
+            
+            if (messages.length === 0) {
+                html += `
+                    <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
+                        <div style="font-size: 24px; margin-bottom: 8px;"><i class="fas fa-inbox"></i></div>
+                        <div>Tidak ada balasan dari support team</div>
+                    </div>
+                `;
+            } else {
+                html += messages.map(msg => {
+                    const isSupport = msg.user_id !== currentUser.userId;
+                    const role = isSupport ? 'support' : 'customer';
+                    const roleText = isSupport ? 'Support' : 'Anda';
+                    
+                    return `
+                        <div class="message">
+                            <div class="message-header">
+                                <div class="message-avatar ${role}">
+                                    ${isSupport ? '<i class="fas fa-headset"></i>' : '<i class="fas fa-user"></i>'}
+                                </div>
+                                <div>
+                                    <span class="message-name">
+                                        ${isSupport ? 'Tim Support' : 'Anda'}
+                                        <span class="message-role ${role}">${roleText}</span>
+                                    </span>
+                                    <span class="message-time">${formatRelativeTime(msg.created_at)}</span>
+                                </div>
+                            </div>
+                            <div class="message-body">${escapeHtml(msg.message)}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
 
             document.getElementById('messagesContainer').innerHTML = html;
         }
