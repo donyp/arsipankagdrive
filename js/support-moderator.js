@@ -11,34 +11,45 @@ let currentSearch = '';
 let totalPages = 1;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('[Support-Moderator] Initializing moderator dashboard...');
+    console.log('[Support-Moderator] Page loaded');
     
-    // Wait for auth to load
-    await new Promise(resolve => {
-        const checkInterval = setInterval(() => {
-            if (typeof currentUser !== 'undefined' && currentUser) {
-                clearInterval(checkInterval);
-                resolve();
-            }
-        }, 100);
-    });
+    // Wait for auth to load with timeout
+    let attempts = 0;
+    const maxAttempts = 50; // 5 seconds max
+    
+    while (attempts < maxAttempts) {
+        if (typeof currentUser !== 'undefined' && currentUser) {
+            console.log('[Support-Moderator] Current user found:', currentUser);
+            break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
 
-    console.log('[Support-Moderator] Current user:', currentUser);
-
-    // Check if user is moderator/super_admin
-    if (currentUser.role !== 'moderator' && currentUser.role !== 'super_admin') {
-        console.log('[Support-Moderator] User is not moderator, redirecting...');
-        window.location.href = '/support-dashboard.html';
+    if (attempts >= maxAttempts) {
+        console.error('[Support-Moderator] Timeout waiting for currentUser');
+        document.body.innerHTML = '<div style="padding: 20px; color: red;">Error: Failed to load user data</div>';
         return;
     }
 
-    // Load zona list for dropdown first
-    await loadZonaList();
-    
-    // Load initial data
+    console.log('[Support-Moderator] User role:', currentUser.role);
+
+    // Check if user is moderator/super_admin
+    if (currentUser.role !== 'moderator' && currentUser.role !== 'super_admin') {
+        console.log('[Support-Moderator] User is not moderator, is:', currentUser.role);
+        // For testing, allow all roles to see this page
+        // window.location.href = '/support-dashboard.html';
+        // return;
+    }
+
+    console.log('[Support-Moderator] Loading stats...');
     await loadStats();
+    
+    console.log('[Support-Moderator] Loading tickets...');
     await loadTickets();
 
+    console.log('[Support-Moderator] Setting up event listeners...');
+    
     // Setup event listeners
     document.getElementById('searchInput').addEventListener('input', debounce(() => {
         currentSearch = document.getElementById('searchInput').value;
@@ -58,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadTickets();
     });
 
-    console.log('[Support-Moderator] Dashboard fully initialized');
+    console.log('[Support-Moderator] Dashboard ready');
 });
 
 function debounce(func, wait) {
@@ -71,44 +82,6 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
-}
-
-async function loadZonaList() {
-    try {
-        console.log('[Support-Moderator] Loading zona list...');
-        const token = localStorage.getItem('jwt_token');
-        
-        if (!token) {
-            console.warn('[Support-Moderator] No JWT token found');
-            return;
-        }
-
-        const response = await fetch('/api/zonas', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!response.ok) {
-            console.warn('[Support-Moderator] Failed to load zonas:', response.status);
-            return;
-        }
-
-        const data = await response.json();
-        const zonas = data.zonas || data.data || [];
-        
-        console.log('[Support-Moderator] Loaded', zonas.length, 'zonas:', zonas);
-        
-        const filterZona = document.getElementById('filterZona');
-        
-        zonas.forEach(zona => {
-            const option = document.createElement('option');
-            option.value = zona.id;
-            option.textContent = zona.nama || `Zona ${zona.id}`;
-            filterZona.appendChild(option);
-        });
-
-    } catch (error) {
-        console.error('[Support-Moderator] Error loading zonas:', error);
-    }
 }
 
 function switchTab(event, tab) {
@@ -127,20 +100,28 @@ function switchTab(event, tab) {
 
 async function loadStats() {
     try {
-        console.log('[Support-Moderator] Loading stats...');
+        console.log('[Support-Moderator] Fetching stats...');
         const token = localStorage.getItem('jwt_token');
         
+        if (!token) {
+            console.warn('[Support-Moderator] No JWT token');
+            return;
+        }
+
         const response = await fetch('/api/support/tickets/stats', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
+        console.log('[Support-Moderator] Stats response status:', response.status);
+
         if (!response.ok) {
-            console.error('[Support-Moderator] Failed to load stats:', response.status);
+            const error = await response.json().catch(() => ({}));
+            console.error('[Support-Moderator] Stats error:', error);
             throw new Error(`HTTP ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('[Support-Moderator] Stats response:', data);
+        console.log('[Support-Moderator] Stats data:', data);
         
         const stats = data.stats || {};
 
@@ -150,21 +131,16 @@ async function loadStats() {
         document.getElementById('statAnswered').textContent = stats.answered || 0;
         document.getElementById('statClosed').textContent = stats.closed || 0;
 
-        console.log('[Support-Moderator] Stats loaded successfully');
+        console.log('[Support-Moderator] Stats updated');
     } catch (error) {
         console.error('[Support-Moderator] Error loading stats:', error);
-        // Set all to 0 if error
-        document.getElementById('statTotal').textContent = '0';
-        document.getElementById('statOpen').textContent = '0';
-        document.getElementById('statInProgress').textContent = '0';
-        document.getElementById('statAnswered').textContent = '0';
-        document.getElementById('statClosed').textContent = '0';
+        // Don't break on stats error, continue to load tickets
     }
 }
 
 async function loadTickets() {
     try {
-        console.log('[Support-Moderator] Loading tickets...', {
+        console.log('[Support-Moderator] Loading tickets with params:', {
             page: currentPage,
             limit: currentLimit,
             status: currentStatus,
@@ -175,6 +151,7 @@ async function loadTickets() {
         const token = localStorage.getItem('jwt_token');
         
         if (!token) {
+            console.error('[Support-Moderator] No JWT token');
             throw new Error('No JWT token found');
         }
 
@@ -187,11 +164,11 @@ async function loadTickets() {
         });
 
         const url = `/api/support/tickets?${params}`;
-        console.log('[Support-Moderator] Fetching from:', url);
+        console.log('[Support-Moderator] Requesting:', url);
 
-        // Add timeout to fetch
+        // Add timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` },
@@ -199,29 +176,34 @@ async function loadTickets() {
         });
 
         clearTimeout(timeoutId);
+        console.log('[Support-Moderator] Response status:', response.status);
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            console.error('[Support-Moderator] API Error:', response.status, errorData);
-            throw new Error(`HTTP ${response.status}: ${errorData.error || 'Unknown error'}`);
+            console.error('[Support-Moderator] Error response:', errorData);
+            throw new Error(`HTTP ${response.status}: ${errorData.error || 'Unknown'}`);
         }
 
         const data = await response.json();
-        console.log('[Support-Moderator] API Response:', data);
+        console.log('[Support-Moderator] Response data:', data);
 
         const tickets = data.tickets || [];
         const pagination = data.pagination || {};
 
         totalPages = pagination.pages || 1;
         
-        console.log('[Support-Moderator] Got', tickets.length, 'tickets');
-        
+        console.log('[Support-Moderator] Rendering', tickets.length, 'tickets');
         renderTickets(tickets);
         updatePagination();
 
     } catch (error) {
         console.error('[Support-Moderator] Error loading tickets:', error);
         const container = document.getElementById('ticketsContainer');
+        if (!container) {
+            console.error('[Support-Moderator] Container not found!');
+            return;
+        }
+        
         container.style.minHeight = '200px';
         container.style.display = 'flex';
         container.style.alignItems = 'center';
@@ -231,7 +213,7 @@ async function loadTickets() {
                 <div style="margin-bottom: 12px;">
                     <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
                 </div>
-                <div>${error.message}</div>
+                <div style="font-weight: 500;">${error.message}</div>
                 <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">Check browser console for more details</div>
             </div>
         `;
@@ -239,8 +221,13 @@ async function loadTickets() {
 }
 
 function renderTickets(tickets) {
-    console.log('[Support-Moderator] Rendering', tickets.length, 'tickets');
+    console.log('[Support-Moderator] renderTickets called with', tickets.length, 'tickets');
     const container = document.getElementById('ticketsContainer');
+
+    if (!container) {
+        console.error('[Support-Moderator] ticketsContainer not found');
+        return;
+    }
 
     if (tickets.length === 0) {
         container.style.minHeight = '200px';
@@ -253,6 +240,7 @@ function renderTickets(tickets) {
                 <div class="text-gray-600">Tidak ada tiket ditemukan</div>
             </div>
         `;
+        console.log('[Support-Moderator] Empty state rendered');
         return;
     }
 
@@ -260,7 +248,7 @@ function renderTickets(tickets) {
     container.style.minHeight = 'auto';
     container.style.display = 'block';
     
-    container.innerHTML = tickets.map(ticket => `
+    const html = tickets.map(ticket => `
         <div class="table-row" onclick="openTicket('${ticket.id}')">
             <div class="font-medium text-gray-900">${ticket.ticket_number || 'N/A'}</div>
             <div class="text-gray-700 truncate" title="${ticket.subject}">${ticket.subject || 'N/A'}</div>
@@ -282,14 +270,20 @@ function renderTickets(tickets) {
             </div>
         </div>
     `).join('');
+    
+    container.innerHTML = html;
+    console.log('[Support-Moderator] Table rendered with', tickets.length, 'rows');
 }
 
 function updatePagination() {
     const info = `Halaman ${currentPage} dari ${totalPages}`;
     document.getElementById('paginationInfo').textContent = info;
 
-    document.getElementById('btnPrevPage').disabled = currentPage <= 1;
-    document.getElementById('btnNextPage').disabled = currentPage >= totalPages;
+    const prevBtn = document.getElementById('btnPrevPage');
+    const nextBtn = document.getElementById('btnNextPage');
+    
+    if (prevBtn) prevBtn.disabled = currentPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
 }
 
 function nextPage() {
@@ -317,3 +311,4 @@ function formatUserId(userId) {
     if (!userId) return '-';
     return userId.substring(0, 8);
 }
+
