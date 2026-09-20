@@ -13,35 +13,19 @@ let totalPages = 1;
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Support-Moderator] Page loaded');
     
-    // Wait for auth to load with timeout
-    let attempts = 0;
-    const maxAttempts = 50; // 5 seconds max
+    // Initialize auth
+    console.log('[Support-Moderator] Initializing auth...');
+    await initAuth();
     
-    while (attempts < maxAttempts) {
-        if (typeof currentUser !== 'undefined' && currentUser) {
-            console.log('[Support-Moderator] Current user found:', currentUser);
-            break;
-        }
-        await new Promise(resolve => setTimeout(resolve, 100));
-        attempts++;
-    }
-
-    if (attempts >= maxAttempts) {
-        console.error('[Support-Moderator] Timeout waiting for currentUser');
-        document.body.innerHTML = '<div style="padding: 20px; color: red;">Error: Failed to load user data</div>';
+    // Check if currentUser is loaded
+    if (!currentUser) {
+        console.error('[Support-Moderator] currentUser still not defined after initAuth');
+        document.body.innerHTML = '<div style="padding: 20px; color: red;">Error: Failed to authenticate</div>';
         return;
     }
 
-    console.log('[Support-Moderator] User role:', currentUser.role);
-
-    // Check if user is moderator/super_admin
-    if (currentUser.role !== 'moderator' && currentUser.role !== 'super_admin') {
-        console.log('[Support-Moderator] User is not moderator, is:', currentUser.role);
-        // For testing, allow all roles to see this page
-        // window.location.href = '/support-dashboard.html';
-        // return;
-    }
-
+    console.log('[Support-Moderator] User authenticated:', currentUser.email, 'Role:', currentUser.role);
+    
     console.log('[Support-Moderator] Loading stats...');
     await loadStats();
     
@@ -51,23 +35,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Support-Moderator] Setting up event listeners...');
     
     // Setup event listeners
-    document.getElementById('searchInput').addEventListener('input', debounce(() => {
-        currentSearch = document.getElementById('searchInput').value;
-        currentPage = 1;
-        loadTickets();
-    }, 300));
+    const searchInput = document.getElementById('searchInput');
+    const filterStatus = document.getElementById('filterStatus');
+    const filterZona = document.getElementById('filterZona');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(() => {
+            currentSearch = searchInput.value;
+            currentPage = 1;
+            loadTickets();
+        }, 300));
+    }
 
-    document.getElementById('filterStatus').addEventListener('change', () => {
-        currentStatus = document.getElementById('filterStatus').value;
-        currentPage = 1;
-        loadTickets();
-    });
+    if (filterStatus) {
+        filterStatus.addEventListener('change', () => {
+            currentStatus = filterStatus.value;
+            currentPage = 1;
+            loadTickets();
+        });
+    }
 
-    document.getElementById('filterZona').addEventListener('change', () => {
-        currentZona = document.getElementById('filterZona').value;
-        currentPage = 1;
-        loadTickets();
-    });
+    if (filterZona) {
+        filterZona.addEventListener('change', () => {
+            currentZona = filterZona.value;
+            currentPage = 1;
+            loadTickets();
+        });
+    }
 
     console.log('[Support-Moderator] Dashboard ready');
 });
