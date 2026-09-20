@@ -514,19 +514,28 @@
             document.getElementById('ticketStatus').textContent = ticket.status || 'Open';
             
             const priorityBadge = document.getElementById('ticketPriority');
-            priorityBadge.textContent = ticket.priority || 'Medium';
-            priorityBadge.className = `priority-badge priority-${priorityClass}`;
+            if (priorityBadge) {
+                priorityBadge.textContent = ticket.priority || 'Medium';
+                priorityBadge.className = `priority-badge priority-${priorityClass}`;
+            }
 
-            document.getElementById('sidebarStatus').textContent = ticket.status || '-';
-            document.getElementById('sidebarPriority').textContent = ticket.priority || '-';
-            document.getElementById('sidebarCategory').textContent = ticket.category || '-';
+            const sidebarStatus = document.getElementById('sidebarStatus');
+            const sidebarPriority = document.getElementById('sidebarPriority');
+            const sidebarCategory = document.getElementById('sidebarCategory');
+            const sidebarCreated = document.getElementById('sidebarCreated');
+            const sidebarLastReply = document.getElementById('sidebarLastReply');
+            const sidebarTotalMessages = document.getElementById('sidebarTotalMessages');
+
+            if (sidebarStatus) sidebarStatus.textContent = ticket.status || '-';
+            if (sidebarPriority) sidebarPriority.textContent = ticket.priority || '-';
+            if (sidebarCategory) sidebarCategory.textContent = ticket.category || '-';
             
             const createdFormatted = formatDateTimeWIB(ticket.created_at);
             console.log('[Ticket-Detail] Created formatted:', createdFormatted);
-            document.getElementById('sidebarCreated').textContent = createdFormatted;
+            if (sidebarCreated) sidebarCreated.textContent = createdFormatted;
             
-            document.getElementById('sidebarLastReply').textContent = getLastReplyTime(ticket);
-            document.getElementById('sidebarTotalMessages').textContent = (ticketData.messages || []).length + 1;
+            if (sidebarLastReply) sidebarLastReply.textContent = getLastReplyTime(ticket);
+            if (sidebarTotalMessages) sidebarTotalMessages.textContent = (ticketData.messages || []).length + 1;
         }
 
         function renderMessages(zonaName) {
