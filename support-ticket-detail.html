@@ -464,6 +464,9 @@
             const ticket = ticketData;
             const priorityClass = (ticket.priority || 'Medium').toLowerCase();
 
+            console.log('[Ticket-Detail] Ticket data:', ticket);
+            console.log('[Ticket-Detail] Created at:', ticket.created_at);
+
             document.getElementById('ticketNumber').textContent = ticket.ticket_number || 'N/A';
             document.getElementById('ticketSubject').textContent = ticket.subject || 'N/A';
             document.getElementById('ticketStatus').textContent = ticket.status || 'Open';
@@ -475,7 +478,11 @@
             document.getElementById('sidebarStatus').textContent = ticket.status || '-';
             document.getElementById('sidebarPriority').textContent = ticket.priority || '-';
             document.getElementById('sidebarCategory').textContent = ticket.category || '-';
-            document.getElementById('sidebarCreated').textContent = formatDateTimeWIB(ticket.created_at);
+            
+            const createdFormatted = formatDateTimeWIB(ticket.created_at);
+            console.log('[Ticket-Detail] Created formatted:', createdFormatted);
+            document.getElementById('sidebarCreated').textContent = createdFormatted;
+            
             document.getElementById('sidebarLastReply').textContent = getLastReplyTime(ticket);
             document.getElementById('sidebarTotalMessages').textContent = (ticketData.messages || []).length + 1;
         }
@@ -561,26 +568,43 @@
         function formatDateTimeWIB(dateString) {
             if (!dateString) return '-';
             
-            // Parse ISO string
-            const date = new Date(dateString);
-            
-            // Format directly using id-ID locale with options
-            // The backend should store UTC, so we just format it
-            const dateStr = date.toLocaleDateString('id-ID', { 
-                day: 'numeric', 
-                month: 'short', 
-                year: 'numeric',
-                timeZone: 'Asia/Jakarta'
-            });
-            
-            const timeStr = date.toLocaleTimeString('id-ID', { 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                hour12: false,
-                timeZone: 'Asia/Jakarta'
-            });
-            
-            return `${dateStr} · ${timeStr}`;
+            try {
+                // Parse ISO string - ensure it's interpreted as UTC
+                let date;
+                if (typeof dateString === 'string') {
+                    // Add 'Z' if not present to ensure UTC interpretation
+                    const isoString = dateString.includes('Z') || dateString.includes('+') 
+                        ? dateString 
+                        : dateString + 'Z';
+                    date = new Date(isoString);
+                } else {
+                    date = new Date(dateString);
+                }
+                
+                if (isNaN(date.getTime())) {
+                    return '-';
+                }
+                
+                // Format using Asia/Jakarta timezone
+                const formatter = new Intl.DateTimeFormat('id-ID', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false,
+                    timeZone: 'Asia/Jakarta'
+                });
+                
+                const parts = formatter.formatToParts(date);
+                const dateStr = `${parts.find(p => p.type === 'day').value} ${parts.find(p => p.type === 'month').value} ${parts.find(p => p.type === 'year').value}`;
+                const timeStr = `${parts.find(p => p.type === 'hour').value}:${parts.find(p => p.type === 'minute').value}`;
+                
+                return `${dateStr} · ${timeStr}`;
+            } catch (e) {
+                console.error('[Ticket-Detail] formatDateTimeWIB error:', e, dateString);
+                return '-';
+            }
         }
 
         function formatRelativeTime(dateString) {
