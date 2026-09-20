@@ -13,6 +13,109 @@
         html, body {
             zoom: 0.8;
         }
+
+        /* Custom Dropdown Styling */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-trigger {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            font-size: 13px;
+            font-weight: 500;
+            color: #2c3e50;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+
+        .dropdown-trigger:hover {
+            border-color: #3b82f6;
+            background: #f8fbff;
+        }
+
+        .dropdown-trigger.active {
+            border-color: #3b82f6;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .dropdown-label {
+            flex: 1;
+            text-align: left;
+        }
+
+        .dropdown-icon {
+            transition: transform 0.2s;
+            color: #9ca3af;
+        }
+
+        .dropdown-trigger.active .dropdown-icon {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #3b82f6;
+            border-top: none;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .dropdown-header {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f9fafb;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .dropdown-options {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .dropdown-option {
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.15s;
+            color: #2c3e50;
+            font-size: 13px;
+        }
+
+        .dropdown-option:hover {
+            background: #f3f4f6;
+        }
+
+        .dropdown-option.selected {
+            background: #eff6ff;
+            color: #1e40af;
+        }
+
+        .checkmark {
+            display: inline-block;
+            width: 16px;
+            text-align: center;
+            color: #3b82f6;
+            font-weight: bold;
+        }
         
         /* File list - use Poppins font */
         .invoice-table {
@@ -866,14 +969,37 @@
 
                                 <!-- Row 2: Filter Dropdowns -->
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px;">
-                                    <!-- Status filter -->
+                                    <!-- Status filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
                                         <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Status Bayar</label>
-                                        <select id="filterStatus" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; font-weight: 500; color: #2c3e50;">
-                                            <option value="">Semua Status</option>
-                                            <option value="Belum Lunas">Belum Lunas</option>
-                                            <option value="Lunas">Lunas</option>
-                                        </select>
+                                        <div class="custom-dropdown" id="statusDropdown">
+                                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'statusDropdown')">
+                                                <span class="dropdown-label">Semua Status</span>
+                                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                                </svg>
+                                            </button>
+                                            <div class="dropdown-menu" style="display: none;">
+                                                <div class="dropdown-header">
+                                                    <span style="font-weight: 600; color: #1f2937;">Filter Status</span>
+                                                </div>
+                                                <div class="dropdown-options">
+                                                    <div class="dropdown-option" onclick="selectOption(event, 'statusDropdown', '', 'Semua Status')">
+                                                        <span class="checkmark">✓</span>
+                                                        <span>Semua Status</span>
+                                                    </div>
+                                                    <div class="dropdown-option" onclick="selectOption(event, 'statusDropdown', 'Belum Lunas', 'Belum Lunas')">
+                                                        <span class="checkmark"></span>
+                                                        <span>Belum Lunas</span>
+                                                    </div>
+                                                    <div class="dropdown-option" onclick="selectOption(event, 'statusDropdown', 'Lunas', 'Lunas')">
+                                                        <span class="checkmark"></span>
+                                                        <span>Lunas</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" id="filterStatus" value="">
                                     </div>
                                     
                                     <!-- Kategori filter -->
@@ -1385,6 +1511,71 @@
     </div>
 
     <script>
+        // Custom Dropdown Functions
+        function toggleCustomDropdown(event, dropdownId) {
+            event.preventDefault();
+            const dropdown = document.getElementById(dropdownId);
+            const trigger = dropdown.querySelector('.dropdown-trigger');
+            const menu = dropdown.querySelector('.dropdown-menu');
+            
+            // Close other dropdowns
+            document.querySelectorAll('.dropdown-menu').forEach(m => {
+                if (m !== menu) m.style.display = 'none';
+                m.parentElement.querySelector('.dropdown-trigger').classList.remove('active');
+            });
+            
+            // Toggle current dropdown
+            if (menu.style.display === 'none') {
+                menu.style.display = 'block';
+                trigger.classList.add('active');
+            } else {
+                menu.style.display = 'none';
+                trigger.classList.remove('active');
+            }
+        }
+
+        function selectOption(event, dropdownId, value, label) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const dropdown = document.getElementById(dropdownId);
+            const hiddenInput = dropdown.querySelector('input[type="hidden"]');
+            const trigger = dropdown.querySelector('.dropdown-trigger .dropdown-label');
+            const menu = dropdown.querySelector('.dropdown-menu');
+            
+            // Update hidden input value
+            hiddenInput.value = value;
+            
+            // Update trigger label
+            trigger.textContent = label;
+            
+            // Update checkmarks
+            dropdown.querySelectorAll('.dropdown-option').forEach(opt => {
+                opt.classList.remove('selected');
+                const text = opt.querySelector('span:last-child').textContent;
+                if (text === label) {
+                    opt.classList.add('selected');
+                }
+            });
+            
+            // Close menu
+            menu.style.display = 'none';
+            dropdown.querySelector('.dropdown-trigger').classList.remove('active');
+            
+            // Trigger change event on hidden input so filters work
+            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.custom-dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                    menu.parentElement.querySelector('.dropdown-trigger').classList.remove('active');
+                });
+            }
+        });
+
         // Setup drag-drop listeners using event delegation
         // This approach works even when modals are hidden/shown
         if (typeof document !== 'undefined') {
