@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        
         .gradient-header {
             background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
         }
@@ -14,40 +16,100 @@
         .stat-card {
             background: white;
             border-radius: 8px;
-            padding: 20px;
+            padding: 16px;
             display: flex;
             align-items: center;
-            gap: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+            gap: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            transition: all 0.2s;
         }
         
         .stat-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         
         .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 18px;
             color: white;
+            flex-shrink: 0;
         }
         
         .stat-total { background: #3b82f6; }
         .stat-open { background: #ef4444; }
+        .stat-in-progress { background: #f59e0b; }
         .stat-answered { background: #10b981; }
         .stat-closed { background: #6b7280; }
         
+        .stat-content h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0;
+        }
+        
+        .stat-content p {
+            font-size: 13px;
+            color: #6b7280;
+            margin: 2px 0 0 0;
+        }
+        
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0 0 12px 0;
+            margin-bottom: 20px;
+        }
+        
+        .tab-btn {
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            margin-bottom: -13px;
+            padding-bottom: 13px;
+        }
+        
+        .tab-btn:hover {
+            color: #1f2937;
+        }
+        
+        .tab-btn.active {
+            color: #e74c3c;
+            border-bottom-color: #e74c3c;
+        }
+        
+        .table-header {
+            display: grid;
+            grid-template-columns: 0.8fr 2fr 1.2fr 1fr 1.2fr 1fr 80px;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
         .table-row {
             display: grid;
-            grid-template-columns: 0.8fr 2fr 1.2fr 1fr 1.5fr 80px;
-            gap: 15px;
-            padding: 15px;
+            grid-template-columns: 0.8fr 2fr 1.2fr 1fr 1.2fr 1fr 80px;
+            gap: 12px;
+            padding: 12px 16px;
             border-bottom: 1px solid #e5e7eb;
             align-items: center;
             cursor: pointer;
@@ -60,37 +122,47 @@
         
         .status-badge {
             display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .status-open { background: #fef2f2; color: #dc2626; }
-        .status-in-progress { background: #fef3c7; color: #d97706; }
-        .status-answered { background: #f0fdf4; color: #16a34a; }
-        .status-resolved { background: #f0f9ff; color: #0284c7; }
-        .status-closed { background: #f3f4f6; color: #4b5563; }
-        
-        .priority-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
             font-size: 11px;
             font-weight: 600;
+            text-transform: uppercase;
+            text-align: center;
         }
         
-        .priority-low { background: #e0e7ff; color: #3730a3; }
-        .priority-medium { background: #fef3c7; color: #92400e; }
-        .priority-high { background: #fecaca; color: #7f1d1d; }
-        .priority-urgent { background: #fca5a5; color: #7f1d1d; }
+        .status-open { background: #fee2e2; color: #991b1b; }
+        .status-in-progress { background: #fef3c7; color: #92400e; }
+        .status-answered { background: #dbeafe; color: #1e40af; }
+        .status-resolved { background: #dcfce7; color: #166534; }
+        .status-closed { background: #f3f4f6; color: #374151; }
+        
+        .priority-indicator {
+            width: 4px;
+            height: 20px;
+            border-radius: 2px;
+            display: inline-block;
+            margin-right: 4px;
+        }
+        
+        .priority-low { background: #3b82f6; }
+        .priority-medium { background: #f59e0b; }
+        .priority-high { background: #ef4444; }
+        .priority-urgent { background: #7c3aed; }
         
         .filter-group {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+        
+        .search-input, .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
         }
         
         .search-input {
@@ -98,73 +170,25 @@
             min-width: 200px;
         }
         
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+        .search-input::placeholder {
+            color: #9ca3af;
         }
         
-        .modal-overlay.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal {
-            background: white;
-            border-radius: 8px;
-            padding: 30px;
-            max-width: 500px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #1f2937;
-        }
-        
-        .form-input, .form-textarea, .form-select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: inherit;
-        }
-        
-        .form-textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-        
-        .form-input:focus, .form-textarea:focus, .form-select:focus {
-            outline: none;
-            border-color: #e74c3c;
-            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+        .filter-select {
+            min-width: 120px;
         }
         
         .btn {
-            padding: 10px 20px;
+            padding: 8px 16px;
             border: none;
             border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 14px;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
         
         .btn-primary {
@@ -177,44 +201,63 @@
         }
         
         .btn-secondary {
-            background: #6b7280;
-            color: white;
+            background: #e5e7eb;
+            color: #374151;
         }
         
         .btn-secondary:hover {
-            background: #4b5563;
+            background: #d1d5db;
         }
         
-        .btn-small {
-            padding: 6px 12px;
+        .btn-sm {
+            padding: 6px 10px;
             font-size: 12px;
         }
         
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 40px 20px;
             color: #6b7280;
         }
         
         .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-            opacity: 0.5;
+            font-size: 36px;
+            margin-bottom: 12px;
+            opacity: 0.6;
         }
         
         .loading-spinner {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f4f6;
-            border-top: 3px solid #e74c3c;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f4f6;
+            border-top: 2px solid #e74c3c;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
         
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .pagination-info {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .pagination-buttons {
+            display: flex;
+            gap: 6px;
         }
     </style>
 </head>
@@ -224,61 +267,65 @@
         <div id="sidebar"></div>
 
         <!-- Main Content -->
-        <div style="margin-left: 16rem; width: calc(100% - 16rem); transition: all 300ms ease;">
+        <div style="margin-left: 16rem; width: calc(100% - 16rem);">
             <!-- Header -->
-            <div class="gradient-header text-white sticky top-0 z-30 shadow-lg">
-                <div class="px-6 py-8">
+            <div class="gradient-header text-white sticky top-0 z-30 shadow">
+                <div class="px-6 py-6">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="bg-white/20 p-3 rounded-lg">
-                                <i class="fas fa-headset text-2xl"></i>
+                            <div class="bg-white/20 p-2.5 rounded-lg">
+                                <i class="fas fa-headset text-xl"></i>
                             </div>
                             <div>
-                                <h1 class="text-3xl font-bold">Support</h1>
-                                <p class="text-red-100 text-sm mt-1">Ke ola tiket support Anda</p>
+                                <h1 class="text-2xl font-bold">Support Ticketing</h1>
+                                <p class="text-red-100 text-xs mt-0.5">Kelola tiket support dari semua zona</p>
                             </div>
                         </div>
-                        <button id="btnCreateTicket" class="bg-white text-red-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition flex items-center gap-2" onclick="showCreateModal()">
-                            <i class="fas fa-plus"></i> Buka Tiket
-                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Content Area -->
+            <!-- Main Content -->
             <div class="p-6">
                 <!-- Statistics -->
-                <div class="grid grid-cols-4 gap-4 mb-6">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
                     <div class="stat-card">
                         <div class="stat-icon stat-total">
-                            <i class="fas fa-list"></i>
+                            <i class="fas fa-list-check"></i>
                         </div>
-                        <div>
-                            <div class="text-2xl font-bold text-gray-800" id="statTotal">0</div>
-                            <div class="text-sm text-gray-600">Total Tickets</div>
-                            <div class="text-xs text-gray-500 mt-1">Semua tiket Anda</div>
+                        <div class="stat-content">
+                            <h3 id="statTotal">0</h3>
+                            <p>Total</p>
                         </div>
                     </div>
                     
                     <div class="stat-card">
                         <div class="stat-icon stat-open">
-                            <i class="fas fa-exclamation-circle"></i>
+                            <i class="fas fa-circle-exclamation"></i>
                         </div>
-                        <div>
-                            <div class="text-2xl font-bold text-gray-800" id="statOpen">0</div>
-                            <div class="text-sm text-gray-600">Open</div>
-                            <div class="text-xs text-gray-500 mt-1">Belum dijawab</div>
+                        <div class="stat-content">
+                            <h3 id="statOpen">0</h3>
+                            <p>Open</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon stat-in-progress">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="statInProgress">0</h3>
+                            <p>In Progress</p>
                         </div>
                     </div>
                     
                     <div class="stat-card">
                         <div class="stat-icon stat-answered">
-                            <i class="fas fa-check-circle"></i>
+                            <i class="fas fa-check"></i>
                         </div>
-                        <div>
-                            <div class="text-2xl font-bold text-gray-800" id="statAnswered">0</div>
-                            <div class="text-sm text-gray-600">Answered</div>
-                            <div class="text-xs text-gray-500 mt-1">Sudah direspon</div>
+                        <div class="stat-content">
+                            <h3 id="statAnswered">0</h3>
+                            <p>Answered</p>
                         </div>
                     </div>
                     
@@ -286,19 +333,28 @@
                         <div class="stat-icon stat-closed">
                             <i class="fas fa-lock"></i>
                         </div>
-                        <div>
-                            <div class="text-2xl font-bold text-gray-800" id="statClosed">0</div>
-                            <div class="text-sm text-gray-600">Closed</div>
-                            <div class="text-xs text-gray-500 mt-1">Selesai</div>
+                        <div class="stat-content">
+                            <h3 id="statClosed">0</h3>
+                            <p>Closed</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Filters & Search -->
+                <!-- Tab Navigation -->
+                <div class="tab-nav">
+                    <button class="tab-btn active" onclick="switchTab('all')">
+                        <i class="fas fa-list"></i> Semua Tiket
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('my-tickets')">
+                        <i class="fas fa-user-clock"></i> Tiket Saya
+                    </button>
+                </div>
+
+                <!-- Filters -->
                 <div class="filter-group">
-                    <input type="text" class="search-input form-input" id="searchInput" placeholder="Cari subjek atau nomor tiket...">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Cari nomor tiket atau subjek...">
                     
-                    <select id="filterStatus" class="form-select" style="min-width: 150px;">
+                    <select id="filterStatus" class="filter-select">
                         <option value="all">Semua Status</option>
                         <option value="Open">Open</option>
                         <option value="In Progress">In Progress</option>
@@ -307,46 +363,46 @@
                         <option value="Closed">Closed</option>
                     </select>
                     
-                    <select id="filterLimit" class="form-select" style="min-width: 100px;">
-                        <option value="10">10 per page</option>
-                        <option value="20" selected>20 per page</option>
-                        <option value="50">50 per page</option>
+                    <select id="filterZona" class="filter-select">
+                        <option value="">Semua Zona</option>
+                        <option value="1">Zona 1</option>
+                        <option value="2">Zona 2</option>
+                        <option value="3">Zona 3</option>
                     </select>
                 </div>
 
                 <!-- Tickets Table -->
-                <div class="bg-white rounded-lg shadow-md">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
                     <!-- Table Header -->
-                    <div class="table-row border-b-2 font-bold text-gray-700 bg-gray-50 cursor-default">
+                    <div class="table-header">
                         <div>TIKET</div>
                         <div>SUBJEK</div>
-                        <div>DEPARTMENT</div>
+                        <div>ZONA</div>
+                        <div>PRIORITAS</div>
                         <div>STATUS</div>
-                        <div>BALASAN TERAKHIR</div>
+                        <div>PEMBUAT</div>
                         <div>AKSI</div>
                     </div>
 
                     <!-- Table Body -->
                     <div id="ticketsContainer">
                         <div class="table-row cursor-default">
-                            <div style="grid-column: 1 / -1; text-align: center; color: #6b7280;">
-                                <div class="loading-spinner" style="margin: 20px auto;"></div>
-                                Loading tickets...
+                            <div style="grid-column: 1 / -1; text-align: center; padding: 24px;">
+                                <div class="loading-spinner" style="margin: 0 auto 8px;"></div>
+                                <span class="text-gray-600">Loading tickets...</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Pagination -->
-                <div class="mt-6 flex justify-between items-center">
-                    <div class="text-sm text-gray-600" id="paginationInfo">
-                        Showing page 1
-                    </div>
-                    <div class="flex gap-2">
-                        <button id="btnPrevPage" class="btn btn-secondary btn-small" onclick="previousPage()">
+                <div class="pagination">
+                    <div class="pagination-info" id="paginationInfo">Halaman 1</div>
+                    <div class="pagination-buttons">
+                        <button class="btn btn-secondary btn-sm" id="btnPrevPage" onclick="previousPage()">
                             <i class="fas fa-chevron-left"></i> Sebelumnya
                         </button>
-                        <button id="btnNextPage" class="btn btn-secondary btn-small" onclick="nextPage()">
+                        <button class="btn btn-secondary btn-sm" id="btnNextPage" onclick="nextPage()">
                             Selanjutnya <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
@@ -355,60 +411,9 @@
         </div>
     </div>
 
-    <!-- Create Ticket Modal -->
-    <div id="createModal" class="modal-overlay">
-        <div class="modal">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Buka Tiket Support</h2>
-                <button onclick="closeCreateModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <form id="createForm" onsubmit="submitCreateTicket(event)">
-                <div class="form-group">
-                    <label class="form-label">Subjek <span style="color: #dc2626;">*</span></label>
-                    <input type="text" class="form-input" id="formSubject" required placeholder="Ringkas masalahnya">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Deskripsi <span style="color: #dc2626;">*</span></label>
-                    <textarea class="form-textarea" id="formDescription" required placeholder="Jelaskan masalah secara detail..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Kategori</label>
-                    <select class="form-select" id="formCategory">
-                        <option value="General">General</option>
-                        <option value="Technical">Technical Support</option>
-                        <option value="Billing">Billing</option>
-                        <option value="Data">Data Issue</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Prioritas</label>
-                    <select class="form-select" id="formPriority">
-                        <option value="Low">Low</option>
-                        <option value="Medium" selected>Medium</option>
-                        <option value="High">High</option>
-                        <option value="Urgent">Urgent</option>
-                    </select>
-                </div>
-
-                <div class="flex gap-3 mt-8">
-                    <button type="button" class="btn btn-secondary flex-1" onclick="closeCreateModal()">Batal</button>
-                    <button type="submit" class="btn btn-primary flex-1">
-                        <i class="fas fa-paper-plane"></i> Kirim Tiket
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/sidebar.js"></script>
-    <script src="js/support-list.js"></script>
+    <script src="js/support-moderator.js"></script>
 </body>
 </html>
