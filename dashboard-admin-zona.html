@@ -14,19 +14,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <style>
-        html, body {
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        body {
             margin: 0;
             padding: 0;
             width: 100%;
-            overflow-x: hidden;
-        }
-
-        /* Apply scale transform instead of zoom to avoid scrollbar issues */
-        body {
-            transform: scale(0.8);
-            transform-origin: top left;
-            width: 125%;
-            height: 125%;
+            height: 100%;
         }
 
         /* Hide sidebar initially to prevent flash */
@@ -34,13 +34,16 @@
             display: none !important;
         }
 
-        /* Main content - no sidebar for admin zona, always full width */
+        /* Main content - scale down to fit without scrollbars */
         #main-content {
             margin-left: 0;
             width: 100%;
-            max-width: 100%;
-            overflow-x: hidden;
-            transform: translateX(0) !important;
+            height: 100%;
+            overflow: auto;
+            transform: scale(0.8);
+            transform-origin: top left;
+            display: flex;
+            flex-direction: column;
         }
 
         .invoice-table {
@@ -233,11 +236,8 @@
         }
 
         @media (max-width: 768px) {
-            body {
+            #main-content {
                 transform: scale(0.6);
-                transform-origin: top left;
-                width: 166.67%;
-                height: 166.67%;
             }
             .filter-grid {
                 grid-template-columns: 1fr;
