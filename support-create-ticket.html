@@ -400,6 +400,8 @@
                 return;
             }
 
+            console.log('[Support-Create] User:', currentUser);
+
             // Drag and drop
             const uploadArea = document.getElementById('uploadArea');
             uploadArea.addEventListener('dragover', (e) => {
@@ -460,12 +462,20 @@
                 const category = document.getElementById('formCategory').value;
                 const priority = document.getElementById('formPriority').value;
 
-                if (!subject || !description) {
+                if (!subject || !description || !category) {
                     alert('Silakan isi semua field yang diperlukan');
                     return;
                 }
 
-                console.log('[Support-Create] Creating ticket:', { subject, category, priority });
+                // Get zona_id from currentUser
+                const zonaId = currentUser.zona_id;
+                
+                if (!zonaId) {
+                    alert('Error: Zona tidak ditemukan. Silakan logout dan login kembali.');
+                    return;
+                }
+
+                console.log('[Support-Create] Creating ticket with zona_id:', zonaId);
 
                 const response = await fetch('/api/support/tickets', {
                     method: 'POST',
@@ -477,7 +487,8 @@
                         subject,
                         description,
                         category,
-                        priority
+                        priority,
+                        zona_id: zonaId
                     })
                 });
 
