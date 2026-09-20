@@ -40,15 +40,59 @@
             overflow-x: hidden;
         }
 
-        .invoice-table {
-            font-family: 'Poppins', sans-serif;
+        header {
+            width: 100%;
+            padding: 30px;
+            box-sizing: border-box;
+            margin: 0;
+            max-width: none;
         }
 
-        .invoice-container {
-            padding: 30px;
-            width: 100%;
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin: 0;
+            width: 100%;
+        }
+
+        .invoice-header h1 {
+            margin: 0;
+            flex: 1;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 0 30px 20px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: calc(100% - 60px);
             box-sizing: border-box;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            margin: 0;
+            width: 100%;
+        }
+
+        table {
+            width: 100% !important;
+            margin: 0 !important;
+            border-collapse: collapse;
+        }
+
+        tbody, thead {
+            width: 100%;
+        }
+
+        tr {
+            width: 100%;
         }
 
         .invoice-header {
