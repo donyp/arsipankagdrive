@@ -421,9 +421,17 @@
             document.getElementById('sidebarStatus').textContent = ticket.status || '-';
             document.getElementById('sidebarPriority').textContent = ticket.priority || '-';
             document.getElementById('sidebarCategory').textContent = ticket.category || '-';
-            document.getElementById('sidebarCreated').textContent = formatDate(ticket.created_at);
+            document.getElementById('sidebarCreated').textContent = formatDateTimeWithTime(ticket.created_at);
             document.getElementById('sidebarLastReply').textContent = formatRelativeTime(ticket.updated_at);
-            document.getElementById('sidebarTotalMessages').textContent = (ticketData.messages || []).length + 1; // +1 for initial description
+            document.getElementById('sidebarTotalMessages').textContent = (ticketData.messages || []).length + 1;
+        }
+
+        function formatDateTimeWithTime(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            const dateStr = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            const timeStr = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+            return `${dateStr} · ${timeStr}`;
         }
 
         function renderMessages() {
@@ -438,8 +446,8 @@
                         <div class="message-content">
                             <div class="message-header-row">
                                 <span class="message-author">Anda</span>
-                                <span class="message-role">Customer</span>
-                                <span class="message-time">${formatDate(ticketData.created_at)}</span>
+                                <span class="message-role">ANDA</span>
+                                <span class="message-time">${formatDateTime(ticketData.created_at)}</span>
                             </div>
                             <div class="message-body">${escapeHtml(ticketData.description)}</div>
                         </div>
@@ -471,8 +479,8 @@
                             <div class="message-content">
                                 <div class="message-header-row">
                                     <span class="message-author">${isSupport ? 'Tim Support' : 'Anda'}</span>
-                                    <span class="message-role">${isSupport ? 'Support' : 'Customer'}</span>
-                                    <span class="message-time">${formatDate(msg.created_at)}</span>
+                                    <span class="message-role">${isSupport ? 'Support' : 'ANDA'}</span>
+                                    <span class="message-time">${formatDateTime(msg.created_at)}</span>
                                 </div>
                                 <div class="message-body">${escapeHtml(msg.message)}</div>
                             </div>
@@ -484,11 +492,12 @@
             document.getElementById('messagesContainer').innerHTML = html;
         }
 
-        function formatDate(dateString) {
+        function formatDateTime(dateString) {
             if (!dateString) return '-';
             const date = new Date(dateString);
-            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + ' · ' + 
-                   date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            const timeStr = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+            return `${dateStr} · ${timeStr}`;
         }
 
         function formatRelativeTime(dateString) {
