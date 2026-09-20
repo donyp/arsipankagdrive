@@ -189,9 +189,16 @@ async function loadTickets() {
         const url = `/api/support/tickets?${params}`;
         console.log('[Support-Moderator] Fetching from:', url);
 
+        // Add timeout to fetch
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
         const response = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${token}` },
+            signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
@@ -214,12 +221,18 @@ async function loadTickets() {
 
     } catch (error) {
         console.error('[Support-Moderator] Error loading tickets:', error);
-        document.getElementById('ticketsContainer').innerHTML = `
-            <div class="table-row">
-                <div style="grid-column: 1 / -1; text-align: center; padding: 24px; display: flex; align-items: center; justify-content: center; gap: 10px; color: #ef4444;">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>${error.message}</span>
+        const container = document.getElementById('ticketsContainer');
+        container.style.minHeight = '200px';
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        container.innerHTML = `
+            <div style="text-align: center; color: #ef4444;">
+                <div style="margin-bottom: 12px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
                 </div>
+                <div>${error.message}</div>
+                <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">Check browser console for more details</div>
             </div>
         `;
     }
@@ -230,19 +243,23 @@ function renderTickets(tickets) {
     const container = document.getElementById('ticketsContainer');
 
     if (tickets.length === 0) {
+        container.style.minHeight = '200px';
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
         container.innerHTML = `
-            <div class="table-row">
-                <div style="grid-column: 1 / -1;">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
-                        <div class="text-gray-600">Tidak ada tiket ditemukan</div>
-                    </div>
-                </div>
+            <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <div class="text-gray-600">Tidak ada tiket ditemukan</div>
             </div>
         `;
         return;
     }
 
+    // Reset container style for table display
+    container.style.minHeight = 'auto';
+    container.style.display = 'block';
+    
     container.innerHTML = tickets.map(ticket => `
         <div class="table-row" onclick="openTicket('${ticket.id}')">
             <div class="font-medium text-gray-900">${ticket.ticket_number || 'N/A'}</div>
