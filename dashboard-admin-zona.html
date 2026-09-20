@@ -52,7 +52,7 @@
         /* Improved header with better visual hierarchy */
         header {
             width: 100%;
-            padding: 36px 44px;
+            padding: 28px 28px;
             box-sizing: border-box;
             margin: 0;
             max-width: none;
@@ -67,17 +67,17 @@
             align-items: center;
             margin: 0;
             width: 100%;
-            gap: 20px;
+            gap: 15px;
         }
 
         .invoice-header h1 {
             margin: 0;
             flex: 1;
-            font-size: 30px;
+            font-size: 26px;
             color: #1a202c;
             font-weight: 800;
             text-align: left;
-            letter-spacing: -0.3px;
+            letter-spacing: -0.2px;
         }
 
         .header-actions {
@@ -111,54 +111,54 @@
 
         /* Main content container */
         .invoice-container {
-            padding: 36px 44px;
+            padding: 24px 28px;
             max-width: 100%;
         }
 
         /* Filter section with improved spacing */
         .filter-section {
             background: white;
-            padding: 36px 44px;
-            border-radius: 14px;
-            margin: 0 0 36px 0;
+            padding: 24px 28px;
+            border-radius: 12px;
+            margin: 0 0 24px 0;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
             border: 1px solid #e5e7eb;
         }
 
         .filter-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 28px;
-            margin-bottom: 28px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+            margin-bottom: 20px;
         }
 
         .filter-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 6px;
         }
 
         .filter-group label {
-            font-size: 12px;
+            font-size: 11px;
             color: #475569;
             margin: 0;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.9px;
+            letter-spacing: 0.7px;
         }
 
         .filter-group select,
         .filter-group input {
-            padding: 12px 14px;
-            border: 1.5px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
             background: white;
             color: #374151;
             font-family: inherit;
             transition: all 0.2s ease;
-            min-height: 44px;
-            line-height: 1.5;
+            min-height: 38px;
+            line-height: 1.4;
         }
 
         .filter-group select:hover,
@@ -178,25 +178,25 @@
         /* Filter buttons */
         .filter-button-group {
             display: flex;
-            gap: 16px;
-            margin-top: 28px;
+            gap: 12px;
+            margin-top: 18px;
         }
 
         .btn {
             background: #3498db;
             color: white;
             border: none;
-            padding: 12px 28px;
-            border-radius: 8px;
+            padding: 10px 20px;
+            border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            box-shadow: 0 2px 6px rgba(52, 152, 219, 0.22);
-            min-height: 44px;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+            min-height: 36px;
         }
 
         .btn:hover {
@@ -240,26 +240,26 @@
         th {
             background: #2d3748;
             color: white;
-            padding: 20px 18px;
+            padding: 14px 12px;
             text-align: left;
             font-weight: 700;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.9px;
-            border-bottom: 2px solid #1a202c;
+            letter-spacing: 0.7px;
+            border-bottom: 1px solid #1a202c;
             vertical-align: middle;
-            line-height: 1.4;
+            line-height: 1.3;
         }
 
         td {
-            padding: 18px 18px;
+            padding: 14px 12px;
             border-bottom: 1px solid #e5e7eb;
-            font-size: 14px;
+            font-size: 13px;
             color: #374151;
             vertical-align: middle;
             height: auto;
-            min-height: 56px;
-            line-height: 1.5;
+            min-height: 44px;
+            line-height: 1.4;
         }
 
         tbody tr:hover {
@@ -274,10 +274,10 @@
         /* Empty state styling */
         .empty-state {
             text-align: center;
-            padding: 60px 30px;
+            padding: 40px 20px;
             color: #6b7280;
             background: #f9fafb;
-            font-size: 15px;
+            font-size: 13px;
         }
 
         /* Pagination */
@@ -285,14 +285,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 24px 28px;
+            padding: 16px 20px;
             border-top: 1px solid #e5e7eb;
             background: #fafbfc;
-            gap: 24px;
+            gap: 16px;
         }
 
         #paginationInfo {
-            font-size: 13px;
+            font-size: 12px;
             color: #64748b;
             font-weight: 600;
         }
@@ -340,14 +340,14 @@
 
         /* Total nominal display */
         #totalNominalDisplayZona {
-            margin-top: 16px;
+            margin-top: 12px;
             font-weight: 700;
             color: #27ae60;
-            font-size: 18px;
-            padding: 14px 18px;
+            font-size: 15px;
+            padding: 10px 12px;
             background: #f0fdf4;
-            border-radius: 8px;
-            border-left: 5px solid #27ae60;
+            border-radius: 6px;
+            border-left: 4px solid #27ae60;
         }
 
         @media (max-width: 768px) {
