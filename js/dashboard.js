@@ -3559,37 +3559,15 @@ async function loadFilterOptions() {
             console.log('[Filter] Month dropdown populated with', months.length, 'options (only months with data)');
         }
         
-        // Populate toko select - clear existing first to avoid duplicates
-        const tokoSelect = document.getElementById('filterToko');
-        if (tokoSelect) {
-            // Keep only the first option (Semua Toko)
-            while (tokoSelect.options.length > 1) {
-                tokoSelect.remove(1);
-            }
-            tokos.forEach(toko => {
-                const option = document.createElement('option');
-                option.value = toko;
-                option.textContent = toko;
-                tokoSelect.appendChild(option);
-            });
-            console.log('[Filter] Toko select populated with', tokoSelect.options.length - 1, 'options');
-        }
+        // Populate toko custom dropdown
+        const tokoOptions = tokos.map(toko => ({ value: toko, label: toko }));
+        populateCustomDropdownOptions('tokoDropdown', tokoOptions);
+        console.log('[Filter] Toko dropdown populated with', tokos.length, 'options');
         
-        // Populate keterangan select - clear existing first to avoid duplicates
-        const keteranganSelect = document.getElementById('filterKeterangan');
-        if (keteranganSelect) {
-            // Keep only the first option (Semua)
-            while (keteranganSelect.options.length > 1) {
-                keteranganSelect.remove(1);
-            }
-            keterangans.forEach(ket => {
-                const option = document.createElement('option');
-                option.value = ket;
-                option.textContent = ket;
-                keteranganSelect.appendChild(option);
-            });
-            console.log('[Filter] Keterangan select populated with', keteranganSelect.options.length - 1, 'options');
-        }
+        // Populate kategori (keterangan) custom dropdown
+        const keteranganOptions = keterangans.map(ket => ({ value: ket, label: ket }));
+        populateCustomDropdownOptions('kategoriDropdown', keteranganOptions);
+        console.log('[Filter] Kategori dropdown populated with', keterangans.length, 'options');
         
         // Update pagination and stats based on loaded data
         updateInvoiceStatsFromData(invoices, invoiceTotalCount);

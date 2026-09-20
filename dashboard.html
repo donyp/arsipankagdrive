@@ -1618,13 +1618,24 @@
         function toggleCustomDropdown(event, dropdownId) {
             event.preventDefault();
             const dropdown = document.getElementById(dropdownId);
+            if (!dropdown) {
+                console.error('[ToggleDropdown] Dropdown not found:', dropdownId);
+                return;
+            }
+            
             const trigger = dropdown.querySelector('.dropdown-trigger');
             const menu = dropdown.querySelector('.dropdown-menu');
+            
+            if (!trigger || !menu) {
+                console.error('[ToggleDropdown] Trigger or menu not found for:', dropdownId);
+                return;
+            }
             
             // Close other dropdowns
             document.querySelectorAll('.dropdown-menu').forEach(m => {
                 if (m !== menu) m.style.display = 'none';
-                m.parentElement.querySelector('.dropdown-trigger').classList.remove('active');
+                const t = m.parentElement.querySelector('.dropdown-trigger');
+                if (t) t.classList.remove('active');
             });
             
             // Toggle current dropdown
@@ -1642,7 +1653,33 @@
             event.stopPropagation();
             
             const dropdown = document.getElementById(dropdownId);
-            const hiddenInput = dropdown.querySelector('input[type="hidden"]');
+            
+            // Find hidden input - could be inside or outside dropdown
+            // Priority: look by ID mapping first (e.g., 'statusDropdown' -> 'filterStatus')
+            let hiddenInput = null;
+            
+            if (dropdownId === 'statusDropdown') {
+                hiddenInput = document.getElementById('filterStatus');
+            } else if (dropdownId === 'kategoriDropdown') {
+                hiddenInput = document.getElementById('filterKeterangan');
+            } else if (dropdownId === 'tokoDropdown') {
+                hiddenInput = document.getElementById('filterToko');
+            } else if (dropdownId === 'tahunDropdown') {
+                hiddenInput = document.getElementById('filterYear');
+            } else if (dropdownId === 'bulanDropdown') {
+                hiddenInput = document.getElementById('filterMonth');
+            }
+            
+            // Fallback: look inside dropdown
+            if (!hiddenInput) {
+                hiddenInput = dropdown.querySelector('input[type="hidden"]');
+            }
+            
+            if (!hiddenInput) {
+                console.error('[SelectOption] Could not find hidden input for dropdown:', dropdownId);
+                return;
+            }
+            
             const trigger = dropdown.querySelector('.dropdown-trigger .dropdown-label');
             const menu = dropdown.querySelector('.dropdown-menu');
             
@@ -1650,7 +1687,9 @@
             hiddenInput.value = value;
             
             // Update trigger label
-            trigger.textContent = label;
+            if (trigger) {
+                trigger.textContent = label;
+            }
             
             // Update checkmarks
             dropdown.querySelectorAll('.dropdown-option').forEach(opt => {
@@ -1662,7 +1701,9 @@
             });
             
             // Close menu
-            menu.style.display = 'none';
+            if (menu) {
+                menu.style.display = 'none';
+            }
             dropdown.querySelector('.dropdown-trigger').classList.remove('active');
             
             // Trigger change event on hidden input so filters work
