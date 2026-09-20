@@ -23,6 +23,7 @@
             padding: 0;
             width: 100%;
             overflow-x: hidden;
+            max-width: 100%;
         }
 
         /* Hide scrollbar */
@@ -35,8 +36,14 @@
             margin: 0 !important;
             padding: 0 !important;
             width: 100%;
+            max-width: 100%;
             overflow-x: hidden !important;
             background: #f5f7fa;
+        }
+
+        /* Override any external CSS that might cause spacing issues */
+        body > * {
+            max-width: 100%;
         }
 
         /* === CUSTOM DROPDOWN STYLING FROM MODERATOR DASHBOARD === */
@@ -520,7 +527,7 @@
     <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-40"></aside>
 
     <!-- Main Content -->
-    <main id="main-content" class="min-h-screen transition-all duration-300" style="position: relative;">
+    <main id="main-content" class="min-h-screen transition-all duration-300">
         <style>
             /* Hide stray CSS text rendering */
             #main-content {
