@@ -134,95 +134,6 @@
             margin-bottom: 12px;
         }
         
-        .ticket-number-section {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .ticket-number {
-            font-weight: 700;
-            color: #4f46e5;
-            font-size: 15px;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .ticket-date {
-            font-size: 12px;
-            color: #9ca3af;
-            margin-top: 4px;
-        }
-        
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 7px 14px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            width: fit-content;
-        }
-        
-        .status-open { background: #fee2e2; color: #991b1b; }
-        .status-in-progress { background: #fef3c7; color: #92400e; }
-        .status-answered { background: #dbeafe; color: #1e40af; }
-        .status-resolved { background: #dcfce7; color: #166534; }
-        .status-closed { background: #f3f4f6; color: #4b5563; }
-        
-        .ticket-content {
-            margin-bottom: 14px;
-        }
-        
-        .ticket-subject {
-            color: #1f2937;
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 6px;
-        }
-        
-        .ticket-meta {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            font-size: 13px;
-            color: #6b7280;
-        }
-        
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .meta-icon {
-            color: #9ca3af;
-            font-size: 12px;
-        }
-        
-        .ticket-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 14px;
-            border-top: 1px solid #f3f4f6;
-        }
-        
-        .last-reply {
-            font-size: 12px;
-            color: #6b7280;
-        }
-        
-        .last-reply-time {
-            color: #4f46e5;
-            font-weight: 600;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-        
         .btn {
             padding: 10px 16px;
             border: none;
@@ -333,6 +244,127 @@
             border-radius: 12px;
             padding: 24px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        
+        .ticket-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .ticket-table thead {
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .ticket-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #f9fafb;
+        }
+        
+        .ticket-table tbody tr {
+            border-bottom: 1px solid #f3f4f6;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .ticket-table tbody tr:hover {
+            background: #f9fafb;
+        }
+        
+        .ticket-table td {
+            padding: 16px;
+            color: #1f2937;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .ticket-table td:nth-child(2) {
+            max-width: 300px;
+            white-space: normal;
+        }
+        
+        .ticket-number-col {
+            font-weight: 700;
+            color: #4f46e5;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .ticket-date-col {
+            font-size: 11px;
+            color: #9ca3af;
+            display: block;
+            margin-top: 2px;
+        }
+        
+        .ticket-subject-col {
+            color: #1f2937;
+            font-weight: 500;
+        }
+        
+        .ticket-category-col {
+            color: #6b7280;
+            font-size: 12px;
+        }
+        
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        
+        .status-dot.open { background: #ef4444; }
+        .status-dot.closed { background: #6b7280; }
+        .status-dot.answered { background: #0284c7; }
+        .status-dot.in-progress { background: #f59e0b; }
+        .status-dot.resolved { background: #16a34a; }
+        
+        .status-text {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            vertical-align: middle;
+        }
+        
+        .status-open { color: #991b1b; }
+        .status-closed { color: #4b5563; }
+        .status-answered { color: #1e40af; }
+        .status-in-progress { color: #92400e; }
+        .status-resolved { color: #166534; }
+        
+        .last-update-col {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .action-col {
+            text-align: center;
+            font-size: 16px;
+            color: #6b7280;
+        }
+        
+        .action-col button {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 6px 10px;
+            font-size: 16px;
+            transition: color 0.2s;
+        }
+        
+        .action-col button:hover {
+            color: #4f46e5;
         }
         
         @media (max-width: 768px) {
@@ -456,12 +488,7 @@
 
                 <!-- Tickets Container -->
                 <div class="tickets-container">
-                    <div id="ticketsContainer" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
-                        <div style="display: flex; align-items: center; gap: 12px; color: #6b7280;">
-                            <div class="loading-spinner"></div>
-                            <span>Memuat tiket...</span>
-                        </div>
-                    </div>
+                    <div id="ticketsContainer"></div>
                 </div>
 
                 <!-- Pagination -->
