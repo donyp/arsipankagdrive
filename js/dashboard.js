@@ -3534,36 +3534,26 @@ async function loadFilterOptions() {
             console.log('[Filter] ✅ Admin Zona: Showing actual konsumen (store) names from invoices');
         }
         
-        // Populate year select
+        // Populate year select (CUSTOM DROPDOWN)
         const yearSelect = document.getElementById('filterYear');
         if (yearSelect) {
-            while (yearSelect.options.length > 1) {
-                yearSelect.remove(1);
-            }
-            years.forEach(year => {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                yearSelect.appendChild(option);
-            });
-            console.log('[Filter] Year select populated with', years.length, 'options');
+            // Create options array with value and label
+            const yearOptions = years.map(year => ({ value: year, label: year }));
+            populateCustomDropdownOptions('tahunDropdown', yearOptions);
+            console.log('[Filter] Year dropdown populated with', years.length, 'options');
         }
         
-        // Populate month select - ONLY with months that have data
+        // Populate month select - ONLY with months that have data (CUSTOM DROPDOWN)
         const monthSelect = document.getElementById('filterMonth');
         if (monthSelect) {
-            while (monthSelect.options.length > 1) {
-                monthSelect.remove(1);
-            }
-            months.forEach(month => {
-                const option = document.createElement('option');
-                option.value = month;
-                const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
-                                   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                option.textContent = monthNames[month - 1];
-                monthSelect.appendChild(option);
-            });
-            console.log('[Filter] Month select populated with', months.length, 'options (only months with data)');
+            const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                               'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            const monthOptions = months.map(month => ({ 
+                value: month, 
+                label: monthNames[month - 1] 
+            }));
+            populateCustomDropdownOptions('bulanDropdown', monthOptions);
+            console.log('[Filter] Month dropdown populated with', months.length, 'options (only months with data)');
         }
         
         // Populate toko select - clear existing first to avoid duplicates
