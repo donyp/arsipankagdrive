@@ -21,19 +21,18 @@
         html, body {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow-x: hidden;
+            width: 100vw !important;
+            overflow-x: hidden !important;
         }
 
-        /* Hide scrollbar but allow scrolling */
+        /* Hide scrollbar completely */
         html {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
 
         html::-webkit-scrollbar {
-            display: none;  /* Chrome, Safari and Opera */
+            display: none;
         }
 
         /* Hide sidebar initially to prevent flash */
@@ -43,11 +42,10 @@
 
         /* Main content - force 100% width with no overflow */
         #main-content {
-            margin: 0;
-            width: 100%;
-            padding: 0;
-            box-sizing: border-box;
-            overflow-x: hidden;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100vw !important;
+            overflow-x: hidden !important;
         }
 
         header {
