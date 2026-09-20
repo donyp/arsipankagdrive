@@ -467,6 +467,7 @@ async function validateAllFiles() {
 
 function renderValidationResults() {
     const stats = document.getElementById('stats');
+    const filesList = document.getElementById('filesList');
     const filesContainer = document.getElementById('filesContainer');
     
     const validCount = validationResults.filter(r => r.valid).length;
@@ -514,6 +515,9 @@ function renderValidationResults() {
             </div>
         `;
     }).join('');
+
+    // Show file list
+    filesList.style.display = 'block';
 
     // Enable/disable upload button
     document.getElementById('btnUpload').disabled = validCount === 0;
