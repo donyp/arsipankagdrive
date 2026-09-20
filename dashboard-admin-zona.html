@@ -21,21 +21,25 @@
         html, body {
             margin: 0;
             padding: 0;
-            width: 100vw !important;
-            overflow-x: hidden !important;
-            zoom: 0.8;
+            width: 100%;
+            overflow-x: hidden;
         }
 
         /* Hide scrollbar */
         html { -ms-overflow-style: none; scrollbar-width: none; }
         html::-webkit-scrollbar { display: none; }
 
+        body {
+            transform: scale(0.85);
+            transform-origin: top center;
+            width: 117.65%;
+        }
+
         #sidebar { display: none !important; }
 
         #main-content {
             margin: 0 !important;
             padding: 0 !important;
-            width: 100vw !important;
             overflow-x: hidden !important;
             background: #f5f7fa;
         }
