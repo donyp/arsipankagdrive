@@ -177,6 +177,11 @@
             letter-spacing: 0.3px;
         }
         
+        .message-role.anda {
+            background: #4f46e5;
+            color: white;
+        }
+        
         .message-time {
             color: #9ca3af;
             font-size: 12px;
@@ -188,6 +193,38 @@
             line-height: 1.6;
             white-space: pre-wrap;
             word-break: break-word;
+        }
+        
+        .message-attachments {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .attachment-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .attachment-icon {
+            color: #9ca3af;
+        }
+        
+        .attachment-item a {
+            color: #4f46e5;
+            text-decoration: none;
+        }
+        
+        .attachment-item a:hover {
+            text-decoration: underline;
         }
         
         .sidebar {
@@ -390,8 +427,9 @@
                 const data = await response.json();
                 ticketData = data.ticket;
 
-                renderTicketDetail();
-                renderMessages();
+                const zonaName = currentUser.zona_name || 'N/A';
+                renderTicketDetail(zonaName);
+                renderMessages(zonaName);
 
             } catch (error) {
                 console.error('[Ticket-Detail] Error:', error);
@@ -406,7 +444,7 @@
             }
         }
 
-        function renderTicketDetail() {
+        function renderTicketDetail(zonaName) {
             const ticket = ticketData;
             const priorityClass = (ticket.priority || 'Medium').toLowerCase();
 
@@ -421,20 +459,12 @@
             document.getElementById('sidebarStatus').textContent = ticket.status || '-';
             document.getElementById('sidebarPriority').textContent = ticket.priority || '-';
             document.getElementById('sidebarCategory').textContent = ticket.category || '-';
-            document.getElementById('sidebarCreated').textContent = formatDateTimeWithTime(ticket.created_at);
-            document.getElementById('sidebarLastReply').textContent = formatRelativeTime(ticket.updated_at);
+            document.getElementById('sidebarCreated').textContent = formatDateTimeWIB(ticket.created_at);
+            document.getElementById('sidebarLastReply').textContent = getLastReplyTime(ticket);
             document.getElementById('sidebarTotalMessages').textContent = (ticketData.messages || []).length + 1;
         }
 
-        function formatDateTimeWithTime(dateString) {
-            if (!dateString) return '-';
-            const date = new Date(dateString);
-            const dateStr = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-            const timeStr = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
-            return `${dateStr} · ${timeStr}`;
-        }
-
-        function renderMessages() {
+        function renderMessages(zonaName) {
             let html = '';
             
             if (ticketData.description) {
@@ -445,9 +475,9 @@
                         </div>
                         <div class="message-content">
                             <div class="message-header-row">
-                                <span class="message-author">Anda</span>
-                                <span class="message-role">ANDA</span>
-                                <span class="message-time">${formatDateTime(ticketData.created_at)}</span>
+                                <span class="message-author">Zona ${zonaName}</span>
+                                <span class="message-role anda">ANDA</span>
+                                <span class="message-time">${formatDateTimeWIB(ticketData.created_at)}</span>
                             </div>
                             <div class="message-body">${escapeHtml(ticketData.description)}</div>
                         </div>
@@ -469,20 +499,32 @@
             } else {
                 html += messages.map(msg => {
                     const isSupport = msg.user_id !== currentUser.userId;
-                    const role = isSupport ? 'support' : 'customer';
+                    const roleClass = !isSupport ? 'anda' : '';
                     
                     return `
                         <div class="message-item">
-                            <div class="message-avatar ${role}">
+                            <div class="message-avatar ${isSupport ? 'support' : 'customer'}">
                                 ${isSupport ? '<i class="fas fa-headset"></i>' : '<i class="fas fa-user"></i>'}
                             </div>
                             <div class="message-content">
                                 <div class="message-header-row">
-                                    <span class="message-author">${isSupport ? 'Tim Support' : 'Anda'}</span>
-                                    <span class="message-role">${isSupport ? 'Support' : 'ANDA'}</span>
-                                    <span class="message-time">${formatDateTime(msg.created_at)}</span>
+                                    <span class="message-author">${isSupport ? 'Tim Support' : 'Zona ' + zonaName}</span>
+                                    <span class="message-role ${roleClass}">${!isSupport ? 'ANDA' : 'Support'}</span>
+                                    <span class="message-time">${formatDateTimeWIB(msg.created_at)}</span>
                                 </div>
                                 <div class="message-body">${escapeHtml(msg.message)}</div>
+                                ${msg.attachments && msg.attachments.length > 0 ? `
+                                    <div class="message-attachments">
+                                        ${msg.attachments.map(att => `
+                                            <div class="attachment-item">
+                                                <span class="attachment-icon"><i class="fas fa-file"></i></span>
+                                                <a href="/api/support/tickets/${ticketId}/download/${att.id}" target="_blank">
+                                                    ${att.file_name}
+                                                </a>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
                             </div>
                         </div>
                     `;
@@ -492,19 +534,41 @@
             document.getElementById('messagesContainer').innerHTML = html;
         }
 
-        function formatDateTime(dateString) {
+        function getLastReplyTime(ticket) {
+            const messages = ticket.messages || [];
+            if (messages.length === 0) return '-';
+            
+            const lastMessage = messages[messages.length - 1];
+            return formatRelativeTime(lastMessage.created_at);
+        }
+
+        function formatDateTimeWIB(dateString) {
             if (!dateString) return '-';
+            
+            // Parse the date
             const date = new Date(dateString);
-            const dateStr = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-            const timeStr = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            // Convert to WIB timezone (UTC+7)
+            const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+            const wibTime = new Date(utcTime + (7 * 60 * 60000));
+            
+            const dateStr = wibTime.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            const timeStr = wibTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
             return `${dateStr} · ${timeStr}`;
         }
 
         function formatRelativeTime(dateString) {
             if (!dateString) return '-';
+            
             const date = new Date(dateString);
+            const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+            const wibTime = new Date(utcTime + (7 * 60 * 60000));
+            
             const now = new Date();
-            const diffMs = now - date;
+            const utcNow = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const wibNow = new Date(utcNow + (7 * 60 * 60000));
+            
+            const diffMs = wibNow - wibTime;
             const diffHours = diffMs / (1000 * 60 * 60);
             const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
@@ -515,7 +579,7 @@
             } else if (diffDays < 7) {
                 return `${Math.floor(diffDays)}d lalu`;
             } else {
-                return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                return '-';
             }
         }
 
