@@ -291,14 +291,8 @@ function openTicket(ticketId) {
 }
 
 function showCreateModal() {
-    const modal = document.getElementById('createModal');
-    modal.style.display = 'flex';
-}
-
-function closeCreateModal() {
-    const modal = document.getElementById('createModal');
-    modal.style.display = 'none';
-    document.getElementById('createForm').reset();
+    // Navigate to create ticket page instead of showing modal
+    window.location.href = '/support-create-ticket.html';
 }
 
 async function submitCreateTicket(e) {

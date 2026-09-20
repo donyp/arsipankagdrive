@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buka Tiket Support - Pusat Arsip Anka</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1f2937;
+            font-size: 14px;
+        }
+        
+        .form-required {
+            color: #dc2626;
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            background: white;
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .form-textarea {
+            min-height: 200px;
+            resize: vertical;
+        }
+        
+        .form-info {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 6px;
+        }
+        
+        .editor-toolbar {
+            display: flex;
+            gap: 4px;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            background: #f9fafb;
+            flex-wrap: wrap;
+        }
+        
+        .editor-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .editor-btn:hover {
+            background: #e5e7eb;
+        }
+        
+        .editor-content {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 0 0 6px 6px;
+            min-height: 200px;
+            font-size: 14px;
+            font-family: inherit;
+            background: white;
+        }
+        
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f9fafb;
+        }
+        
+        .upload-area:hover {
+            border-color: #4f46e5;
+            background: #f0f4ff;
+        }
+        
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            color: #9ca3af;
+        }
+        
+        .upload-text {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .upload-hint {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 8px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+        
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+            flex: 1;
+        }
+        
+        .btn-primary:hover {
+            background: #4338ca;
+        }
+        
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+            flex: 1;
+        }
+        
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 24px;
+            cursor: pointer;
+        }
+        
+        .back-link:hover {
+            color: #1f2937;
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div style="width: 100%;">
+        <!-- Header -->
+        <div style="background: white; border-bottom: 1px solid #e5e7eb;">
+            <div class="px-6 py-6">
+                <a href="/support-dashboard-customer" class="back-link">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                <div>
+                    <h1 style="font-size: 24px; font-weight: 700; color: #1f2937; margin: 0;">Buka Tiket Baru</h1>
+                    <p style="color: #6b7280; font-size: 13px; margin: 6px 0 0 0;">Isi form berikut untuk menghubungi tim support kami</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="px-6 py-8">
+            <div style="max-width: 900px;">
+                <form id="createTicketForm" onsubmit="submitTicket(event)">
+                    <!-- Department & Priority Row -->
+                    <div class="two-column">
+                        <div class="form-group">
+                            <label class="form-label">
+                                Department <span class="form-required">*</span>
+                            </label>
+                            <select id="formCategory" class="form-select" required>
+                                <option value="">Pilih department...</option>
+                                <option value="General">General</option>
+                                <option value="Technical">Technical Support</option>
+                                <option value="Billing">Billing</option>
+                                <option value="Data">Data Issue</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Prioritas</label>
+                            <select id="formPriority" class="form-select">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                                <option value="Urgent">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Service Type / Domain -->
+                    <div class="form-group">
+                        <label class="form-label">Layanan Terkait</label>
+                        <div style="position: relative;">
+                            <input type="text" id="formService" class="form-input" placeholder="Ketik untuk mencari layanan atau domain..." style="padding-right: 40px;">
+                            <button type="button" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer;">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <div class="form-info">Opsional — pilih jika tiket terkait layanan atau domain tertentu</div>
+                    </div>
+
+                    <!-- Subject -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            Subjek <span class="form-required">*</span>
+                        </label>
+                        <input type="text" id="formSubject" class="form-input" placeholder="Ringkasan masalah Anda" required>
+                    </div>
+
+                    <!-- Description / Message -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            Pesan <span class="form-required">*</span>
+                        </label>
+                        <div class="editor-toolbar">
+                            <button type="button" class="editor-btn" title="Bold" onclick="document.execCommand('bold');">
+                                <i class="fas fa-bold"></i>
+                            </button>
+                            <button type="button" class="editor-btn" title="Italic" onclick="document.execCommand('italic');">
+                                <i class="fas fa-italic"></i>
+                            </button>
+                            <button type="button" class="editor-btn" title="Underline" onclick="document.execCommand('underline');">
+                                <i class="fas fa-underline"></i>
+                            </button>
+                            <div style="width: 1px; height: 20px; background: #d1d5db;"></div>
+                            <button type="button" class="editor-btn" title="Heading 1" onclick="document.execCommand('formatblock', false, 'h1');">H1</button>
+                            <button type="button" class="editor-btn" title="Heading 2" onclick="document.execCommand('formatblock', false, 'h2');">H2</button>
+                            <button type="button" class="editor-btn" title="Heading 3" onclick="document.execCommand('formatblock', false, 'h3');">H3</button>
+                            <div style="width: 1px; height: 20px; background: #d1d5db;"></div>
+                            <button type="button" class="editor-btn" title="Unordered List" onclick="document.execCommand('insertUnorderedList');">
+                                <i class="fas fa-list-ul"></i>
+                            </button>
+                            <button type="button" class="editor-btn" title="Ordered List" onclick="document.execCommand('insertOrderedList');">
+                                <i class="fas fa-list-ol"></i>
+                            </button>
+                            <button type="button" class="editor-btn" title="Blockquote" onclick="document.execCommand('formatblock', false, 'blockquote');">
+                                <i class="fas fa-quote-left"></i>
+                            </button>
+                            <div style="width: 1px; height: 20px; background: #d1d5db;"></div>
+                            <button type="button" class="editor-btn" title="Code" onclick="document.execCommand('formatblock', false, 'pre');">
+                                <i class="fas fa-code"></i>
+                            </button>
+                            <button type="button" class="editor-btn" title="Link" onclick="insertLink();">
+                                <i class="fas fa-link"></i>
+                            </button>
+                        </div>
+                        <div id="formDescription" class="editor-content" contenteditable="true" placeholder="Jelaskan masalah atau pertanyaan Anda secara detail..."></div>
+                        <div style="text-align: right; font-size: 12px; color: #6b7280; margin-top: 8px;">
+                            <span id="charCount">0</span> kata - <span id="charCountDetail">0</span> karakter
+                        </div>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="form-group">
+                        <label class="form-label">Lampiran</label>
+                        <div class="upload-area" onclick="document.getElementById('fileInput').click();">
+                            <div class="upload-icon">
+                                <i class="fas fa-paperclip"></i>
+                            </div>
+                            <div class="upload-text">Drag & drop atau pilih file</div>
+                            <div class="upload-hint">JPG, JPEG, PNG, GIF, PDF maks. 2MB per file - maks. 5 file</div>
+                            <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.pdf" style="display: none;" onchange="handleFileSelect(event)">
+                        </div>
+                        <div id="fileList" style="margin-top: 12px;"></div>
+                        <div class="form-info">Opsional — JPG, JPEG, PNG, GIF, PDF. 2MB per file</div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" onclick="window.location.href='/support-dashboard-customer';">
+                            Batal
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Kirim Tiket
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        let selectedFiles = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('[Support-Create] Page loaded');
+            await initAuth();
+            
+            if (!currentUser) {
+                document.body.innerHTML = '<div style="padding: 20px; color: red;">Error: Failed to authenticate</div>';
+                return;
+            }
+            
+            if (currentUser.role !== 'admin_zona' && currentUser.role !== 'super_admin') {
+                window.location.href = '/support-dashboard';
+                return;
+            }
+
+            // Character counter
+            const editor = document.getElementById('formDescription');
+            editor.addEventListener('input', updateCharCount);
+        });
+
+        function updateCharCount() {
+            const text = document.getElementById('formDescription').innerText || '';
+            const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const chars = text.length;
+            document.getElementById('charCount').textContent = words;
+            document.getElementById('charCountDetail').textContent = chars;
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            selectedFiles = [...selectedFiles, ...files].slice(0, 5); // Max 5 files
+            displayFileList();
+        }
+
+        function displayFileList() {
+            const fileList = document.getElementById('fileList');
+            if (selectedFiles.length === 0) {
+                fileList.innerHTML = '';
+                return;
+            }
+            
+            fileList.innerHTML = selectedFiles.map((file, idx) => `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px; background: #f3f4f6; border-radius: 6px; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                        <i class="fas fa-file" style="color: #6b7280;"></i>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 13px; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</div>
+                            <div style="font-size: 11px; color: #9ca3af;">${(file.size / 1024).toFixed(1)} KB</div>
+                        </div>
+                    </div>
+                    <button type="button" style="background: none; border: none; color: #6b7280; cursor: pointer; padding: 4px;" onclick="removeFile(${idx});">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(idx) {
+            selectedFiles.splice(idx, 1);
+            displayFileList();
+        }
+
+        function insertLink() {
+            const url = prompt('Masukkan URL:');
+            if (url) {
+                document.execCommand('createLink', false, url);
+            }
+        }
+
+        async function submitTicket(e) {
+            e.preventDefault();
+            
+            try {
+                const token = localStorage.getItem('jwt_token');
+                const subject = document.getElementById('formSubject').value;
+                const description = document.getElementById('formDescription').innerHTML;
+                const category = document.getElementById('formCategory').value;
+                const priority = document.getElementById('formPriority').value;
+
+                if (!subject || !description) {
+                    alert('Silakan isi semua field yang diperlukan');
+                    return;
+                }
+
+                console.log('[Support-Create] Creating ticket:', { subject, category, priority });
+
+                const response = await fetch('/api/support/tickets', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        subject,
+                        description,
+                        category,
+                        priority
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to create ticket');
+                }
+
+                const data = await response.json();
+                console.log('[Support-Create] Ticket created:', data.ticket.ticket_number);
+
+                alert(`✓ ${data.ticket.ticket_number} berhasil dibuat!`);
+                window.location.href = `/support-dashboard-customer`;
+
+            } catch (error) {
+                console.error('[Support-Create] Error:', error);
+                alert(`Error: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

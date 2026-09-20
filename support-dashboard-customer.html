@@ -405,57 +405,6 @@
         </div>
     </div>
 
-    <!-- Create Ticket Modal -->
-    <div id="createModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
-        <div style="background: white; border-radius: 8px; padding: 30px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-                <h2 style="font-size: 20px; font-weight: bold; color: #1f2937; margin: 0;">Buka Tiket Support</h2>
-                <button onclick="closeCreateModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <form id="createForm" onsubmit="submitCreateTicket(event)">
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1f2937;">Subjek <span style="color: #dc2626;">*</span></label>
-                    <input type="text" id="formSubject" required placeholder="Ringkas masalahnya" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1f2937;">Deskripsi <span style="color: #dc2626;">*</span></label>
-                    <textarea id="formDescription" required placeholder="Jelaskan masalah secara detail..." style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; min-height: 120px; resize: vertical; font-family: inherit;"></textarea>
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1f2937;">Kategori</label>
-                    <select id="formCategory" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
-                        <option value="General">General</option>
-                        <option value="Technical">Technical Support</option>
-                        <option value="Billing">Billing</option>
-                        <option value="Data">Data Issue</option>
-                    </select>
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1f2937;">Prioritas</label>
-                    <select id="formPriority" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
-                        <option value="Low">Low</option>
-                        <option value="Medium" selected>Medium</option>
-                        <option value="High">High</option>
-                        <option value="Urgent">Urgent</option>
-                    </select>
-                </div>
-
-                <div style="display: flex; gap: 12px; margin-top: 32px;">
-                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeCreateModal()">Batal</button>
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">
-                        <i class="fas fa-paper-plane"></i> Kirim Tiket
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
