@@ -216,8 +216,9 @@ async function loadTickets() {
         console.error('[Support-Moderator] Error loading tickets:', error);
         document.getElementById('ticketsContainer').innerHTML = `
             <div class="table-row">
-                <div style="grid-column: 1 / -1; text-align: center; color: #ef4444; padding: 24px;">
-                    <i class="fas fa-exclamation-triangle"></i> ${error.message}
+                <div style="grid-column: 1 / -1; text-align: center; padding: 24px; display: flex; align-items: center; justify-content: center; gap: 10px; color: #ef4444;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>${error.message}</span>
                 </div>
             </div>
         `;
