@@ -439,16 +439,33 @@
                         });
                         if (zonaResponse.ok) {
                             const zonaData = await zonaResponse.json();
-                            console.log('[Ticket-Detail] All zonas:', zonaData);
+                            console.log('[Ticket-Detail] All zonas response:', zonaData);
                             
-                            const zonas = Array.isArray(zonaData) ? zonaData : zonaData.data || [];
-                            const userZona = zonas.find(z => z.id == currentUser.zona_id);
+                            // Handle different response formats
+                            let zonas = [];
+                            if (Array.isArray(zonaData)) {
+                                zonas = zonaData;
+                            } else if (zonaData.data && Array.isArray(zonaData.data)) {
+                                zonas = zonaData.data;
+                            } else if (zonaData.zonas && Array.isArray(zonaData.zonas)) {
+                                zonas = zonaData.zonas;
+                            }
+                            
+                            console.log('[Ticket-Detail] Parsed zonas array:', zonas);
+                            console.log('[Ticket-Detail] Looking for zona_id:', currentUser.zona_id, 'type:', typeof currentUser.zona_id);
+                            
+                            // Find by id (try both string and number comparison)
+                            const userZona = zonas.find(z => {
+                                console.log('[Ticket-Detail] Checking zona:', z.id, 'against', currentUser.zona_id, 'match:', z.id == currentUser.zona_id);
+                                return z.id == currentUser.zona_id || String(z.id) === String(currentUser.zona_id);
+                            });
                             
                             if (userZona) {
-                                zonaName = userZona.nama || userZona.name || 'N/A';
-                                console.log('[Ticket-Detail] Found zona:', zonaName);
+                                zonaName = userZona.nama || userZona.name || userZona.Nama || 'N/A';
+                                console.log('[Ticket-Detail] Found zona:', zonaName, userZona);
                             } else {
                                 console.warn('[Ticket-Detail] Zona not found for zona_id:', currentUser.zona_id);
+                                console.log('[Ticket-Detail] Available zonas:', zonas.map(z => ({ id: z.id, nama: z.nama })));
                             }
                         }
                     } catch (e) {
@@ -598,6 +615,9 @@
                     return '-';
                 }
                 
+                console.log('[Ticket-Detail] formatDateTimeWIB - parsed date:', date);
+                console.log('[Ticket-Detail] formatDateTimeWIB - ISO:', date.toISOString());
+                
                 // Format using Asia/Jakarta timezone
                 const formatter = new Intl.DateTimeFormat('id-ID', {
                     year: 'numeric',
@@ -605,15 +625,25 @@
                     day: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit',
+                    second: '2-digit',
                     hour12: false,
                     timeZone: 'Asia/Jakarta'
                 });
                 
                 const parts = formatter.formatToParts(date);
-                const dateStr = `${parts.find(p => p.type === 'day').value} ${parts.find(p => p.type === 'month').value} ${parts.find(p => p.type === 'year').value}`;
-                const timeStr = `${parts.find(p => p.type === 'hour').value}:${parts.find(p => p.type === 'minute').value}`;
+                const partsObj = {};
+                parts.forEach(part => {
+                    if (part.type !== 'literal') {
+                        partsObj[part.type] = part.value;
+                    }
+                });
                 
-                return `${dateStr} · ${timeStr}`;
+                const dateStr = `${partsObj.day} ${partsObj.month} ${partsObj.year}`;
+                const timeStr = `${partsObj.hour}:${partsObj.minute}`;
+                const formatted = `${dateStr} · ${timeStr}`;
+                
+                console.log('[Ticket-Detail] formatDateTimeWIB - formatted:', formatted);
+                return formatted;
             } catch (e) {
                 console.error('[Ticket-Detail] formatDateTimeWIB error:', e, dateString);
                 return '-';
