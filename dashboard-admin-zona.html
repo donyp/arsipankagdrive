@@ -733,11 +733,16 @@
             const menu = dropdown.querySelector('.dropdown-menu');
             const hiddenInput = dropdown.parentElement.querySelector('input[type="hidden"]');
             
+            console.log('selectOption called:', { dropdownId, value, label, hiddenInputId: hiddenInput?.id });
+            
             // Update trigger label
             if (trigger) trigger.textContent = label;
             
             // Update hidden input value
-            if (hiddenInput) hiddenInput.value = value;
+            if (hiddenInput) {
+                hiddenInput.value = value;
+                console.log('Updated hidden input:', hiddenInput.id, '=', value);
+            }
             
             // Update selected state
             dropdown.querySelectorAll('.dropdown-option').forEach(opt => {
@@ -916,16 +921,23 @@
                 const month = document.getElementById('filterMonth')?.value;
                 const search = document.getElementById('filterSearch')?.value;
 
+                console.log('loadInvoices - Filter values:', { supplier, keterangan, year, month, search });
+
                 if (supplier) params.append('toko', supplier);
                 if (keterangan) params.append('keterangan', keterangan);
                 if (search) params.append('search', search);
+
+                console.log('loadInvoices - API params:', params.toString());
 
                 const res = await API.get(`/api/invoice/list?${params.toString()}`);
                 let invoices = res.data || [];
                 totalCount = res.count || 0;
 
+                console.log('loadInvoices - Received invoices:', invoices.length, 'Total count:', totalCount);
+
                 // Client-side filtering by year/month
                 if (year || month) {
+                    console.log('loadInvoices - Applying client-side year/month filter');
                     invoices = invoices.filter(inv => {
                         if (!inv.tanggal) return false;
                         const date = new Date(inv.tanggal);
@@ -936,6 +948,7 @@
                         if (month && invMonth !== month) return false;
                         return true;
                     });
+                    console.log('loadInvoices - After year/month filter:', invoices.length);
                 }
 
                 renderInvoices(invoices);
@@ -1024,9 +1037,13 @@
         function applyFilters() {
             const year = document.getElementById('filterYear')?.value;
             const month = document.getElementById('filterMonth')?.value;
+            const supplier = document.getElementById('filterSupplier')?.value;
+            const keterangan = document.getElementById('filterKeterangan')?.value;
 
-            if (!year || !month) {
-                toastr.error('Silahkan pilih tahun dan bulan terlebih dahulu');
+            console.log('Applying filters:', { year, month, supplier, keterangan });
+
+            if (!year && !month) {
+                toastr.error('Silahkan pilih tahun atau bulan terlebih dahulu');
                 return;
             }
 
