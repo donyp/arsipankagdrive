@@ -22,23 +22,22 @@
 
         .dropdown-trigger {
             width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e5e7eb;
+            padding: 11px 14px;
+            border: 2px solid #d1d5db;
             border-radius: 8px;
             background: white;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 500;
             color: #2c3e50;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: all 0.2s;
+            transition: all 0.3s;
         }
 
         .dropdown-trigger:hover {
             border-color: #3b82f6;
-            background: #f8fbff;
         }
 
         .dropdown-trigger.active {
@@ -50,11 +49,13 @@
         .dropdown-label {
             flex: 1;
             text-align: left;
+            font-weight: 500;
         }
 
         .dropdown-icon {
-            transition: transform 0.2s;
+            transition: transform 0.3s;
             color: #9ca3af;
+            margin-left: 8px;
         }
 
         .dropdown-trigger.active .dropdown-icon {
@@ -71,50 +72,77 @@
             border-top: none;
             border-bottom-left-radius: 8px;
             border-bottom-right-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
             z-index: 1000;
             overflow: hidden;
         }
 
         .dropdown-header {
-            padding: 10px 12px;
+            padding: 12px 16px;
             border-bottom: 1px solid #e5e7eb;
             background: #f9fafb;
             font-weight: 600;
             color: #1f2937;
+            font-size: 14px;
         }
 
         .dropdown-options {
-            max-height: 200px;
+            max-height: 240px;
             overflow-y: auto;
         }
 
+        .dropdown-options::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .dropdown-options::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .dropdown-options::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .dropdown-options::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
         .dropdown-option {
-            padding: 10px 12px;
+            padding: 12px 16px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: background 0.2s;
             color: #2c3e50;
-            font-size: 13px;
+            font-size: 14px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .dropdown-option:last-child {
+            border-bottom: none;
         }
 
         .dropdown-option:hover {
-            background: #f3f4f6;
+            background: #f8f9fa;
         }
 
         .dropdown-option.selected {
             background: #eff6ff;
             color: #1e40af;
+            font-weight: 500;
         }
 
         .checkmark {
-            display: inline-block;
-            width: 16px;
-            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
             color: #3b82f6;
             font-weight: bold;
+            font-size: 16px;
         }
         
         /* File list - use Poppins font */
@@ -1002,41 +1030,116 @@
                                         <input type="hidden" id="filterStatus" value="">
                                     </div>
                                     
-                                    <!-- Kategori filter -->
+                                    <!-- Kategori filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
                                         <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Kategori</label>
-                                        <select id="filterKeterangan" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; font-weight: 500; color: #2c3e50;">
-                                            <option value="">Semua</option>
-                                            <option value="PPN">PPN</option>
-                                            <option value="NON PPN">NON PPN</option>
-                                            <option value="GUNGGUNG">GUNGGUNG</option>
-                                        </select>
+                                        <div class="custom-dropdown" id="kategoriDropdown">
+                                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'kategoriDropdown')">
+                                                <span class="dropdown-label">Semua</span>
+                                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                                </svg>
+                                            </button>
+                                            <div class="dropdown-menu" style="display: none;">
+                                                <div class="dropdown-header">Filter Kategori</div>
+                                                <div class="dropdown-options">
+                                                    <div class="dropdown-option selected" onclick="selectOption(event, 'kategoriDropdown', '', 'Semua')">
+                                                        <span class="checkmark">✓</span>
+                                                        <span>Semua</span>
+                                                    </div>
+                                                    <div class="dropdown-option" onclick="selectOption(event, 'kategoriDropdown', 'PPN', 'PPN')">
+                                                        <span class="checkmark"></span>
+                                                        <span>PPN</span>
+                                                    </div>
+                                                    <div class="dropdown-option" onclick="selectOption(event, 'kategoriDropdown', 'NON PPN', 'NON PPN')">
+                                                        <span class="checkmark"></span>
+                                                        <span>NON PPN</span>
+                                                    </div>
+                                                    <div class="dropdown-option" onclick="selectOption(event, 'kategoriDropdown', 'GUNGGUNG', 'GUNGGUNG')">
+                                                        <span class="checkmark"></span>
+                                                        <span>GUNGGUNG</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" id="filterKeterangan" value="">
                                     </div>
                                     
-                                    <!-- Toko filter -->
+                                    <!-- Toko filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
                                         <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Toko</label>
-                                        <select id="filterToko" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; font-weight: 500; color: #2c3e50;">
-                                            <option value="">Semua Toko</option>
-                                            <option value="Anka Pemalang">Anka Pemalang</option>
-                                            <option value="Anka Bekasi">Anka Bekasi</option>
-                                        </select>
+                                        <div class="custom-dropdown" id="tokoDropdown">
+                                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'tokoDropdown')">
+                                                <span class="dropdown-label">Semua Toko</span>
+                                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                                </svg>
+                                            </button>
+                                            <div class="dropdown-menu" style="display: none;">
+                                                <div class="dropdown-header">Filter Toko</div>
+                                                <div class="dropdown-options">
+                                                    <div class="dropdown-option selected" onclick="selectOption(event, 'tokoDropdown', '', 'Semua Toko')">
+                                                        <span class="checkmark">✓</span>
+                                                        <span>Semua Toko</span>
+                                                    </div>
+                                                    <div class="dropdown-option" onclick="selectOption(event, 'tokoDropdown', 'Anka Pemalang', 'Anka Pemalang')">
+                                                        <span class="checkmark"></span>
+                                                        <span>Anka Pemalang</span>
+                                                    </div>
+                                                    <div class="dropdown-option" onclick="selectOption(event, 'tokoDropdown', 'Anka Bekasi', 'Anka Bekasi')">
+                                                        <span class="checkmark"></span>
+                                                        <span>Anka Bekasi</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" id="filterToko" value="">
                                     </div>
 
-                                    <!-- Tahun filter -->
+                                    <!-- Tahun filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
                                         <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Tahun</label>
-                                        <select id="filterYear" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; font-weight: 500; color: #2c3e50;">
-                                            <option value="">Semua Tahun</option>
-                                        </select>
+                                        <div class="custom-dropdown" id="tahunDropdown">
+                                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'tahunDropdown')">
+                                                <span class="dropdown-label">Semua Tahun</span>
+                                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                                </svg>
+                                            </button>
+                                            <div class="dropdown-menu" style="display: none;">
+                                                <div class="dropdown-header">Filter Tahun</div>
+                                                <div class="dropdown-options">
+                                                    <div class="dropdown-option selected" onclick="selectOption(event, 'tahunDropdown', '', 'Semua Tahun')">
+                                                        <span class="checkmark">✓</span>
+                                                        <span>Semua Tahun</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" id="filterYear" value="">
                                     </div>
 
-                                    <!-- Bulan filter -->
+                                    <!-- Bulan filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
                                         <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Bulan</label>
-                                        <select id="filterMonth" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; font-weight: 500; color: #2c3e50;">
-                                            <option value="">Semua Bulan</option>
-                                        </select>
+                                        <div class="custom-dropdown" id="bulanDropdown">
+                                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'bulanDropdown')">
+                                                <span class="dropdown-label">Semua Bulan</span>
+                                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                                </svg>
+                                            </button>
+                                            <div class="dropdown-menu" style="display: none;">
+                                                <div class="dropdown-header">Filter Bulan</div>
+                                                <div class="dropdown-options">
+                                                    <div class="dropdown-option selected" onclick="selectOption(event, 'bulanDropdown', '', 'Semua Bulan')">
+                                                        <span class="checkmark">✓</span>
+                                                        <span>Semua Bulan</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" id="filterMonth" value="">
                                     </div>
 
                                     <!-- Reset button -->
