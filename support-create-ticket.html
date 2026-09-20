@@ -671,6 +671,9 @@
                 document.getElementById('ticketNumberDisplay').textContent = data.ticket.ticket_number;
                 document.getElementById('successModal').classList.add('active');
 
+                // Auto redirect after 2 seconds
+                autoRedirectAfterSuccess();
+
             } catch (error) {
                 console.error('[Support-Create] Error:', error);
                 document.getElementById('loadingOverlay').classList.remove('active');
@@ -680,6 +683,13 @@
 
         function closeSuccessModal() {
             window.location.href = `/support-dashboard-customer`;
+        }
+
+        // Auto redirect after showing success modal
+        function autoRedirectAfterSuccess() {
+            setTimeout(() => {
+                window.location.href = `/support-dashboard-customer`;
+            }, 2000); // Redirect after 2 seconds
         }
     </script>
 </body>
