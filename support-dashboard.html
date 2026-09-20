@@ -379,25 +379,30 @@
                 </div>
 
                 <!-- Tickets Table -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                    <!-- Table Header -->
-                    <div class="table-header">
-                        <div>TIKET</div>
-                        <div>SUBJEK</div>
-                        <div>ZONA</div>
-                        <div>PRIORITAS</div>
-                        <div>STATUS</div>
-                        <div>PEMBUAT</div>
-                        <div>AKSI</div>
-                    </div>
-
-                    <!-- Table Body -->
-                    <div id="ticketsContainer" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
-                        <div style="display: flex; align-items: center; gap: 12px; color: #6b7280;">
-                            <div class="loading-spinner"></div>
-                            <span>Loading tickets...</span>
-                        </div>
-                    </div>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                                <th style="text-align: left; padding: 12px 16px; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; width: 12%;">TIKET</th>
+                                <th style="text-align: left; padding: 12px 16px; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; width: 28%;">SUBJEK</th>
+                                <th style="text-align: left; padding: 12px 16px; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; width: 15%;">ZONA</th>
+                                <th style="text-align: left; padding: 12px 16px; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; width: 13%;">PRIORITAS</th>
+                                <th style="text-align: left; padding: 12px 16px; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; width: 15%;">STATUS</th>
+                                <th style="text-align: left; padding: 12px 16px; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; width: 12%;">PEMBUAT</th>
+                                <th style="text-align: center; padding: 12px 16px; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; width: 5%;">AKSI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticketsContainer">
+                            <tr>
+                                <td colspan="7" style="padding: 48px 16px; text-align: center; color: #6b7280;">
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+                                        <div class="loading-spinner"></div>
+                                        <span>Loading tickets...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 <!-- Pagination -->

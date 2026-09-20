@@ -224,49 +224,84 @@ function renderTickets(tickets) {
     }
 
     if (tickets.length === 0) {
-        container.style.minHeight = '200px';
-        container.style.display = 'flex';
-        container.style.alignItems = 'center';
-        container.style.justifyContent = 'center';
         container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📭</div>
-                <div class="text-gray-600">Tidak ada tiket ditemukan</div>
-            </div>
+            <tr>
+                <td colspan="7" style="padding: 48px 16px; text-align: center;">
+                    <div class="empty-state" style="padding: 0;">
+                        <div class="empty-state-icon">📭</div>
+                        <div style="color: #6b7280;">Tidak ada tiket ditemukan</div>
+                    </div>
+                </td>
+            </tr>
         `;
         console.log('[Support-Moderator] Empty state rendered');
         return;
     }
 
-    // Reset container style for table display
-    container.style.minHeight = 'auto';
-    container.style.display = 'block';
-    
-    const html = tickets.map(ticket => `
-        <div class="table-row" onclick="openTicket('${ticket.id}')">
-            <div class="font-medium text-gray-900">${ticket.ticket_number || 'N/A'}</div>
-            <div class="text-gray-700 truncate" title="${ticket.subject}">${ticket.subject || 'N/A'}</div>
-            <div class="text-gray-600 text-sm">Zona ${ticket.zona_id || '-'}</div>
-            <div>
-                <span class="priority-indicator priority-${(ticket.priority || 'medium').toLowerCase()}"></span>
-                <span class="text-xs text-gray-700">${ticket.priority || 'Medium'}</span>
-            </div>
-            <div>
-                <span class="status-badge status-${(ticket.status || 'open').toLowerCase().replace(/\s+/g, '-')}">
-                    ${ticket.status || 'Open'}
-                </span>
-            </div>
-            <div class="text-sm text-gray-600">${formatUserId(ticket.user_id)}</div>
-            <div>
-                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openTicket('${ticket.id}')">
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-        </div>
-    `).join('');
+    const html = tickets.map(ticket => {
+        const priorityClass = (ticket.priority || 'medium').toLowerCase();
+        const statusClass = (ticket.status || 'open').toLowerCase().replace(/\s+/g, '-');
+        
+        return `
+            <tr style="border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: background 0.2s;" onclick="openTicket('${ticket.id}')" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+                <td style="padding: 12px 16px; font-weight: 500; color: #1f2937;">${ticket.ticket_number || 'N/A'}</td>
+                <td style="padding: 12px 16px; color: #374151; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${ticket.subject}">${ticket.subject || 'N/A'}</td>
+                <td style="padding: 12px 16px; color: #6b7280; font-size: 14px;">Zona ${String(ticket.zona_id).replace(/^0+/, '') || '-'}</td>
+                <td style="padding: 12px 16px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 4px; height: 20px; border-radius: 2px; background: ${getPriorityColor(priorityClass)}; display: inline-block;"></span>
+                        <span style="font-size: 13px; color: #6b7280;">${ticket.priority || 'Medium'}</span>
+                    </div>
+                </td>
+                <td style="padding: 12px 16px;">
+                    <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; background: ${getStatusBg(statusClass)}; color: ${getStatusColor(statusClass)};">
+                        ${ticket.status || 'Open'}
+                    </span>
+                </td>
+                <td style="padding: 12px 16px; font-size: 13px; color: #6b7280;">${formatUserId(ticket.user_id)}</td>
+                <td style="padding: 12px 16px; text-align: center;">
+                    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openTicket('${ticket.id}')">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
     
     container.innerHTML = html;
     console.log('[Support-Moderator] Table rendered with', tickets.length, 'rows');
+}
+
+function getPriorityColor(priority) {
+    const colors = {
+        'low': '#3b82f6',
+        'medium': '#f59e0b',
+        'high': '#ef4444',
+        'urgent': '#7c3aed'
+    };
+    return colors[priority] || colors['medium'];
+}
+
+function getStatusBg(status) {
+    const colors = {
+        'open': '#fee2e2',
+        'in-progress': '#fef3c7',
+        'answered': '#dbeafe',
+        'resolved': '#dcfce7',
+        'closed': '#f3f4f6'
+    };
+    return colors[status] || colors['open'];
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'open': '#991b1b',
+        'in-progress': '#92400e',
+        'answered': '#1e40af',
+        'resolved': '#166534',
+        'closed': '#374151'
+    };
+    return colors[status] || colors['open'];
 }
 
 function updatePagination() {
