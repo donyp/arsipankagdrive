@@ -347,7 +347,13 @@ async function validateAllFiles() {
     validationResults = [];
 
     try {
-        const token = API.getToken() || localStorage.getItem('jwt_token');
+        // Get token from API object if available, otherwise from localStorage
+        let token;
+        if (typeof API !== 'undefined' && API.getToken) {
+            token = API.getToken();
+        } else {
+            token = localStorage.getItem('jwt_token');
+        }
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
         // Validate each file with small delay to show progress
@@ -453,7 +459,7 @@ async function validateAllFiles() {
 
     } catch (error) {
         console.error('[PDF Bulk] Validation error:', error);
-        Toast.error(error.message, '❌ Validation Error');
+        showNotification(error.message, 'error');
         validating.style.display = 'none';
         dropZone.style.display = 'block';
     }
@@ -536,7 +542,13 @@ async function uploadValidFiles() {
     );
 
     try {
-        const token = API.getToken() || localStorage.getItem('jwt_token');
+        // Get token from API object if available, otherwise from localStorage
+        let token;
+        if (typeof API !== 'undefined' && API.getToken) {
+            token = API.getToken();
+        } else {
+            token = localStorage.getItem('jwt_token');
+        }
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
         // OPTIMIZATION: Upload files in parallel (up to 3 concurrent uploads)
