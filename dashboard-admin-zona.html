@@ -19,10 +19,13 @@
         }
 
         html {
+            zoom: 0.8;
             scrollbar-gutter: stable;
+            margin: 0;
+            padding: 0;
         }
 
-        html, body {
+        body {
             margin: 0;
             padding: 0;
             width: 100%;
@@ -235,6 +238,9 @@
         }
 
         @media (max-width: 768px) {
+            html {
+                zoom: 0.6;
+            }
             .filter-grid {
                 grid-template-columns: 1fr;
             }
