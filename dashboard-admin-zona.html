@@ -15,9 +15,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <style>
         html, body {
-            zoom: 0.8;
             margin: 0;
             padding: 0;
+            width: 100%;
+            overflow-x: hidden;
         }
 
         /* Hide sidebar initially to prevent flash */
@@ -29,7 +30,7 @@
         #main-content {
             margin-left: 0;
             width: 100%;
-            min-width: 100vw;
+            max-width: 100%;
             overflow-x: hidden;
             transform: translateX(0) !important;
         }
@@ -224,9 +225,6 @@
         }
 
         @media (max-width: 768px) {
-            html, body {
-                zoom: 0.6;
-            }
             .filter-grid {
                 grid-template-columns: 1fr;
             }
