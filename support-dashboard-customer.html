@@ -7,46 +7,58 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #eef2f9 100%);
+        }
         
         .stat-card {
             background: white;
             border-radius: 12px;
-            padding: 20px;
+            padding: 24px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
             border: 1px solid #f3f4f6;
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
         }
         
         .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 8px;
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 24px;
             color: white;
             flex-shrink: 0;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
         
-        .stat-total { background: #4f46e5; }
-        .stat-open { background: #ef4444; }
-        .stat-answered { background: #10b981; }
-        .stat-closed { background: #8b5cf6; }
+        .stat-total { background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); }
+        .stat-open { background: linear-gradient(135deg, #ef4444 0%, #f87171 100%); }
+        .stat-answered { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); }
+        .stat-closed { background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%); }
         
         .stat-number {
-            font-size: 28px;
-            font-weight: 700;
+            font-size: 32px;
+            font-weight: 800;
             color: #1f2937;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
         
         .stat-label {
             font-size: 13px;
             color: #6b7280;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         .stat-info {
@@ -57,26 +69,25 @@
             gap: 4px;
         }
         
-        .stat-info.open {
-            color: #ef4444;
-        }
+        .stat-info.open { color: #ef4444; }
         
         .filter-bar {
             background: white;
             padding: 16px;
-            border-radius: 8px;
+            border-radius: 12px;
             border: 1px solid #e5e7eb;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
             align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
         
         .search-input, .filter-select {
-            padding: 10px 14px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
+            padding: 11px 14px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
             font-size: 14px;
             background: white;
             font-family: inherit;
@@ -86,7 +97,8 @@
         .search-input:focus, .filter-select:focus {
             outline: none;
             border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            background: #fafbff;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
         }
         
         .search-input {
@@ -99,58 +111,53 @@
             cursor: pointer;
         }
         
-        .table-header {
-            display: grid;
-            grid-template-columns: 0.8fr 2fr 1.2fr 1fr 1.2fr 80px;
-            gap: 12px;
-            padding: 12px 16px;
-            background: #f9fafb;
-            border-bottom: 2px solid #e5e7eb;
-            font-weight: 600;
-            font-size: 11px;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .table-row {
-            display: grid;
-            grid-template-columns: 0.8fr 2fr 1.2fr 1fr 1.2fr 80px;
-            gap: 12px;
-            padding: 16px;
-            border-bottom: 1px solid #f3f4f6;
-            align-items: center;
+        .ticket-card {
+            background: white;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
             cursor: pointer;
-            transition: background 0.2s;
         }
         
-        .table-row:hover {
-            background: #f9fafb;
+        .ticket-card:hover {
+            border-color: #4f46e5;
+            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.12);
+            transform: translateY(-2px);
         }
         
-        .ticket-info {
+        .ticket-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        
+        .ticket-number-section {
             display: flex;
             flex-direction: column;
         }
         
         .ticket-number {
             font-weight: 700;
-            color: #1f2937;
-            font-size: 14px;
+            color: #4f46e5;
+            font-size: 15px;
+            font-family: 'Courier New', monospace;
         }
         
         .ticket-date {
             font-size: 12px;
             color: #9ca3af;
-            margin-top: 2px;
+            margin-top: 4px;
         }
         
         .status-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 7px 14px;
+            border-radius: 8px;
             font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
@@ -163,38 +170,80 @@
         .status-resolved { background: #dcfce7; color: #166534; }
         .status-closed { background: #f3f4f6; color: #4b5563; }
         
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
+        .ticket-content {
+            margin-bottom: 14px;
         }
         
-        .status-dot.open { background: #ef4444; }
-        .status-dot.closed { background: #6b7280; }
-        .status-dot.answered { background: #0284c7; }
-        .status-dot.resolved { background: #16a34a; }
+        .ticket-subject {
+            color: #1f2937;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+        
+        .ticket-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .meta-icon {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+        
+        .ticket-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 14px;
+            border-top: 1px solid #f3f4f6;
+        }
+        
+        .last-reply {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .last-reply-time {
+            color: #4f46e5;
+            font-weight: 600;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
         
         .btn {
-            padding: 10px 20px;
+            padding: 10px 16px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 14px;
+            font-size: 13px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
         }
         
         .btn-primary {
-            background: #4f46e5;
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
             color: white;
         }
         
         .btn-primary:hover {
-            background: #4338ca;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            transform: translateY(-2px);
         }
         
         .btn-secondary {
@@ -207,28 +256,35 @@
         }
         
         .btn-sm {
-            padding: 6px 10px;
+            padding: 8px 12px;
             font-size: 12px;
         }
         
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 80px 20px;
             color: #6b7280;
         }
         
         .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-            opacity: 0.6;
+            font-size: 56px;
+            margin-bottom: 16px;
+            opacity: 0.4;
+        }
+        
+        .empty-state-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
         }
         
         .loading-spinner {
             display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #f3f4f6;
-            border-top: 2px solid #4f46e5;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #4f46e5;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -242,12 +298,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 20px;
+            margin-top: 24px;
         }
         
         .pagination-info {
-            font-size: 12px;
+            font-size: 13px;
             color: #6b7280;
+            font-weight: 600;
         }
         
         .pagination-buttons {
@@ -264,10 +321,39 @@
             font-size: 14px;
             margin-bottom: 16px;
             cursor: pointer;
+            font-weight: 600;
         }
         
         .back-link:hover {
-            color: #1f2937;
+            color: #4f46e5;
+        }
+        
+        .tickets-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        
+        @media (max-width: 768px) {
+            .ticket-header {
+                flex-direction: column;
+            }
+            
+            .ticket-footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .action-buttons {
+                margin-top: 12px;
+                width: 100%;
+            }
+            
+            .ticket-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
         }
     </style>
 </head>
@@ -277,28 +363,28 @@
         <div style="width: 100%;">
             <!-- Header -->
             <div style="background: white; border-bottom: 1px solid #e5e7eb;">
-                <div class="px-6 py-6">
-                    <div class="flex items-center justify-between mb-4">
+                <div class="px-6 py-8">
+                    <div class="flex items-center justify-between mb-6">
                         <a href="/dashboard-admin-zona" class="back-link">
-                            <i class="fas fa-chevron-left"></i>
+                            <i class="fas fa-chevron-left"></i> Kembali
                         </a>
                     </div>
                     <div class="flex items-center justify-between">
                         <div>
-                            <h1 style="font-size: 28px; font-weight: 700; color: #1f2937; margin: 0;">Support</h1>
-                            <p style="color: #6b7280; font-size: 14px; margin: 6px 0 0 0;">Kelola tiket support Anda</p>
+                            <h1 style="font-size: 32px; font-weight: 800; color: #1f2937; margin: 0;">Support Tickets</h1>
+                            <p style="color: #6b7280; font-size: 14px; margin: 6px 0 0 0;">Kelola dan lacak semua tiket support Anda</p>
                         </div>
-                        <button id="btnCreateTicket" class="btn btn-primary" onclick="showCreateModal()">
-                            <i class="fas fa-plus"></i> Buka Tiket
-                        </button>
+                        <a href="/support-create-ticket.html" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Buka Tiket Baru
+                        </a>
                     </div>
                 </div>
             </div>
 
             <!-- Main Content -->
-            <div class="px-6 py-6">
+            <div class="px-6 py-8">
                 <!-- Statistics -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <div class="stat-card">
                         <div class="stat-icon stat-total">
                             <i class="fas fa-envelope"></i>
@@ -307,7 +393,7 @@
                         <div class="stat-label">Total Tickets</div>
                         <div class="stat-info">
                             <i class="fas fa-check" style="color: #4f46e5;"></i>
-                            <span id="statTotalInfo">Semua tiket Anda</span>
+                            <span>Semua tiket Anda</span>
                         </div>
                     </div>
                     
@@ -318,8 +404,8 @@
                         <div class="stat-number" id="statOpen">0</div>
                         <div class="stat-label">Open</div>
                         <div class="stat-info open">
-                            <i class="fas fa-times"></i>
-                            <span id="statOpenInfo">Tidak ada yang terb...</span>
+                            <i class="fas fa-spinner"></i>
+                            <span>Menunggu respon</span>
                         </div>
                     </div>
                     
@@ -331,26 +417,26 @@
                         <div class="stat-label">Answered</div>
                         <div class="stat-info">
                             <i class="fas fa-check"></i>
-                            <span id="statAnsweredInfo">Sudah direspon</span>
+                            <span>Sudah direspon</span>
                         </div>
                     </div>
                     
                     <div class="stat-card">
                         <div class="stat-icon stat-closed">
-                            <i class="fas fa-lock"></i>
+                            <i class="fas fa-check-circle"></i>
                         </div>
                         <div class="stat-number" id="statClosed">0</div>
                         <div class="stat-label">Closed</div>
                         <div class="stat-info">
-                            <i class="fas fa-check"></i>
-                            <span id="statClosedInfo">Arisip selasai</span>
+                            <i class="fas fa-lock"></i>
+                            <span>Sudah ditutup</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Filters -->
                 <div class="filter-bar">
-                    <input type="text" class="search-input" id="searchInput" placeholder="Cari subjek atau nomor tiket...">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Cari nomor tiket atau subjek...">
                     
                     <select id="filterStatus" class="filter-select">
                         <option value="all">Semua Status</option>
@@ -362,29 +448,18 @@
                     </select>
                     
                     <select id="filterLimit" class="filter-select">
-                        <option value="10">Tampilkan: 10</option>
-                        <option value="20" selected>Tampilkan: 20</option>
-                        <option value="50">Tampilkan: 50</option>
+                        <option value="10">10 Tiket</option>
+                        <option value="20" selected>20 Tiket</option>
+                        <option value="50">50 Tiket</option>
                     </select>
                 </div>
 
-                <!-- Tickets Table -->
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
-                    <!-- Table Header -->
-                    <div class="table-header">
-                        <div>TIKET</div>
-                        <div>SUBJEK</div>
-                        <div>DEPARTMENT</div>
-                        <div>STATUS</div>
-                        <div>BALASAN TERAKHIR</div>
-                        <div>AKSI</div>
-                    </div>
-
-                    <!-- Table Body -->
+                <!-- Tickets Container -->
+                <div class="tickets-container">
                     <div id="ticketsContainer" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
                         <div style="display: flex; align-items: center; gap: 12px; color: #6b7280;">
                             <div class="loading-spinner"></div>
-                            <span>Loading tickets...</span>
+                            <span>Memuat tiket...</span>
                         </div>
                     </div>
                 </div>

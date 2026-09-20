@@ -203,49 +203,78 @@ function renderTickets(tickets) {
     }
 
     if (tickets.length === 0) {
-        container.style.minHeight = '200px';
+        container.style.minHeight = '300px';
         container.style.display = 'flex';
         container.style.alignItems = 'center';
         container.style.justifyContent = 'center';
         container.innerHTML = `
-            <div style="text-align: center; padding: 48px 20px; color: #6b7280;">
-                <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.6;">📭</div>
-                <div>Tidak ada tiket ditemukan</div>
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <div class="empty-state-title">Tidak Ada Tiket</div>
+                <div style="font-size: 13px; color: #9ca3af; margin-top: 8px;">Belum ada tiket support yang dibuat</div>
             </div>
         `;
         console.log('[Support-Customer] Empty state rendered');
         return;
     }
 
-    // Reset container style for table display
+    // Reset container style for card display
     container.style.minHeight = 'auto';
     container.style.display = 'block';
     
-    const html = tickets.map(ticket => `
-        <div class="table-row" onclick="openTicket('${ticket.id}')">
-            <div>
-                <div class="ticket-number">${ticket.ticket_number || 'N/A'}</div>
-                <div class="ticket-date">${formatTicketDate(ticket.created_at)}</div>
+    const html = tickets.map(ticket => {
+        const statusClass = (ticket.status || 'Open').toLowerCase().replace(/\s+/g, '-');
+        return `
+            <div class="ticket-card" onclick="openTicket('${ticket.id}')">
+                <div class="ticket-header">
+                    <div class="ticket-number-section">
+                        <div class="ticket-number">${ticket.ticket_number || 'N/A'}</div>
+                        <div class="ticket-date">${formatTicketDate(ticket.created_at)}</div>
+                    </div>
+                    <span class="status-badge status-${statusClass}">
+                        ${ticket.status || 'Open'}
+                    </span>
+                </div>
+                
+                <div class="ticket-content">
+                    <div class="ticket-subject">${ticket.subject || 'N/A'}</div>
+                    
+                    <div class="ticket-meta">
+                        <div class="meta-item">
+                            <span class="meta-icon"><i class="fas fa-tag"></i></span>
+                            <span>${ticket.category || 'General'}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon"><i class="fas fa-flag"></i></span>
+                            <span>${ticket.priority || 'Medium'}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon"><i class="fas fa-clock"></i></span>
+                            <span>${formatDate(ticket.updated_at)}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ticket-footer">
+                    <div class="last-reply">
+                        <span>Terakhir diupdate </span>
+                        <span class="last-reply-time">${formatDate(ticket.updated_at)}</span>
+                    </div>
+                    <div class="action-buttons">
+                        <button style="background: none; border: none; color: #6b7280; cursor: pointer; font-size: 16px; padding: 8px 12px; border-radius: 6px; transition: all 0.2s; margin-left: auto;" 
+                            onclick="event.stopPropagation();" title="Lihat Detail">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="text-gray-700 truncate" title="${ticket.subject}">${ticket.subject || 'N/A'}</div>
-            <div class="text-gray-600 text-sm">${ticket.category || '-'}</div>
-            <div>
-                <span class="status-badge status-${(ticket.status || 'open').toLowerCase().replace(/\s+/g, '-')}">
-                    <span class="status-dot ${(ticket.status || 'open').toLowerCase().replace(/\s+/g, '-')}"></span>
-                    ${ticket.status || 'Open'}
-                </span>
-            </div>
-            <div class="text-sm text-gray-600">${formatDate(ticket.updated_at)}</div>
-            <div style="text-align: center;">
-                <button style="background: none; border: none; color: #6b7280; cursor: pointer; font-size: 18px; padding: 4px;" onclick="event.stopPropagation();">
-                    <i class="fas fa-ellipsis-v"></i>
-                </button>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
     
     container.innerHTML = html;
-    console.log('[Support-Customer] Table rendered with', tickets.length, 'rows');
+    console.log('[Support-Customer] Cards rendered with', tickets.length, 'tickets');
 }
 
 function getPriorityColor(priority) {

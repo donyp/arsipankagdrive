@@ -268,6 +268,145 @@
             background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #818cf8 100%);
         }
         
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .success-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            display: none;
+            text-align: center;
+            animation: slideUp 0.4s ease;
+        }
+        
+        .success-modal.active {
+            display: block;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translate(-50%, calc(-50% + 30px));
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, -50%);
+                opacity: 1;
+            }
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            color: white;
+            font-size: 40px;
+            animation: scaleUp 0.5s ease;
+        }
+        
+        @keyframes scaleUp {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+        
+        .success-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+        
+        .success-message {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+        
+        .ticket-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #4f46e5;
+            padding: 12px 16px;
+            background: #f0f4ff;
+            border-radius: 10px;
+            margin: 16px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .success-button {
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .success-button:hover {
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+            transform: translateY(-2px);
+        }
+        
         @media (max-width: 768px) {
             .two-column {
                 grid-template-columns: 1fr;
@@ -280,12 +419,34 @@
             .button-group {
                 flex-direction: column;
             }
+            
+            .success-modal {
+                margin: 20px;
+                max-width: calc(100% - 40px);
+            }
         }
     </style>
 </head>
 <body>
     <div style="min-height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #eef2f9 100%);">
-        <!-- Header with Gradient -->
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <div class="loading-text">Mengirim tiket...</div>
+            </div>
+        </div>
+
+        <!-- Success Modal -->
+        <div class="success-modal" id="successModal">
+            <div class="success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="success-title">Tiket Berhasil Dibuat!</div>
+            <div class="success-message">Tim support kami akan segera meninjau tiket Anda</div>
+            <div class="ticket-number" id="ticketNumberDisplay"></div>
+            <button class="success-button" onclick="closeSuccessModal()">Kembali ke Dashboard</button>
+        </div>
         <div class="header-bg">
             <div style="padding: 32px 24px;">
                 <div style="display: flex; align-items: center; gap: 16px; max-width: 100%;">
@@ -477,6 +638,9 @@
 
                 console.log('[Support-Create] Creating ticket with zona_id:', zonaId);
 
+                // Show loading overlay
+                document.getElementById('loadingOverlay').classList.add('active');
+
                 const response = await fetch('/api/support/tickets', {
                     method: 'POST',
                     headers: {
@@ -500,13 +664,22 @@
                 const data = await response.json();
                 console.log('[Support-Create] Ticket created:', data.ticket.ticket_number);
 
-                alert(`✓ ${data.ticket.ticket_number} berhasil dibuat!`);
-                window.location.href = `/support-dashboard-customer`;
+                // Hide loading overlay
+                document.getElementById('loadingOverlay').classList.remove('active');
+
+                // Show success modal
+                document.getElementById('ticketNumberDisplay').textContent = data.ticket.ticket_number;
+                document.getElementById('successModal').classList.add('active');
 
             } catch (error) {
                 console.error('[Support-Create] Error:', error);
+                document.getElementById('loadingOverlay').classList.remove('active');
                 alert(`Error: ${error.message}`);
             }
+        }
+
+        function closeSuccessModal() {
+            window.location.href = `/support-dashboard-customer`;
         }
     </script>
 </body>
