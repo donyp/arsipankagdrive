@@ -733,16 +733,11 @@
             const menu = dropdown.querySelector('.dropdown-menu');
             const hiddenInput = dropdown.parentElement.querySelector('input[type="hidden"]');
             
-            console.log('selectOption called:', { dropdownId, value, label, hiddenInputId: hiddenInput?.id });
-            
             // Update trigger label
             if (trigger) trigger.textContent = label;
             
             // Update hidden input value
-            if (hiddenInput) {
-                hiddenInput.value = value;
-                console.log('Updated hidden input:', hiddenInput.id, '=', value);
-            }
+            if (hiddenInput) hiddenInput.value = value;
             
             // Update selected state
             dropdown.querySelectorAll('.dropdown-option').forEach(opt => {
@@ -921,51 +916,26 @@
                 const month = document.getElementById('filterMonth')?.value;
                 const search = document.getElementById('filterSearch')?.value;
 
-                console.log('loadInvoices - Filter values:', { supplier, keterangan, year, month, search });
-
                 if (supplier) params.append('toko', supplier);
                 if (keterangan) params.append('keterangan', keterangan);
                 if (search) params.append('search', search);
-
-                console.log('loadInvoices - API params:', params.toString());
 
                 const res = await API.get(`/api/invoice/list?${params.toString()}`);
                 let invoices = res.data || [];
                 totalCount = res.count || 0;
 
-                console.log('loadInvoices - Received invoices:', invoices.length, 'Total count:', totalCount);
-
                 // Client-side filtering by year/month
                 if (year || month) {
-                    console.log('loadInvoices - Applying client-side year/month filter');
-                    console.log('loadInvoices - Filter params: year=' + year + ', month=' + month);
-                    
-                    invoices = invoices.filter((inv, index) => {
-                        if (!inv.tanggal) {
-                            console.log('Invoice #' + index + ' has no tanggal:', inv.faktur);
-                            return false;
-                        }
+                    invoices = invoices.filter(inv => {
+                        if (!inv.tanggal) return false;
                         const date = new Date(inv.tanggal);
                         const invYear = date.getFullYear().toString();
                         const invMonth = String(date.getMonth() + 1).padStart(2, '0');
-
-                        const yearMatch = !year || invYear === year;
-                        const monthMatch = !month || invMonth === month;
-                        const passes = yearMatch && monthMatch;
-
-                        if (index < 3) { // Only log first 3 for clarity
-                            console.log('Invoice #' + index + ' [' + inv.faktur + ']:');
-                            console.log('  - tanggal: ' + inv.tanggal);
-                            console.log('  - invYear: ' + invYear + ' (filter: ' + year + ') = ' + yearMatch);
-                            console.log('  - invMonth: ' + invMonth + ' (filter: ' + month + ') = ' + monthMatch);
-                            console.log('  - PASSES: ' + passes);
-                        }
 
                         if (year && invYear !== year) return false;
                         if (month && invMonth !== month) return false;
                         return true;
                     });
-                    console.log('loadInvoices - After year/month filter:', invoices.length);
                 }
 
                 renderInvoices(invoices);
@@ -987,7 +957,25 @@
             const tbody = document.getElementById('invoiceTableBody');
 
             if (invoices.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Tidak ada invoice yang ditemukan</td></tr>';
+                const year = document.getElementById('filterYear')?.value;
+                const month = document.getElementById('filterMonth')?.value;
+                const supplier = document.getElementById('filterSupplier')?.value;
+                
+                let message = 'Tidak ada invoice yang ditemukan';
+                if (year || month || supplier) {
+                    const monthNames = {
+                        '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
+                        '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
+                        '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
+                    };
+                    const filters = [];
+                    if (month) filters.push('bulan ' + monthNames[month]);
+                    if (year) filters.push('tahun ' + year);
+                    if (supplier) filters.push('supplier ' + supplier);
+                    message = 'Tidak ada invoice untuk ' + filters.join(', ');
+                }
+                
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${message}</td></tr>`;
                 return;
             }
 
@@ -1056,8 +1044,6 @@
             const month = document.getElementById('filterMonth')?.value;
             const supplier = document.getElementById('filterSupplier')?.value;
             const keterangan = document.getElementById('filterKeterangan')?.value;
-
-            console.log('Applying filters:', { year, month, supplier, keterangan });
 
             if (!year && !month) {
                 toastr.error('Silahkan pilih tahun atau bulan terlebih dahulu');
