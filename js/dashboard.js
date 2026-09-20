@@ -1997,8 +1997,11 @@ function setupEventListeners() {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('keydown', handleInvoiceFilterEnter);
-            // Also add change event for select dropdowns (triggers immediately on selection)
+            // Add change event for both SELECT dropdowns and custom dropdown hidden inputs
             if (el.tagName === 'SELECT') {
+                el.addEventListener('change', applyInvoiceFilters);
+            } else if (el.tagName === 'INPUT' && el.type === 'hidden') {
+                // For custom dropdowns (hidden input elements)
                 el.addEventListener('change', applyInvoiceFilters);
             }
         }
