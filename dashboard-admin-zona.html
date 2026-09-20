@@ -18,13 +18,7 @@
             box-sizing: border-box;
         }
 
-        html {
-            zoom: 0.8;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
+        html, body {
             margin: 0;
             padding: 0;
             width: 100%;
@@ -37,12 +31,10 @@
             display: none !important;
         }
 
-        /* Main content - no sidebar for admin zona, always full width */
+        /* Main content - force 100% width with no overflow */
         #main-content {
-            margin-left: 0;
-            margin-right: 0;
+            margin: 0;
             width: 100%;
-            height: auto;
             padding: 0;
             box-sizing: border-box;
             overflow-x: hidden;
@@ -237,9 +229,6 @@
         }
 
         @media (max-width: 768px) {
-            html {
-                zoom: 0.6;
-            }
             .filter-grid {
                 grid-template-columns: 1fr;
             }
