@@ -3,233 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ticket Detail - Support</title>
+    <title>Detail Tiket - Support</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .gradient-header {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #eef2f9 100%);
         }
         
-        .ticket-info-box {
+        .header {
             background: white;
-            border-left: 4px solid #e74c3c;
-            padding: 20px;
-            border-radius: 6px;
-            margin-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 20px 0;
         }
         
-        .info-row {
-            display: grid;
-            grid-template-columns: 150px 1fr;
-            gap: 15px;
-            padding: 10px 0;
-            border-bottom: 1px solid #f0f0f0;
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
         
-        .info-label {
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 14px;
             font-weight: 600;
-            color: #4b5563;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
         
-        .info-value {
+        .back-btn:hover {
+            color: #4f46e5;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 24px;
+            padding: 24px 0;
+        }
+        
+        .ticket-messages {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .ticket-title-section {
+            padding: 24px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .ticket-number {
+            font-size: 13px;
+            color: #6b7280;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .ticket-subject {
+            font-size: 24px;
+            font-weight: 700;
             color: #1f2937;
+            margin-bottom: 12px;
+        }
+        
+        .ticket-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .meta-icon {
+            color: #9ca3af;
+            font-size: 13px;
+        }
+        
+        .meta-label {
+            color: #6b7280;
+            font-size: 13px;
         }
         
         .status-badge {
-            display: inline-block;
-            padding: 6px 14px;
-            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 6px;
             font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
         }
         
-        .status-open { background: #fef2f2; color: #dc2626; }
-        .status-in-progress { background: #fef3c7; color: #d97706; }
-        .status-answered { background: #f0fdf4; color: #16a34a; }
-        .status-resolved { background: #f0f9ff; color: #0284c7; }
+        .status-open { background: #fee2e2; color: #991b1b; }
+        .status-in-progress { background: #fef3c7; color: #92400e; }
+        .status-answered { background: #dbeafe; color: #1e40af; }
+        .status-resolved { background: #dcfce7; color: #166534; }
         .status-closed { background: #f3f4f6; color: #4b5563; }
         
         .priority-badge {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 4px 10px;
             border-radius: 4px;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
-        .priority-low { background: #e0e7ff; color: #3730a3; }
+        .priority-low { background: #dbeafe; color: #1e40af; }
         .priority-medium { background: #fef3c7; color: #92400e; }
-        .priority-high { background: #fecaca; color: #7f1d1d; }
-        .priority-urgent { background: #fca5a5; color: #7f1d1d; }
+        .priority-high { background: #fee2e2; color: #991b1b; }
+        .priority-urgent { background: #ede9fe; color: #5b21b6; }
         
-        .message-box {
-            background: white;
-            padding: 20px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            border: 1px solid #e5e7eb;
+        .messages-container {
+            padding: 24px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .message:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
         
         .message-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 12px;
             margin-bottom: 12px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #f0f0f0;
         }
         
-        .message-meta {
-            font-size: 13px;
-            color: #6b7280;
-        }
-        
-        .message-content {
-            color: #1f2937;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        
-        .internal-note {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
-        }
-        
-        .internal-badge {
-            display: inline-block;
-            background: #f59e0b;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 10px;
-            font-weight: 600;
-            margin-left: 8px;
-        }
-        
-        .attachment-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px;
-            background: #f9fafb;
-            border-radius: 4px;
-            margin-top: 8px;
-        }
-        
-        .attachment-icon {
-            width: 32px;
-            height: 32px;
-            background: #e5e7eb;
-            border-radius: 4px;
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 16px;
-            color: #4b5563;
+            font-weight: 700;
+            color: white;
         }
         
-        .attachment-name {
-            flex: 1;
+        .message-avatar.support {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        }
+        
+        .message-avatar.customer {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+        }
+        
+        .message-name {
+            font-weight: 600;
+            color: #1f2937;
             font-size: 13px;
+        }
+        
+        .message-role {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            background: #f0f4ff;
+            color: #4f46e5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .message-role.support {
+            background: #f0f4ff;
+            color: #4f46e5;
+        }
+        
+        .message-time {
+            color: #9ca3af;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        
+        .message-body {
+            color: #374151;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            height: fit-content;
+        }
+        
+        .sidebar-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .info-item {
+            margin-bottom: 20px;
+        }
+        
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        
+        .info-value {
             color: #1f2937;
             font-weight: 500;
-            word-break: break-all;
-        }
-        
-        .attachment-download {
-            color: #e74c3c;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 12px;
-        }
-        
-        .attachment-download:hover {
-            text-decoration: underline;
-        }
-        
-        .reply-form {
-            background: white;
-            padding: 20px;
-            border-radius: 6px;
-            border: 1px solid #e5e7eb;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #1f2937;
-        }
-        
-        .form-textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
             font-size: 14px;
-            font-family: inherit;
-            min-height: 120px;
-            resize: vertical;
-        }
-        
-        .form-textarea:focus {
-            outline: none;
-            border-color: #e74c3c;
-            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
-        }
-        
-        .btn-primary {
-            background: #e74c3c;
-            color: white;
-        }
-        
-        .btn-primary:hover:not(:disabled) {
-            background: #c0392b;
-        }
-        
-        .btn-secondary {
-            background: #6b7280;
-            color: white;
-        }
-        
-        .btn-secondary:hover:not(:disabled) {
-            background: #4b5563;
-        }
-        
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-        }
-        
-        .btn-danger:hover:not(:disabled) {
-            background: #b91c1c;
-        }
-        
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 12px;
         }
         
         .loading-spinner {
@@ -237,9 +262,9 @@
             width: 20px;
             height: 20px;
             border: 3px solid #f3f4f6;
-            border-top: 3px solid #e74c3c;
+            border-top: 3px solid #4f46e5;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
         
         @keyframes spin {
@@ -247,145 +272,266 @@
             100% { transform: rotate(360deg); }
         }
         
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .checkbox-group input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-        
-        .checkbox-group label {
-            cursor: pointer;
-            font-size: 14px;
-            color: #4b5563;
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <div id="app">
-        <!-- Sidebar -->
-        <div id="sidebar"></div>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <a href="/support-dashboard-customer" class="back-btn">
+                <i class="fas fa-chevron-left"></i>
+                <span>Kembali ke Daftar Tiket</span>
+            </a>
+        </div>
+    </div>
 
-        <!-- Main Content -->
-        <div style="margin-left: 16rem; width: calc(100% - 16rem); transition: all 300ms ease;">
-            <!-- Header -->
-            <div class="gradient-header text-white sticky top-0 z-30 shadow-lg">
-                <div class="px-6 py-6 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <button onclick="goBackToList()" class="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition">
-                            <i class="fas fa-arrow-left text-lg"></i>
-                        </button>
-                        <div>
-                            <h1 class="text-2xl font-bold" id="ticketTitle">Ticket Loading...</h1>
-                            <p class="text-red-100 text-sm" id="ticketStatus">Loading...</p>
+    <!-- Main Content -->
+    <div class="container">
+        <div class="main-content">
+            <!-- Messages Section -->
+            <div class="ticket-messages">
+                <div class="ticket-title-section">
+                    <div class="ticket-number" id="ticketNumber">Loading...</div>
+                    <div class="ticket-subject" id="ticketSubject">Loading...</div>
+                    
+                    <div class="ticket-meta-row" style="margin-top: 16px;">
+                        <div class="meta-item">
+                            <span class="meta-icon">●</span>
+                            <span id="ticketStatus" class="status-badge status-open">Open</span>
                         </div>
+                        <div class="meta-item">
+                            <span class="meta-icon"><i class="fas fa-flag"></i></span>
+                            <span id="ticketPriority" class="priority-badge priority-medium">Medium</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon"><i class="fas fa-clock"></i></span>
+                            <span class="meta-label"><span id="ticketTime">Loading...</span> lalu</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Container -->
+                <div class="messages-container" id="messagesContainer">
+                    <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
+                        <div class="loading-spinner" style="display: inline-block; margin-bottom: 16px;"></div>
+                        <div>Memuat pesan...</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Content Area -->
-            <div class="p-6">
-                <!-- Ticket Info -->
-                <div class="ticket-info-box" id="ticketInfoBox">
-                    <div class="info-row">
-                        <div class="info-label">Nomor Tiket</div>
-                        <div class="info-value" id="ticketNumber">#ANKA000</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Status</div>
-                        <div class="info-value">
-                            <span class="status-badge" id="statusBadge">Open</span>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Prioritas</div>
-                        <div class="info-value">
-                            <span class="priority-badge" id="priorityBadge">Medium</span>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Kategori</div>
-                        <div class="info-value" id="categoryValue">General</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Dibuat</div>
-                        <div class="info-value" id="createdDate">-</div>
-                    </div>
-                    <div class="info-row" style="border-bottom: none;">
-                        <div class="info-label">Aksi</div>
-                        <div class="info-value flex gap-2">
-                            <button id="btnResolve" class="btn btn-primary btn-small" onclick="resolveTicket()" style="display: none;">
-                                <i class="fas fa-check"></i> Tandai Selesai
-                            </button>
-                            <button id="btnClose" class="btn btn-secondary btn-small" onclick="closeTicket()" style="display: none;">
-                                <i class="fas fa-lock"></i> Close
-                            </button>
-                        </div>
-                    </div>
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-title">Informasi Tiket</div>
+                
+                <div class="info-item">
+                    <div class="info-label">Status</div>
+                    <div class="info-value" id="sidebarStatus">-</div>
                 </div>
-
-                <!-- Ticket Content -->
-                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4" id="ticketSubject">Subject</h3>
-                    <div class="text-gray-700 mb-4" id="ticketDescription" style="white-space: pre-wrap; word-wrap: break-word;">Description</div>
-                    
-                    <div id="ticketAttachmentsContainer" style="display: none;">
-                        <h4 class="font-bold text-gray-700 mt-4 mb-3">Lampiran</h4>
-                        <div id="ticketAttachments"></div>
-                    </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Prioritas</div>
+                    <div class="info-value" id="sidebarPriority">-</div>
                 </div>
-
-                <!-- Messages -->
-                <div class="mb-6">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4">Percakapan</h3>
-                    <div id="messagesContainer" style="min-height: 100px;">
-                        <div style="text-align: center; color: #6b7280; padding: 40px;">
-                            <div class="loading-spinner" style="margin: 0 auto 15px;"></div>
-                            Loading messages...
-                        </div>
-                    </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Kategori</div>
+                    <div class="info-value" id="sidebarCategory">-</div>
                 </div>
-
-                <!-- Reply Form -->
-                <div class="reply-form" id="replyFormContainer">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4">Balas Tiket</h3>
-                    
-                    <form id="replyForm" onsubmit="submitReply(event)">
-                        <div class="form-group">
-                            <label class="form-label">Pesan Anda</label>
-                            <textarea class="form-textarea" id="replyMessage" required placeholder="Tulis balasan Anda di sini..."></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Lampiran (Opsional)</label>
-                            <input type="file" id="replyAttachment" class="form-input" accept="*/*">
-                            <p class="text-xs text-gray-500 mt-2">Ukuran maks: 10MB</p>
-                        </div>
-
-                        <div class="checkbox-group" id="internalNoteGroup" style="display: none;">
-                            <input type="checkbox" id="isInternalNote">
-                            <label for="isInternalNote">Catatan Internal (hanya terlihat oleh support staff)</label>
-                        </div>
-
-                        <div class="flex gap-3 mt-6">
-                            <button type="submit" class="btn btn-primary flex-1" id="btnSendReply">
-                                <i class="fas fa-paper-plane"></i> Kirim Balasan
-                            </button>
-                        </div>
-                    </form>
+                
+                <div class="info-item">
+                    <div class="info-label">Dibuat</div>
+                    <div class="info-value" id="sidebarCreated">-</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Balasan Terakhir</div>
+                    <div class="info-value" id="sidebarLastReply">-</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Total Pesan</div>
+                    <div class="info-value" id="sidebarTotalMessages">-</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/sidebar.js"></script>
-    <script src="js/support-detail.js"></script>
+    <script>
+        let ticketId = null;
+        let ticketData = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('[Ticket-Detail] Page loaded');
+            
+            // Get ticket ID from URL
+            const params = new URLSearchParams(window.location.search);
+            ticketId = params.get('id');
+            
+            if (!ticketId) {
+                console.error('[Ticket-Detail] No ticket ID provided');
+                document.body.innerHTML = '<div style="padding: 20px; color: red;">Error: No ticket ID provided</div>';
+                return;
+            }
+
+            console.log('[Ticket-Detail] Loading ticket:', ticketId);
+            
+            // Initialize auth
+            await initAuth();
+            
+            if (!currentUser) {
+                console.error('[Ticket-Detail] Not authenticated');
+                window.location.href = '/login';
+                return;
+            }
+
+            // Load ticket
+            await loadTicketDetail();
+        });
+
+        async function loadTicketDetail() {
+            try {
+                const token = localStorage.getItem('jwt_token');
+                
+                const response = await fetch(`/api/support/tickets/${ticketId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load ticket: ${response.status}`);
+                }
+
+                const data = await response.json();
+                ticketData = data.ticket;
+
+                console.log('[Ticket-Detail] Ticket data:', ticketData);
+                
+                renderTicketDetail();
+                renderMessages();
+
+            } catch (error) {
+                console.error('[Ticket-Detail] Error:', error);
+                document.getElementById('messagesContainer').innerHTML = `
+                    <div style="text-align: center; color: #ef4444; padding: 40px 20px;">
+                        <div style="margin-bottom: 12px;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
+                        </div>
+                        <div>${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderTicketDetail() {
+            const ticket = ticketData;
+            const statusClass = (ticket.status || 'Open').toLowerCase().replace(/\s+/g, '-');
+            const priorityClass = (ticket.priority || 'Medium').toLowerCase();
+
+            // Header
+            document.getElementById('ticketNumber').textContent = ticket.ticket_number || 'N/A';
+            document.getElementById('ticketSubject').textContent = ticket.subject || 'N/A';
+            
+            const statusBadge = document.getElementById('ticketStatus');
+            statusBadge.textContent = ticket.status || 'Open';
+            statusBadge.className = `status-badge status-${statusClass}`;
+            
+            const priorityBadge = document.getElementById('ticketPriority');
+            priorityBadge.textContent = ticket.priority || 'Medium';
+            priorityBadge.className = `priority-badge priority-${priorityClass}`;
+            
+            document.getElementById('ticketTime').textContent = formatRelativeTime(ticket.updated_at);
+
+            // Sidebar
+            document.getElementById('sidebarStatus').textContent = ticket.status || '-';
+            document.getElementById('sidebarPriority').textContent = ticket.priority || '-';
+            document.getElementById('sidebarCategory').textContent = ticket.category || '-';
+            document.getElementById('sidebarCreated').textContent = formatDate(ticket.created_at);
+            document.getElementById('sidebarLastReply').textContent = formatRelativeTime(ticket.updated_at);
+            document.getElementById('sidebarTotalMessages').textContent = (ticketData.messages || []).length;
+        }
+
+        function renderMessages() {
+            const messages = ticketData.messages || [];
+            
+            if (messages.length === 0) {
+                document.getElementById('messagesContainer').innerHTML = `
+                    <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
+                        <div style="font-size: 24px; margin-bottom: 8px;"><i class="fas fa-inbox"></i></div>
+                        <div>Tidak ada pesan</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = messages.map(msg => {
+                const isSupport = msg.user_id !== currentUser.userId;
+                const role = isSupport ? 'support' : 'customer';
+                const roleText = isSupport ? 'Support' : 'Anda';
+                
+                return `
+                    <div class="message">
+                        <div class="message-header">
+                            <div class="message-avatar ${role}">
+                                ${isSupport ? '<i class="fas fa-headset"></i>' : '<i class="fas fa-user"></i>'}
+                            </div>
+                            <div>
+                                <span class="message-name">
+                                    ${isSupport ? 'Tim Support' : 'Anda'}
+                                    <span class="message-role ${role}">${roleText}</span>
+                                </span>
+                                <span class="message-time">${formatRelativeTime(msg.created_at)}</span>
+                            </div>
+                        </div>
+                        <div class="message-body">${escapeHtml(msg.message)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('messagesContainer').innerHTML = html;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function formatRelativeTime(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffHours = diffMs / (1000 * 60 * 60);
+            const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+            if (diffHours < 1) {
+                return 'Baru saja';
+            } else if (diffHours < 24) {
+                return `${Math.floor(diffHours)}h`;
+            } else if (diffDays < 7) {
+                return `${Math.floor(diffDays)}d`;
+            } else {
+                return formatDate(dateString);
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+    </script>
 </body>
 </html>
