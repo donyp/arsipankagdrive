@@ -427,23 +427,36 @@
                 const data = await response.json();
                 ticketData = data.ticket;
 
-                // Get zona name - try multiple sources
+                // Get zona name - fetch all zonas and find by zona_id
                 let zonaName = 'N/A';
+                console.log('[Ticket-Detail] currentUser:', currentUser);
+                console.log('[Ticket-Detail] zona_id:', currentUser.zona_id);
+                
                 if (currentUser.zona_id) {
-                    // Try to fetch zona name from API if zona_id exists
                     try {
-                        const zonaResponse = await fetch(`/api/zonas/${currentUser.zona_id}`, {
+                        const zonaResponse = await fetch(`/api/zonas`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
                         if (zonaResponse.ok) {
                             const zonaData = await zonaResponse.json();
-                            zonaName = zonaData.nama || zonaData.name || 'N/A';
+                            console.log('[Ticket-Detail] All zonas:', zonaData);
+                            
+                            const zonas = Array.isArray(zonaData) ? zonaData : zonaData.data || [];
+                            const userZona = zonas.find(z => z.id == currentUser.zona_id);
+                            
+                            if (userZona) {
+                                zonaName = userZona.nama || userZona.name || 'N/A';
+                                console.log('[Ticket-Detail] Found zona:', zonaName);
+                            } else {
+                                console.warn('[Ticket-Detail] Zona not found for zona_id:', currentUser.zona_id);
+                            }
                         }
                     } catch (e) {
-                        console.warn('[Ticket-Detail] Could not fetch zona name:', e);
+                        console.warn('[Ticket-Detail] Could not fetch zonas:', e);
                     }
                 }
 
+                console.log('[Ticket-Detail] Final zonaName:', zonaName);
                 renderTicketDetail(zonaName);
                 renderMessages(zonaName);
 
