@@ -80,11 +80,13 @@ async function loadZonas() {
         
         if (response.ok) {
             const data = await response.json();
-            const zonas = data.zonas || [];
+            const zonas = data.zonas || data.data || [];
             
-            // Create map: zona_id -> zona_name
+            console.log('[Support-Moderator] Zonas response:', zonas);
+            
+            // Create map: zona_id (id) -> zona_name (nama)
             zonas.forEach(zona => {
-                zonasMap[zona.zona_id] = zona.zona_name;
+                zonasMap[zona.id] = zona.nama;
             });
             
             console.log('[Support-Moderator] Zonas loaded:', zonasMap);
@@ -94,8 +96,8 @@ async function loadZonas() {
             if (filterZona) {
                 zonas.forEach(zona => {
                     const option = document.createElement('option');
-                    option.value = zona.zona_id;
-                    option.textContent = zona.zona_name;
+                    option.value = zona.id;
+                    option.textContent = zona.nama;
                     filterZona.appendChild(option);
                 });
             }
@@ -395,7 +397,7 @@ function previousPage() {
 
 function openTicket(ticketId) {
     console.log('[Support-Moderator] Opening ticket:', ticketId);
-    window.location.href = `/support-ticket-detail.html?id=${ticketId}`;
+    window.location.href = `/support-ticket-detail-moderator.html?id=${ticketId}`;
 }
 
 function formatUserId(userId) {

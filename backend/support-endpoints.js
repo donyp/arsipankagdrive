@@ -59,26 +59,28 @@ module.exports = function registerSupportEndpoints(app, supabase, authenticateTo
 
                 // Get zona name
                 try {
-                    const { data: zona } = await supabase
+                    const { data: zona, error: zonaError } = await supabase
                         .from('zonas')
-                        .select('zona_name')
-                        .eq('zona_id', ticket.zona_id)
+                        .select('nama')
+                        .eq('id', ticket.zona_id)
                         .single();
-                    if (zona) zona_name = zona.zona_name;
+                    if (zona) zona_name = zona.nama;
+                    if (zonaError) console.warn('Zona error:', zonaError);
                 } catch (e) {
-                    console.warn('Failed to get zona name for zona_id:', ticket.zona_id);
+                    console.warn('Failed to get zona name for zona_id:', ticket.zona_id, e);
                 }
 
                 // Get username
                 try {
-                    const { data: user } = await supabase
+                    const { data: user, error: userError } = await supabase
                         .from('users')
                         .select('username')
                         .eq('id', ticket.user_id)
                         .single();
                     if (user) created_by_username = user.username;
+                    if (userError) console.warn('User error:', userError);
                 } catch (e) {
-                    console.warn('Failed to get username for user_id:', ticket.user_id);
+                    console.warn('Failed to get username for user_id:', ticket.user_id, e);
                 }
 
                 return {
@@ -189,10 +191,24 @@ module.exports = function registerSupportEndpoints(app, supabase, authenticateTo
                 attachments: attachments?.filter(a => a.message_id === msg.id) || []
             })) || [];
 
+            // Get creator username
+            let created_by_username = 'N/A';
+            try {
+                const { data: user } = await supabase
+                    .from('users')
+                    .select('username')
+                    .eq('id', ticket.user_id)
+                    .single();
+                if (user) created_by_username = user.username;
+            } catch (e) {
+                console.warn('Failed to get username for user_id:', ticket.user_id);
+            }
+
             res.json({
                 success: true,
                 ticket: {
                     ...ticket,
+                    created_by_username,
                     attachments: attachments?.filter(a => !a.message_id) || [],
                     messages: enrichedMessages
                 }
