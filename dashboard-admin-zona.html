@@ -53,7 +53,7 @@
         header {
             background: white;
             border-bottom: 1px solid #e5e7eb;
-            padding: 24px 30px;
+            padding: 16px 20px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
@@ -61,11 +61,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
 
         .header-title h1 {
-            font-size: 26px;
+            font-size: 20px;
             font-weight: 700;
             color: #2c3e50;
         }
@@ -74,11 +74,11 @@
             background: #f87171;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             transition: background 0.3s;
         }
 
@@ -88,34 +88,34 @@
 
         /* CONTAINER */
         .container {
-            padding: 30px;
+            padding: 20px;
             max-width: 100%;
         }
 
         /* FILTER SECTION */
         .filter-section {
             background: white;
-            padding: 20px;
+            padding: 16px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .filter-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
         .filter-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
         }
 
         .filter-group label {
-            font-size: 12px;
+            font-size: 11px;
             color: #6b7280;
             font-weight: 600;
             text-transform: uppercase;
@@ -123,10 +123,10 @@
 
         .filter-group input,
         .filter-group select {
-            padding: 10px 12px;
+            padding: 8px 10px;
             border: 2px solid #d1d5db;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 13px;
             background: white;
             color: #2c3e50;
             transition: border-color 0.3s;
@@ -139,24 +139,31 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
+        .filter-actions-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
         .filter-actions {
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 15px;
+            gap: 8px;
         }
 
         .btn-apply,
         .btn-reset {
-            padding: 10px 20px;
+            padding: 8px 16px;
             border: none;
             border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             transition: all 0.3s;
         }
 
@@ -179,10 +186,9 @@
         }
 
         .total-display {
-            margin-top: 15px;
             font-weight: 700;
             color: #059669;
-            font-size: 18px;
+            font-size: 16px;
         }
 
         /* TABLE */
@@ -204,10 +210,10 @@
         }
 
         th {
-            padding: 14px 12px;
+            padding: 10px 10px;
             text-align: left;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
         }
 
@@ -221,8 +227,8 @@
         }
 
         td {
-            padding: 12px;
-            font-size: 13px;
+            padding: 10px 10px;
+            font-size: 12px;
             color: #374151;
         }
 
@@ -254,7 +260,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
+            padding: 12px 16px;
             border-top: 1px solid #e5e7eb;
             flex-wrap: wrap;
             gap: 10px;
@@ -262,27 +268,27 @@
 
         .pagination-info {
             color: #6b7280;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .pagination-buttons {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .btn-page {
             background: white;
             border: 2px solid #3b82f6;
             color: #3b82f6;
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 13px;
+            font-size: 12px;
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
         }
 
         .btn-page:hover:not(:disabled) {
@@ -300,15 +306,15 @@
             background: #3b82f6;
             color: white;
             border: none;
-            padding: 6px 12px;
+            padding: 5px 10px;
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 11px;
             cursor: pointer;
             font-weight: 600;
             transition: background 0.3s;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
         }
 
         .btn-action:hover {
@@ -327,16 +333,16 @@
             }
 
             .container {
-                padding: 15px;
+                padding: 12px;
             }
 
             header {
-                padding: 20px;
+                padding: 16px;
             }
 
             th, td {
-                padding: 10px 8px;
-                font-size: 12px;
+                padding: 8px 6px;
+                font-size: 11px;
             }
         }
     </style>
@@ -408,17 +414,17 @@
                     </div>
                 </div>
 
-                <!-- Total Display -->
-                <div id="totalNominalDisplay" class="total-display">Total: Rp 0</div>
-
-                <!-- Action Buttons -->
-                <div class="filter-actions">
-                    <button class="btn-apply" onclick="applyFilters()">
-                        <i class="fas fa-filter"></i> Terapkan Filter
-                    </button>
-                    <button class="btn-reset" onclick="resetFilters()">
-                        <i class="fas fa-redo"></i> Reset
-                    </button>
+                <!-- Total Display with Action Buttons -->
+                <div class="filter-actions-row">
+                    <div id="totalNominalDisplay" class="total-display">Total: Rp 0</div>
+                    <div class="filter-actions">
+                        <button class="btn-apply" onclick="applyFilters()">
+                            <i class="fas fa-filter"></i> Terapkan Filter
+                        </button>
+                        <button class="btn-reset" onclick="resetFilters()">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
                 </div>
             </div>
 
