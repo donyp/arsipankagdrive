@@ -209,7 +209,7 @@ function renderTickets(tickets) {
         container.style.justifyContent = 'center';
         container.innerHTML = `
             <div style="text-align: center; padding: 48px 20px; color: #6b7280;">
-                <div style="font-size: 36px; margin-bottom: 12px; opacity: 0.6;">📭</div>
+                <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.6;">📭</div>
                 <div>Tidak ada tiket ditemukan</div>
             </div>
         `;
@@ -223,20 +223,22 @@ function renderTickets(tickets) {
     
     const html = tickets.map(ticket => `
         <div class="table-row" onclick="openTicket('${ticket.id}')">
-            <div class="font-medium text-gray-900">${ticket.ticket_number || 'N/A'}</div>
-            <div class="text-gray-700 truncate" title="${ticket.subject}">${ticket.subject || 'N/A'}</div>
             <div>
-                <span style="display: inline-block; width: 4px; height: 20px; border-radius: 2px; margin-right: 6px; background: ${getPriorityColor(ticket.priority)}"></span>
-                <span class="text-xs text-gray-700">${ticket.priority || 'Medium'}</span>
+                <div class="ticket-number">${ticket.ticket_number || 'N/A'}</div>
+                <div class="ticket-date">${formatTicketDate(ticket.created_at)}</div>
             </div>
+            <div class="text-gray-700 truncate" title="${ticket.subject}">${ticket.subject || 'N/A'}</div>
+            <div class="text-gray-600 text-sm">${ticket.category || '-'}</div>
             <div>
                 <span class="status-badge status-${(ticket.status || 'open').toLowerCase().replace(/\s+/g, '-')}">
+                    <span class="status-dot ${(ticket.status || 'open').toLowerCase().replace(/\s+/g, '-')}"></span>
                     ${ticket.status || 'Open'}
                 </span>
             </div>
-            <div>
-                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openTicket('${ticket.id}')">
-                    <i class="fas fa-arrow-right"></i>
+            <div class="text-sm text-gray-600">${formatDate(ticket.updated_at)}</div>
+            <div style="text-align: center;">
+                <button style="background: none; border: none; color: #6b7280; cursor: pointer; font-size: 18px; padding: 4px;" onclick="event.stopPropagation();">
+                    <i class="fas fa-ellipsis-v"></i>
                 </button>
             </div>
         </div>
@@ -255,8 +257,6 @@ function getPriorityColor(priority) {
     };
     return colors[priority] || '#f59e0b';
 }
-
-function updatePagination() {
     const info = `Halaman ${currentPage} dari ${totalPages}`;
     document.getElementById('paginationInfo').textContent = info;
 
@@ -349,5 +349,29 @@ async function submitCreateTicket(e) {
     } catch (error) {
         console.error('[Support-Customer] Error creating ticket:', error);
         alert(`Error: ${error.message}`);
+    }
+}
+
+function formatTicketDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffHours = diffMs / (1000 * 60 * 60);
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+    if (diffHours < 1) {
+        return 'Baru saja';
+    } else if (diffHours < 24) {
+        return `${Math.floor(diffHours)}h lalu`;
+    } else if (diffDays < 7) {
+        return `${Math.floor(diffDays)}d lalu`;
+    } else {
+        return date.toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
     }
 }

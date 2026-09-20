@@ -9,71 +9,72 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         
-        .gradient-header {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-        }
-        
         .stat-card {
             background: white;
-            border-radius: 8px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            border-radius: 12px;
+            padding: 20px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            transition: all 0.2s;
             border: 1px solid #f3f4f6;
         }
         
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
         .stat-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 6px;
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 20px;
             color: white;
             flex-shrink: 0;
+            margin-bottom: 12px;
         }
         
-        .stat-total { background: #3b82f6; }
+        .stat-total { background: #4f46e5; }
         .stat-open { background: #ef4444; }
         .stat-answered { background: #10b981; }
-        .stat-closed { background: #6b7280; }
+        .stat-closed { background: #8b5cf6; }
         
-        .stat-content h3 {
-            font-size: 20px;
+        .stat-number {
+            font-size: 28px;
             font-weight: 700;
             color: #1f2937;
-            margin: 0;
+            margin-bottom: 4px;
         }
         
-        .stat-content p {
+        .stat-label {
             font-size: 13px;
             color: #6b7280;
-            margin: 2px 0 0 0;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .stat-info {
+            font-size: 12px;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .stat-info.open {
+            color: #ef4444;
         }
         
         .filter-bar {
             background: white;
-            padding: 14px;
+            padding: 16px;
             border-radius: 8px;
             border: 1px solid #e5e7eb;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             display: flex;
-            gap: 10px;
+            gap: 12px;
             flex-wrap: wrap;
             align-items: center;
         }
         
         .search-input, .filter-select {
-            padding: 8px 12px;
+            padding: 10px 14px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
             font-size: 14px;
@@ -84,8 +85,8 @@
         
         .search-input:focus, .filter-select:focus {
             outline: none;
-            border-color: #e74c3c;
-            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
         
         .search-input {
@@ -100,13 +101,13 @@
         
         .table-header {
             display: grid;
-            grid-template-columns: 0.8fr 2fr 1fr 1.5fr 80px;
+            grid-template-columns: 0.8fr 2fr 1.2fr 1fr 1.2fr 80px;
             gap: 12px;
             padding: 12px 16px;
             background: #f9fafb;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 2px solid #e5e7eb;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 11px;
             color: #6b7280;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -114,10 +115,10 @@
         
         .table-row {
             display: grid;
-            grid-template-columns: 0.8fr 2fr 1fr 1.5fr 80px;
+            grid-template-columns: 0.8fr 2fr 1.2fr 1fr 1.2fr 80px;
             gap: 12px;
-            padding: 12px 16px;
-            border-bottom: 1px solid #e5e7eb;
+            padding: 16px;
+            border-bottom: 1px solid #f3f4f6;
             align-items: center;
             cursor: pointer;
             transition: background 0.2s;
@@ -127,42 +128,73 @@
             background: #f9fafb;
         }
         
+        .ticket-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .ticket-number {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 14px;
+        }
+        
+        .ticket-date {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+        
         .status-badge {
-            display: inline-block;
-            padding: 4px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
             border-radius: 6px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
-            text-align: center;
+            width: fit-content;
         }
         
         .status-open { background: #fee2e2; color: #991b1b; }
         .status-in-progress { background: #fef3c7; color: #92400e; }
         .status-answered { background: #dbeafe; color: #1e40af; }
         .status-resolved { background: #dcfce7; color: #166534; }
-        .status-closed { background: #f3f4f6; color: #374151; }
+        .status-closed { background: #f3f4f6; color: #4b5563; }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .status-dot.open { background: #ef4444; }
+        .status-dot.closed { background: #6b7280; }
+        .status-dot.answered { background: #0284c7; }
+        .status-dot.resolved { background: #16a34a; }
         
         .btn {
-            padding: 8px 16px;
+            padding: 10px 20px;
             border: none;
             border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 13px;
+            font-size: 14px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
         }
         
         .btn-primary {
-            background: #e74c3c;
+            background: #4f46e5;
             color: white;
         }
         
         .btn-primary:hover {
-            background: #c0392b;
+            background: #4338ca;
         }
         
         .btn-secondary {
@@ -181,12 +213,12 @@
         
         .empty-state {
             text-align: center;
-            padding: 48px 20px;
+            padding: 60px 20px;
             color: #6b7280;
         }
         
         .empty-state-icon {
-            font-size: 36px;
+            font-size: 48px;
             margin-bottom: 12px;
             opacity: 0.6;
         }
@@ -196,7 +228,7 @@
             width: 16px;
             height: 16px;
             border: 2px solid #f3f4f6;
-            border-top: 2px solid #e74c3c;
+            border-top: 2px solid #4f46e5;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -210,9 +242,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 16px;
-            padding-top: 12px;
-            border-top: 1px solid #e5e7eb;
+            margin-top: 20px;
         }
         
         .pagination-info {
@@ -222,50 +252,62 @@
         
         .pagination-buttons {
             display: flex;
+            gap: 8px;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
             gap: 6px;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+        
+        .back-link:hover {
+            color: #1f2937;
         }
     </style>
 </head>
 <body class="bg-gray-50">
     <div id="app">
-        <!-- Main Content (No Sidebar) -->
+        <!-- Main Content -->
         <div style="width: 100%;">
             <!-- Header -->
-            <div class="gradient-header text-white sticky top-0 z-30 shadow">
-                <div class="px-6 py-5">
+            <div style="background: white; border-bottom: 1px solid #e5e7eb;">
+                <div class="px-6 py-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <a href="/dashboard-admin-zona" class="back-link">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </div>
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-white/20 p-2.5 rounded-lg">
-                                <i class="fas fa-headset text-xl"></i>
-                            </div>
-                            <div>
-                                <h1 class="text-2xl font-bold">Support</h1>
-                                <p class="text-red-100 text-xs mt-0.5">Buka dan kelola tiket support Anda</p>
-                            </div>
+                        <div>
+                            <h1 style="font-size: 28px; font-weight: 700; color: #1f2937; margin: 0;">Support</h1>
+                            <p style="color: #6b7280; font-size: 14px; margin: 6px 0 0 0;">Kelola tiket support Anda</p>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <button id="btnCreateTicket" class="bg-white text-red-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition flex items-center gap-2" onclick="showCreateModal()">
-                                <i class="fas fa-plus"></i> Buka Tiket
-                            </button>
-                            <a href="/dashboard-admin-zona" class="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition flex items-center gap-2" title="Back to Dashboard">
-                                <i class="fas fa-arrow-left"></i>
-                            </a>
-                        </div>
+                        <button id="btnCreateTicket" class="btn btn-primary" onclick="showCreateModal()">
+                            <i class="fas fa-plus"></i> Buka Tiket
+                        </button>
                     </div>
                 </div>
             </div>
 
             <!-- Main Content -->
-            <div class="p-6">
+            <div class="px-6 py-6">
                 <!-- Statistics -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div class="stat-card">
                         <div class="stat-icon stat-total">
-                            <i class="fas fa-list-check"></i>
+                            <i class="fas fa-envelope"></i>
                         </div>
-                        <div class="stat-content">
-                            <h3 id="statTotal">0</h3>
-                            <p>Total</p>
+                        <div class="stat-number" id="statTotal">0</div>
+                        <div class="stat-label">Total Tickets</div>
+                        <div class="stat-info">
+                            <i class="fas fa-check" style="color: #4f46e5;"></i>
+                            <span id="statTotalInfo">Semua tiket Anda</span>
                         </div>
                     </div>
                     
@@ -273,19 +315,23 @@
                         <div class="stat-icon stat-open">
                             <i class="fas fa-circle-exclamation"></i>
                         </div>
-                        <div class="stat-content">
-                            <h3 id="statOpen">0</h3>
-                            <p>Open</p>
+                        <div class="stat-number" id="statOpen">0</div>
+                        <div class="stat-label">Open</div>
+                        <div class="stat-info open">
+                            <i class="fas fa-times"></i>
+                            <span id="statOpenInfo">Tidak ada yang terb...</span>
                         </div>
                     </div>
                     
                     <div class="stat-card">
                         <div class="stat-icon stat-answered">
-                            <i class="fas fa-check"></i>
+                            <i class="fas fa-reply"></i>
                         </div>
-                        <div class="stat-content">
-                            <h3 id="statAnswered">0</h3>
-                            <p>Answered</p>
+                        <div class="stat-number" id="statAnswered">0</div>
+                        <div class="stat-label">Answered</div>
+                        <div class="stat-info">
+                            <i class="fas fa-check"></i>
+                            <span id="statAnsweredInfo">Sudah direspon</span>
                         </div>
                     </div>
                     
@@ -293,16 +339,18 @@
                         <div class="stat-icon stat-closed">
                             <i class="fas fa-lock"></i>
                         </div>
-                        <div class="stat-content">
-                            <h3 id="statClosed">0</h3>
-                            <p>Closed</p>
+                        <div class="stat-number" id="statClosed">0</div>
+                        <div class="stat-label">Closed</div>
+                        <div class="stat-info">
+                            <i class="fas fa-check"></i>
+                            <span id="statClosedInfo">Arisip selasai</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Filters -->
                 <div class="filter-bar">
-                    <input type="text" class="search-input" id="searchInput" placeholder="Cari nomor tiket atau subjek...">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Cari subjek atau nomor tiket...">
                     
                     <select id="filterStatus" class="filter-select">
                         <option value="all">Semua Status</option>
@@ -312,16 +360,23 @@
                         <option value="Resolved">Resolved</option>
                         <option value="Closed">Closed</option>
                     </select>
+                    
+                    <select id="filterLimit" class="filter-select">
+                        <option value="10">Tampilkan: 10</option>
+                        <option value="20" selected>Tampilkan: 20</option>
+                        <option value="50">Tampilkan: 50</option>
+                    </select>
                 </div>
 
                 <!-- Tickets Table -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
                     <!-- Table Header -->
                     <div class="table-header">
                         <div>TIKET</div>
                         <div>SUBJEK</div>
-                        <div>PRIORITAS</div>
+                        <div>DEPARTMENT</div>
                         <div>STATUS</div>
+                        <div>BALASAN TERAKHIR</div>
                         <div>AKSI</div>
                     </div>
 
