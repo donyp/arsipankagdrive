@@ -26,6 +26,7 @@ const { startAutoSync } = require('./gdrive-file-sync');
 const registerFeatureEndpoints = require('./feature-endpoints');
 const registerBackupEndpoints = require('./backup-endpoints');
 const registerLoggingEndpoints = require('./logging-endpoints');
+const registerSupportEndpoints = require('./support-endpoints');
 const { generateRcloneConfig, verifyRcloneConfig } = require('./generate-rclone-config');
 const { startFileCountSyncJob } = require('./file-count-sync-job');
 const { initializeAutoLogoutScheduler } = require('./scheduled-auto-logout');
@@ -292,6 +293,14 @@ app.get('/upload-faktur', (req, res) => {
 
 app.get('/dashboard-zona', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'dashboard-admin-zona.html'));
+});
+
+app.get('/support-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'support-dashboard.html'));
+});
+
+app.get('/support-ticket-detail.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'support-ticket-detail.html'));
 });
 
 // Generic page router
@@ -887,8 +896,16 @@ console.log('  ✓ FAQ Knowledge Base');
 // ============================================================
 console.log('[INIT] Registering Backup Management endpoints...');
 registerBackupEndpoints(app, supabase, authenticateToken, authorizeRole);
-console.log('[INIT] Backup Management endpoints registered ?');
-console.log('  ? Backup creation, listing, verification');
+console.log('[INIT] Backup Management endpoints registered ✅');
+console.log('  ✓ Backup creation, listing, verification');
+
+// ============================================================
+// Support Ticketing System Endpoints
+// ============================================================
+console.log('[INIT] Registering Support Ticketing endpoints...');
+registerSupportEndpoints(app, supabase, authenticateToken, authorizeRole, upload);
+console.log('[INIT] Support Ticketing endpoints registered ✅');
+console.log('  ✓ Ticket CRUD, messaging, attachments, status management');
 console.log('  ? Backup restoration & deletion with audit log');
 console.log('  ? Automatic retention policy enforcement');
 
