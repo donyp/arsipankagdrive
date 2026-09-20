@@ -326,7 +326,7 @@
             border-left: 4px solid #27ae60;
         }
     </style>
-
+    <style>
         /* Improved header with better visual hierarchy */
         header {
             width: 100%;
@@ -796,12 +796,24 @@
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100" style="position: relative;">
+    <style>
+        /* Hide any stray CSS text that renders before header */
+        main::before {
+            display: none;
+        }
+    </style>
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-40"></aside>
 
     <!-- Main Content -->
-    <main id="main-content" class="min-h-screen transition-all duration-300">
+    <main id="main-content" class="min-h-screen transition-all duration-300" style="position: relative;">
+        <style>
+            /* Hide stray CSS text rendering */
+            #main-content {
+                font-size: initial;
+            }
+        </style>
         <!-- Top Bar -->
         <header class="bg-white border-b border-gray-200 shadow-sm" style="padding: 30px;">
             <div class="flex items-center justify-between gap-4">
