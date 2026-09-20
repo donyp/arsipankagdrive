@@ -257,6 +257,8 @@ function getPriorityColor(priority) {
     };
     return colors[priority] || '#f59e0b';
 }
+
+function updatePagination() {
     const info = `Halaman ${currentPage} dari ${totalPages}`;
     document.getElementById('paginationInfo').textContent = info;
 
