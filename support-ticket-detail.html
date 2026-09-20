@@ -427,7 +427,23 @@
                 const data = await response.json();
                 ticketData = data.ticket;
 
-                const zonaName = currentUser.zona_name || 'N/A';
+                // Get zona name - try multiple sources
+                let zonaName = 'N/A';
+                if (currentUser.zona_id) {
+                    // Try to fetch zona name from API if zona_id exists
+                    try {
+                        const zonaResponse = await fetch(`/api/zonas/${currentUser.zona_id}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (zonaResponse.ok) {
+                            const zonaData = await zonaResponse.json();
+                            zonaName = zonaData.nama || zonaData.name || 'N/A';
+                        }
+                    } catch (e) {
+                        console.warn('[Ticket-Detail] Could not fetch zona name:', e);
+                    }
+                }
+
                 renderTicketDetail(zonaName);
                 renderMessages(zonaName);
 
@@ -545,15 +561,25 @@
         function formatDateTimeWIB(dateString) {
             if (!dateString) return '-';
             
-            // Parse the date
+            // Parse ISO string
             const date = new Date(dateString);
             
-            // Convert to WIB timezone (UTC+7)
-            const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
-            const wibTime = new Date(utcTime + (7 * 60 * 60000));
+            // Format directly using id-ID locale with options
+            // The backend should store UTC, so we just format it
+            const dateStr = date.toLocaleDateString('id-ID', { 
+                day: 'numeric', 
+                month: 'short', 
+                year: 'numeric',
+                timeZone: 'Asia/Jakarta'
+            });
             
-            const dateStr = wibTime.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-            const timeStr = wibTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const timeStr = date.toLocaleTimeString('id-ID', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                hour12: false,
+                timeZone: 'Asia/Jakarta'
+            });
+            
             return `${dateStr} · ${timeStr}`;
         }
 
@@ -561,14 +587,9 @@
             if (!dateString) return '-';
             
             const date = new Date(dateString);
-            const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
-            const wibTime = new Date(utcTime + (7 * 60 * 60000));
-            
             const now = new Date();
-            const utcNow = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const wibNow = new Date(utcNow + (7 * 60 * 60000));
             
-            const diffMs = wibNow - wibTime;
+            const diffMs = now - date;
             const diffHours = diffMs / (1000 * 60 * 60);
             const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
