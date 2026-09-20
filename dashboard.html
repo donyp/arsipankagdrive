@@ -1684,14 +1684,32 @@
                 trigger.textContent = label;
             }
             
-            // Update checkmarks
+            // Update checkmarks - remove all first, then add to matching option
             dropdown.querySelectorAll('.dropdown-option').forEach(opt => {
                 opt.classList.remove('selected');
-                const text = opt.querySelector('span:last-child').textContent;
-                if (text === label) {
-                    opt.classList.add('selected');
+                const checkmark = opt.querySelector('.checkmark');
+                if (checkmark) {
+                    checkmark.textContent = '';
                 }
             });
+            
+            // Find the clicked option by matching the label text and mark it as selected
+            let foundOption = false;
+            dropdown.querySelectorAll('.dropdown-option').forEach(opt => {
+                const optLabel = opt.querySelector('span:last-child').textContent.trim();
+                if (optLabel === label) {
+                    opt.classList.add('selected');
+                    const checkmark = opt.querySelector('.checkmark');
+                    if (checkmark) {
+                        checkmark.textContent = '✓';
+                    }
+                    foundOption = true;
+                }
+            });
+            
+            if (!foundOption) {
+                console.warn('[SelectOption] Could not find option with label:', label, 'in dropdown:', dropdownId);
+            }
             
             // Close menu
             if (menu) {
@@ -1724,16 +1742,16 @@
             // Clear existing options (keep header)
             optionsContainer.querySelectorAll('.dropdown-option').forEach(opt => opt.remove());
             
-            // Add new options
-            options.forEach((option, index) => {
+            // Add new options - don't auto-select first, let selectOption handle it
+            options.forEach((option) => {
                 const optionEl = document.createElement('div');
-                optionEl.className = 'dropdown-option' + (index === 0 ? ' selected' : '');
+                optionEl.className = 'dropdown-option';
                 
                 const value = typeof option === 'object' ? option.value : option;
                 const label = typeof option === 'object' ? option.label : optionFormatter ? optionFormatter(option) : option;
                 
                 optionEl.innerHTML = `
-                    <span class="checkmark">${index === 0 ? '✓' : ''}</span>
+                    <span class="checkmark"></span>
                     <span>${label}</span>
                 `;
                 
