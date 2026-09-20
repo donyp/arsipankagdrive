@@ -521,6 +521,16 @@
             let html = '';
             
             if (ticketData.description) {
+                // Clean zona name - remove leading zeros and extract number
+                let cleanZonaName = zonaName;
+                if (zonaName && zonaName !== 'N/A') {
+                    // If it's "Zona 01", extract just "1"
+                    const match = zonaName.match(/(\d+)/);
+                    if (match) {
+                        cleanZonaName = match[1].replace(/^0+/, '') || '0';
+                    }
+                }
+                
                 html += `
                     <div class="message-item">
                         <div class="message-avatar customer">
@@ -528,7 +538,7 @@
                         </div>
                         <div class="message-content">
                             <div class="message-header-row">
-                                <span class="message-author">Zona ${zonaName}</span>
+                                <span class="message-author">Zona ${cleanZonaName}</span>
                                 <span class="message-role anda">ANDA</span>
                                 <span class="message-time">${formatDateTimeWIB(ticketData.created_at)}</span>
                             </div>
@@ -554,6 +564,15 @@
                     const isSupport = msg.user_id !== currentUser.userId;
                     const roleClass = !isSupport ? 'anda' : '';
                     
+                    // Clean zona name for replies too
+                    let cleanZonaName = zonaName;
+                    if (zonaName && zonaName !== 'N/A') {
+                        const match = zonaName.match(/(\d+)/);
+                        if (match) {
+                            cleanZonaName = match[1].replace(/^0+/, '') || '0';
+                        }
+                    }
+                    
                     return `
                         <div class="message-item">
                             <div class="message-avatar ${isSupport ? 'support' : 'customer'}">
@@ -561,7 +580,7 @@
                             </div>
                             <div class="message-content">
                                 <div class="message-header-row">
-                                    <span class="message-author">${isSupport ? 'Tim Support' : 'Zona ' + zonaName}</span>
+                                    <span class="message-author">${isSupport ? 'Tim Support' : 'Zona ' + cleanZonaName}</span>
                                     <span class="message-role ${roleClass}">${!isSupport ? 'ANDA' : 'Support'}</span>
                                     <span class="message-time">${formatDateTimeWIB(msg.created_at)}</span>
                                 </div>
