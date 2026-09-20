@@ -9,6 +9,7 @@ let currentStatus = 'all';
 let currentZona = '';
 let currentSearch = '';
 let totalPages = 1;
+let zonasMap = {}; // Cache for zona lookup
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Support-Moderator] Page loaded');
@@ -25,6 +26,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     console.log('[Support-Moderator] User authenticated:', currentUser.email, 'Role:', currentUser.role);
+    
+    // Load zonas first
+    console.log('[Support-Moderator] Loading zonas...');
+    await loadZonas();
     
     console.log('[Support-Moderator] Loading stats...');
     await loadStats();
@@ -65,6 +70,40 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     console.log('[Support-Moderator] Dashboard ready');
 });
+
+async function loadZonas() {
+    try {
+        const token = localStorage.getItem('jwt_token');
+        const response = await fetch('/api/zonas', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const zonas = data.zonas || [];
+            
+            // Create map: zona_id -> zona_name
+            zonas.forEach(zona => {
+                zonasMap[zona.zona_id] = zona.zona_name;
+            });
+            
+            console.log('[Support-Moderator] Zonas loaded:', zonasMap);
+            
+            // Populate filter dropdown
+            const filterZona = document.getElementById('filterZona');
+            if (filterZona) {
+                zonas.forEach(zona => {
+                    const option = document.createElement('option');
+                    option.value = zona.zona_id;
+                    option.textContent = zona.zona_name;
+                    filterZona.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('[Support-Moderator] Error loading zonas:', error);
+    }
+}
 
 function debounce(func, wait) {
     let timeout;
@@ -242,11 +281,34 @@ function renderTickets(tickets) {
         const priorityClass = (ticket.priority || 'medium').toLowerCase();
         const statusClass = (ticket.status || 'open').toLowerCase().replace(/\s+/g, '-');
         
+        // Get zona name - extract number from zona_name if available, else use zona_id
+        let zonaDisplay = 'N/A';
+        if (ticket.zona_name) {
+            // If zona_name is "Zona 01", extract just "1"
+            const match = ticket.zona_name.match(/(\d+)/);
+            if (match) {
+                zonaDisplay = 'Zona ' + (match[1].replace(/^0+/, '') || '0');
+            } else {
+                zonaDisplay = ticket.zona_name;
+            }
+        } else if (zonasMap[ticket.zona_id]) {
+            const zonaName = zonasMap[ticket.zona_id];
+            const match = zonaName.match(/(\d+)/);
+            if (match) {
+                zonaDisplay = 'Zona ' + (match[1].replace(/^0+/, '') || '0');
+            } else {
+                zonaDisplay = zonaName;
+            }
+        }
+        
+        // Get username from ticket - prefer ticket.created_by_username if available
+        const username = ticket.created_by_username || ticket.creator_name || formatUserId(ticket.user_id);
+        
         return `
             <tr style="border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: background 0.2s;" onclick="openTicket('${ticket.id}')" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
                 <td style="padding: 12px 16px; font-weight: 500; color: #1f2937;">${ticket.ticket_number || 'N/A'}</td>
                 <td style="padding: 12px 16px; color: #374151; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${ticket.subject}">${ticket.subject || 'N/A'}</td>
-                <td style="padding: 12px 16px; color: #6b7280; font-size: 14px;">Zona ${String(ticket.zona_id).replace(/^0+/, '') || '-'}</td>
+                <td style="padding: 12px 16px; color: #6b7280; font-size: 14px;">${zonaDisplay}</td>
                 <td style="padding: 12px 16px;">
                     <div style="display: flex; align-items: center; gap: 6px;">
                         <span style="width: 4px; height: 20px; border-radius: 2px; background: ${getPriorityColor(priorityClass)}; display: inline-block;"></span>
@@ -258,7 +320,7 @@ function renderTickets(tickets) {
                         ${ticket.status || 'Open'}
                     </span>
                 </td>
-                <td style="padding: 12px 16px; font-size: 13px; color: #6b7280;">${formatUserId(ticket.user_id)}</td>
+                <td style="padding: 12px 16px; font-size: 13px; color: #6b7280;">${username}</td>
                 <td style="padding: 12px 16px; text-align: center;">
                     <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openTicket('${ticket.id}')">
                         <i class="fas fa-arrow-right"></i>

@@ -52,9 +52,45 @@ module.exports = function registerSupportEndpoints(app, supabase, authenticateTo
 
             if (error) throw error;
 
+            // Now fetch zona names and usernames for the tickets
+            const enrichedTickets = await Promise.all((tickets || []).map(async (ticket) => {
+                let zona_name = 'N/A';
+                let created_by_username = 'N/A';
+
+                // Get zona name
+                try {
+                    const { data: zona } = await supabase
+                        .from('zonas')
+                        .select('zona_name')
+                        .eq('zona_id', ticket.zona_id)
+                        .single();
+                    if (zona) zona_name = zona.zona_name;
+                } catch (e) {
+                    console.warn('Failed to get zona name for zona_id:', ticket.zona_id);
+                }
+
+                // Get username
+                try {
+                    const { data: user } = await supabase
+                        .from('users')
+                        .select('username')
+                        .eq('id', ticket.user_id)
+                        .single();
+                    if (user) created_by_username = user.username;
+                } catch (e) {
+                    console.warn('Failed to get username for user_id:', ticket.user_id);
+                }
+
+                return {
+                    ...ticket,
+                    zona_name,
+                    created_by_username
+                };
+            }));
+
             res.json({
                 success: true,
-                tickets: tickets || [],
+                tickets: enrichedTickets || [],
                 pagination: {
                     total: count,
                     page: parseInt(page),
