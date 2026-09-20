@@ -10,6 +10,106 @@
         .gradient-header {
             background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
         }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #ccc;
+            background: #f9f9f9;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .file-item.valid {
+            border-left-color: #27ae60;
+            background: #f0fdf4;
+        }
+
+        .file-item.invalid {
+            border-left-color: #e74c3c;
+            background: #fef2f2;
+        }
+
+        .file-item-icon {
+            font-size: 20px;
+            font-weight: bold;
+            margin-right: 12px;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .file-item.valid .file-item-icon {
+            color: #27ae60;
+        }
+
+        .file-item.invalid .file-item-icon {
+            color: #e74c3c;
+        }
+
+        .file-item-name {
+            font-weight: 600;
+            color: #2c3e50;
+            word-break: break-word;
+        }
+
+        .file-item-faktur {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+
+        .file-item-status {
+            margin-left: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .file-item.valid .file-item-status {
+            background: #d4edda;
+            color: #27ae60;
+        }
+
+        .file-item.invalid .file-item-status {
+            background: #f8d7da;
+            color: #e74c3c;
+        }
+
+        .delete-btn {
+            margin-left: 10px;
+            padding: 6px 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .filesList.show {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -21,6 +121,10 @@
         }
         #app {
             width: 100%;
+        }
+        #dropZone.drag-over {
+            border-color: #e74c3c !important;
+            background-color: #fde8e8 !important;
         }
     </style>
     <div id="app">
@@ -68,6 +172,13 @@
                         <span style="font-size: 14px; color: #7f8c8d;">atau klik untuk memilih file</span>
                     </div>
 
+                    <!-- Validating Spinner -->
+                    <div id="validating" style="display: none; text-align: center; padding: 40px;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">⏳</div>
+                        <p style="color: #2c3e50; font-weight: 600; margin-bottom: 10px;">Validating Files...</p>
+                        <p style="color: #7f8c8d; font-size: 14px;">Please wait while we check your files</p>
+                    </div>
+
                     <input type="file" id="fileInput" accept=".pdf" multiple style="display: none;">
 
                     <!-- Stats -->
@@ -109,5 +220,6 @@
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/sidebar.js"></script>
+    <script src="js/upload-invoice-pdf.js"></script>
 </body>
 </html>
