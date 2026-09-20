@@ -111,91 +111,92 @@
 
         /* Main content container */
         .invoice-container {
-            padding: 40px 40px;
+            padding: 56px 60px;
             max-width: 100%;
         }
 
         /* Filter section with improved spacing */
         .filter-section {
             background: white;
-            padding: 40px 48px;
+            padding: 52px 64px;
             border-radius: 16px;
-            margin: 0 0 40px 0;
+            margin: 0 0 56px 0;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
             border: 1px solid #e5e7eb;
         }
 
         .filter-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 32px;
-            margin-bottom: 32px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 48px;
+            margin-bottom: 44px;
         }
 
         .filter-group {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
         }
 
         .filter-group label {
-            font-size: 12px;
+            font-size: 13px;
             color: #475569;
             margin: 0;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
+            letter-spacing: 1.2px;
         }
 
         .filter-group select,
         .filter-group input {
-            padding: 14px 16px;
-            border: 1.5px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 16px 18px;
+            border: 2px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 15px;
             background: white;
             color: #374151;
             font-family: inherit;
             transition: all 0.2s ease;
-            min-height: 44px;
+            min-height: 52px;
+            line-height: 1.6;
         }
 
         .filter-group select:hover,
         .filter-group input:hover {
             border-color: #9ca3af;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         .filter-group select:focus,
         .filter-group input:focus {
             outline: none;
             border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
             background: white;
         }
 
         /* Filter buttons */
         .filter-button-group {
             display: flex;
-            gap: 16px;
-            margin-top: 32px;
+            gap: 24px;
+            margin-top: 44px;
         }
 
         .btn {
             background: #3498db;
             color: white;
             border: none;
-            padding: 14px 32px;
-            border-radius: 8px;
+            padding: 18px 42px;
+            border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 15px;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
-            min-height: 44px;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.25);
+            min-height: 52px;
         }
 
         .btn:hover {
@@ -214,10 +215,11 @@
         /* Table wrapper and styling */
         .table-wrapper {
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
             border: 1px solid #e5e7eb;
+            margin-top: 20px;
         }
 
         table {
@@ -238,27 +240,30 @@
         th {
             background: #2d3748;
             color: white;
-            padding: 22px 20px;
+            padding: 28px 24px;
             text-align: left;
             font-weight: 700;
-            font-size: 12px;
+            font-size: 13px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 2px solid #1a202c;
+            letter-spacing: 1.2px;
+            border-bottom: 3px solid #1a202c;
             vertical-align: middle;
+            line-height: 1.5;
         }
 
         td {
-            padding: 22px 20px;
+            padding: 28px 24px;
             border-bottom: 1px solid #e5e7eb;
-            font-size: 15px;
+            font-size: 16px;
             color: #374151;
             vertical-align: middle;
-            height: 60px;
+            height: auto;
+            min-height: 72px;
+            line-height: 1.6;
         }
 
         tbody tr:hover {
-            background: #f9fafb;
+            background: #f0f9ff;
             transition: background 0.15s ease;
         }
 
@@ -280,16 +285,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 28px 32px;
-            border-top: 1px solid #e5e7eb;
-            background: #f9fafb;
-            gap: 20px;
+            padding: 36px 40px;
+            border-top: 2px solid #e5e7eb;
+            background: #fafbfc;
+            gap: 32px;
         }
 
         #paginationInfo {
-            font-size: 14px;
+            font-size: 15px;
             color: #64748b;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         /* Stat cards (if used) */
