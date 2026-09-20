@@ -91,19 +91,52 @@ async function loadZonas() {
             
             console.log('[Support-Moderator] Zonas loaded:', zonasMap);
             
-            // Populate filter dropdown
-            const filterZona = document.getElementById('filterZona');
-            if (filterZona) {
-                zonas.forEach(zona => {
-                    const option = document.createElement('option');
-                    option.value = zona.id;
-                    option.textContent = zona.nama;
-                    filterZona.appendChild(option);
-                });
-            }
+            // Populate filter dropdown AFTER we have the map
+            await populateZonaFilter(zonas);
         }
     } catch (error) {
         console.error('[Support-Moderator] Error loading zonas:', error);
+    }
+}
+
+async function populateZonaFilter(zonas) {
+    const filterZona = document.getElementById('filterZona');
+    if (!filterZona) return;
+    
+    // Load all tickets to get unique zonas
+    try {
+        const token = localStorage.getItem('jwt_token');
+        const response = await fetch('/api/support/tickets?limit=1000', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const tickets = data.tickets || [];
+            
+            // Get unique zona_ids from tickets
+            const uniqueZonaIds = [...new Set(tickets.map(t => t.zona_id))].sort((a, b) => a - b);
+            
+            console.log('[Support-Moderator] Unique zona IDs in tickets:', uniqueZonaIds);
+            
+            // Clear existing options except first
+            while (filterZona.options.length > 1) {
+                filterZona.remove(1);
+            }
+            
+            // Add options for zonas that have tickets
+            uniqueZonaIds.forEach(zonaId => {
+                const zonaName = zonasMap[zonaId] || `Zona ${zonaId}`;
+                const option = document.createElement('option');
+                option.value = zonaId;
+                option.textContent = zonaName;
+                filterZona.appendChild(option);
+            });
+            
+            console.log('[Support-Moderator] Zona filter populated');
+        }
+    } catch (error) {
+        console.error('[Support-Moderator] Error populating zona filter:', error);
     }
 }
 

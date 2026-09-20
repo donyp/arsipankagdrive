@@ -563,8 +563,9 @@
             // For now, just show the ID - we can fetch zona name if needed
             document.getElementById('ticketZona').textContent = `Zona ${zonaId}`;
 
-            // Set status dropdown
-            document.getElementById('statusSelect').value = ticketData.status;
+            // Set status dropdown with current status
+            const statusSelect = document.getElementById('statusSelect');
+            statusSelect.value = ticketData.status;
 
             // Set sidebar info
             document.getElementById('sidebarCreatedBy').textContent = ticketData.created_by_username || 'N/A';
