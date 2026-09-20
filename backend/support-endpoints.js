@@ -36,7 +36,7 @@ module.exports = function registerSupportEndpoints(app, supabase, authenticateTo
 
             // Filter by zona if provided (admin can filter)
             if (zona_id) {
-                query = query.eq('zona_id', zona_id);
+                query = query.eq('zona_id', parseInt(zona_id));
             }
 
             // Search by ticket number or subject

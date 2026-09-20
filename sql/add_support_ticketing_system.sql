@@ -4,16 +4,16 @@
 
 -- Support Tickets Table
 CREATE TABLE IF NOT EXISTS support_tickets (
-    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     ticket_number VARCHAR(20) NOT NULL UNIQUE,
-    user_id VARCHAR(36) NOT NULL,
-    zona_id VARCHAR(36) NOT NULL,
+    user_id UUID NOT NULL,
+    zona_id INTEGER NOT NULL,
     subject VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     category VARCHAR(50) NOT NULL DEFAULT 'General',
     priority VARCHAR(20) NOT NULL DEFAULT 'Medium',
     status VARCHAR(20) NOT NULL DEFAULT 'Open',
-    assigned_to VARCHAR(36),
+    assigned_to UUID,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP NULL,
@@ -37,9 +37,9 @@ CREATE INDEX idx_assigned_status ON support_tickets(assigned_to, status);
 
 -- Support Messages/Replies Table
 CREATE TABLE IF NOT EXISTS support_messages (
-    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
-    ticket_id VARCHAR(36) NOT NULL,
-    user_id VARCHAR(36) NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticket_id UUID NOT NULL,
+    user_id UUID NOT NULL,
     message TEXT NOT NULL,
     is_internal BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -57,14 +57,14 @@ CREATE INDEX idx_msg_ticket_created ON support_messages(ticket_id, created_at);
 
 -- Support Attachments Table
 CREATE TABLE IF NOT EXISTS support_attachments (
-    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
-    ticket_id VARCHAR(36),
-    message_id VARCHAR(36),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticket_id UUID,
+    message_id UUID,
     file_name VARCHAR(255) NOT NULL,
     file_path VARCHAR(500) NOT NULL,
     file_type VARCHAR(100),
     file_size INTEGER,
-    uploaded_by VARCHAR(36) NOT NULL,
+    uploaded_by UUID NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT fk_att_ticket_id FOREIGN KEY (ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE,
@@ -79,9 +79,9 @@ CREATE INDEX idx_att_uploaded_by ON support_attachments(uploaded_by);
 
 -- Support Ticket Activity Log (optional, for audit trail)
 CREATE TABLE IF NOT EXISTS support_ticket_activity (
-    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
-    ticket_id VARCHAR(36) NOT NULL,
-    user_id VARCHAR(36) NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticket_id UUID NOT NULL,
+    user_id UUID NOT NULL,
     action VARCHAR(50) NOT NULL,
     old_value VARCHAR(255),
     new_value VARCHAR(255),
