@@ -26,6 +26,16 @@
             overflow-x: hidden;
         }
 
+        /* Hide scrollbar but allow scrolling */
+        html {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        html::-webkit-scrollbar {
+            display: none;  /* Chrome, Safari and Opera */
+        }
+
         /* Hide sidebar initially to prevent flash */
         #sidebar {
             display: none !important;
