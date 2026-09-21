@@ -1205,28 +1205,56 @@
 
         async function loadInvoices() {
             try {
-                const params = new URLSearchParams({
-                    limit: pageSize,
-                    offset: (currentPage - 1) * pageSize
-                });
-
                 const supplier = document.getElementById('filterSupplier')?.value;
                 const keterangan = document.getElementById('filterKeterangan')?.value;
                 const year = document.getElementById('filterYear')?.value;
                 const month = document.getElementById('filterMonth')?.value;
                 const search = document.getElementById('filterSearch')?.value;
 
+                // First, get ALL invoices that match filter (for stats calculation)
+                const allParams = new URLSearchParams({
+                    limit: 100000,  // Get all for stats
+                    offset: 0
+                });
+
+                if (supplier) allParams.append('toko', supplier);
+                if (keterangan) allParams.append('keterangan', keterangan);
+                if (search) allParams.append('search', search);
+
+                const allRes = await API.get(`/api/invoice/list?${allParams.toString()}`);
+                let allFilteredInvoices = allRes.data || [];
+                
+                // Apply client-side year/month filter to ALL invoices (for stats)
+                if (year || month) {
+                    allFilteredInvoices = allFilteredInvoices.filter(inv => {
+                        if (!inv.tanggal) return false;
+                        const date = new Date(inv.tanggal);
+                        const invYear = date.getFullYear().toString();
+                        const invMonth = String(date.getMonth() + 1).padStart(2, '0');
+
+                        if (year && invYear !== year) return false;
+                        if (month && invMonth !== month) return false;
+                        return true;
+                    });
+                }
+                
+                // Now get paginated data for table display
+                const params = new URLSearchParams({
+                    limit: pageSize,
+                    offset: (currentPage - 1) * pageSize
+                });
+
                 if (supplier) params.append('toko', supplier);
                 if (keterangan) params.append('keterangan', keterangan);
                 if (search) params.append('search', search);
 
                 const res = await API.get(`/api/invoice/list?${params.toString()}`);
-                let invoices = res.data || [];
+                let paginatedInvoices = res.data || [];
                 totalCount = res.count || 0;
 
-                // Client-side filtering by year/month
+                // Client-side filtering by year/month for paginated data
                 if (year || month) {
-                    invoices = invoices.filter(inv => {
+                    paginatedInvoices = paginatedInvoices.filter(inv => {
                         if (!inv.tanggal) return false;
                         const date = new Date(inv.tanggal);
                         const invYear = date.getFullYear().toString();
@@ -1238,12 +1266,12 @@
                     });
                 }
 
-                renderInvoices(invoices);
+                renderInvoices(paginatedInvoices);
                 updatePagination();
-                updateTotalNominal(invoices);
+                updateTotalNominal(paginatedInvoices);
                 
-                // Update welcome stats to reflect current filters
-                updateWelcomeStatsWithFilter(invoices);
+                // Update welcome stats with ALL filtered invoices (not just paginated)
+                updateWelcomeStatsWithAllFiltered(allFilteredInvoices);
 
             } catch (err) {
                 console.error('Error loading invoices:', err);
@@ -1253,24 +1281,25 @@
             }
         }
         
-        // Update welcome stats based on current filtered invoices
-        function updateWelcomeStatsWithFilter(filteredInvoices) {
+        // Update welcome stats based on ALL filtered invoices (across all pages)
+        function updateWelcomeStatsWithAllFiltered(allFilteredInvoices) {
             try {
                 const year = document.getElementById('filterYear')?.value;
                 const month = document.getElementById('filterMonth')?.value;
+                const supplier = document.getElementById('filterSupplier')?.value;
                 
                 // Only update if there's an active filter
-                if (!year && !month && !document.getElementById('filterSupplier')?.value) {
-                    // No filter - show all stats (original behavior)
+                if (!year && !month && !supplier) {
+                    // No filter - show all stats
                     return;
                 }
                 
-                const totalInvoice = filteredInvoices.length;
-                const lunas = filteredInvoices.filter(inv => inv.status === 'Lunas').length;
-                const belumLunas = filteredInvoices.filter(inv => inv.status === 'Belum Lunas').length;
+                const totalInvoice = allFilteredInvoices.length;  // Total dari SEMUA yang match filter
+                const lunas = allFilteredInvoices.filter(inv => inv.status === 'Lunas').length;
+                const belumLunas = allFilteredInvoices.filter(inv => inv.status === 'Belum Lunas').length;
 
-                // Calculate total amount
-                const totalAmount = filteredInvoices.reduce((sum, inv) => {
+                // Calculate total amount dari SEMUA filtered invoices
+                const totalAmount = allFilteredInvoices.reduce((sum, inv) => {
                     const nominal = parseFloat(inv.total_jumlah_jual) || 0;
                     return sum + nominal;
                 }, 0);
@@ -1288,9 +1317,9 @@
                 document.getElementById('statBelumLunas').textContent = belumLunas;
                 document.getElementById('totalInvoice').textContent = formatter.format(totalAmount);
                 
-                console.log('[WelcomeStats] Updated with filter - Total: Rp ' + formatter.format(totalAmount));
+                console.log('[WelcomeStats] Updated with ALL filtered - Total count: ' + totalInvoice + ', Total Rp: ' + formatter.format(totalAmount));
             } catch (err) {
-                console.error('Error updating welcome stats with filter:', err);
+                console.error('Error updating welcome stats:', err);
             }
         }
 
