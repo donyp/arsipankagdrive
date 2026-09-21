@@ -542,7 +542,6 @@ module.exports = function registerSupportEndpoints(app, supabase, authenticateTo
             res.status(500).json({ error: error.message });
         }
     });
-};
 
     // ============================================
     // DELETE /api/support/tickets/cleanup-old-closed - Delete closed tickets older than 7 days (admin only)
