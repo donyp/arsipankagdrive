@@ -4,16 +4,64 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buka Tiket Support - Pusat Arsip Anka</title>
+    <!-- DARK MODE - Apply immediately to prevent flash -->
+    <script>
+        (function() {
+            if (localStorage.getItem('dark_mode_enabled') === 'true') {
+                document.documentElement.setAttribute('data-dark-mode', 'true');
+                document.documentElement.style.cssText = `
+                    --color-bg-primary: #0f172a;
+                    --color-bg-secondary: #1e293b;
+                    --color-bg-tertiary: #334155;
+                    --color-text-primary: #f1f5f9;
+                    --color-text-secondary: #cbd5e1;
+                    --color-text-tertiary: #94a3b8;
+                    --color-border: #475569;
+                    --color-border-dark: #64748b;
+                    --color-accent: #3b82f6;
+                `;
+            }
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* DARK MODE CSS VARIABLES */
+        :root {
+            /* Light mode (default) */
+            --color-bg-primary: #f5f7fa;
+            --color-bg-secondary: #ffffff;
+            --color-bg-tertiary: #f3f4f6;
+            --color-text-primary: #1f2937;
+            --color-text-secondary: #6b7280;
+            --color-text-tertiary: #9ca3af;
+            --color-border: #e5e7eb;
+            --color-border-dark: #d1d5db;
+            --color-accent: #3b82f6;
+        }
+
+        html[data-dark-mode="true"] {
+            /* Dark mode */
+            --color-bg-primary: #0f172a;
+            --color-bg-secondary: #1e293b;
+            --color-bg-tertiary: #334155;
+            --color-text-primary: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-text-tertiary: #94a3b8;
+            --color-border: #475569;
+            --color-border-dark: #64748b;
+            --color-accent: #60a5fa;
+        }
+        
         * { box-sizing: border-box; }
         
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #eef2f9 100%);
+            background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-tertiary) 100%);
+            color: var(--color-text-primary);
             margin: 0;
             padding: 0;
+            transition: background 0.3s, color 0.3s;
         }
         
         .form-group {
@@ -24,7 +72,7 @@
             display: block;
             font-weight: 600;
             margin-bottom: 10px;
-            color: #111827;
+            color: var(--color-text-primary);
             font-size: 14px;
             letter-spacing: 0.3px;
         }
@@ -36,22 +84,23 @@
         .form-input, .form-select, .form-textarea {
             width: 100%;
             padding: 12px 16px;
-            border: 1.5px solid #e5e7eb;
+            border: 1.5px solid var(--color-border-dark);
             border-radius: 10px;
             font-size: 14px;
             font-family: inherit;
-            background: white;
+            background: var(--color-bg-secondary);
+            color: var(--color-text-primary);
             transition: all 0.3s ease;
         }
         
         .form-input:hover, .form-select:hover, .form-textarea:hover {
-            border-color: #d1d5db;
+            border-color: var(--color-border);
         }
         
         .form-input:focus, .form-select:focus, .form-textarea:focus {
             outline: none;
             border-color: #4f46e5;
-            background: #fafbff;
+            background: var(--color-bg-secondary);
             box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
         }
         
@@ -61,24 +110,24 @@
         }
         
         .upload-area {
-            border: 2px dashed #cbd5e1;
+            border: 2px dashed var(--color-border-dark);
             border-radius: 14px;
             padding: 40px 24px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: linear-gradient(135deg, #f8fafc 0%, #f0f4ff 100%);
+            background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-secondary) 100%);
         }
         
         .upload-area:hover {
             border-color: #4f46e5;
-            background: linear-gradient(135deg, #f0f4ff 0%, #ede9fe 100%);
+            background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
             transform: translateY(-1px);
         }
         
         .upload-area.active {
             border-color: #4f46e5;
-            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-secondary) 100%);
             box-shadow: 0 4px 16px rgba(79, 70, 229, 0.15);
         }
         
@@ -96,14 +145,14 @@
         
         .upload-text {
             font-size: 14px;
-            color: #1f2937;
+            color: var(--color-text-primary);
             font-weight: 600;
             margin-bottom: 4px;
         }
         
         .upload-hint {
             font-size: 12px;
-            color: #6b7280;
+            color: var(--color-text-secondary);
             margin-top: 8px;
         }
         
@@ -112,8 +161,8 @@
             align-items: center;
             justify-content: space-between;
             padding: 12px 14px;
-            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-            border: 1px solid #e5e7eb;
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
             border-radius: 10px;
             margin-bottom: 10px;
             font-size: 13px;
@@ -121,7 +170,7 @@
         }
         
         .file-item:hover {
-            border-color: #d1d5db;
+            border-color: var(--color-border-dark);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
         
@@ -132,7 +181,7 @@
         }
         
         .file-item-name {
-            color: #1f2937;
+            color: var(--color-text-primary);
             flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -141,10 +190,10 @@
         }
         
         .file-item-size {
-            color: #9ca3af;
+            color: var(--color-text-secondary);
             margin-left: 10px;
             font-size: 12px;
-            background: white;
+            background: var(--color-bg-secondary);
             padding: 2px 8px;
             border-radius: 6px;
         }
@@ -152,7 +201,7 @@
         .file-remove-btn {
             background: none;
             border: none;
-            color: #9ca3af;
+            color: var(--color-text-tertiary);
             cursor: pointer;
             padding: 6px 8px;
             margin-left: 10px;
@@ -428,7 +477,14 @@
     </style>
 </head>
 <body>
-    <div style="min-height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #eef2f9 100%);">
+    <!-- Apply dark mode if enabled -->
+    <script>
+        if (localStorage.getItem('dark_mode_enabled') === 'true') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+    
+    <div style="min-height: 100vh; background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-tertiary) 100%);">
         <!-- Loading Overlay -->
         <div class="loading-overlay" id="loadingOverlay">
             <div class="loading-spinner">
