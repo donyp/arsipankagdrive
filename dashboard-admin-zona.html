@@ -733,8 +733,8 @@
             <div class="welcome-section">
                 <div class="welcome-header">
                     <div class="welcome-text">
-                        <h2 id="welcome-name">Selamat siang, Admin</h2>
-                        <p id="welcome-info">Informasi ringkas data zona Anda</p>
+                        <h2 id="welcome-name">Selamat siang, Admin 👋</h2>
+                        <p id="welcome-info">Informasi data zona anda</p>
                     </div>
                     
                     <button class="theme-toggle" id="themeToggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">
@@ -1127,7 +1127,102 @@
 
 
         // ============================================
-        // UPDATE WELCOME STATS
+        // COMBINED: LOAD STATS AND INVOICES DATA
+        // ============================================
+        async function loadAllInvoicesAndStats() {
+            try {
+                // Single API call to get all invoice data
+                const res = await API.get('/api/invoice/list?limit=10000&offset=0');
+                const invoices = res.data || [];
+
+                // === UPDATE WELCOME STATS ===
+                const totalInvoice = invoices.length;
+                const lunas = invoices.filter(inv => inv.status === 'Lunas').length;
+                const belumLunas = invoices.filter(inv => inv.status === 'Belum Lunas').length;
+
+                // Calculate total amount
+                const totalAmount = invoices.reduce((sum, inv) => {
+                    const nominal = parseFloat(inv.total_jumlah_jual) || 0;
+                    return sum + nominal;
+                }, 0);
+
+                // Format currency
+                const formatter = new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0
+                });
+
+                // Update stats in DOM
+                const statTotalInvoice = document.getElementById('statTotalInvoice');
+                const statLunas = document.getElementById('statLunas');
+                const statBelumLunas = document.getElementById('statBelumLunas');
+                const totalInvoiceDisplay = document.getElementById('totalInvoice');
+
+                if (statTotalInvoice) statTotalInvoice.textContent = totalInvoice;
+                if (statLunas) statLunas.textContent = lunas;
+                if (statBelumLunas) statBelumLunas.textContent = belumLunas;
+                if (totalInvoiceDisplay) totalInvoiceDisplay.textContent = formatter.format(totalAmount);
+
+                // === POPULATE FILTER OPTIONS ===
+                // Extract unique years and months
+                const yearsSet = new Set();
+                const monthsSet = new Set();
+
+                invoices.forEach(inv => {
+                    if (inv.tanggal) {
+                        const date = new Date(inv.tanggal);
+                        yearsSet.add(date.getFullYear().toString());
+                        monthsSet.add(String(date.getMonth() + 1).padStart(2, '0'));
+                    }
+                });
+
+                // Populate year dropdown
+                const yearDropdown = document.getElementById('yearDropdown');
+                const yearOptions = yearDropdown.querySelector('.dropdown-options');
+                const years = Array.from(yearsSet).sort((a, b) => b - a);
+                
+                let yearHTML = '<div class="dropdown-option selected" onclick="selectOption(event, \'yearDropdown\', \'\', \'Semua Tahun\')"><span class="checkmark">✓</span><span>Semua Tahun</span></div>';
+                years.forEach(year => {
+                    yearHTML += `<div class="dropdown-option" onclick="selectOption(event, 'yearDropdown', '${year}', '${year}')"><span class="checkmark"></span><span>${year}</span></div>`;
+                });
+                yearOptions.innerHTML = yearHTML;
+
+                // Populate month dropdown
+                const monthDropdown = document.getElementById('monthDropdown');
+                const monthOptions = monthDropdown.querySelector('.dropdown-options');
+                const monthNames = {
+                    '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
+                    '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
+                    '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
+                };
+                
+                let monthHTML = '<div class="dropdown-option selected" onclick="selectOption(event, \'monthDropdown\', \'\', \'Semua Bulan\')"><span class="checkmark">✓</span><span>Semua Bulan</span></div>';
+                const months = Array.from(monthsSet).sort();
+                months.forEach(month => {
+                    monthHTML += `<div class="dropdown-option" onclick="selectOption(event, 'monthDropdown', '${month}', '${monthNames[month]}')"><span class="checkmark"></span><span>${monthNames[month]}</span></div>`;
+                });
+                monthOptions.innerHTML = monthHTML;
+
+                // Populate supplier dropdown
+                const suppliers = [...new Set(invoices.map(inv => inv.toko).filter(Boolean))].sort();
+                const supplierDropdown = document.getElementById('supplierDropdown');
+                const supplierOptions = supplierDropdown.querySelector('.dropdown-options');
+                
+                let supplierHTML = '<div class="dropdown-option selected" onclick="selectOption(event, \'supplierDropdown\', \'\', \'Semua Supplier\')"><span class="checkmark">✓</span><span>Semua Supplier</span></div>';
+                suppliers.forEach(supplier => {
+                    const escaped = supplier.replace(/'/g, "\\'");
+                    supplierHTML += `<div class="dropdown-option" onclick="selectOption(event, 'supplierDropdown', '${escaped}', '${escaped}')"><span class="checkmark"></span><span>${supplier}</span></div>`;
+                });
+                supplierOptions.innerHTML = supplierHTML;
+
+                console.log('Loaded', invoices.length, 'invoices - updated stats and filters');
+            } catch (err) {
+                console.error('Error loading invoices and stats:', err);
+            }
+        }
+
+        // UPDATE WELCOME STATS (kept for backward compatibility)
         // ============================================
         async function updateWelcomeStats() {
             try {
@@ -1598,14 +1693,16 @@
                     zonaName = zonaName.replace(/\bZona\s+0+(\d+)/, 'Zona $1');
                 }
 
-                // Update welcome section with safe checks
+                // Update welcome name immediately
                 const welcomeNameEl = document.getElementById('welcome-name');
-                const welcomeInfoEl = document.getElementById('welcome-info');
-                if (welcomeNameEl) welcomeNameEl.textContent = `Selamat siang, ${zonaName} 👋`;
-                if (welcomeInfoEl) welcomeInfoEl.textContent = `Total Invoice dari ${zonaName}`;
+                if (welcomeNameEl) welcomeNameEl.textContent = `Selamat siang, Admin ${zonaName} 👋`;
 
-                await loadAllInvoices();
-                await updateWelcomeStats();
+                // Load all data in one call (stats + filter options)
+                await loadAllInvoicesAndStats();
+
+                // Update welcome info after data loads
+                const welcomeInfoEl = document.getElementById('welcome-info');
+                if (welcomeInfoEl) welcomeInfoEl.textContent = `Informasi data zona ${zonaName}`;
 
             } catch (err) {
                 console.error('Init error:', err);
