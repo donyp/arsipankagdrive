@@ -8,6 +8,12 @@ let currentStatus = 'all';
 let currentSearch = '';
 let totalPages = 1;
 
+// Cache keys
+const CACHE_TICKETS = 'support_customer_tickets';
+const CACHE_STATS = 'support_customer_stats';
+const CACHE_TIMESTAMP = 'support_customer_cache_timestamp';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Support-Customer] Page loaded');
     
@@ -31,17 +37,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
-    // Load stats and tickets in parallel for faster display
-    console.log('[Support-Customer] Starting parallel data load...');
+    // Display cached data immediately if available
+    const cachedTickets = getCache(CACHE_TICKETS);
+    const cachedStats = getCache(CACHE_STATS);
+    
+    if (cachedTickets && cachedStats) {
+        console.log('[Support-Customer] Displaying cached data...');
+        renderTickets(cachedTickets);
+        updateCachedStats(cachedStats);
+        updatePagination();
+    }
+    
+    // Fetch fresh data in background
+    console.log('[Support-Customer] Fetching fresh data in background...');
     const startTime = performance.now();
     Promise.all([
         loadStats(),
         loadTickets()
     ]).then(() => {
         const loadTime = (performance.now() - startTime).toFixed(0);
-        console.log(`[Support-Customer] Data loaded in ${loadTime}ms`);
+        console.log(`[Support-Customer] Fresh data loaded in ${loadTime}ms`);
     }).catch(err => {
-        console.error('[Support-Customer] Error during parallel load:', err);
+        console.error('[Support-Customer] Error loading fresh data:', err);
     });
 
     console.log('[Support-Customer] Setting up event listeners...');
@@ -66,8 +83,62 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    console.log('[Support-Customer] Dashboard initialized (data loading in background)');
+    console.log('[Support-Customer] Dashboard initialized with cached data');
 });
+
+// Cache management functions
+function setCache(key, value, duration = CACHE_DURATION) {
+    try {
+        const data = {
+            value: value,
+            timestamp: Date.now(),
+            duration: duration
+        };
+        localStorage.setItem(key, JSON.stringify(data));
+        console.log(`[Cache] Set ${key}`);
+    } catch (err) {
+        console.warn('[Cache] Failed to set cache:', err);
+    }
+}
+
+function getCache(key) {
+    try {
+        const item = localStorage.getItem(key);
+        if (!item) return null;
+        
+        const data = JSON.parse(item);
+        const isExpired = (Date.now() - data.timestamp) > data.duration;
+        
+        if (isExpired) {
+            console.log(`[Cache] ${key} expired, removing`);
+            localStorage.removeItem(key);
+            return null;
+        }
+        
+        console.log(`[Cache] Retrieved ${key}`);
+        return data.value;
+    } catch (err) {
+        console.warn('[Cache] Failed to get cache:', err);
+        return null;
+    }
+}
+
+function clearCache(key) {
+    try {
+        localStorage.removeItem(key);
+        console.log(`[Cache] Cleared ${key}`);
+    } catch (err) {
+        console.warn('[Cache] Failed to clear cache:', err);
+    }
+}
+
+function updateCachedStats(stats) {
+    document.getElementById('statTotal').textContent = stats.total || 0;
+    document.getElementById('statOpen').textContent = stats.open || 0;
+    document.getElementById('statAnswered').textContent = stats.answered || 0;
+    document.getElementById('statClosed').textContent = stats.closed || 0;
+    console.log('[Support-Customer] Stats updated from cache');
+}
 
 function debounce(func, wait) {
     let timeout;
@@ -108,12 +179,13 @@ async function loadStats() {
         
         const stats = data.stats || {};
 
-        document.getElementById('statTotal').textContent = stats.total || 0;
-        document.getElementById('statOpen').textContent = stats.open || 0;
-        document.getElementById('statAnswered').textContent = stats.answered || 0;
-        document.getElementById('statClosed').textContent = stats.closed || 0;
+        // Cache stats
+        setCache(CACHE_STATS, stats);
+        
+        // Update UI
+        updateCachedStats(stats);
 
-        console.log('[Support-Customer] Stats updated');
+        console.log('[Support-Customer] Stats updated and cached');
     } catch (error) {
         console.error('[Support-Customer] Error loading stats:', error);
         // Don't break on stats error
@@ -171,6 +243,12 @@ async function loadTickets() {
         const pagination = data.pagination || {};
 
         totalPages = pagination.pages || 1;
+        
+        // Cache tickets only if no filters applied (cache the main list)
+        if (!currentSearch && currentStatus === 'all') {
+            setCache(CACHE_TICKETS, tickets);
+            console.log('[Support-Customer] Tickets cached');
+        }
         
         console.log('[Support-Customer] Rendering', tickets.length, 'tickets');
         renderTickets(tickets);
