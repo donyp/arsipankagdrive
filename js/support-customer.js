@@ -31,11 +31,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
-    console.log('[Support-Customer] Loading stats...');
-    await loadStats();
-    
-    console.log('[Support-Customer] Loading tickets...');
-    await loadTickets();
+    // Load stats and tickets in parallel for faster display
+    console.log('[Support-Customer] Starting parallel data load...');
+    const startTime = performance.now();
+    Promise.all([
+        loadStats(),
+        loadTickets()
+    ]).then(() => {
+        const loadTime = (performance.now() - startTime).toFixed(0);
+        console.log(`[Support-Customer] Data loaded in ${loadTime}ms`);
+    }).catch(err => {
+        console.error('[Support-Customer] Error during parallel load:', err);
+    });
 
     console.log('[Support-Customer] Setting up event listeners...');
     
@@ -59,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    console.log('[Support-Customer] Dashboard ready');
+    console.log('[Support-Customer] Dashboard initialized (data loading in background)');
 });
 
 function debounce(func, wait) {

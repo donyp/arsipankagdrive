@@ -27,15 +27,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     console.log('[Support-Moderator] User authenticated:', currentUser.email, 'Role:', currentUser.role);
     
-    // Load zonas first
+    // Load zonas first (blocking, needed for ticket rendering)
     console.log('[Support-Moderator] Loading zonas...');
     await loadZonas();
     
-    console.log('[Support-Moderator] Loading stats...');
-    await loadStats();
-    
-    console.log('[Support-Moderator] Loading tickets...');
-    await loadTickets();
+    // Load stats and tickets in parallel for faster display
+    console.log('[Support-Moderator] Starting parallel data load...');
+    const startTime = performance.now();
+    Promise.all([
+        loadStats(),
+        loadTickets()
+    ]).then(() => {
+        const loadTime = (performance.now() - startTime).toFixed(0);
+        console.log(`[Support-Moderator] Data loaded in ${loadTime}ms`);
+    }).catch(err => {
+        console.error('[Support-Moderator] Error during parallel load:', err);
+    });
 
     console.log('[Support-Moderator] Setting up event listeners...');
     
@@ -68,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    console.log('[Support-Moderator] Dashboard ready');
+    console.log('[Support-Moderator] Dashboard initialized (data loading in background)');
 });
 
 async function loadZonas() {
