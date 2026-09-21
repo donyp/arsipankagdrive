@@ -5933,14 +5933,14 @@ app.delete('/api/fleet/:id', authenticateToken, async (req, res) => {
 // SERVER STARTUP WITH COMPREHENSIVE ERROR HANDLING
 // ============================================================
 
-// Task 3.4: Log startup intent before binding
-console.log(`🚀 Backend starting on port ${PORT}`);
-
 // CRITICAL: Listen on 0.0.0.0 for Docker/Hugging Face compatibility
 // Listening on 'localhost' or '127.0.0.1' only works inside container
 // Must bind to 0.0.0.0 to be accessible from outside the container
 const HOST = '0.0.0.0';
 const PORT = Number(process.env.PORT) || 5000;
+
+// Task 3.4: Log startup intent before binding
+console.log(`🚀 Backend starting on port ${PORT}`);
 
 // Initialize startup sequence: Alist → Rclone → Node.js Server
 // (async () => {
