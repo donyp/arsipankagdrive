@@ -21,7 +21,6 @@
             icon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 0v2m0-2a2 2 0 100 4m0-4a2 2 0 110 4m0 4v2m0-6V4',
             children: [
                 { href: '/rename-faktur', label: 'Faktur Pajak', icon: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' },
-                { href: '/rename-invoice-hijau', label: 'Invoice Hijau', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
             ]
         },
 
@@ -182,8 +181,12 @@
                 ${navHTML}
             </nav>
 
-            <!-- Footer Area (Optional) -->
-            <div style="padding: 1rem; border-top: 1px solid #e5e7eb; flex-shrink: 0; font-size: 0.7rem; color: #9ca3af; text-align: center;">
+            <!-- Footer Area with Dark Mode Toggle -->
+            <div style="padding: 1rem; border-top: 1px solid #e5e7eb; flex-shrink: 0; font-size: 0.7rem; color: #9ca3af; text-align: center; display: flex; flex-direction: column; gap: 1rem;">
+                <button id="dark-mode-toggle" onclick="toggleDarkMode()" style="width: 100%; padding: 0.5rem; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; color: #6b7280; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <span id="dark-mode-icon">🌙</span>
+                    <span id="dark-mode-label">Dark Mode</span>
+                </button>
                 <p style="margin: 0; font-weight: 500;">v3.1</p>
             </div>
         `;
@@ -215,3 +218,59 @@
     };
 
 })();
+
+
+// ============================================================
+// DARK MODE IMPLEMENTATION
+// ============================================================
+
+function toggleDarkMode() {
+    const isDark = localStorage.getItem('dark_mode_enabled') === 'true';
+    const newState = !isDark;
+    
+    localStorage.setItem('dark_mode_enabled', newState ? 'true' : 'false');
+    
+    if (newState) {
+        document.documentElement.setAttribute('data-dark-mode', 'true');
+    } else {
+        document.documentElement.removeAttribute('data-dark-mode');
+    }
+    
+    updateDarkModeUI();
+    console.log('[DarkMode] Toggled to:', newState ? 'Dark' : 'Light');
+}
+
+function updateDarkModeUI() {
+    const isDark = localStorage.getItem('dark_mode_enabled') === 'true';
+    const icon = document.getElementById('dark-mode-icon');
+    const label = document.getElementById('dark-mode-label');
+    const toggle = document.getElementById('dark-mode-toggle');
+    
+    if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+    if (label) label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+    if (toggle) {
+        toggle.style.background = isDark ? '#334155' : '#f3f4f6';
+        toggle.style.color = isDark ? '#cbd5e1' : '#6b7280';
+        toggle.style.borderColor = isDark ? '#475569' : '#e5e7eb';
+    }
+}
+
+// Initialize dark mode UI on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateDarkModeUI);
+} else {
+    updateDarkModeUI();
+}
+
+// Listen for dark mode changes from other tabs/windows
+window.addEventListener('storage', (e) => {
+    if (e.key === 'dark_mode_enabled') {
+        const isDark = e.newValue === 'true';
+        if (isDark) {
+            document.documentElement.setAttribute('data-dark-mode', 'true');
+        } else {
+            document.documentElement.removeAttribute('data-dark-mode');
+        }
+        updateDarkModeUI();
+    }
+});

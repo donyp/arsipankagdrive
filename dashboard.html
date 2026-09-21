@@ -4,11 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Pusat Arsip Anka</title>
+    <!-- DARK MODE - Apply immediately to prevent flash -->
+    <script>
+        (function() {
+            if (localStorage.getItem('dark_mode_enabled') === 'true') {
+                document.documentElement.setAttribute('data-dark-mode', 'true');
+                document.documentElement.style.cssText = `
+                    --color-bg-primary: #0f172a;
+                    --color-bg-secondary: #1e293b;
+                    --color-bg-tertiary: #334155;
+                    --color-text-primary: #f1f5f9;
+                    --color-text-secondary: #cbd5e1;
+                    --color-border: #475569;
+                    --color-border-dark: #64748b;
+                `;
+            }
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+        /* DARK MODE CSS VARIABLES */
+        :root {
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f5f7fa;
+            --color-bg-tertiary: #f3f4f6;
+            --color-text-primary: #1f2937;
+            --color-text-secondary: #6b7280;
+            --color-text-tertiary: #9ca3af;
+            --color-border: #e5e7eb;
+            --color-border-dark: #d1d5db;
+        }
+        
+        html[data-dark-mode="true"] {
+            --color-bg-primary: #0f172a;
+            --color-bg-secondary: #1e293b;
+            --color-bg-tertiary: #334155;
+            --color-text-primary: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-text-tertiary: #94a3b8;
+            --color-border: #475569;
+            --color-border-dark: #64748b;
+        }
+        
+        body {
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            transition: background 0.3s, color 0.3s;
+        }
+
         /* Set default zoom to 80% for better fit */
         html, body {
             zoom: 0.8;
@@ -23,12 +69,12 @@
         .dropdown-trigger {
             width: 100%;
             padding: 11px 14px;
-            border: 2px solid #d1d5db;
+            border: 2px solid var(--color-border-dark);
             border-radius: 8px;
-            background: white;
+            background: var(--color-bg-secondary);
             font-size: 14px;
             font-weight: 500;
-            color: #2c3e50;
+            color: var(--color-text-primary);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -812,6 +858,12 @@
 </head>
 
 <body class="bg-gray-50">
+    <!-- Apply dark mode if enabled -->
+    <script>
+        if (localStorage.getItem('dark_mode_enabled') === 'true') {
+            document.documentElement.setAttribute('data-dark-mode', 'true');
+        }
+    </script>
     <style>
         body {
             zoom: 0.8;
