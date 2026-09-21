@@ -193,6 +193,151 @@
             color: #2c3e50;
         }
 
+        .header-title p {
+            color: #6b7280;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        /* WELCOME SECTION WITH STATS */
+        .welcome-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .welcome-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            gap: 20px;
+        }
+
+        .welcome-text {
+            flex: 1;
+        }
+
+        .welcome-text h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .welcome-text p {
+            font-size: 13px;
+            color: #6b7280;
+            margin: 0;
+        }
+
+        .welcome-credit {
+            background: #f0f4ff;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .welcome-credit-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .welcome-credit-icon {
+            font-size: 24px;
+            color: #3b82f6;
+        }
+
+        .welcome-credit-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        /* STATS GRID */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #d1d5db;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.total {
+            background: #3b82f6;
+        }
+
+        .stat-icon.lunas {
+            background: #10b981;
+        }
+
+        .stat-icon.belum-lunas {
+            background: #f59e0b;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .stat-description {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
         .btn-logout {
             background: #f87171;
             color: white;
@@ -478,7 +623,8 @@
         <header>
             <div class="header-container">
                 <div class="header-title">
-                    <h1>Selamat datang, Admin Zona <span id="zona-number"></span></h1>
+                    <h1>Selamat siang, Admin <span id="zona-name"></span> 👋</h1>
+                    <p id="welcome-subtitle" style="color: #6b7280; font-size: 14px; margin-top: 4px;"></p>
                 </div>
                 <div class="header-actions">
                     <a href="/support-dashboard-customer" class="btn-icon-action" title="Support Tickets" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; background: #f3f4f6; color: #374151; text-decoration: none; font-size: 14px; hover: background #e5e7eb; transition: all 0.2s;">
@@ -493,6 +639,56 @@
 
         <!-- Content Container -->
         <div class="container">
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+                <div class="welcome-content">
+                    <div class="welcome-text">
+                        <h2 id="welcome-name">Selamat siang, Admin</h2>
+                        <p id="welcome-info">Informasi ringkas data zona Anda</p>
+                    </div>
+                    <div class="welcome-credit">
+                        <span class="welcome-credit-label">Total Invoice</span>
+                        <i class="fas fa-calculator welcome-credit-icon"></i>
+                        <p class="welcome-credit-value" id="totalInvoice">Rp 0</p>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon total">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Total Invoice</div>
+                            <p class="stat-value" id="statTotalInvoice">0</p>
+                            <div class="stat-description">Semua invoice dari zona ini</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon lunas">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Lunas</div>
+                            <p class="stat-value" id="statLunas">0</p>
+                            <div class="stat-description">Invoice yang sudah dibayar</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon belum-lunas">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Belum Lunas</div>
+                            <p class="stat-value" id="statBelumLunas">0</p>
+                            <div class="stat-description">Menunggu pembayaran</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Filter Section -->
             <div class="filter-section">
                 <div class="filter-grid">
@@ -842,6 +1038,42 @@
         }
 
         // ============================================
+        // UPDATE WELCOME STATS
+        // ============================================
+        async function updateWelcomeStats() {
+            try {
+                const res = await API.get('/api/invoice/list?limit=10000&offset=0');
+                const invoices = res.data || [];
+
+                // Calculate stats
+                const totalInvoice = invoices.length;
+                const lunas = invoices.filter(inv => inv.status === 'Lunas').length;
+                const belumLunas = invoices.filter(inv => inv.status === 'Belum Lunas').length;
+
+                // Calculate total amount
+                const totalAmount = invoices.reduce((sum, inv) => {
+                    const nominal = parseFloat(inv.total_jumlah_jual) || 0;
+                    return sum + nominal;
+                }, 0);
+
+                // Format currency
+                const formatter = new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0
+                });
+
+                // Update stats
+                document.getElementById('statTotalInvoice').textContent = totalInvoice;
+                document.getElementById('statLunas').textContent = lunas;
+                document.getElementById('statBelumLunas').textContent = belumLunas;
+                document.getElementById('totalInvoice').textContent = formatter.format(totalAmount);
+
+            } catch (err) {
+                console.error('Error updating welcome stats:', err);
+            }
+        }
+
         // INVOICE LOADING
         // ============================================
         async function loadAllInvoices() {
@@ -1172,25 +1404,26 @@
 
                 if (!currentUser) {
                     console.error('currentUser not available');
-                    document.getElementById('zona-number').textContent = '-';
+                    document.getElementById('zona-name').textContent = 'Admin';
                     return;
                 }
 
-                let zonaNumber = '1';
+                let zonaName = 'Admin';
                 if (currentUser.zonas?.nama) {
-                    const extracted = currentUser.zonas.nama.toString().replace(/[^\d]/g, '');
-                    if (extracted) zonaNumber = String(parseInt(extracted));
-                } else if (currentUser.zona_id) {
-                    zonaNumber = currentUser.zona_id.toString();
+                    zonaName = currentUser.zonas.nama || 'Admin';
                 }
 
-                document.getElementById('zona-number').textContent = zonaNumber;
+                // Update welcome section
+                document.getElementById('zona-name').textContent = zonaName;
+                document.getElementById('welcome-name').textContent = `Selamat siang, ${zonaName} 👋`;
+                document.getElementById('welcome-subtitle').textContent = `Ringkasan data zona ${zonaName}`;
 
                 await loadAllInvoices();
+                await updateWelcomeStats();
 
             } catch (err) {
                 console.error('Init error:', err);
-                document.getElementById('zona-number').textContent = '-';
+                document.getElementById('zona-name').textContent = 'Admin';
             }
         });
     </script>
