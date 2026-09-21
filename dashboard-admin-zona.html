@@ -1693,16 +1693,15 @@
                     zonaName = zonaName.replace(/\bZona\s+0+(\d+)/, 'Zona $1');
                 }
 
-                // Update welcome name immediately
+                // Update welcome name and info IMMEDIATELY (synchronously)
                 const welcomeNameEl = document.getElementById('welcome-name');
                 if (welcomeNameEl) welcomeNameEl.textContent = `Selamat siang, Admin ${zonaName} 👋`;
 
-                // Load all data in one call (stats + filter options)
-                await loadAllInvoicesAndStats();
-
-                // Update welcome info after data loads
                 const welcomeInfoEl = document.getElementById('welcome-info');
                 if (welcomeInfoEl) welcomeInfoEl.textContent = `Informasi data zona ${zonaName}`;
+
+                // Load data in background (don't await - let it run in parallel)
+                loadAllInvoicesAndStats();
 
             } catch (err) {
                 console.error('Init error:', err);
