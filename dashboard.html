@@ -49,6 +49,54 @@
             --color-border-dark: #64748b;
         }
         
+        /* Dark mode specific overrides */
+        html[data-dark-mode="true"] .invoice-header h1 {
+            color: var(--color-text-primary);
+        }
+        
+        html[data-dark-mode="true"] .stat-card {
+            background: var(--color-bg-secondary);
+            border-color: var(--color-border);
+        }
+        
+        html[data-dark-mode="true"] .stat-label {
+            color: var(--color-text-secondary);
+        }
+        
+        html[data-dark-mode="true"] .filters-container {
+            background: var(--color-bg-secondary);
+            border-color: var(--color-border);
+        }
+        
+        html[data-dark-mode="true"] .filter-group label {
+            color: var(--color-text-secondary);
+        }
+        
+        html[data-dark-mode="true"] .filter-group select,
+        html[data-dark-mode="true"] .filter-group input {
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-primary);
+            border-color: var(--color-border);
+        }
+        
+        html[data-dark-mode="true"] .filter-group select:focus,
+        html[data-dark-mode="true"] .filter-group input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        html[data-dark-mode="true"] .dropdown-icon {
+            color: var(--color-text-secondary);
+        }
+        
+        html[data-dark-mode="true"] .dropdown-options::-webkit-scrollbar-thumb {
+            background: var(--color-border-dark);
+        }
+        
+        html[data-dark-mode="true"] .dropdown-options::-webkit-scrollbar-thumb:hover {
+            background: var(--color-text-tertiary);
+        }
+        
         body {
             background: var(--color-bg-primary);
             color: var(--color-text-primary);
@@ -100,7 +148,7 @@
 
         .dropdown-icon {
             transition: transform 0.3s;
-            color: #9ca3af;
+            color: var(--color-text-tertiary);
             margin-left: 8px;
         }
 
@@ -113,7 +161,7 @@
             top: 100%;
             left: 0;
             right: 0;
-            background: white;
+            background: var(--color-bg-secondary);
             border: 2px solid #3b82f6;
             border-top: none;
             border-bottom-left-radius: 8px;
@@ -125,10 +173,10 @@
 
         .dropdown-header {
             padding: 12px 16px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--color-border);
             background: #f9fafb;
             font-weight: 600;
-            color: #1f2937;
+            color: var(--color-text-primary);
             font-size: 14px;
         }
 
@@ -161,7 +209,7 @@
             gap: 12px;
             cursor: pointer;
             transition: background 0.2s;
-            color: #2c3e50;
+            color: var(--color-text-primary);
             font-size: 14px;
             border-bottom: 1px solid #f3f4f6;
         }
@@ -210,7 +258,7 @@
 
         .invoice-header h1 {
             font-size: 28px;
-            color: #2c3e50;
+            color: var(--color-text-primary);
             font-weight: 900;
             text-align: left;
         }
@@ -249,12 +297,12 @@
         }
 
         .stat-card {
-            background: white;
+            background: var(--color-bg-secondary);
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             text-align: center;
-            border: 1px solid #f0f0f0;
+            border: 1px solid var(--color-border);
         }
 
         .stat-value {
@@ -265,7 +313,7 @@
 
         .stat-label {
             font-size: 13px;
-            color: #7f8c8d;
+            color: var(--color-text-secondary);
             text-transform: uppercase;
             font-weight: 900;
             text-align: left;
@@ -278,12 +326,12 @@
 
         /* Filters */
         .filters-container {
-            background: white;
+            background: var(--color-bg-secondary);
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            border: 1px solid #f0f0f0;
+            border: 1px solid var(--color-border);
         }
 
         .filters-grid {
@@ -300,7 +348,7 @@
 
         .filter-group label {
             font-size: 12px;
-            color: #7f8c8d;
+            color: var(--color-text-secondary);
             margin-bottom: 6px;
             font-weight: 900;
             text-transform: uppercase;
@@ -310,11 +358,11 @@
         .filter-group select,
         .filter-group input {
             padding: 10px;
-            border: 2px solid #ecf0f1;
+            border: 2px solid var(--color-border);
             border-radius: 6px;
             font-size: 14px;
             transition: border-color 0.3s;
-            background: white;
+            background: var(--color-bg-secondary);
         }
 
         .filter-group select:focus,
@@ -371,11 +419,11 @@
 
         /* Table */
         .table-container {
-            background: white;
+            background: var(--color-bg-secondary);
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             overflow: hidden;
-            border: 1px solid #f0f0f0;
+            border: 1px solid var(--color-border);
         }
 
         .invoice-table {
@@ -411,7 +459,7 @@
         .invoice-table td {
             padding: 12px;
             font-size: 13px;
-            color: #2c3e50;
+            color: var(--color-text-primary);
             font-weight: 700;
             border-right: none;
             vertical-align: middle;
@@ -538,14 +586,14 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px 20px;
-            background: white;
+            background: var(--color-bg-secondary);
             border-top: 1px solid #ecf0f1;
             flex-wrap: wrap;
             gap: 10px;
         }
 
         .pagination-info {
-            color: #7f8c8d;
+            color: var(--color-text-secondary);
             font-size: 13px;
         }
 
@@ -556,7 +604,7 @@
         }
 
         .btn-page {
-            background: white;
+            background: var(--color-bg-secondary);
             border: 2px solid #3498db;
             color: #3498db;
             padding: 8px 16px;
@@ -599,7 +647,7 @@
         }
 
         .loading-spinner {
-            background: white;
+            background: var(--color-bg-secondary);
             padding: 30px;
             border-radius: 12px;
             text-align: center;
@@ -742,7 +790,7 @@
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #7f8c8d;
+            color: var(--color-text-secondary);
         }
 
         .empty-state i {
@@ -754,7 +802,7 @@
         .empty-state h3 {
             font-size: 18px;
             margin-bottom: 10px;
-            color: #2c3e50;
+            color: var(--color-text-primary);
         }
 
         /* Currency Format */
@@ -947,29 +995,29 @@
                     <!-- Invoice list will be loaded here -->
                     <div id="invoice-embed" class="bg-white rounded-3xl border border-gray-100 shadow-sm">
                         <!-- Invoice Header -->
-                        <div style="padding: 15px 10px; border-bottom: 1px solid #e5e7eb;">
+                        <div style="padding: 15px 10px; border-bottom: 1px solid var(--color-border);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                                <h2 style="font-size: 24px; font-weight: 700; color: #2c3e50; margin: 0;">📋 Daftar File Invoice</h2>
+                                <h2 style="font-size: 24px; font-weight: 700; color: var(--color-text-primary); margin: 0;">📋 Daftar File Invoice</h2>
                             </div>
 
                             <!-- Modern Stats Cards - Clean Design -->
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
                                 <!-- Total Invoice Card -->
-                                <div style="background: white; border: 1px solid #e5e7eb; border-left: 4px solid #667eea; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.3s ease;">
+                                <div style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-left: 4px solid #667eea; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.3s ease;">
                                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                         <div>
-                                            <div style="font-size: 11px; color: #9ca3af; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;">Total Invoice</div>
-                                            <div style="font-size: 32px; font-weight: 800; color: #1f2937; line-height: 1;" data-stat="total" id="statTotal">0</div>
+                                            <div style="font-size: 11px; color: var(--color-text-tertiary); font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;">Total Invoice</div>
+                                            <div style="font-size: 32px; font-weight: 800; color: var(--color-text-primary); line-height: 1;" data-stat="total" id="statTotal">0</div>
                                         </div>
                                         <div style="width: 48px; height: 48px; background: #f3f4f6; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📊</div>
                                     </div>
                                 </div>
 
                                 <!-- Lunas Card -->
-                                <div style="background: white; border: 1px solid #e5e7eb; border-left: 4px solid #10b981; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.3s ease;">
+                                <div style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-left: 4px solid #10b981; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.3s ease;">
                                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                         <div>
-                                            <div style="font-size: 11px; color: #9ca3af; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;">Lunas</div>
+                                            <div style="font-size: 11px; color: var(--color-text-tertiary); font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;">Lunas</div>
                                             <div style="font-size: 32px; font-weight: 800; color: #10b981; line-height: 1;" data-stat="uploaded" id="statUploaded">0</div>
                                         </div>
                                         <div style="width: 48px; height: 48px; background: #ecfdf5; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px;">✅</div>
@@ -977,10 +1025,10 @@
                                 </div>
 
                                 <!-- Belum Lunas Card -->
-                                <div style="background: white; border: 1px solid #e5e7eb; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.3s ease;">
+                                <div style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-left: 4px solid #f59e0b; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.3s ease;">
                                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                         <div>
-                                            <div style="font-size: 11px; color: #9ca3af; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;">Belum Lunas</div>
+                                            <div style="font-size: 11px; color: var(--color-text-tertiary); font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;">Belum Lunas</div>
                                             <div style="font-size: 32px; font-weight: 800; color: #f59e0b; line-height: 1;" data-stat="pending" id="statPending">0</div>
                                         </div>
                                         <div style="width: 48px; height: 48px; background: #fffbeb; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px;">⏳</div>
@@ -1028,8 +1076,8 @@
                                 
                                 /* Option styling */
                                 select option {
-                                    background: white;
-                                    color: #2c3e50;
+                                    background: var(--color-bg-secondary);
+                                    color: var(--color-text-primary);
                                     padding: 10px;
                                     font-size: 14px;
                                 }
@@ -1041,17 +1089,17 @@
                                 }
                             </style>
 
-                            <div style="margin-bottom: 24px; background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                            <div style="margin-bottom: 24px; background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid var(--color-border);">
                                 <!-- Row 1: Search Bar -->
                                 <div style="margin-bottom: 12px;">
-                                    <input type="text" id="filterSearch" placeholder="Cari faktur, nomor, atau kategori..." style="width: 100%; padding: 11px 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; transition: all 0.2s; font-weight: 500;">
+                                    <input type="text" id="filterSearch" placeholder="Cari faktur, nomor, atau kategori..." style="width: 100%; padding: 11px 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: var(--color-bg-secondary); transition: all 0.2s; font-weight: 500;">
                                 </div>
 
                                 <!-- Row 2: Filter Dropdowns -->
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px;">
                                     <!-- Status filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
-                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Status Bayar</label>
+                                        <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Status Bayar</label>
                                         <div class="custom-dropdown" id="statusDropdown">
                                             <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'statusDropdown')">
                                                 <span class="dropdown-label">Semua Status</span>
@@ -1081,7 +1129,7 @@
                                     
                                     <!-- Kategori filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
-                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Kategori</label>
+                                        <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Kategori</label>
                                         <div class="custom-dropdown" id="kategoriDropdown">
                                             <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'kategoriDropdown')">
                                                 <span class="dropdown-label">Semua</span>
@@ -1115,7 +1163,7 @@
                                     
                                     <!-- Toko filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
-                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Toko</label>
+                                        <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Toko</label>
                                         <div class="custom-dropdown" id="tokoDropdown">
                                             <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'tokoDropdown')">
                                                 <span class="dropdown-label">Semua Toko</span>
@@ -1145,7 +1193,7 @@
 
                                     <!-- Tahun filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
-                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Tahun</label>
+                                        <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Tahun</label>
                                         <div class="custom-dropdown" id="tahunDropdown">
                                             <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'tahunDropdown')">
                                                 <span class="dropdown-label">Semua Tahun</span>
@@ -1167,7 +1215,7 @@
 
                                     <!-- Bulan filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
-                                        <label style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Bulan</label>
+                                        <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Bulan</label>
                                         <div class="custom-dropdown" id="bulanDropdown">
                                             <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'bulanDropdown')">
                                                 <span class="dropdown-label">Semua Bulan</span>
@@ -1195,35 +1243,35 @@
                             </div>
 
                             <!-- Modern Table Section -->
-                            <table class="invoice-table" style="width: 100%; border-collapse: collapse; background: white;">
+                            <table class="invoice-table" style="width: 100%; border-collapse: collapse; background: var(--color-bg-secondary);">
                                 <thead>
-                                    <tr style="background: white; border-bottom: 2px solid #e5e7eb;">
-                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 10%;">Status</th>
-                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 7%;">Tanggal</th>
-                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 13%;">No Faktur</th>
-                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 9%;">Status Bayar</th>
-                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 6%;">Tipe</th>
-                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 15%;">Nama Konsumen</th>
-                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 10%;">Nama Toko</th>
-                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 9%;">Total</th>
-                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 8%;">Keterangan</th>
-                                        <th style="padding: 14px 16px; text-align: center; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; width: 7%;">Aksi</th>
+                                    <tr style="background: var(--color-bg-secondary); border-bottom: 2px solid #e5e7eb;">
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 0.05em; width: 10%;">Status</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 0.05em; width: 7%;">Tanggal</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 0.05em; width: 13%;">No Faktur</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 0.05em; width: 9%;">Status Bayar</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 0.05em; width: 6%;">Tipe</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 0.05em; width: 15%;">Nama Konsumen</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 0.05em; width: 10%;">Nama Toko</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 0.05em; width: 9%;">Total</th>
+                                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 0.05em; width: 8%;">Keterangan</th>
+                                        <th style="padding: 14px 16px; text-align: center; font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 0.05em; width: 7%;">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="invoiceTableBody" style="border-top: 1px solid #e5e7eb;">
                                     <tr>
-                                        <td colspan="10" style="text-align: center; padding: 40px; color: #9ca3af;">Memuat data invoice...</td>
+                                        <td colspan="10" style="text-align: center; padding: 40px; color: var(--color-text-tertiary);">Memuat data invoice...</td>
                                     </tr>
                                 </tbody>
                             </table>
                             
                             <!-- Pagination -->
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
-                                <div style="color: #6b7280; font-size: 13px; font-weight: 500;">
+                                <div style="color: var(--color-text-secondary); font-size: 13px; font-weight: 500;">
                                     <span id="paginationInfo">Menampilkan 0 - 0 dari 0 invoice</span>
                                 </div>
                                 <div style="display: flex; gap: 8px;">
-                                    <button id="prevPageBtn" onclick="previousInvoicePage()" style="background: white; color: #3b82f6; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.borderColor='#3b82f6'" onmouseout="this.style.backgroundColor='white'; this.style.borderColor='#d1d5db'" disabled>
+                                    <button id="prevPageBtn" onclick="previousInvoicePage()" style="background: var(--color-bg-secondary); color: #3b82f6; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.borderColor='#3b82f6'" onmouseout="this.style.backgroundColor='white'; this.style.borderColor='#d1d5db'" disabled>
                                         <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                                         Sebelumnya
                                     </button>
@@ -1237,11 +1285,11 @@
                         
                         <!-- ADMIN_ZONA FILTER SECTION - HIDDEN BY DEFAULT -->
                         <div id="adminZonaFilterSection" style="display: none; padding: 10px;">
-                            <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
+                            <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--color-border);">
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
                                     <!-- SUPPLIER (Konsumen) filter -->
                                     <div>
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Supplier</label>
+                                        <label style="display: block; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px; font-weight: 600;">Supplier</label>
                                         <select id="filterSupplier" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
                                             <option value="">Semua Supplier</option>
                                         </select>
@@ -1249,7 +1297,7 @@
                                     
                                     <!-- KETERANGAN filter -->
                                     <div>
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Keterangan</label>
+                                        <label style="display: block; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px; font-weight: 600;">Keterangan</label>
                                         <select id="filterAdminZonaKeterangan" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
                                             <option value="">Semua</option>
                                             <option value="PPN">PPN</option>
@@ -1260,7 +1308,7 @@
                                     
                                     <!-- TAHUN filter -->
                                     <div>
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Tahun</label>
+                                        <label style="display: block; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px; font-weight: 600;">Tahun</label>
                                         <select id="filterYear" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
                                             <option value="">Semua Tahun</option>
                                         </select>
@@ -1268,7 +1316,7 @@
                                     
                                     <!-- BULAN filter -->
                                     <div>
-                                        <label style="display: block; font-size: 12px; color: #7f8c8d; margin-bottom: 5px; font-weight: 600;">Bulan</label>
+                                        <label style="display: block; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px; font-weight: 600;">Bulan</label>
                                         <select id="filterAdminZonaMonth" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
                                             <option value="">Semua Bulan</option>
                                             <option value="01">Januari</option>
@@ -1295,7 +1343,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <p style="color: #7f8c8d; font-size: 13px;">Filter by Supplier (Konsumen), Keterangan, Tahun, dan Bulan untuk invoices di zona Anda.</p>
+                            <p style="color: var(--color-text-secondary); font-size: 13px;">Filter by Supplier (Konsumen), Keterangan, Tahun, dan Bulan untuk invoices di zona Anda.</p>
                         </div>
                 </div>
 
@@ -1305,9 +1353,9 @@
 
     <!-- Confirmation Modal -->
     <div id="confirmationModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 99999; align-items: center; justify-content: center;">
-        <div style="background: white; border-radius: 8px; padding: 30px; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: center;">
-            <h3 id="confirmTitle" style="margin: 0 0 15px 0; font-size: 18px; color: #2c3e50; font-weight: 600;">Konfirmasi Hapus</h3>
-            <p id="confirmMessage" style="margin: 0 0 25px 0; font-size: 14px; color: #7f8c8d;">Apakah Anda yakin ingin menghapus file ini?</p>
+        <div style="background: var(--color-bg-secondary); border-radius: 8px; padding: 30px; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: center;">
+            <h3 id="confirmTitle" style="margin: 0 0 15px 0; font-size: 18px; color: var(--color-text-primary); font-weight: 600;">Konfirmasi Hapus</h3>
+            <p id="confirmMessage" style="margin: 0 0 25px 0; font-size: 14px; color: var(--color-text-secondary);">Apakah Anda yakin ingin menghapus file ini?</p>
             <div style="display: flex; gap: 10px; justify-content: center;">
                 <button onclick="closeConfirmation()" style="flex: 1; padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
                     Batal
@@ -1493,13 +1541,13 @@
 
     <!-- Edit Headline Modal -->
     <div id="edit-headline-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 99999; align-items: center; justify-content: center;">
-        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 90%; max-height: 80vh; overflow-y: auto;">
-            <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #2c3e50; font-weight: 600;">Edit Headline Banner</h2>
+        <div style="background: var(--color-bg-secondary); border-radius: 12px; padding: 30px; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 90%; max-height: 80vh; overflow-y: auto;">
+            <h2 style="margin: 0 0 20px 0; font-size: 20px; color: var(--color-text-primary); font-weight: 600;">Edit Headline Banner</h2>
             
             <div style="margin-bottom: 20px;">
-                <label style="display: block; font-size: 13px; color: #7f8c8d; margin-bottom: 8px; font-weight: 600;">Teks Headline:</label>
+                <label style="display: block; font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px; font-weight: 600;">Teks Headline:</label>
                 <textarea id="headline-input" style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 100px;" placeholder="Masukkan teks headline..."></textarea>
-                <p style="font-size: 12px; color: #9ca3af; margin-top: 8px;">Teks akan ditampilkan sebagai headline banner yang bergerak di bagian atas setiap halaman.</p>
+                <p style="font-size: 12px; color: var(--color-text-tertiary); margin-top: 8px;">Teks akan ditampilkan sebagai headline banner yang bergerak di bagian atas setiap halaman.</p>
             </div>
             
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
@@ -1604,8 +1652,8 @@
                 margin-bottom: 16px;
             ">
                 <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #3b82f6; margin-bottom: 12px; display: block;"></i>
-                <p style="margin: 0; color: #1f2937; font-weight: 600; font-size: 14px;">Drag & drop PDF di sini</p>
-                <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 13px;">atau klik untuk memilih</p>
+                <p style="margin: 0; color: var(--color-text-primary); font-weight: 600; font-size: 14px;">Drag & drop PDF di sini</p>
+                <p style="margin: 8px 0 0 0; color: var(--color-text-secondary); font-size: 13px;">atau klik untuk memilih</p>
             </div>
 
             <!-- File Input (Hidden) -->
@@ -1613,7 +1661,7 @@
 
             <!-- Upload Button -->
             <div style="display: flex; gap: 8px;">
-                <button onclick="closePdfUploadModal()" style="flex: 1; background: #e5e7eb; color: #1f2937; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#d1d5db'" onmouseout="this.style.backgroundColor='#e5e7eb'">Batal</button>
+                <button onclick="closePdfUploadModal()" style="flex: 1; background: #e5e7eb; color: var(--color-text-primary); border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#d1d5db'" onmouseout="this.style.backgroundColor='#e5e7eb'">Batal</button>
                 <button id="pdfUploadBtn" onclick="uploadPdfFile()" style="flex: 1; background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#2563eb'" onmouseout="this.style.backgroundColor='#3b82f6'">Upload</button>
             </div>
         </div>
@@ -1643,8 +1691,8 @@
                 margin-bottom: 16px;
             ">
                 <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #27ae60; margin-bottom: 12px; display: block;"></i>
-                <p style="margin: 0; color: #1f2937; font-weight: 600; font-size: 14px;">Drag & drop PDF Bukti Bayar di sini</p>
-                <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 13px;">atau klik untuk memilih</p>
+                <p style="margin: 0; color: var(--color-text-primary); font-weight: 600; font-size: 14px;">Drag & drop PDF Bukti Bayar di sini</p>
+                <p style="margin: 8px 0 0 0; color: var(--color-text-secondary); font-size: 13px;">atau klik untuk memilih</p>
             </div>
 
             <!-- File Input (Hidden) -->
@@ -1652,7 +1700,7 @@
 
             <!-- Upload Button -->
             <div style="display: flex; gap: 8px;">
-                <button onclick="closeBuktiBayarUploadModal()" style="flex: 1; background: #e5e7eb; color: #1f2937; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#d1d5db'" onmouseout="this.style.backgroundColor='#e5e7eb'">Batal</button>
+                <button onclick="closeBuktiBayarUploadModal()" style="flex: 1; background: #e5e7eb; color: var(--color-text-primary); border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#d1d5db'" onmouseout="this.style.backgroundColor='#e5e7eb'">Batal</button>
                 <button id="buktiBayarUploadBtn" onclick="uploadBuktiBayarFile()" style="flex: 1; background: #27ae60; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#229954'" onmouseout="this.style.backgroundColor='#27ae60'">Upload</button>
             </div>
         </div>
@@ -1933,3 +1981,4 @@
     </script>
 </body>
 </html>
+
