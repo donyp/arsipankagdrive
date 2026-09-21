@@ -218,6 +218,15 @@
             flex-wrap: wrap;
         }
 
+        .welcome-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
         .welcome-text {
             flex: 1;
             min-width: 200px;
@@ -228,6 +237,7 @@
             gap: 12px;
             flex-wrap: wrap;
             align-items: center;
+            margin-bottom: 24px;
         }
 
         .btn-action {
@@ -684,21 +694,10 @@
         <div class="container">
             <!-- Welcome Section -->
             <div class="welcome-section">
-                <div class="welcome-content">
+                <div class="welcome-header">
                     <div class="welcome-text">
                         <h2 id="welcome-name">Selamat siang, Admin</h2>
                         <p id="welcome-info">Informasi ringkas data zona Anda</p>
-                    </div>
-                    
-                    <div class="welcome-actions">
-                        <a href="/support-dashboard-customer" class="btn-action btn-support" title="Support Tickets">
-                            <i class="fas fa-headset"></i>
-                            <span>Support</span>
-                        </a>
-                        <button class="btn-action btn-logout-action" onclick="logout()">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </button>
                     </div>
                     
                     <div class="welcome-credit">
@@ -706,6 +705,17 @@
                         <i class="fas fa-calculator welcome-credit-icon"></i>
                         <p class="welcome-credit-value" id="totalInvoice">Rp 0</p>
                     </div>
+                </div>
+                
+                <div class="welcome-actions">
+                    <a href="/support-dashboard-customer" class="btn-action btn-support" title="Support Tickets">
+                        <i class="fas fa-headset"></i>
+                        <span>Support</span>
+                    </a>
+                    <button class="btn-action btn-logout-action" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
                 </div>
                 
                 <div class="stats-grid">
@@ -1459,7 +1469,8 @@
 
                 if (!currentUser) {
                     console.error('currentUser not available');
-                    document.getElementById('zona-name').textContent = 'Admin';
+                    const zoneNameEl = document.getElementById('zona-name');
+                    if (zoneNameEl) zoneNameEl.textContent = 'Admin';
                     return;
                 }
 
@@ -1468,16 +1479,19 @@
                     zonaName = currentUser.zonas.nama || 'Admin';
                 }
 
-                // Update welcome section
-                document.getElementById('zona-name').textContent = zonaName;
-                document.getElementById('welcome-name').textContent = `Selamat siang, ${zonaName} 👋`;
+                // Update welcome section with safe checks
+                const welcomeNameEl = document.getElementById('welcome-name');
+                const welcomeInfoEl = document.getElementById('welcome-info');
+                if (welcomeNameEl) welcomeNameEl.textContent = `Selamat siang, ${zonaName} 👋`;
+                if (welcomeInfoEl) welcomeInfoEl.textContent = `Ringkasan data zona ${zonaName}`;
 
                 await loadAllInvoices();
                 await updateWelcomeStats();
 
             } catch (err) {
                 console.error('Init error:', err);
-                document.getElementById('zona-name').textContent = 'Admin';
+                const welcomeNameEl = document.getElementById('welcome-name');
+                if (welcomeNameEl) welcomeNameEl.textContent = 'Selamat siang, Admin 👋';
             }
         });
     </script>
