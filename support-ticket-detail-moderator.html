@@ -777,6 +777,16 @@
                 const data = await response.json();
                 ticketData.status = newStatus;
                 console.log('[Ticket-Detail-Moderator] Status updated to:', newStatus);
+                
+                // Show success message
+                alert('Status tiket berhasil diperbarui');
+                
+                // If status changed to Resolved or Closed, redirect to dashboard after 2 seconds
+                if (['Resolved', 'Closed'].includes(newStatus)) {
+                    setTimeout(() => {
+                        window.location.href = '/support-dashboard.html';
+                    }, 1500);
+                }
             } catch (error) {
                 console.error('[Ticket-Detail-Moderator] Error updating status:', error);
                 alert('Error: ' + error.message);

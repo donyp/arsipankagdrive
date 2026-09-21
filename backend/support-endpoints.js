@@ -543,3 +543,38 @@ module.exports = function registerSupportEndpoints(app, supabase, authenticateTo
         }
     });
 };
+
+    // ============================================
+    // DELETE /api/support/tickets/cleanup-old-closed - Delete closed tickets older than 7 days (admin only)
+    // ============================================
+    app.delete('/api/support/tickets/cleanup-old-closed', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
+        try {
+            console.log('[Support] Running cleanup: deleting closed tickets older than 7 days');
+            
+            // Calculate date 7 days ago
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            
+            // Delete tickets with status 'Closed' and created_at older than 7 days
+            const { data: deletedTickets, error: deleteError } = await supabase
+                .from('support_tickets')
+                .delete()
+                .eq('status', 'Closed')
+                .lt('created_at', sevenDaysAgo.toISOString())
+                .select();
+            
+            if (deleteError) throw deleteError;
+            
+            const count = deletedTickets?.length || 0;
+            console.log('[Support] Cleanup completed: deleted', count, 'old closed tickets');
+            
+            res.json({
+                success: true,
+                message: `Cleanup completed: deleted ${count} closed tickets older than 7 days`
+            });
+        } catch (error) {
+            console.error('[Support] Error running cleanup:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+};
