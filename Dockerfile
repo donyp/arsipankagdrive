@@ -64,7 +64,7 @@ EXPOSE 8080
 
 # Add Health Check for Cloud Run / Kubernetes environments
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/api/heartbeat || exit 1
+    CMD curl -f http://localhost:8080/health || exit 1
 
 # Note on Different Environments:
 # - Cloud Run: Uses PORT env var (8080), Health check enabled
