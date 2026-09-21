@@ -2,7 +2,7 @@
 // Support Ticketing - Moderator Dashboard
 // ============================================
 
-let currentTab = 'all';
+let currentTab = 'active';
 let currentPage = 1;
 let currentLimit = 20;
 let currentStatus = 'all';
@@ -163,7 +163,18 @@ function switchTab(event, tab) {
     });
     event.target.closest('.tab-btn')?.classList.add('active');
     
-    loadTickets();
+    // Set status filter based on tab
+    if (tab === 'active') {
+        // Show only active statuses: Open, In Progress, Answered
+        currentStatus = 'all';
+        // We'll filter on frontend for active tickets
+        loadTickets();
+    } else if (tab === 'history') {
+        // Show only closed statuses: Resolved, Closed
+        currentStatus = 'all';
+        // We'll filter on frontend for history tickets
+        loadTickets();
+    }
 }
 
 async function loadStats() {
@@ -297,7 +308,21 @@ function renderTickets(tickets) {
         return;
     }
 
-    if (tickets.length === 0) {
+    // Filter tickets based on current tab
+    let filteredTickets = tickets;
+    if (currentTab === 'active') {
+        // Show only active statuses
+        filteredTickets = tickets.filter(t => 
+            ['Open', 'In Progress', 'Answered'].includes(t.status)
+        );
+    } else if (currentTab === 'history') {
+        // Show only history statuses
+        filteredTickets = tickets.filter(t => 
+            ['Resolved', 'Closed'].includes(t.status)
+        );
+    }
+
+    if (filteredTickets.length === 0) {
         container.innerHTML = `
             <tr>
                 <td colspan="7" style="padding: 48px 16px; text-align: center;">
@@ -312,14 +337,13 @@ function renderTickets(tickets) {
         return;
     }
 
-    const html = tickets.map(ticket => {
+    const html = filteredTickets.map(ticket => {
         const priorityClass = (ticket.priority || 'medium').toLowerCase();
         const statusClass = (ticket.status || 'open').toLowerCase().replace(/\s+/g, '-');
         
         // Get zona name - extract number from zona_name if available, else use zona_id
         let zonaDisplay = 'N/A';
         if (ticket.zona_name) {
-            // If zona_name is "Zona 01", extract just "1"
             const match = ticket.zona_name.match(/(\d+)/);
             if (match) {
                 zonaDisplay = 'Zona ' + (match[1].replace(/^0+/, '') || '0');
@@ -336,8 +360,8 @@ function renderTickets(tickets) {
             }
         }
         
-        // Get username from ticket - prefer ticket.created_by_username if available
-        const username = ticket.created_by_username || ticket.creator_name || formatUserId(ticket.user_id);
+        // Get relative time from created_at
+        const relativeTime = getRelativeTime(ticket.created_at);
         
         return `
             <tr style="border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: background 0.2s;" onclick="openTicket('${ticket.id}')" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
@@ -355,7 +379,7 @@ function renderTickets(tickets) {
                         ${ticket.status || 'Open'}
                     </span>
                 </td>
-                <td style="padding: 12px 16px; font-size: 13px; color: #6b7280;">${username}</td>
+                <td style="padding: 12px 16px; font-size: 13px; color: #6b7280;">${relativeTime}</td>
                 <td style="padding: 12px 16px; text-align: center;">
                     <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openTicket('${ticket.id}')">
                         <i class="fas fa-arrow-right"></i>
@@ -366,7 +390,7 @@ function renderTickets(tickets) {
     }).join('');
     
     container.innerHTML = html;
-    console.log('[Support-Moderator] Table rendered with', tickets.length, 'rows');
+    console.log('[Support-Moderator] Table rendered with', filteredTickets.length, 'rows');
 }
 
 function getPriorityColor(priority) {
@@ -436,5 +460,37 @@ function openTicket(ticketId) {
 function formatUserId(userId) {
     if (!userId) return '-';
     return userId.substring(0, 8);
+}
+
+function getRelativeTime(dateString) {
+    if (!dateString) return '-';
+    
+    try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+        
+        if (seconds < 60) {
+            return 'Baru Saja';
+        } else if (seconds < 3600) {
+            const minutes = Math.floor(seconds / 60);
+            return `${minutes} Menit Yang Lalu`;
+        } else if (seconds < 86400) {
+            const hours = Math.floor(seconds / 3600);
+            return `${hours} Jam Yang Lalu`;
+        } else if (seconds < 604800) {
+            const days = Math.floor(seconds / 86400);
+            return `${days} Hari Yang Lalu`;
+        } else if (seconds < 2592000) {
+            const weeks = Math.floor(seconds / 604800);
+            return `${weeks} Minggu Yang Lalu`;
+        } else {
+            const months = Math.floor(seconds / 2592000);
+            return `${months} Bulan Yang Lalu`;
+        }
+    } catch (e) {
+        console.error('[getRelativeTime] Error:', e);
+        return '-';
+    }
 }
 
