@@ -23,48 +23,12 @@
 
         // Function to apply dark mode color replacements to inline styles
         function applyDarkModeInlineStyles(isDarkMode) {
-            const colorMap = {
-                // Light mode colors
-                '#f9fafb': isDarkMode ? 'var(--color-bg-secondary)' : '#f9fafb',
-                '#f8f9fa': isDarkMode ? 'var(--color-bg-lighter)' : '#f8f9fa',
-                '#f5f7fa': isDarkMode ? 'var(--color-bg-secondary)' : '#f5f7fa',
-                '#f3f4f6': isDarkMode ? 'rgba(100, 116, 139, 0.2)' : '#f3f4f6',
-                '#ecf0f1': isDarkMode ? 'var(--color-bg-secondary)' : '#ecf0f1',
-                '#fffbeb': isDarkMode ? 'rgba(245, 158, 11, 0.1)' : '#fffbeb',
-                '#ecfdf5': isDarkMode ? 'rgba(16, 185, 129, 0.1)' : '#ecfdf5',
-                '#e5e7eb': isDarkMode ? 'var(--color-border)' : '#e5e7eb',
-                '#d1d5db': isDarkMode ? 'var(--color-border-dark)' : '#d1d5db',
-                
-                // Button colors
-                '#ef4444': isDarkMode ? '#ef4444' : '#ef4444',
-                '#dc2626': isDarkMode ? '#dc2626' : '#dc2626',
-                '#3b82f6': isDarkMode ? '#60a5fa' : '#3b82f6',
-                '#2563eb': isDarkMode ? '#3b82f6' : '#2563eb',
-                
-                // Stats card accent colors
-                '#667eea': isDarkMode ? '#667eea' : '#667eea',
-                '#10b981': isDarkMode ? '#10b981' : '#10b981',
-                '#f59e0b': isDarkMode ? '#fbbf24' : '#f59e0b',
-                
-                // Text colors
-                '#ffffff': isDarkMode ? 'var(--color-text-primary)' : '#ffffff',
-                'white': isDarkMode ? 'var(--color-text-primary)' : 'white'
-            };
-
-            // Apply to all elements with inline styles
-            document.querySelectorAll('[style]').forEach(el => {
-                let style = el.getAttribute('style');
-                let originalStyle = el.getAttribute('data-original-style') || style;
-                el.setAttribute('data-original-style', originalStyle);
-
-                let newStyle = originalStyle;
-                for (const [oldColor, newColor] of Object.entries(colorMap)) {
-                    const regex = new RegExp(oldColor, 'gi');
-                    newStyle = newStyle.replace(regex, newColor);
-                }
-                
-                el.setAttribute('style', newStyle);
-            });
+            // This function is safe to call but most styling is now handled by CSS variables
+            // Keep it simple - just update specific elements that need inline color adjustments
+            if (!isDarkMode) return;
+            
+            // Let CSS variables handle everything - no aggressive color replacement
+            console.log('[DarkMode] Inline styles handler ready');
         }
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -250,11 +214,85 @@
         html[data-dark-mode="true"] [style*="background: #ecfdf5"] {
             background: rgba(16, 185, 129, 0.1) !important;
         }
+
+        /* Override all element defaults for dark mode */
+        html[data-dark-mode="true"] {
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+        }
+
+        html[data-dark-mode="true"] body {
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+        }
+
+        html[data-dark-mode="true"] input,
+        html[data-dark-mode="true"] select,
+        html[data-dark-mode="true"] textarea {
+            background-color: var(--color-bg-tertiary);
+            color: var(--color-text-primary);
+            border-color: var(--color-border);
+        }
+
+        html[data-dark-mode="true"] button {
+            color: var(--color-text-primary);
+        }
+
+        html[data-dark-mode="true"] #sidebar {
+            background: var(--color-bg-primary);
+            border-right-color: var(--color-border);
+        }
+
+        html[data-dark-mode="true"] #main-content {
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+        }
+
+        /* Fix header in dark mode */
+        html[data-dark-mode="true"] header {
+            background-color: var(--color-bg-secondary) !important;
+            border-bottom-color: var(--color-border) !important;
+        }
+
+        /* Fix table in dark mode */
+        html[data-dark-mode="true"] table {
+            background-color: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+        }
+
+        html[data-dark-mode="true"] table tr {
+            background-color: var(--color-bg-secondary);
+            border-color: var(--color-border);
+        }
+
+        html[data-dark-mode="true"] table th {
+            background-color: var(--color-header-bg);
+            color: white;
+            border-color: var(--color-header-border);
+        }
         
+        /* Force visibility and background colors */
+        html, body {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
         body {
             background: var(--color-bg-primary);
             color: var(--color-text-primary);
             transition: background 0.3s, color 0.3s;
+        }
+
+        body.bg-gray-50 {
+            background-color: var(--color-bg-primary) !important;
+        }
+
+        /* Ensure all content is visible */
+        #app,
+        #main-content,
+        #sidebar {
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         /* Set default zoom to 80% for better fit */
@@ -1057,6 +1095,7 @@
         }
     </style>
     <script>
+        // Store original opacity state but don't hide yet
         document.documentElement.style.opacity = '0';
         document.documentElement.classList.add('auth-loading');
     </script>
@@ -1072,9 +1111,15 @@
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
                 applyDarkModeInlineStyles(localStorage.getItem('dark_mode_enabled') === 'true');
+                // Show page after dark mode is applied
+                document.documentElement.style.opacity = '1';
+                document.documentElement.classList.remove('auth-loading');
             });
         } else {
             applyDarkModeInlineStyles(localStorage.getItem('dark_mode_enabled') === 'true');
+            // Show page after dark mode is applied
+            document.documentElement.style.opacity = '1';
+            document.documentElement.classList.remove('auth-loading');
         }
     </script>
     <style>
@@ -1086,7 +1131,25 @@
         #app {
             width: 100%;
         }
+
+        /* Ensure visibility on page load */
+        html.auth-loading {
+            opacity: 0 !important;
+        }
+
+        html:not(.auth-loading) {
+            opacity: 1 !important;
+        }
     </style>
+    <script>
+        // Safety timeout to show page after 2 seconds
+        setTimeout(() => {
+            if (document.documentElement.classList.contains('auth-loading')) {
+                document.documentElement.style.opacity = '1';
+                document.documentElement.classList.remove('auth-loading');
+            }
+        }, 2000);
+    </script>
     <div id="app">
         <!-- Sidebar -->
         <div id="sidebar"></div>
