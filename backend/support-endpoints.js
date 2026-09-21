@@ -194,14 +194,23 @@ module.exports = function registerSupportEndpoints(app, supabase, authenticateTo
             // Get creator username
             let created_by_username = 'N/A';
             try {
-                const { data: user } = await supabase
+                console.log('[Support] Fetching user for user_id:', ticket.user_id);
+                const { data: user, error: userError } = await supabase
                     .from('users')
                     .select('username')
                     .eq('id', ticket.user_id)
                     .single();
-                if (user) created_by_username = user.username;
+                
+                if (userError) {
+                    console.warn('[Support] User query error:', userError);
+                } else if (user) {
+                    created_by_username = user.username;
+                    console.log('[Support] Found username:', created_by_username);
+                } else {
+                    console.warn('[Support] No user found for user_id:', ticket.user_id);
+                }
             } catch (e) {
-                console.warn('Failed to get username for user_id:', ticket.user_id);
+                console.error('[Support] Exception fetching username:', e);
             }
 
             res.json({
