@@ -164,6 +164,16 @@
         .filter-select {
             min-width: 140px;
             cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%234f46e5' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+        }
+
+        .filter-select option {
+            background: var(--color-bg-secondary);
+            color: var(--color-text-primary);
         }
         
         .ticket-card {
@@ -398,13 +408,33 @@
             font-weight: 600;
             text-transform: uppercase;
             vertical-align: middle;
+            padding: 4px 12px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
         
-        .status-open { color: #991b1b; }
-        .status-closed { color: #4b5563; }
-        .status-answered { color: #1e40af; }
-        .status-in-progress { color: #92400e; }
-        .status-resolved { color: #166534; }
+        .status-open { 
+            color: #991b1b;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .status-closed { 
+            color: #4b5563;
+            background: rgba(107, 114, 128, 0.1);
+        }
+        .status-answered { 
+            color: #1e40af;
+            background: rgba(2, 132, 199, 0.1);
+        }
+        .status-in-progress { 
+            color: #92400e;
+            background: rgba(245, 158, 11, 0.1);
+        }
+        .status-resolved { 
+            color: #166534;
+            background: rgba(22, 163, 74, 0.1);
+        }
         
         .last-update-col {
             font-size: 12px;
