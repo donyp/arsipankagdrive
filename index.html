@@ -15,12 +15,41 @@
         .font-inter {
             font-family: 'Inter', sans-serif;
         }
+        
+        /* DARK MODE CSS VARIABLES */
+        :root {
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f5f5f5;
+            --color-text-primary: #3b5bdb;
+            --color-text-secondary: #666;
+            --color-border: #ddd;
+            --color-form-input-border: #ddd;
+            --color-form-input-text: #3b5bdb;
+            --color-form-placeholder: #a8afd8;
+            --color-form-bg: transparent;
+        }
+        
+        html[data-dark-mode="true"] {
+            --color-bg-primary: #0f172a;
+            --color-bg-secondary: #1e293b;
+            --color-text-primary: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-border: #475569;
+            --color-form-input-border: #475569;
+            --color-form-input-text: #60a5fa;
+            --color-form-placeholder: #64748b;
+            --color-form-bg: transparent;
+        }
+        
         .gradient-blue {
             background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 50%, #1d4ed8 100%);
         }
         body {
             margin: 0;
             padding: 0;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            transition: background 0.3s, color 0.3s;
         }
         .login-container {
             display: flex;
@@ -49,12 +78,13 @@
         }
         .right-section {
             flex: 1;
-            background: #ffffff;
+            background: var(--color-bg-primary);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: 60px 40px;
+            transition: background 0.3s;
         }
         .left-content {
             position: relative;
@@ -103,14 +133,16 @@
         .welcome-heading {
             font-size: 28px;
             font-weight: 900;
-            color: #3b5bdb;
+            color: var(--color-text-primary);
             margin-bottom: 15px;
+            transition: color 0.3s;
         }
         .welcome-subtitle {
             font-size: 13px;
-            color: #666;
+            color: var(--color-text-secondary);
             margin-bottom: 30px;
             line-height: 1.5;
+            transition: color 0.3s;
         }
         .welcome-subtitle a {
             color: #3b5bdb;
@@ -124,15 +156,15 @@
             width: 100%;
             padding: 12px 0;
             border: none;
-            border-bottom: 2px solid #ddd;
+            border-bottom: 2px solid var(--color-form-input-border);
             font-size: 14px;
             font-weight: 500;
-            color: #3b5bdb;
-            background: transparent;
-            transition: border-color 0.3s;
+            color: var(--color-form-input-text);
+            background: var(--color-form-bg);
+            transition: border-color 0.3s, color 0.3s;
         }
         .form-input::placeholder {
-            color: #a8afd8;
+            color: var(--color-form-placeholder);
         }
         .form-input:focus {
             outline: none;
@@ -163,9 +195,9 @@
         .google-btn {
             width: 100%;
             padding: 14px 20px;
-            background: white;
-            color: #000;
-            border: 1px solid #ddd;
+            background: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
             border-radius: 6px;
             font-size: 14px;
             font-weight: 600;
@@ -178,13 +210,15 @@
             margin-top: 15px;
         }
         .google-btn:hover {
-            background: #f9f9f9;
+            background: var(--color-bg-primary);
+            border-color: var(--color-border);
         }
         .forgot-password {
             text-align: center;
             margin-top: 20px;
             font-size: 13px;
-            color: #666;
+            color: var(--color-text-secondary);
+            transition: color 0.3s;
         }
         .forgot-password a {
             color: #3b5bdb;
@@ -193,6 +227,39 @@
         }
         .forgot-password a:hover {
             text-decoration: underline;
+        }
+        
+        /* Dark Mode Toggle Button */
+        .dark-mode-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 50;
+        }
+        
+        .dark-mode-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        html[data-dark-mode="true"] .dark-mode-toggle {
+            background: rgba(30, 41, 59, 0.5);
+            border-color: rgba(71, 85, 105, 0.3);
+        }
+        
+        html[data-dark-mode="true"] .dark-mode-toggle:hover {
+            background: rgba(30, 41, 59, 0.7);
         }
         @media (max-width: 1024px) {
             .left-section {
@@ -219,6 +286,11 @@
 
         <!-- Right Side -->
         <div class="right-section">
+            <!-- Dark Mode Toggle -->
+            <button id="dark-mode-btn" class="dark-mode-toggle" title="Toggle dark mode" onclick="toggleDarkMode()">
+                <span id="theme-icon">🌙</span>
+            </button>
+            
             <div class="form-container">
                 <!-- Welcome Section -->
                 <h2 class="welcome-heading">Welcome Back!</h2>
@@ -444,6 +516,52 @@
             }
         `;
         document.head.appendChild(style);
+        
+        // =============================================
+        // DARK MODE IMPLEMENTATION
+        // =============================================
+        
+        function toggleDarkMode() {
+            const isDark = localStorage.getItem('dark_mode_enabled') === 'true';
+            const newState = !isDark;
+            
+            localStorage.setItem('dark_mode_enabled', newState ? 'true' : 'false');
+            
+            if (newState) {
+                document.documentElement.setAttribute('data-dark-mode', 'true');
+            } else {
+                document.documentElement.removeAttribute('data-dark-mode');
+            }
+            
+            updateThemeIcon();
+            console.log('[DarkMode] Toggled to:', newState ? 'Dark' : 'Light');
+        }
+        
+        function updateThemeIcon() {
+            const isDark = localStorage.getItem('dark_mode_enabled') === 'true';
+            const icon = document.getElementById('theme-icon');
+            if (icon) {
+                icon.textContent = isDark ? '☀️' : '🌙';
+            }
+        }
+        
+        // Initialize dark mode on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const isDark = localStorage.getItem('dark_mode_enabled') === 'true';
+            if (isDark) {
+                document.documentElement.setAttribute('data-dark-mode', 'true');
+            }
+            updateThemeIcon();
+        });
+        
+        // Also apply on initial load if page is already loaded
+        if (document.readyState !== 'loading') {
+            const isDark = localStorage.getItem('dark_mode_enabled') === 'true';
+            if (isDark) {
+                document.documentElement.setAttribute('data-dark-mode', 'true');
+            }
+            updateThemeIcon();
+        }
     </script>
 </body>
 
