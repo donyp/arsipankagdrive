@@ -146,7 +146,6 @@ function clearCache(key) {
 function updateCachedStats(stats) {
     document.getElementById('statTotal').textContent = stats.total || 0;
     document.getElementById('statOpen').textContent = stats.open || 0;
-    document.getElementById('statInProgress').textContent = stats.in_progress || 0;
     document.getElementById('statAnswered').textContent = stats.answered || 0;
     document.getElementById('statClosed').textContent = stats.closed || 0;
     console.log('[Support-Moderator] Stats updated from cache');
@@ -246,7 +245,7 @@ function switchTab(event, tab) {
     
     // Set status filter based on tab
     if (tab === 'active') {
-        // Show only active statuses: Open, In Progress, Answered
+        // Show only active statuses: Open, Answered
         currentStatus = 'all';
         // We'll filter on frontend for active tickets
         loadTickets();
@@ -402,7 +401,7 @@ function renderTickets(tickets) {
     if (currentTab === 'active') {
         // Show only active statuses
         filteredTickets = tickets.filter(t => 
-            ['Open', 'In Progress', 'Answered'].includes(t.status)
+            ['Open', 'Answered'].includes(t.status)
         );
     } else if (currentTab === 'history') {
         // Show only history statuses

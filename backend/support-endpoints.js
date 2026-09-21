@@ -132,7 +132,6 @@ module.exports = function registerSupportEndpoints(app, supabase, authenticateTo
             const stats = {
                 total: allTickets?.length || 0,
                 open: allTickets?.filter(t => t.status === 'Open').length || 0,
-                in_progress: allTickets?.filter(t => t.status === 'In Progress').length || 0,
                 answered: allTickets?.filter(t => t.status === 'Answered').length || 0,
                 resolved: allTickets?.filter(t => t.status === 'Resolved').length || 0,
                 closed: allTickets?.filter(t => t.status === 'Closed').length || 0
@@ -292,7 +291,7 @@ module.exports = function registerSupportEndpoints(app, supabase, authenticateTo
             const { id } = req.params;
             const { status } = req.body;
 
-            const validStatuses = ['Open', 'In Progress', 'Answered', 'Resolved', 'Closed'];
+            const validStatuses = ['Open', 'Answered', 'Resolved', 'Closed'];
             if (!validStatuses.includes(status)) {
                 return res.status(400).json({ error: 'Invalid status' });
             }
