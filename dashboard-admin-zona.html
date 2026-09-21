@@ -10,6 +10,27 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- DARK MODE - Apply immediately to prevent flash on page load -->
+    <script>
+        (function() {
+            if (localStorage.getItem('dark_mode_enabled') === 'true') {
+                // Apply dark mode variables directly to avoid FOUC (Flash of Unstyled Content)
+                document.documentElement.style.cssText = `
+                    --color-bg-primary: #0f172a;
+                    --color-bg-secondary: #1e293b;
+                    --color-bg-tertiary: #334155;
+                    --color-text-primary: #f1f5f9;
+                    --color-text-secondary: #cbd5e1;
+                    --color-text-tertiary: #94a3b8;
+                    --color-border: #475569;
+                    --color-border-dark: #64748b;
+                    --color-accent: #60a5fa;
+                `;
+                // Also add the class for selector-based styling
+                document.body.className = (document.body.className || '') + ' dark-mode';
+            }
+        })();
+    </script>
     <style>
         /* DARK MODE CSS VARIABLES */
         :root {
@@ -1698,7 +1719,7 @@
                 if (welcomeNameEl) welcomeNameEl.textContent = `Selamat siang, Admin ${zonaName} 👋`;
 
                 const welcomeInfoEl = document.getElementById('welcome-info');
-                if (welcomeInfoEl) welcomeInfoEl.textContent = `Informasi data zona ${zonaName}`;
+                if (welcomeInfoEl) welcomeInfoEl.textContent = `Informasi data ${zonaName}`;
 
                 // Load data in background (don't await - let it run in parallel)
                 loadAllInvoicesAndStats();
