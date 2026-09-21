@@ -11,6 +11,13 @@ let currentSearch = '';
 let totalPages = 1;
 let zonasMap = {}; // Cache for zona lookup
 
+// Cache keys
+const CACHE_TICKETS = 'support_moderator_tickets';
+const CACHE_STATS = 'support_moderator_stats';
+const CACHE_ZONAS = 'support_zonas';
+const CACHE_TIMESTAMP = 'support_cache_timestamp';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Support-Moderator] Page loaded');
     
@@ -31,17 +38,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Support-Moderator] Loading zonas...');
     await loadZonas();
     
-    // Load stats and tickets in parallel for faster display
-    console.log('[Support-Moderator] Starting parallel data load...');
+    // Display cached data immediately if available
+    const cachedTickets = getCache(CACHE_TICKETS);
+    const cachedStats = getCache(CACHE_STATS);
+    
+    if (cachedTickets && cachedStats) {
+        console.log('[Support-Moderator] Displaying cached data...');
+        renderTickets(cachedTickets);
+        updateCachedStats(cachedStats);
+        updatePagination();
+    }
+    
+    // Fetch fresh data in background
+    console.log('[Support-Moderator] Fetching fresh data in background...');
     const startTime = performance.now();
     Promise.all([
         loadStats(),
         loadTickets()
     ]).then(() => {
         const loadTime = (performance.now() - startTime).toFixed(0);
-        console.log(`[Support-Moderator] Data loaded in ${loadTime}ms`);
+        console.log(`[Support-Moderator] Fresh data loaded in ${loadTime}ms`);
     }).catch(err => {
-        console.error('[Support-Moderator] Error during parallel load:', err);
+        console.error('[Support-Moderator] Error loading fresh data:', err);
     });
 
     console.log('[Support-Moderator] Setting up event listeners...');
@@ -75,8 +93,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    console.log('[Support-Moderator] Dashboard initialized (data loading in background)');
+    console.log('[Support-Moderator] Dashboard initialized with cached data');
 });
+
+// Cache management functions
+function setCache(key, value, duration = CACHE_DURATION) {
+    try {
+        const data = {
+            value: value,
+            timestamp: Date.now(),
+            duration: duration
+        };
+        localStorage.setItem(key, JSON.stringify(data));
+        console.log(`[Cache] Set ${key}`);
+    } catch (err) {
+        console.warn('[Cache] Failed to set cache:', err);
+    }
+}
+
+function getCache(key) {
+    try {
+        const item = localStorage.getItem(key);
+        if (!item) return null;
+        
+        const data = JSON.parse(item);
+        const isExpired = (Date.now() - data.timestamp) > data.duration;
+        
+        if (isExpired) {
+            console.log(`[Cache] ${key} expired, removing`);
+            localStorage.removeItem(key);
+            return null;
+        }
+        
+        console.log(`[Cache] Retrieved ${key}`);
+        return data.value;
+    } catch (err) {
+        console.warn('[Cache] Failed to get cache:', err);
+        return null;
+    }
+}
+
+function clearCache(key) {
+    try {
+        localStorage.removeItem(key);
+        console.log(`[Cache] Cleared ${key}`);
+    } catch (err) {
+        console.warn('[Cache] Failed to clear cache:', err);
+    }
+}
+
+function updateCachedStats(stats) {
+    document.getElementById('statTotal').textContent = stats.total || 0;
+    document.getElementById('statOpen').textContent = stats.open || 0;
+    document.getElementById('statInProgress').textContent = stats.in_progress || 0;
+    document.getElementById('statAnswered').textContent = stats.answered || 0;
+    document.getElementById('statClosed').textContent = stats.closed || 0;
+    console.log('[Support-Moderator] Stats updated from cache');
+}
 
 async function loadZonas() {
     try {
@@ -211,13 +284,13 @@ async function loadStats() {
         
         const stats = data.stats || {};
 
-        document.getElementById('statTotal').textContent = stats.total || 0;
-        document.getElementById('statOpen').textContent = stats.open || 0;
-        document.getElementById('statInProgress').textContent = stats.in_progress || 0;
-        document.getElementById('statAnswered').textContent = stats.answered || 0;
-        document.getElementById('statClosed').textContent = stats.closed || 0;
+        // Cache stats
+        setCache(CACHE_STATS, stats);
+        
+        // Update UI
+        updateCachedStats(stats);
 
-        console.log('[Support-Moderator] Stats updated');
+        console.log('[Support-Moderator] Stats updated and cached');
     } catch (error) {
         console.error('[Support-Moderator] Error loading stats:', error);
         // Don't break on stats error, continue to load tickets
@@ -278,6 +351,12 @@ async function loadTickets() {
 
         totalPages = pagination.pages || 1;
         
+        // Cache tickets only if no filters applied (cache the main list)
+        if (!currentSearch && !currentZona && currentStatus === 'all') {
+            setCache(CACHE_TICKETS, tickets);
+            console.log('[Support-Moderator] Tickets cached');
+        }
+        
         console.log('[Support-Moderator] Rendering', tickets.length, 'tickets');
         renderTickets(tickets);
         updatePagination();
@@ -295,13 +374,15 @@ async function loadTickets() {
         container.style.alignItems = 'center';
         container.style.justifyContent = 'center';
         container.innerHTML = `
-            <div style="text-align: center; color: #ef4444;">
-                <div style="margin-bottom: 12px;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
-                </div>
-                <div style="font-weight: 500;">${error.message}</div>
-                <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">Check browser console for more details</div>
-            </div>
+            <tr>
+                <td colspan="7" style="text-align: center; color: #ef4444; padding: 48px 16px;">
+                    <div style="margin-bottom: 12px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
+                    </div>
+                    <div style="font-weight: 500;">${error.message}</div>
+                    <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">Check browser console for more details</div>
+                </td>
+            </tr>
         `;
     }
 }
