@@ -49,7 +49,9 @@ RUN mkdir -p /app/data/log /app/data/temp /app/backend/data/log /app/backend/dat
 
 # Environment variables first (define before use)
 # Cloud Run uses PORT environment variable (default 8080)
-# But we keep 8080 as default for compatibility across platforms
+# Hugging Face Spaces uses 7860
+# Local/Replit uses 5000
+# This is overridable via runtime PORT env var
 ENV PORT=8080
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=512

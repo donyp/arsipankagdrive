@@ -17,7 +17,8 @@ mkdir -p /root/.config/alist
 chmod -R 777 /app/data /app/backend/tmp
 
 # Export PORT for Hugging Face (default 7860) / Cloud Run (8080)
-export PORT=${PORT:-7860}
+# If PORT not set from Docker, use 5000 as fallback (Replit/local dev)
+export PORT=${PORT:-5000}
 export NODE_ENV=production
 
 # Set RCLONE_CONFIG to point to /app/rclone.conf for Railway and Cloud Run
@@ -112,8 +113,11 @@ cd /app/backend
 
 # Start Node in foreground
 # It will connect to Alist on localhost:5244 or fall back to LocalStorage
+echo "[DEBUG] About to start node server.js with PORT=$PORT"
 node server.js 2>&1 &
 NODE_PID=$!
+
+echo "[DEBUG] Node PID: $NODE_PID"
 
 # Wait for Node to complete
 wait $NODE_PID
