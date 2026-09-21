@@ -14,11 +14,9 @@
     <script>
         (function() {
             if (localStorage.getItem('dark_mode_enabled') === 'true') {
-                // Apply dark mode class immediately
-                document.body.className = (document.body.className || '') + ' dark-mode';
-                
-                // Also apply variables directly to body for instant effect
-                document.body.style.cssText = `
+                // Apply dark mode to HTML element and set inline styles early
+                const root = document.documentElement;
+                root.style.cssText = `
                     --color-bg-primary: #0f172a;
                     --color-bg-secondary: #1e293b;
                     --color-bg-tertiary: #334155;
@@ -29,6 +27,10 @@
                     --color-border-dark: #64748b;
                     --color-accent: #60a5fa;
                 `;
+                root.className = (root.className || '') + ' dark-mode';
+                
+                // Add a data attribute to signal body to add class when ready
+                root.setAttribute('data-dark-mode', 'true');
             }
         })();
     </script>
@@ -47,7 +49,8 @@
             --color-accent: #3b82f6;
         }
 
-        body.dark-mode {
+        body.dark-mode,
+        html.dark-mode body {
             /* Dark mode */
             --color-bg-primary: #0f172a;
             --color-bg-secondary: #1e293b;
@@ -793,6 +796,13 @@
     </style>
 </head>
 <body>
+    <!-- Apply dark mode immediately if needed -->
+    <script>
+        if (document.documentElement.getAttribute('data-dark-mode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+    
     <!-- Sidebar (hidden for admin zona) -->
     <aside id="sidebar"></aside>
 
