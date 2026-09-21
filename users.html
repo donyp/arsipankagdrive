@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manajemen User - Pusat Arsip Anka</title>
+    <!-- DARK MODE - Apply immediately to prevent flash -->
+    <script>
+        (function() {
+            if (localStorage.getItem('dark_mode_enabled') === 'true') {
+                document.documentElement.setAttribute('data-dark-mode', 'true');
+            }
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -13,6 +21,12 @@
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- Apply dark mode if enabled -->
+    <script>
+        if (localStorage.getItem('dark_mode_enabled') === 'true') {
+            document.documentElement.setAttribute('data-dark-mode', 'true');
+        }
+    </script>
     <style>
         body {
             zoom: 0.8;
@@ -283,5 +297,7 @@
     </script>
 </body>
 </html>
+
+
 
 
