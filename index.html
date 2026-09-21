@@ -83,13 +83,17 @@
         }
         .right-section {
             flex: 1;
-            background: var(--color-bg-primary);
+            background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: 60px 40px;
             transition: background 0.3s;
+        }
+        
+        html[data-dark-mode="true"] .right-section {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         }
         .left-content {
             position: relative;
@@ -128,12 +132,30 @@
         .form-container {
             width: 100%;
             max-width: 420px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+        
+        html[data-dark-mode="true"] .form-container {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
         .brand-name {
             font-size: 24px;
             font-weight: 900;
             color: #3b5bdb;
             margin-bottom: 30px;
+            transition: color 0.3s;
+        }
+        
+        html[data-dark-mode="true"] .brand-name {
+            color: #60a5fa;
         }
         .welcome-heading {
             font-size: 28px;
@@ -166,22 +188,23 @@
             font-weight: 500;
             color: var(--color-form-input-text);
             background: var(--color-form-bg);
-            transition: border-color 0.3s, color 0.3s;
+            transition: border-color 0.3s, color 0.3s, box-shadow 0.3s;
         }
         .form-input::placeholder {
             color: var(--color-form-placeholder);
         }
         .form-input:focus {
             outline: none;
-            border-bottom-color: #3b5bdb;
+            border-bottom-color: #4f46e5;
+            box-shadow: 0 2px 0 rgba(79, 70, 229, 0.3);
         }
         .login-btn {
             width: 100%;
             padding: 14px 20px;
-            background: #3b5bdb;
+            background: linear-gradient(135deg, #4f46e5 0%, #3b5bdb 100%);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 14px;
             font-weight: 900;
             cursor: pointer;
@@ -189,9 +212,11 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-top: 30px;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
         }
         .login-btn:hover {
-            background: #2b4bbb;
+            background: linear-gradient(135deg, #3b5bdb 0%, #2b4bbb 100%);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
             transform: translateY(-2px);
         }
         .login-btn:active {
@@ -242,7 +267,8 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
             cursor: pointer;
@@ -255,16 +281,18 @@
         }
         
         .dark-mode-toggle:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
         }
         
         html[data-dark-mode="true"] .dark-mode-toggle {
-            background: rgba(30, 41, 59, 0.5);
-            border-color: rgba(71, 85, 105, 0.3);
+            background: rgba(71, 85, 105, 0.3);
+            border-color: rgba(71, 85, 105, 0.5);
         }
         
         html[data-dark-mode="true"] .dark-mode-toggle:hover {
-            background: rgba(30, 41, 59, 0.7);
+            background: rgba(71, 85, 105, 0.5);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         @media (max-width: 1024px) {
             .left-section {
