@@ -65,6 +65,11 @@
             padding: 60px 80px;
             position: relative;
             overflow: hidden;
+            transition: background 0.3s;
+        }
+        
+        html[data-dark-mode="true"] .left-section {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         }
         .left-section::before {
             content: '';
