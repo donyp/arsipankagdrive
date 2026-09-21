@@ -687,26 +687,36 @@
         function formatDateTimeWIB(dateString) {
             if (!dateString) return '-';
             
-            // Parse the datetime
-            const date = new Date(dateString);
+            console.log('[DateFormat] Raw input:', dateString);
             
-            console.log('[DateFormat] Input:', dateString);
-            console.log('[DateFormat] Parsed date:', date);
-            console.log('[DateFormat] ISO String:', date.toISOString());
+            // If no timezone info, assume UTC
+            let dateObj = dateString;
+            if (!dateString.includes('Z') && !dateString.includes('+') && !dateString.includes('-')) {
+                // No timezone, append Z to treat as UTC
+                dateObj = dateString + 'Z';
+                console.log('[DateFormat] Added Z for UTC:', dateObj);
+            }
             
-            // Use Intl formatter with WIB timezone
+            const date = new Date(dateObj);
+            
+            console.log('[DateFormat] Parsed date object:', date);
+            console.log('[DateFormat] Date ISO:', date.toISOString());
+            console.log('[DateFormat] Date UTC time:', date.getUTCHours(), 'h', date.getUTCMinutes(), 'm');
+            
+            // Format dengan timezone WIB (UTC+7)
             const formatter = new Intl.DateTimeFormat('id-ID', {
                 year: 'numeric',
-                month: 'short',
+                month: '2-digit',
                 day: '2-digit',
                 hour: '2-digit',
                 minute: '2-digit',
+                second: '2-digit',
                 hour12: false,
                 timeZone: 'Asia/Jakarta'
             });
             
             const formatted = formatter.format(date);
-            console.log('[DateFormat] Formatted:', formatted);
+            console.log('[DateFormat] Final formatted:', formatted);
             
             return formatted;
         }

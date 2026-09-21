@@ -638,31 +638,32 @@
         function formatDateTimeWIB(dateString) {
             if (!dateString) return '-';
             
+            console.log('[DateFormat] Raw input:', dateString);
+            
             try {
-                // Parse ISO string - ensure it's interpreted as UTC
-                let date;
-                if (typeof dateString === 'string') {
-                    // Add 'Z' if not present to ensure UTC interpretation
-                    const isoString = dateString.includes('Z') || dateString.includes('+') 
-                        ? dateString 
-                        : dateString + 'Z';
-                    date = new Date(isoString);
-                } else {
-                    date = new Date(dateString);
+                // If no timezone info, assume UTC
+                let dateObj = dateString;
+                if (typeof dateString === 'string' && !dateString.includes('Z') && !dateString.includes('+') && !dateString.includes('-')) {
+                    // No timezone, append Z to treat as UTC
+                    dateObj = dateString + 'Z';
+                    console.log('[DateFormat] Added Z for UTC:', dateObj);
                 }
+                
+                const date = new Date(dateObj);
                 
                 if (isNaN(date.getTime())) {
                     return '-';
                 }
                 
-                console.log('[Ticket-Detail] formatDateTimeWIB - parsed date:', date);
-                console.log('[Ticket-Detail] formatDateTimeWIB - ISO:', date.toISOString());
+                console.log('[DateFormat] Parsed date object:', date);
+                console.log('[DateFormat] Date ISO:', date.toISOString());
+                console.log('[DateFormat] Date UTC time:', date.getUTCHours(), 'h', date.getUTCMinutes(), 'm');
                 
                 // Format using Asia/Jakarta timezone
                 const formatter = new Intl.DateTimeFormat('id-ID', {
                     year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit',
@@ -670,22 +671,12 @@
                     timeZone: 'Asia/Jakarta'
                 });
                 
-                const parts = formatter.formatToParts(date);
-                const partsObj = {};
-                parts.forEach(part => {
-                    if (part.type !== 'literal') {
-                        partsObj[part.type] = part.value;
-                    }
-                });
+                const formatted = formatter.format(date);
+                console.log('[DateFormat] Final formatted:', formatted);
                 
-                const dateStr = `${partsObj.day} ${partsObj.month} ${partsObj.year}`;
-                const timeStr = `${partsObj.hour}:${partsObj.minute}`;
-                const formatted = `${dateStr} · ${timeStr}`;
-                
-                console.log('[Ticket-Detail] formatDateTimeWIB - formatted:', formatted);
                 return formatted;
             } catch (e) {
-                console.error('[Ticket-Detail] formatDateTimeWIB error:', e, dateString);
+                console.error('[DateFormat] Error:', e);
                 return '-';
             }
         }
