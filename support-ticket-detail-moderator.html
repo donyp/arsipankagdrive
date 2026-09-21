@@ -538,6 +538,8 @@
                 ticketData = data.ticket;
                 
                 console.log('[Ticket-Detail-Moderator] Ticket loaded:', ticketData);
+                console.log('[Ticket-Detail-Moderator] created_by_username:', ticketData.created_by_username);
+                console.log('[Ticket-Detail-Moderator] created_at:', ticketData.created_at);
                 
                 // Load zona name
                 await loadZonaName();
@@ -684,15 +686,29 @@
 
         function formatDateTimeWIB(dateString) {
             if (!dateString) return '-';
+            
+            // Parse the datetime
             const date = new Date(dateString);
-            return date.toLocaleDateString('id-ID', {
+            
+            console.log('[DateFormat] Input:', dateString);
+            console.log('[DateFormat] Parsed date:', date);
+            console.log('[DateFormat] ISO String:', date.toISOString());
+            
+            // Use Intl formatter with WIB timezone
+            const formatter = new Intl.DateTimeFormat('id-ID', {
                 year: 'numeric',
                 month: 'short',
-                day: 'numeric',
+                day: '2-digit',
                 hour: '2-digit',
                 minute: '2-digit',
+                hour12: false,
                 timeZone: 'Asia/Jakarta'
             });
+            
+            const formatted = formatter.format(date);
+            console.log('[DateFormat] Formatted:', formatted);
+            
+            return formatted;
         }
 
         function getLastReplyTime(ticket) {
