@@ -147,6 +147,7 @@ function updateCachedStats(stats) {
     document.getElementById('statTotal').textContent = stats.total || 0;
     document.getElementById('statOpen').textContent = stats.open || 0;
     document.getElementById('statAnswered').textContent = stats.answered || 0;
+    document.getElementById('statResolved').textContent = stats.resolved || 0;
     document.getElementById('statClosed').textContent = stats.closed || 0;
     console.log('[Support-Moderator] Stats updated from cache');
 }
