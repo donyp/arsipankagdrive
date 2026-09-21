@@ -672,16 +672,6 @@
 
     <!-- Main Content -->
     <main id="main-content">
-        <!-- Header -->
-        <header>
-            <div class="header-container">
-                <div class="header-title">
-                    <h1>Selamat siang, Admin <span id="zona-name"></span> 👋</h1>
-                    <p id="welcome-subtitle" style="color: #6b7280; font-size: 14px; margin-top: 4px;"></p>
-                </div>
-            </div>
-        </header>
-
         <!-- Content Container -->
         <div class="container">
             <!-- Welcome Section -->
@@ -1472,7 +1462,6 @@
                 // Update welcome section
                 document.getElementById('zona-name').textContent = zonaName;
                 document.getElementById('welcome-name').textContent = `Selamat siang, ${zonaName} 👋`;
-                document.getElementById('welcome-subtitle').textContent = `Ringkasan data zona ${zonaName}`;
 
                 await loadAllInvoices();
                 await updateWelcomeStats();
