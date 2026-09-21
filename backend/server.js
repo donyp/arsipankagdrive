@@ -73,7 +73,6 @@ initializeSecretManager();
 
 const app = express();
 const DEFAULT_PORT = 5000;
-const port = Number(process.env.PORT) || DEFAULT_PORT;
 
 // ============================================================
 // HTTP Agent Configuration - Increase connection pool limits
@@ -5910,12 +5909,13 @@ app.delete('/api/fleet/:id', authenticateToken, async (req, res) => {
 // ============================================================
 
 // Task 3.4: Log startup intent before binding
-console.log(`🚀 Backend starting on port ${process.env.PORT || DEFAULT_PORT}`);
+console.log(`🚀 Backend starting on port ${PORT}`);
 
 // CRITICAL: Listen on 0.0.0.0 for Docker/Hugging Face compatibility
 // Listening on 'localhost' or '127.0.0.1' only works inside container
 // Must bind to 0.0.0.0 to be accessible from outside the container
 const HOST = '0.0.0.0';
+const PORT = Number(process.env.PORT) || 5000;
 
 // Initialize startup sequence: Alist → Rclone → Node.js Server
 // (async () => {
