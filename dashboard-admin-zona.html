@@ -716,6 +716,53 @@
             cursor: not-allowed;
         }
 
+        /* SWEETALERT CUSTOM STYLES */
+        .logout-popup-small {
+            padding: 24px !important;
+            border-radius: 8px !important;
+        }
+
+        .logout-title-small {
+            font-size: 18px !important;
+            margin-bottom: 12px !important;
+            font-weight: 600 !important;
+        }
+
+        .logout-html-small {
+            margin: 12px 0 !important;
+        }
+
+        .logout-html-small p {
+            font-size: 14px !important;
+            line-height: 1.4 !important;
+        }
+
+        .swal2-icon {
+            margin: 0 auto 12px !important;
+            width: 40px !important;
+            height: 40px !important;
+        }
+
+        .swal2-icon svg {
+            width: 40px !important;
+            height: 40px !important;
+        }
+
+        .swal2-actions {
+            gap: 8px !important;
+            padding: 12px 0 0 0 !important;
+            margin: 0 !important;
+        }
+
+        .swal2-confirm,
+        .swal2-cancel {
+            padding: 8px 16px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            border-radius: 6px !important;
+            min-width: auto !important;
+        }
+
         /* RESPONSIVE */
         @media (max-width: 768px) {
             .header-container {
@@ -1625,15 +1672,26 @@
         // LOGOUT
         // ============================================
         function logout() {
+            // Determine current theme
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            
             Swal.fire({
-                title: '🚪 Logout Akun?',
-                html: '<p>Apakah Anda yakin ingin keluar dari sistem?</p>',
+                title: 'Logout Akun?',
+                html: '<p style="margin: 0; font-size: 14px;">Apakah Anda yakin ingin keluar dari sistem?</p>',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
-                cancelButtonColor: 'var(--color-text-secondary)',
+                cancelButtonColor: isDarkMode ? '#64748b' : '#cbd5e1',
                 confirmButtonText: 'YA, LOGOUT',
-                cancelButtonText: 'Batal'
+                cancelButtonText: 'Batal',
+                background: isDarkMode ? '#1e293b' : '#ffffff',
+                color: isDarkMode ? '#f1f5f9' : '#1f2937',
+                width: '360px',
+                customClass: {
+                    popup: 'logout-popup-small',
+                    title: 'logout-title-small',
+                    htmlContainer: 'logout-html-small'
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
                     localStorage.removeItem('jwt_token');
