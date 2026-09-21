@@ -304,7 +304,7 @@
         }
         
         .tickets-container {
-            background: white;
+            background: var(--color-bg-secondary);
             border-radius: 12px;
             padding: 24px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -316,7 +316,7 @@
         }
         
         .ticket-table thead {
-            border-bottom: 2px solid #e5e7eb;
+            border-bottom: 2px solid var(--color-border);
         }
         
         .ticket-table th {
@@ -324,25 +324,25 @@
             text-align: left;
             font-size: 12px;
             font-weight: 700;
-            color: #6b7280;
+            color: var(--color-text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            background: #f9fafb;
+            background: var(--color-bg-tertiary);
         }
         
         .ticket-table tbody tr {
-            border-bottom: 1px solid #f3f4f6;
+            border-bottom: 1px solid var(--color-border);
             transition: all 0.2s;
             cursor: pointer;
         }
         
         .ticket-table tbody tr:hover {
-            background: #f9fafb;
+            background: var(--color-bg-tertiary);
         }
         
         .ticket-table td {
             padding: 16px;
-            color: #1f2937;
+            color: var(--color-text-primary);
             font-size: 13px;
             white-space: nowrap;
             overflow: hidden;
@@ -363,13 +363,13 @@
         
         .ticket-date-col {
             font-size: 11px;
-            color: #9ca3af;
+            color: var(--color-text-secondary);
             display: block;
             margin-top: 2px;
         }
         
         .ticket-subject-col {
-            color: #1f2937;
+            color: var(--color-text-primary);
             font-weight: 500;
         }
         
@@ -465,7 +465,7 @@
         <!-- Main Content -->
         <div style="width: 100%;">
             <!-- Header -->
-            <div style="background: white; border-bottom: 1px solid #e5e7eb;">
+            <div style="background: var(--color-bg-secondary); border-bottom: 1px solid var(--color-border);">
                 <div class="px-6 py-8">
                     <div class="flex items-center justify-between mb-6">
                         <a href="/dashboard-admin-zona" class="back-link">
@@ -474,8 +474,8 @@
                     </div>
                     <div class="flex items-center justify-between">
                         <div>
-                            <h1 style="font-size: 32px; font-weight: 800; color: #1f2937; margin: 0;">Support Tickets</h1>
-                            <p style="color: #6b7280; font-size: 14px; margin: 6px 0 0 0;">Kelola dan lacak semua tiket support Anda</p>
+                            <h1 style="font-size: 32px; font-weight: 800; color: var(--color-text-primary); margin: 0;">Support Tickets</h1>
+                            <p style="color: var(--color-text-secondary); font-size: 14px; margin: 6px 0 0 0;">Kelola dan lacak semua tiket support Anda</p>
                         </div>
                         <a href="/support-create-ticket.html" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Buka Tiket Baru
