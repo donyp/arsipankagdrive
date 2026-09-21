@@ -1268,7 +1268,7 @@
 
                 renderInvoices(paginatedInvoices);
                 updatePagination();
-                updateTotalNominal(paginatedInvoices);
+                updateTotalNominal(allFilteredInvoices);  // Use ALL filtered invoices, not paginated
                 
                 // Update welcome stats with ALL filtered invoices (not just paginated)
                 updateWelcomeStatsWithAllFiltered(allFilteredInvoices);
