@@ -182,8 +182,8 @@
 
         .header-container {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            justify-content: flex-start;
+            align-items: flex-start;
             gap: 15px;
         }
 
@@ -207,6 +207,59 @@
             margin-bottom: 20px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             border: 1px solid #e5e7eb;
+        }
+
+        .welcome-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            gap: 20px;
+        }
+
+        .welcome-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            transition: all 0.3s;
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-action:hover {
+            background: #e5e7eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-logout-action {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-logout-action:hover {
+            background: #fca5a5;
+        }
+
+        .btn-support {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .btn-support:hover {
+            background: #bfdbfe;
         }
 
         .welcome-content {
@@ -626,14 +679,6 @@
                     <h1>Selamat siang, Admin <span id="zona-name"></span> 👋</h1>
                     <p id="welcome-subtitle" style="color: #6b7280; font-size: 14px; margin-top: 4px;"></p>
                 </div>
-                <div class="header-actions">
-                    <a href="/support-dashboard-customer" class="btn-icon-action" title="Support Tickets" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; background: #f3f4f6; color: #374151; text-decoration: none; font-size: 14px; hover: background #e5e7eb; transition: all 0.2s;">
-                        <i class="fas fa-headset"></i>
-                    </a>
-                    <button class="btn-logout" onclick="logout()">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </button>
-                </div>
             </div>
         </header>
 
@@ -651,6 +696,17 @@
                         <i class="fas fa-calculator welcome-credit-icon"></i>
                         <p class="welcome-credit-value" id="totalInvoice">Rp 0</p>
                     </div>
+                </div>
+                
+                <div class="welcome-actions">
+                    <a href="/support-dashboard-customer" class="btn-action btn-support" title="Support Tickets">
+                        <i class="fas fa-headset"></i>
+                        <span>Support</span>
+                    </a>
+                    <button class="btn-action btn-logout-action" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
                 </div>
                 
                 <div class="stats-grid">
