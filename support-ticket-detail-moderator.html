@@ -690,9 +690,11 @@
             console.log('[DateFormat] Raw input:', dateString);
             
             try {
-                // Parse the timestamp as-is (no Z appended)
-                // This preserves the local time if database stores in local time
-                const date = new Date(dateString);
+                // Parse as ISO string
+                // Some timestamps may be UTC, some may be in WIB already
+                // We need to detect and handle both cases
+                
+                let date = new Date(dateString);
                 
                 if (isNaN(date.getTime())) {
                     return '-';
@@ -703,36 +705,29 @@
                 console.log('[DateFormat] getHours (local):', date.getHours());
                 console.log('[DateFormat] getUTCHours:', date.getUTCHours());
                 
-                // Try both local and UTC formatting to debug
-                const localFormatter = new Intl.DateTimeFormat('id-ID', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                });
+                // Always use getUTCHours and add 7 for WIB
+                // This handles both UTC timestamps and WIB timestamps correctly
+                const utcHours = date.getUTCHours();
+                const wibHours = (utcHours + 7) % 24;
+                const dayOffset = utcHours + 7 >= 24 ? 1 : 0;
                 
-                const localFormatted = localFormatter.format(date);
-                console.log('[DateFormat] Local format:', localFormatted);
+                // Create a date in UTC+7
+                const wibDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
                 
-                // Also try with explicit Asia/Jakarta timezone
-                const wibFormatter = new Intl.DateTimeFormat('id-ID', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false,
-                    timeZone: 'Asia/Jakarta'
-                });
+                console.log('[DateFormat] UTC hours:', utcHours, '-> WIB hours:', wibHours);
+                console.log('[DateFormat] Using UTC methods on adjusted date');
                 
-                const wibFormatted = wibFormatter.format(date);
-                console.log('[DateFormat] WIB (Asia/Jakarta) format:', wibFormatted);
+                const year = wibDate.getUTCFullYear();
+                const month = String(wibDate.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(wibDate.getUTCDate()).padStart(2, '0');
+                const hours = String(wibDate.getUTCHours()).padStart(2, '0');
+                const minutes = String(wibDate.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(wibDate.getUTCSeconds()).padStart(2, '0');
                 
-                return wibFormatted;
+                const formatted = `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+                console.log('[DateFormat] Final WIB formatted:', formatted);
+                
+                return formatted;
             } catch (e) {
                 console.error('[DateFormat] Error:', e);
                 return '-';
