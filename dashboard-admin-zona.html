@@ -215,12 +215,19 @@
             align-items: flex-start;
             margin-bottom: 24px;
             gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .welcome-text {
+            flex: 1;
+            min-width: 200px;
         }
 
         .welcome-actions {
             display: flex;
             gap: 12px;
-            margin-bottom: 24px;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
         .btn-action {
@@ -292,11 +299,12 @@
             border-radius: 8px;
             padding: 16px;
             text-align: center;
-            min-width: 180px;
+            min-width: 150px;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .welcome-credit-label {
@@ -681,22 +689,23 @@
                         <h2 id="welcome-name">Selamat siang, Admin</h2>
                         <p id="welcome-info">Informasi ringkas data zona Anda</p>
                     </div>
+                    
+                    <div class="welcome-actions">
+                        <a href="/support-dashboard-customer" class="btn-action btn-support" title="Support Tickets">
+                            <i class="fas fa-headset"></i>
+                            <span>Support</span>
+                        </a>
+                        <button class="btn-action btn-logout-action" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                    
                     <div class="welcome-credit">
                         <span class="welcome-credit-label">Total Invoice</span>
                         <i class="fas fa-calculator welcome-credit-icon"></i>
                         <p class="welcome-credit-value" id="totalInvoice">Rp 0</p>
                     </div>
-                </div>
-                
-                <div class="welcome-actions">
-                    <a href="/support-dashboard-customer" class="btn-action btn-support" title="Support Tickets">
-                        <i class="fas fa-headset"></i>
-                        <span>Support</span>
-                    </a>
-                    <button class="btn-action btn-logout-action" onclick="logout()">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Logout</span>
-                    </button>
                 </div>
                 
                 <div class="stats-grid">
