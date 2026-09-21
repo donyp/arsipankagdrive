@@ -301,7 +301,7 @@
             text-decoration: none;
             transition: all 0.3s;
             background: var(--color-bg-tertiary);
-            color: #374151;
+            color: var(--color-text-primary);
         }
 
         .btn-action:hover {
@@ -310,21 +310,21 @@
         }
 
         .btn-logout-action {
-            background: #fee2e2;
-            color: #dc2626;
+            background: var(--color-accent);
+            color: var(--color-bg-secondary);
         }
 
         .btn-logout-action:hover {
-            background: #fca5a5;
+            opacity: 0.9;
         }
 
         .btn-support {
-            background: #dbeafe;
-            color: #1e40af;
+            background: var(--color-accent);
+            color: var(--color-bg-secondary);
         }
 
         .btn-support:hover {
-            background: #bfdbfe;
+            opacity: 0.9;
         }
 
         .welcome-content {
@@ -458,7 +458,7 @@
         }
 
         .btn-logout {
-            background: #f87171;
+            background: var(--color-accent);
             color: var(--color-bg-secondary);
             border: none;
             padding: 8px 16px;
@@ -589,7 +589,15 @@
             color: var(--color-text-primary);
         }
 
-        th, td {
+        th {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+            color: var(--color-text-primary);
+            font-weight: 600;
+        }
+
+        td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid var(--color-border);
@@ -597,6 +605,7 @@
         }
 
         tbody tr {
+            background-color: var(--color-bg-secondary);
             transition: background-color 0.2s;
         }
 
@@ -612,6 +621,7 @@
             text-align: center;
             padding: 40px 20px;
             color: var(--color-text-secondary);
+            background-color: var(--color-bg-secondary);
         }
         .table-container {
             background: var(--color-bg-secondary);
@@ -650,7 +660,7 @@
         td {
             padding: 10px 10px;
             font-size: 12px;
-            color: #374151;
+            color: var(--color-text-primary);
         }
 
         .empty-state {
@@ -720,26 +730,6 @@
         .btn-page:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-        }
-
-        /* ACTION BUTTONS */
-        .btn-action {
-            background: var(--color-accent);
-            color: var(--color-bg-secondary);
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .btn-action:hover {
-            background: #2563eb;
         }
 
         /* RESPONSIVE */
