@@ -237,6 +237,12 @@ function toggleDarkMode() {
     }
     
     updateDarkModeUI();
+    
+    // Apply inline style dark mode changes
+    if (window.applyDarkModeInlineStyles) {
+        window.applyDarkModeInlineStyles(newState);
+    }
+    
     console.log('[DarkMode] Toggled to:', newState ? 'Dark' : 'Light');
 }
 
@@ -272,5 +278,10 @@ window.addEventListener('storage', (e) => {
             document.documentElement.removeAttribute('data-dark-mode');
         }
         updateDarkModeUI();
+        
+        // Apply inline style dark mode changes
+        if (window.applyDarkModeInlineStyles) {
+            window.applyDarkModeInlineStyles(isDark);
+        }
     }
 });
