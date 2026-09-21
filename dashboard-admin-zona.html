@@ -522,12 +522,6 @@
             background: #4b5563;
         }
 
-        .total-display {
-            font-weight: 700;
-            color: #059669;
-            font-size: 16px;
-        }
-
         /* TABLE */
         .table-container {
             background: white;
@@ -864,9 +858,8 @@
                     </div>
                 </div>
 
-                <!-- Total Display with Action Buttons -->
+                <!-- Action Buttons -->
                 <div class="filter-actions-row">
-                    <div id="totalNominalDisplay" class="total-display">Total: Rp 0</div>
                     <div class="filter-actions">
                         <button class="btn-apply" onclick="applyFilters()">
                             <i class="fas fa-filter"></i> Terapkan Filter
@@ -1084,23 +1077,6 @@
             `;
         }
 
-        function updateTotalNominal(invoices) {
-            const totalDisplay = document.getElementById('totalNominalDisplay');
-            if (!totalDisplay) return;
-
-            const total = invoices.reduce((sum, invoice) => {
-                const nominal = parseFloat(invoice.total_jumlah_jual) || 0;
-                return sum + nominal;
-            }, 0);
-
-            const formattedTotal = new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(total);
-
-            totalDisplay.textContent = `Total: ${formattedTotal}`;
-        }
 
         // ============================================
         // UPDATE WELCOME STATS
@@ -1255,7 +1231,6 @@
 
                 renderInvoices(paginatedInvoices);
                 updatePagination();
-                updateTotalNominal(allFilteredInvoices);  // Use ALL filtered invoices
                 
                 // Update welcome stats with ALL filtered invoices
                 updateWelcomeStatsWithAllFiltered(allFilteredInvoices);
@@ -1459,8 +1434,6 @@
                 }
             });
             
-            document.getElementById('totalNominalDisplay').textContent = 'Total: Rp 0';
-
             invoiceFilterState.hasFiltered = false;
             invoiceFilterState.year = '';
             invoiceFilterState.month = '';
