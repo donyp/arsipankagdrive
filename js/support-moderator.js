@@ -34,19 +34,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     console.log('[Support-Moderator] User authenticated:', currentUser.email, 'Role:', currentUser.role);
     
-    // Load zonas first (blocking, needed for ticket rendering)
-    console.log('[Support-Moderator] Loading zonas...');
-    await loadZonas();
+    // Load zonas in background (non-blocking)
+    console.log('[Support-Moderator] Loading zonas in background...');
+    loadZonas().catch(err => console.error('[Support-Moderator] Error loading zonas:', err));
     
-    // Display cached data immediately if available
+    // Display cached data immediately
     const cachedTickets = getCache(CACHE_TICKETS);
     const cachedStats = getCache(CACHE_STATS);
     
     if (cachedTickets && cachedStats) {
-        console.log('[Support-Moderator] Displaying cached data...');
+        console.log('[Support-Moderator] Displaying cached data immediately...');
         renderTickets(cachedTickets);
         updateCachedStats(cachedStats);
         updatePagination();
+        console.log('[Support-Moderator] Cache displayed');
     }
     
     // Fetch fresh data in background
@@ -93,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    console.log('[Support-Moderator] Dashboard initialized with cached data');
+    console.log('[Support-Moderator] Dashboard initialized - showing cached data if available');
 });
 
 // Cache management functions
