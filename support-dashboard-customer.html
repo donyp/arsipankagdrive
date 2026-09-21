@@ -329,6 +329,7 @@
         .ticket-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: auto;
         }
         
         .ticket-table thead {
@@ -336,7 +337,7 @@
         }
         
         .ticket-table th {
-            padding: 14px 16px;
+            padding: 16px;
             text-align: left;
             font-size: 12px;
             font-weight: 700;
@@ -345,16 +346,18 @@
             letter-spacing: 0.5px;
             background: var(--color-bg-tertiary);
             vertical-align: middle;
+            height: auto;
         }
         
         .ticket-table tbody tr {
             border-bottom: 1px solid var(--color-border);
             transition: all 0.2s;
             cursor: pointer;
+            height: auto;
         }
         
         .ticket-table tbody tr:hover {
-            background: var(--color-bg-tertiary);
+            background: rgba(79, 70, 229, 0.05);
         }
         
         .ticket-table td {
@@ -365,11 +368,27 @@
             overflow: hidden;
             text-overflow: ellipsis;
             vertical-align: middle;
+            height: auto;
         }
+        
+        .ticket-table td:nth-child(1) { width: 15%; }
+        .ticket-table td:nth-child(2) { width: 30%; }
+        .ticket-table td:nth-child(3) { width: 15%; }
+        .ticket-table td:nth-child(4) { width: 12%; }
+        .ticket-table td:nth-child(5) { width: 18%; }
+        .ticket-table td:nth-child(6) { width: 10%; }
+        
+        .ticket-table th:nth-child(1) { width: 15%; }
+        .ticket-table th:nth-child(2) { width: 30%; }
+        .ticket-table th:nth-child(3) { width: 15%; }
+        .ticket-table th:nth-child(4) { width: 12%; }
+        .ticket-table th:nth-child(5) { width: 18%; }
+        .ticket-table th:nth-child(6) { width: 10%; }
         
         .ticket-table td:nth-child(2) {
             max-width: 300px;
             white-space: normal;
+            width: 30%;
         }
         
         .ticket-number-col {
