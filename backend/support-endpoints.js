@@ -70,17 +70,17 @@ module.exports = function registerSupportEndpoints(app, supabase, authenticateTo
                     console.warn('Failed to get zona name for zona_id:', ticket.zona_id, e);
                 }
 
-                // Get username
+                // Get user name (from users.name, not username)
                 try {
                     const { data: user, error: userError } = await supabase
                         .from('users')
-                        .select('username')
+                        .select('name')
                         .eq('id', ticket.user_id)
                         .single();
-                    if (user) created_by_username = user.username;
+                    if (user) created_by_username = user.name || 'N/A';
                     if (userError) console.warn('User error:', userError);
                 } catch (e) {
-                    console.warn('Failed to get username for user_id:', ticket.user_id, e);
+                    console.warn('Failed to get user name for user_id:', ticket.user_id, e);
                 }
 
                 return {
@@ -191,26 +191,26 @@ module.exports = function registerSupportEndpoints(app, supabase, authenticateTo
                 attachments: attachments?.filter(a => a.message_id === msg.id) || []
             })) || [];
 
-            // Get creator username
+            // Get creator username (from users.name, not username column)
             let created_by_username = 'N/A';
             try {
                 console.log('[Support] Fetching user for user_id:', ticket.user_id);
                 const { data: user, error: userError } = await supabase
                     .from('users')
-                    .select('username')
+                    .select('name')
                     .eq('id', ticket.user_id)
                     .single();
                 
                 if (userError) {
                     console.warn('[Support] User query error:', userError);
                 } else if (user) {
-                    created_by_username = user.username;
-                    console.log('[Support] Found username:', created_by_username);
+                    created_by_username = user.name || 'N/A';
+                    console.log('[Support] Found user name:', created_by_username);
                 } else {
                     console.warn('[Support] No user found for user_id:', ticket.user_id);
                 }
             } catch (e) {
-                console.error('[Support] Exception fetching username:', e);
+                console.error('[Support] Exception fetching user:', e);
             }
 
             res.json({
