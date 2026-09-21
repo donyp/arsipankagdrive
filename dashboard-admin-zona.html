@@ -14,8 +14,21 @@
     <script>
         (function() {
             if (localStorage.getItem('dark_mode_enabled') === 'true') {
-                // Apply dark mode to body element to update CSS variables
+                // Apply dark mode class immediately
                 document.body.className = (document.body.className || '') + ' dark-mode';
+                
+                // Also apply variables directly to body for instant effect
+                document.body.style.cssText = `
+                    --color-bg-primary: #0f172a;
+                    --color-bg-secondary: #1e293b;
+                    --color-bg-tertiary: #334155;
+                    --color-text-primary: #f1f5f9;
+                    --color-text-secondary: #cbd5e1;
+                    --color-text-tertiary: #94a3b8;
+                    --color-border: #475569;
+                    --color-border-dark: #64748b;
+                    --color-accent: #60a5fa;
+                `;
             }
         })();
     </script>
