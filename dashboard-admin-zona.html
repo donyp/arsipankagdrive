@@ -1241,12 +1241,56 @@
                 renderInvoices(invoices);
                 updatePagination();
                 updateTotalNominal(invoices);
+                
+                // Update welcome stats to reflect current filters
+                updateWelcomeStatsWithFilter(invoices);
 
             } catch (err) {
                 console.error('Error loading invoices:', err);
                 document.getElementById('invoiceTableBody').innerHTML = `
                     <tr><td colspan="8" class="empty-state" style="color: red;">Error: ${err.message}</td></tr>
                 `;
+            }
+        }
+        
+        // Update welcome stats based on current filtered invoices
+        function updateWelcomeStatsWithFilter(filteredInvoices) {
+            try {
+                const year = document.getElementById('filterYear')?.value;
+                const month = document.getElementById('filterMonth')?.value;
+                
+                // Only update if there's an active filter
+                if (!year && !month && !document.getElementById('filterSupplier')?.value) {
+                    // No filter - show all stats (original behavior)
+                    return;
+                }
+                
+                const totalInvoice = filteredInvoices.length;
+                const lunas = filteredInvoices.filter(inv => inv.status === 'Lunas').length;
+                const belumLunas = filteredInvoices.filter(inv => inv.status === 'Belum Lunas').length;
+
+                // Calculate total amount
+                const totalAmount = filteredInvoices.reduce((sum, inv) => {
+                    const nominal = parseFloat(inv.total_jumlah_jual) || 0;
+                    return sum + nominal;
+                }, 0);
+
+                // Format currency
+                const formatter = new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0
+                });
+
+                // Update stats
+                document.getElementById('statTotalInvoice').textContent = totalInvoice;
+                document.getElementById('statLunas').textContent = lunas;
+                document.getElementById('statBelumLunas').textContent = belumLunas;
+                document.getElementById('totalInvoice').textContent = formatter.format(totalAmount);
+                
+                console.log('[WelcomeStats] Updated with filter - Total: Rp ' + formatter.format(totalAmount));
+            } catch (err) {
+                console.error('Error updating welcome stats with filter:', err);
             }
         }
 
