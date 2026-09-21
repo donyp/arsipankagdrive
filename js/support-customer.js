@@ -3,7 +3,7 @@
 // ============================================
 
 let currentPage = 1;
-let currentLimit = 20;
+let currentLimit = 5;
 let currentStatus = 'all';
 let currentSearch = '';
 let totalPages = 1;
