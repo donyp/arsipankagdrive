@@ -1211,37 +1211,13 @@
                 const month = document.getElementById('filterMonth')?.value;
                 const search = document.getElementById('filterSearch')?.value;
 
-                // First, get ALL invoices that match filter (for stats calculation)
-                const allParams = new URLSearchParams({
-                    limit: 100000,  // Get all for stats
-                    offset: 0
-                });
-
-                if (supplier) allParams.append('toko', supplier);
-                if (keterangan) allParams.append('keterangan', keterangan);
-                if (search) allParams.append('search', search);
-
-                const allRes = await API.get(`/api/invoice/list?${allParams.toString()}`);
-                let allFilteredInvoices = allRes.data || [];
+                // When filtering by month/year, we need to get ALL data first, then filter and paginate
+                const hasMonthYearFilter = year || month;
                 
-                // Apply client-side year/month filter to ALL invoices (for stats)
-                if (year || month) {
-                    allFilteredInvoices = allFilteredInvoices.filter(inv => {
-                        if (!inv.tanggal) return false;
-                        const date = new Date(inv.tanggal);
-                        const invYear = date.getFullYear().toString();
-                        const invMonth = String(date.getMonth() + 1).padStart(2, '0');
-
-                        if (year && invYear !== year) return false;
-                        if (month && invMonth !== month) return false;
-                        return true;
-                    });
-                }
-                
-                // Now get paginated data for table display
+                // Build params for API
                 const params = new URLSearchParams({
-                    limit: pageSize,
-                    offset: (currentPage - 1) * pageSize
+                    limit: hasMonthYearFilter ? 100000 : pageSize,  // Get all if month/year filter
+                    offset: hasMonthYearFilter ? 0 : (currentPage - 1) * pageSize
                 });
 
                 if (supplier) params.append('toko', supplier);
@@ -1249,12 +1225,12 @@
                 if (search) params.append('search', search);
 
                 const res = await API.get(`/api/invoice/list?${params.toString()}`);
-                let paginatedInvoices = res.data || [];
+                let invoices = res.data || [];
                 totalCount = res.count || 0;
 
-                // Client-side filtering by year/month for paginated data
+                // Apply client-side filtering by year/month
                 if (year || month) {
-                    paginatedInvoices = paginatedInvoices.filter(inv => {
+                    invoices = invoices.filter(inv => {
                         if (!inv.tanggal) return false;
                         const date = new Date(inv.tanggal);
                         const invYear = date.getFullYear().toString();
@@ -1264,13 +1240,24 @@
                         if (month && invMonth !== month) return false;
                         return true;
                     });
+                    
+                    // Update totalCount to reflect filtered results
+                    totalCount = invoices.length;
                 }
+                
+                // Store all filtered invoices for stats
+                const allFilteredInvoices = invoices;
+                
+                // Now apply pagination to the filtered results
+                const startIdx = (currentPage - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+                const paginatedInvoices = invoices.slice(startIdx, endIdx);
 
                 renderInvoices(paginatedInvoices);
                 updatePagination();
-                updateTotalNominal(allFilteredInvoices);  // Use ALL filtered invoices, not paginated
+                updateTotalNominal(allFilteredInvoices);  // Use ALL filtered invoices
                 
-                // Update welcome stats with ALL filtered invoices (not just paginated)
+                // Update welcome stats with ALL filtered invoices
                 updateWelcomeStatsWithAllFiltered(allFilteredInvoices);
 
             } catch (err) {
