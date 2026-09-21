@@ -152,13 +152,17 @@
         .search-input:focus, .filter-select:focus {
             outline: none;
             border-color: #4f46e5;
-            background: #fafbff;
+            background: var(--color-bg-secondary);
             box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
         }
         
         .search-input {
             flex: 1;
             min-width: 250px;
+        }
+        
+        .search-input::placeholder {
+            color: var(--color-text-tertiary);
         }
         
         .filter-select {
@@ -338,6 +342,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             background: var(--color-bg-tertiary);
+            vertical-align: middle;
         }
         
         .ticket-table tbody tr {
@@ -357,6 +362,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            vertical-align: middle;
         }
         
         .ticket-table td:nth-child(2) {
@@ -571,11 +577,6 @@
                         <option value="Closed">Closed</option>
                     </select>
                     
-                    <select id="filterLimit" class="filter-select">
-                        <option value="10">10 Tiket</option>
-                        <option value="20" selected>20 Tiket</option>
-                        <option value="50">50 Tiket</option>
-                    </select>
                 </div>
 
                 <!-- Tickets Container -->
