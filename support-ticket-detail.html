@@ -641,34 +641,25 @@
             console.log('[DateFormat] Raw input:', dateString);
             
             try {
-                // If no timezone info, assume UTC
-                let dateObj = dateString;
-                if (typeof dateString === 'string' && !dateString.includes('Z') && !dateString.includes('+') && !dateString.includes('-')) {
-                    // No timezone, append Z to treat as UTC
-                    dateObj = dateString + 'Z';
-                    console.log('[DateFormat] Added Z for UTC:', dateObj);
-                }
-                
-                const date = new Date(dateObj);
+                // Database timestamps are already in WIB (local time)
+                // Parse directly WITHOUT timezone conversion
+                const date = new Date(dateString);
                 
                 if (isNaN(date.getTime())) {
                     return '-';
                 }
                 
-                console.log('[DateFormat] Parsed date object:', date);
-                console.log('[DateFormat] Date ISO:', date.toISOString());
-                console.log('[DateFormat] Date UTC time:', date.getUTCHours(), 'h', date.getUTCMinutes(), 'm');
+                console.log('[DateFormat] Parsed date:', date);
+                console.log('[DateFormat] Local time (no conversion):', date.toLocaleString('id-ID'));
                 
-                // Format using Asia/Jakarta timezone
+                // Format as-is (database already in WIB)
                 const formatter = new Intl.DateTimeFormat('id-ID', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit',
                     hour: '2-digit',
                     minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false,
-                    timeZone: 'Asia/Jakarta'
+                    hour12: false
                 });
                 
                 const formatted = formatter.format(date);

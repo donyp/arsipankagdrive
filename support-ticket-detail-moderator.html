@@ -689,36 +689,37 @@
             
             console.log('[DateFormat] Raw input:', dateString);
             
-            // If no timezone info, assume UTC
-            let dateObj = dateString;
-            if (!dateString.includes('Z') && !dateString.includes('+') && !dateString.includes('-')) {
-                // No timezone, append Z to treat as UTC
-                dateObj = dateString + 'Z';
-                console.log('[DateFormat] Added Z for UTC:', dateObj);
+            try {
+                // Database timestamps are already in WIB (local time)
+                // Parse directly WITHOUT timezone conversion
+                const date = new Date(dateString);
+                
+                if (isNaN(date.getTime())) {
+                    return '-';
+                }
+                
+                console.log('[DateFormat] Parsed date:', date);
+                console.log('[DateFormat] Local time (no conversion):', date.toLocaleString('id-ID'));
+                
+                // Format as-is (database already in WIB)
+                const formatter = new Intl.DateTimeFormat('id-ID', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                });
+                
+                const formatted = formatter.format(date);
+                console.log('[DateFormat] Final formatted:', formatted);
+                
+                return formatted;
+            } catch (e) {
+                console.error('[DateFormat] Error:', e);
+                return '-';
             }
-            
-            const date = new Date(dateObj);
-            
-            console.log('[DateFormat] Parsed date object:', date);
-            console.log('[DateFormat] Date ISO:', date.toISOString());
-            console.log('[DateFormat] Date UTC time:', date.getUTCHours(), 'h', date.getUTCMinutes(), 'm');
-            
-            // Format dengan timezone WIB (UTC+7)
-            const formatter = new Intl.DateTimeFormat('id-ID', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false,
-                timeZone: 'Asia/Jakarta'
-            });
-            
-            const formatted = formatter.format(date);
-            console.log('[DateFormat] Final formatted:', formatted);
-            
-            return formatted;
         }
 
         function getLastReplyTime(ticket) {
