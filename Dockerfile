@@ -56,6 +56,7 @@ ENV PORT=8080
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=512
 ENV LOG_LEVEL=warn
+ENV RCLONE_CONFIG=/app/rclone.conf
 
 # Expose port
 # 8080 for Cloud Run / Node backend
@@ -77,4 +78,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Storage uses rclone (Google Drive) instead
 
 # Start application
-CMD ["/bin/bash", "/app/start.sh"]
+CMD ["node", "/app/backend/server.js"]

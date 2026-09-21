@@ -19,6 +19,31 @@ const archiver = require('archiver');
 const RcloneStorage = require('./rclone_wrapper');
 const LocalStorage = require('./local_storage');
 const { initializeClient: initializeSecretManager, getSecret } = require('./secretManager');
+
+// Create necessary directories at startup
+const dirsToCreate = [
+    '/app/data/log',
+    '/app/data/temp',
+    '/app/backend/data/log',
+    '/app/backend/data/temp',
+    '/app/backend/tmp',
+    path.join(__dirname, '..', 'data', 'log'),
+    path.join(__dirname, '..', 'data', 'temp'),
+    path.join(__dirname, 'data', 'log'),
+    path.join(__dirname, 'data', 'temp'),
+    path.join(__dirname, 'tmp')
+];
+
+dirsToCreate.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        try {
+            fs.mkdirSync(dir, { recursive: true });
+            console.log(`[STARTUP] Created directory: ${dir}`);
+        } catch (err) {
+            console.warn(`[STARTUP] Could not create directory ${dir}:`, err.message);
+        }
+    }
+});
 const { initializeAlist } = require('./alistStartupHandler');
 const { initializeRcloneConnectivity, verifyRcloneConnectivity } = require('./rcloneConnectivityHandler');
 const { runBackendInitialization } = require('./backendInitializer');
