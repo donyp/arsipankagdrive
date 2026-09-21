@@ -1594,13 +1594,15 @@
                 let zonaName = 'Admin';
                 if (currentUser.zonas?.nama) {
                     zonaName = currentUser.zonas.nama || 'Admin';
+                    // Remove leading zeros from zona number (e.g., "Zona 01" -> "Zona 1")
+                    zonaName = zonaName.replace(/\bZona\s+0+(\d+)/, 'Zona $1');
                 }
 
                 // Update welcome section with safe checks
                 const welcomeNameEl = document.getElementById('welcome-name');
                 const welcomeInfoEl = document.getElementById('welcome-info');
                 if (welcomeNameEl) welcomeNameEl.textContent = `Selamat siang, ${zonaName} 👋`;
-                if (welcomeInfoEl) welcomeInfoEl.textContent = `Ringkasan data zona ${zonaName}`;
+                if (welcomeInfoEl) welcomeInfoEl.textContent = `Total Invoice dari ${zonaName}`;
 
                 await loadAllInvoices();
                 await updateWelcomeStats();
