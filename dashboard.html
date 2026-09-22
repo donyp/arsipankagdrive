@@ -559,11 +559,18 @@
             background-color: var(--color-bg-secondary) !important;
         }
 
-        /* Fix black text in dark mode */
-        html[data-dark-mode="true"] *[style*="color: black"],
-        html[data-dark-mode="true"] *[style*="color: #000"],
-        html[data-dark-mode="true"] *[style*="color: #000000"] {
-            color: var(--color-text-primary) !important;
+        /* Fix all light-colored backgrounds that should be darker in dark mode */
+        html[data-dark-mode="true"] [style*="background: #f3f4f6"],
+        html[data-dark-mode="true"] [style*="background: #ecfdf5"],
+        html[data-dark-mode="true"] [style*="background: #fffbeb"],
+        html[data-dark-mode="true"] [style*="background: #fef3c7"],
+        html[data-dark-mode="true"] [style*="background: #fee2e2"],
+        html[data-dark-mode="true"] [style*="background-color: #f3f4f6"],
+        html[data-dark-mode="true"] [style*="background-color: #ecfdf5"],
+        html[data-dark-mode="true"] [style*="background-color: #fffbeb"],
+        html[data-dark-mode="true"] [style*="background-color: #fef3c7"],
+        html[data-dark-mode="true"] [style*="background-color: #fee2e2"] {
+            background: rgba(100, 116, 139, 0.2) !important;
         }
 
         /* Fix status badges text color in dark mode */
