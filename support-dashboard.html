@@ -37,6 +37,50 @@
         .gradient-header {
             background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
         }
+
+        /* Tailwind utilities dark mode overrides */
+        html[data-dark-mode="true"] .bg-gray-50 {
+            background-color: var(--color-bg-primary);
+        }
+
+        html[data-dark-mode="true"] .text-white {
+            color: white;
+        }
+
+        html[data-dark-mode="true"] .px-6 {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+        html[data-dark-mode="true"] .py-5 {
+            padding-top: 1.25rem;
+            padding-bottom: 1.25rem;
+        }
+
+        html[data-dark-mode="true"] .text-red-100 {
+            color: rgba(254, 226, 226, 0.7);
+        }
+
+        html[data-dark-mode="true"] .grid {
+            background: transparent;
+        }
+
+        html[data-dark-mode="true"] .shadow {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        html[data-dark-mode="true"] .shadow-sm {
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        html[data-dark-mode="true"] .p-6 {
+            padding: 1.5rem;
+            background: var(--color-bg-primary);
+        }
+
+        html[data-dark-mode="true"] .sticky {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
         
         .stat-card {
             background: white;
@@ -460,6 +504,58 @@
 
         html[data-dark-mode="true"] .border-gray-200 {
             border-color: var(--color-border);
+        }
+
+        /* Overflow hidden containers */
+        html[data-dark-mode="true"] .overflow-hidden {
+            background: var(--color-bg-secondary);
+        }
+
+        /* Main content area */
+        html[data-dark-mode="true"] [style*="margin-left"] {
+            background: var(--color-bg-primary);
+        }
+
+        /* Ensure text is always visible */
+        html[data-dark-mode="true"] td,
+        html[data-dark-mode="true"] th,
+        html[data-dark-mode="true"] span,
+        html[data-dark-mode="true"] p,
+        html[data-dark-mode="true"] div {
+            transition: color 0.2s, background 0.2s;
+        }
+
+        /* Additional dark mode overrides for content areas */
+        html[data-dark-mode="true"] .mb-8 {
+            background: transparent;
+        }
+
+        html[data-dark-mode="true"] tbody {
+            background: var(--color-bg-secondary);
+        }
+
+        html[data-dark-mode="true"] thead {
+            background: var(--color-bg-tertiary);
+        }
+
+        /* Ensure all links are readable */
+        html[data-dark-mode="true"] a {
+            color: #93c5fd;
+            text-decoration: none;
+        }
+
+        html[data-dark-mode="true"] a:hover {
+            color: #60a5fa;
+        }
+
+        /* Action buttons in table */
+        html[data-dark-mode="true"] .action-btn,
+        html[data-dark-mode="true"] button[onclick*="view"],
+        html[data-dark-mode="true"] button[onclick*="delete"],
+        html[data-dark-mode="true"] button[onclick*="edit"] {
+            background: #e74c3c;
+            color: white;
+            border: none;
         }
     </style>
 </head>

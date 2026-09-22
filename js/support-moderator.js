@@ -397,6 +397,14 @@ function renderTickets(tickets) {
         return;
     }
 
+    // Check dark mode
+    const isDarkMode = localStorage.getItem('dark_mode_enabled') === 'true';
+    const textColor = isDarkMode ? '#f1f5f9' : '#1f2937';
+    const secondaryTextColor = isDarkMode ? '#cbd5e1' : '#6b7280';
+    const bgHover = isDarkMode ? '#334155' : '#f9fafb';
+    const bgDefault = isDarkMode ? 'transparent' : 'white';
+    const borderColor = isDarkMode ? '#475569' : '#e5e7eb';
+
     // Filter tickets based on current tab
     let filteredTickets = tickets;
     if (currentTab === 'active') {
@@ -414,10 +422,10 @@ function renderTickets(tickets) {
     if (filteredTickets.length === 0) {
         container.innerHTML = `
             <tr>
-                <td colspan="7" style="padding: 48px 16px; text-align: center;">
-                    <div class="empty-state" style="padding: 0;">
+                <td colspan="7" style="padding: 48px 16px; text-align: center; background: ${bgDefault}; border-bottom: 1px solid ${borderColor};">
+                    <div class="empty-state" style="padding: 0; color: ${secondaryTextColor};">
                         <div class="empty-state-icon">📭</div>
-                        <div style="color: #6b7280;">Tidak ada tiket ditemukan</div>
+                        <div>Tidak ada tiket ditemukan</div>
                     </div>
                 </td>
             </tr>
@@ -453,22 +461,22 @@ function renderTickets(tickets) {
         const relativeTime = getRelativeTime(ticket.created_at);
         
         return `
-            <tr style="border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: background 0.2s;" onclick="openTicket('${ticket.id}')" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
-                <td style="padding: 12px 16px; font-weight: 500; color: #1f2937;">${ticket.ticket_number || 'N/A'}</td>
-                <td style="padding: 12px 16px; color: #374151; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${ticket.subject}">${ticket.subject || 'N/A'}</td>
-                <td style="padding: 12px 16px; color: #6b7280; font-size: 14px;">${zonaDisplay}</td>
+            <tr style="border-bottom: 1px solid ${borderColor}; cursor: pointer; transition: background 0.2s; background: ${bgDefault};" onclick="openTicket('${ticket.id}')" onmouseover="this.style.background='${bgHover}'" onmouseout="this.style.background='${bgDefault}'">
+                <td style="padding: 12px 16px; font-weight: 500; color: ${textColor};">${ticket.ticket_number || 'N/A'}</td>
+                <td style="padding: 12px 16px; color: ${textColor}; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${ticket.subject}">${ticket.subject || 'N/A'}</td>
+                <td style="padding: 12px 16px; color: ${secondaryTextColor}; font-size: 14px;">${zonaDisplay}</td>
                 <td style="padding: 12px 16px;">
                     <div style="display: flex; align-items: center; gap: 6px;">
                         <span style="width: 4px; height: 20px; border-radius: 2px; background: ${getPriorityColor(priorityClass)}; display: inline-block;"></span>
-                        <span style="font-size: 13px; color: #6b7280;">${ticket.priority || 'Medium'}</span>
+                        <span style="font-size: 13px; color: ${secondaryTextColor};">${ticket.priority || 'Medium'}</span>
                     </div>
                 </td>
                 <td style="padding: 12px 16px;">
-                    <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; background: ${getStatusBg(statusClass)}; color: ${getStatusColor(statusClass)};">
+                    <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; background: ${getStatusBgDarkMode(statusClass, isDarkMode)}; color: ${getStatusColorDarkMode(statusClass, isDarkMode)};">
                         ${ticket.status || 'Open'}
                     </span>
                 </td>
-                <td style="padding: 12px 16px; font-size: 13px; color: #6b7280;">${relativeTime}</td>
+                <td style="padding: 12px 16px; font-size: 13px; color: ${secondaryTextColor};">${relativeTime}</td>
                 <td style="padding: 12px 16px; text-align: center;">
                     <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openTicket('${ticket.id}')">
                         <i class="fas fa-arrow-right"></i>
@@ -480,6 +488,51 @@ function renderTickets(tickets) {
     
     container.innerHTML = html;
     console.log('[Support-Moderator] Table rendered with', filteredTickets.length, 'rows');
+}
+
+// Dark mode helper functions for status styling
+function getStatusBgDarkMode(status, isDarkMode) {
+    if (!isDarkMode) {
+        const map = {
+            'open': '#fee2e2',
+            'answered': '#dbeafe',
+            'in-progress': '#fef3c7',
+            'resolved': '#dcfce7',
+            'closed': '#f3f4f6'
+        };
+        return map[status] || '#dbeafe';
+    } else {
+        const map = {
+            'open': '#7f1d1d',
+            'answered': '#0c2d6b',
+            'in-progress': '#78350f',
+            'resolved': '#14532d',
+            'closed': '#374151'
+        };
+        return map[status] || '#0c2d6b';
+    }
+}
+
+function getStatusColorDarkMode(status, isDarkMode) {
+    if (!isDarkMode) {
+        const map = {
+            'open': '#991b1b',
+            'answered': '#1e40af',
+            'in-progress': '#92400e',
+            'resolved': '#166534',
+            'closed': '#374151'
+        };
+        return map[status] || '#1e40af';
+    } else {
+        const map = {
+            'open': '#fecaca',
+            'answered': '#93c5fd',
+            'in-progress': '#fcd34d',
+            'resolved': '#86efac',
+            'closed': '#d1d5db'
+        };
+        return map[status] || '#93c5fd';
+    }
 }
 
 function getPriorityColor(priority) {
