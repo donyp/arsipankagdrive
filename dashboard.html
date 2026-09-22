@@ -279,6 +279,66 @@
             background-color: rgba(0, 0, 0, 0.7) !important;
         }
 
+        /* Fix all modal backgrounds in dark mode */
+        html[data-dark-mode="true"] .bg-white {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] .bg-white.rounded-lg {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] div.bg-white {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        /* Fix modal text colors */
+        html[data-dark-mode="true"] .text-gray-800 {
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] .text-gray-400 {
+            color: var(--color-text-tertiary) !important;
+        }
+
+        html[data-dark-mode="true"] .text-gray-600 {
+            color: var(--color-text-secondary) !important;
+        }
+
+        /* Fix modal button colors */
+        html[data-dark-mode="true"] button.text-gray-400 {
+            color: var(--color-text-tertiary) !important;
+        }
+
+        html[data-dark-mode="true"] button.hover\:text-gray-600:hover {
+            color: var(--color-text-secondary) !important;
+        }
+
+        /* Fix confirmation modal and other inline style modals */
+        html[data-dark-mode="true"] #confirmationModal > div {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] #edit-headline-modal > div {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] #pdfUploadModal > div {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] #buktiBayarUploadModal > div {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        /* Fix all modal headings */
+        html[data-dark-mode="true"] #pdfUploadModal h2,
+        html[data-dark-mode="true"] #buktiBayarUploadModal h2,
+        html[data-dark-mode="true"] #edit-headline-modal h2,
+        html[data-dark-mode="true"] #confirmationModal h3 {
+            color: var(--color-text-primary) !important;
+        }
+
         /* Fix header in dark mode */
         html[data-dark-mode="true"] header.sticky {
             background-color: rgba(30, 41, 59, 0.95) !important;
