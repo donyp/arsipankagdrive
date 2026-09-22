@@ -15,6 +15,68 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f5f7fa;
+            --color-bg-tertiary: #ffffff;
+            --color-text-primary: #1f2937;
+            --color-text-secondary: #6b7280;
+            --color-border: #e5e7eb;
+        }
+        
+        html[data-dark-mode="true"] {
+            --color-bg-primary: #0f172a;
+            --color-bg-secondary: #1e293b;
+            --color-bg-tertiary: #334155;
+            --color-text-primary: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-border: #475569;
+        }
+        
+        body {
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        html[data-dark-mode="true"] .bg-white {
+            background-color: var(--color-bg-secondary) !important;
+            color: var(--color-text-primary);
+        }
+        
+        html[data-dark-mode="true"] .bg-gray-50 {
+            background-color: var(--color-bg-primary) !important;
+        }
+        
+        html[data-dark-mode="true"] .bg-gray-400,
+        html[data-dark-mode="true"] .bg-green-600 {
+            background-color: inherit !important;
+        }
+        
+        html[data-dark-mode="true"] .text-gray-800,
+        html[data-dark-mode="true"] .text-gray-900 {
+            color: var(--color-text-primary) !important;
+        }
+        
+        html[data-dark-mode="true"] .text-gray-500,
+        html[data-dark-mode="true"] .text-gray-600 {
+            color: var(--color-text-secondary) !important;
+        }
+        
+        html[data-dark-mode="true"] .border-gray-200,
+        html[data-dark-mode="true"] .border-gray-100,
+        html[data-dark-mode="true"] .border-blue-200 {
+            border-color: var(--color-border) !important;
+        }
+        
+        html[data-dark-mode="true"] .bg-blue-50 {
+            background-color: var(--color-bg-secondary) !important;
+        }
+        
+        html[data-dark-mode="true"] .text-blue-800 {
+            color: #93c5fd !important;
+        }
+
         .gradient-header {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }

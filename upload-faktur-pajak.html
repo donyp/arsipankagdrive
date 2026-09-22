@@ -15,6 +15,72 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f5f7fa;
+            --color-bg-tertiary: #ffffff;
+            --color-text-primary: #1f2937;
+            --color-text-secondary: #6b7280;
+            --color-border: #e5e7eb;
+        }
+        
+        html[data-dark-mode="true"] {
+            --color-bg-primary: #0f172a;
+            --color-bg-secondary: #1e293b;
+            --color-bg-tertiary: #334155;
+            --color-text-primary: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-border: #475569;
+        }
+        
+        body {
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        html[data-dark-mode="true"] .bg-white {
+            background-color: var(--color-bg-secondary) !important;
+            color: var(--color-text-primary);
+        }
+        
+        html[data-dark-mode="true"] .bg-gray-50 {
+            background-color: var(--color-bg-primary) !important;
+        }
+        
+        html[data-dark-mode="true"] .text-gray-800,
+        html[data-dark-mode="true"] .text-gray-900 {
+            color: var(--color-text-primary) !important;
+        }
+        
+        html[data-dark-mode="true"] .text-gray-500,
+        html[data-dark-mode="true"] .text-gray-600 {
+            color: var(--color-text-secondary) !important;
+        }
+        
+        html[data-dark-mode="true"] .border-gray-200,
+        html[data-dark-mode="true"] .border-gray-100,
+        html[data-dark-mode="true"] .border-yellow-200 {
+            border-color: var(--color-border) !important;
+        }
+        
+        html[data-dark-mode="true"] .bg-yellow-50 {
+            background-color: var(--color-bg-secondary) !important;
+        }
+        
+        html[data-dark-mode="true"] .text-yellow-800 {
+            color: #fef3c7 !important;
+        }
+        
+        html[data-dark-mode="true"] .bg-gray-100,
+        html[data-dark-mode="true"] .bg-gray-200 {
+            background-color: var(--color-bg-secondary) !important;
+        }
+        
+        html[data-dark-mode="true"] .file-item {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
         .gradient-header {
             background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
         }
@@ -35,9 +101,17 @@
             background: #faf5ff;
         }
 
+        html[data-dark-mode="true"] .file-item.valid {
+            background: var(--color-bg-tertiary) !important;
+        }
+
         .file-item.invalid {
             border-left-color: #ef4444;
             background: #fef2f2;
+        }
+
+        html[data-dark-mode="true"] .file-item.invalid {
+            background: var(--color-bg-secondary) !important;
         }
 
         .file-item-icon {
@@ -51,6 +125,11 @@
             font-weight: 700;
             font-size: 18px;
             flex-shrink: 0;
+        }
+
+        html[data-dark-mode="true"] .file-item-icon {
+            background: var(--color-bg-secondary) !important;
+            color: var(--color-text-secondary) !important;
         }
 
         .file-item.valid .file-item-icon {
@@ -70,11 +149,19 @@
             font-size: 14px;
         }
 
+        html[data-dark-mode="true"] .file-item-name {
+            color: var(--color-text-primary) !important;
+        }
+
         .file-item-info {
             font-size: 12px;
             color: #2c3e50;
             margin-top: 4px;
             font-weight: 500;
+        }
+
+        html[data-dark-mode="true"] .file-item-info {
+            color: var(--color-text-secondary) !important;
         }
 
         .delete-btn {
@@ -137,6 +224,11 @@
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        html[data-dark-mode="true"] .upload-spinner {
+            background: var(--color-bg-secondary) !important;
+            color: var(--color-text-primary) !important;
         }
 
         .upload-spinner i {
