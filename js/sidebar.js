@@ -70,11 +70,23 @@
         }
     };
 
+    // Check if dark mode is enabled (do this first, before navHTML generation)
+    const isDarkMode = localStorage.getItem('dark_mode_enabled') === 'true';
+    const bgColor = isDarkMode ? '#1e293b' : '#ffffff';
+    const borderColor = isDarkMode ? '#475569' : '#e5e7eb';
+    const textColor = isDarkMode ? '#f1f5f9' : '#374151';
+    const secondaryTextColor = isDarkMode ? '#cbd5e1' : '#9ca3af';
+    const hoverBgColor = isDarkMode ? '#334155' : '#f9fafb';
+    const activeBgColor = isDarkMode ? '#1e40af' : '#eff6ff';
+    const activeTextColor = isDarkMode ? '#60a5fa' : '#2563eb';
+    const buttonBgColor = isDarkMode ? '#334155' : '#f3f4f6';
+    const dropdownBgColor = isDarkMode ? '#0f172a' : '#fafbfc';
+
     let navHTML = '';
 
     for (const item of menuItems) {
         if (item.section) {
-            navHTML += `<p style="font-size: 0.65rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin: 0; padding: 1rem 1rem 0.5rem 1rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0;">${item.section}</p>`;
+            navHTML += `<p style="font-size: 0.65rem; color: ${secondaryTextColor}; text-transform: uppercase; letter-spacing: 0.1em; margin: 0; padding: 1rem 1rem 0.5rem 1rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0;">${item.section}</p>`;
             continue;
         }
 
@@ -87,7 +99,7 @@
             for (const child of visibleChildren) {
                 const isActive = activePage === child.href;
                 childrenHTML += `
-                    <a href="${child.href}" style="display: flex; align-items: center; padding: 0.5rem 1rem 0.5rem 3rem; margin: 0.05rem 0; border-radius: 0; font-size: 0.8rem; ${isActive ? 'color: #2563eb; background: #eff6ff; border-left: 3px solid #2563eb; padding-left: 2.75rem; font-weight: 600;' : 'color: #6b7280;'} text-decoration: none; width: 100%; box-sizing: border-box; display: flex; align-items: center; min-height: 2rem; transition: all 0.2s;">
+                    <a href="${child.href}" style="display: flex; align-items: center; padding: 0.5rem 1rem 0.5rem 3rem; margin: 0.05rem 0; border-radius: 0; font-size: 0.8rem; ${isActive ? `color: ${activeTextColor}; background: ${activeBgColor}; border-left: 3px solid ${activeTextColor}; padding-left: 2.75rem; font-weight: 600;` : `color: ${secondaryTextColor};`} text-decoration: none; width: 100%; box-sizing: border-box; display: flex; align-items: center; min-height: 2rem; transition: all 0.2s;">
                         <svg style="width: 0.85rem; height: 0.85rem; flex-shrink: 0; margin-right: 0.6rem; opacity: 0.7;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             ${renderIcon(child.icon)}
                         </svg>
@@ -98,7 +110,7 @@
 
             navHTML += `
                 <div id="${item.id}-parent" style="padding: 0; margin: 0;">
-                    <button onclick="toggleSidebarDropdown('${item.id}')" style="width: 100%; display: flex; align-items: center; padding: 0.6rem 1rem; border-radius: 0; font-size: 0.85rem; color: #374151; border: none; background: transparent; cursor: pointer; font-weight: 500; min-height: 2.5rem; line-height: 1.3; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='transparent'">
+                    <button onclick="toggleSidebarDropdown('${item.id}')" style="width: 100%; display: flex; align-items: center; padding: 0.6rem 1rem; border-radius: 0; font-size: 0.85rem; color: ${textColor}; border: none; background: transparent; cursor: pointer; font-weight: 500; min-height: 2.5rem; line-height: 1.3; transition: all 0.2s;" onmouseover="this.style.backgroundColor='${hoverBgColor}'" onmouseout="this.style.backgroundColor='transparent'">
                         <svg style="width: 1.1rem; height: 1.1rem; flex-shrink: 0; margin-right: 0.75rem; opacity: 0.7;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             ${renderIcon(item.icon)}
                         </svg>
@@ -108,7 +120,7 @@
                         </svg>
                     </button>
                     <div id="${item.id}" class="sidebar-dropdown-content" style="max-height: ${maxH}; overflow: hidden; transition: max-height 300ms;">
-                        <div style="padding: 0; background: #fafbfc;">
+                        <div style="padding: 0; background: ${dropdownBgColor};">
                             ${childrenHTML}
                         </div>
                     </div>
@@ -118,7 +130,7 @@
             const isActive = activePage === item.href;
             navHTML += `
                 <div style="padding: 0; margin: 0;">
-                    <a href="${item.href}" style="display: flex; align-items: center; padding: 0.6rem 1rem; border-radius: 0; font-size: 0.85rem; color: ${isActive ? '#2563eb' : '#374151'}; background: ${isActive ? '#eff6ff' : 'transparent'}; border-left: ${isActive ? '3px solid #2563eb' : '3px solid transparent'}; text-decoration: none; font-weight: ${isActive ? '600' : '500'}; width: 100%; box-sizing: border-box; min-height: 2.5rem; display: flex; align-items: center; line-height: 1.3; transition: all 0.2s;" onmouseover="this.style.backgroundColor='${isActive ? '#eff6ff' : '#f9fafb'}'" onmouseout="this.style.backgroundColor='${isActive ? '#eff6ff' : 'transparent'}'">
+                    <a href="${item.href}" style="display: flex; align-items: center; padding: 0.6rem 1rem; border-radius: 0; font-size: 0.85rem; color: ${isActive ? activeTextColor : textColor}; background: ${isActive ? activeBgColor : 'transparent'}; border-left: ${isActive ? `3px solid ${activeTextColor}` : '3px solid transparent'}; text-decoration: none; font-weight: ${isActive ? '600' : '500'}; width: 100%; box-sizing: border-box; min-height: 2.5rem; display: flex; align-items: center; line-height: 1.3; transition: all 0.2s;" onmouseover="this.style.backgroundColor='${isActive ? activeBgColor : hoverBgColor}'" onmouseout="this.style.backgroundColor='${isActive ? activeBgColor : 'transparent'}'">
                         <svg style="width: 1.1rem; height: 1.1rem; flex-shrink: 0; margin-right: 0.75rem; opacity: ${isActive ? '1' : '0.7'};" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             ${renderIcon(item.icon)}
                         </svg>
@@ -150,17 +162,23 @@
             height: ${hasAnnouncement ? 'calc(100vh - 60px)' : '100vh'};
             display: flex;
             flex-direction: column;
-            background: #ffffff;
-            border-right: 1px solid #e5e7eb;
+            background: ${bgColor};
+            border-right: 1px solid ${borderColor};
             z-index: 9999;
             overflow: hidden;
             box-sizing: border-box;
             min-height: ${hasAnnouncement ? 'calc(100vh - 60px)' : '100vh'};
+            transition: background 0.3s, border-color 0.3s;
         `;
+
+        const textColor = isDarkMode ? '#f1f5f9' : '#1f2937';
+        const secondaryTextColor = isDarkMode ? '#cbd5e1' : '#9ca3af';
+        const hoverBgColor = isDarkMode ? '#334155' : '#f9fafb';
+        const buttonBgColor = isDarkMode ? '#334155' : '#f3f4f6';
 
         sidebar.innerHTML = `
             <!-- Header Logo Section -->
-            <div style="padding: 1.25rem 1rem; border-bottom: 1px solid #e5e7eb; flex-shrink: 0;">
+            <div style="padding: 1.25rem 1rem; border-bottom: 1px solid ${borderColor}; flex-shrink: 0;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <!-- Logo -->
                     <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">
@@ -170,8 +188,8 @@
                     </div>
                     <!-- Company Name -->
                     <div style="flex: 1;">
-                        <h1 style="font-size: 0.85rem; font-weight: 900; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2;">Arsip Anka</h1>
-                        <span style="font-size: 0.65rem; color: #9ca3af; font-weight: 600; text-transform: capitalize; letter-spacing: 0.03em; display: block; line-height: 1.2;">Member Area</span>
+                        <h1 style="font-size: 0.85rem; font-weight: 900; color: ${textColor}; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; line-height: 1.2;">Arsip Anka</h1>
+                        <span style="font-size: 0.65rem; color: ${secondaryTextColor}; font-weight: 600; text-transform: capitalize; letter-spacing: 0.03em; display: block; line-height: 1.2;">Member Area</span>
                     </div>
                 </div>
             </div>
@@ -182,12 +200,12 @@
             </nav>
 
             <!-- Footer Area with Dark Mode Toggle -->
-            <div style="padding: 1rem; border-top: 1px solid #e5e7eb; flex-shrink: 0; font-size: 0.7rem; color: #9ca3af; text-align: center; display: flex; flex-direction: column; gap: 1rem;">
-                <button id="dark-mode-toggle" onclick="toggleDarkMode()" style="width: 100%; padding: 0.5rem; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; color: #6b7280; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <div style="padding: 1rem; border-top: 1px solid ${borderColor}; flex-shrink: 0; font-size: 0.7rem; color: ${secondaryTextColor}; text-align: center; display: flex; flex-direction: column; gap: 1rem;">
+                <button id="dark-mode-toggle" onclick="toggleDarkMode()" style="width: 100%; padding: 0.5rem; background: ${buttonBgColor}; border: 1px solid ${borderColor}; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; color: ${textColor}; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 6px;">
                     <span id="dark-mode-icon">🌙</span>
                     <span id="dark-mode-label">Dark Mode</span>
                 </button>
-                <p style="margin: 0; font-weight: 500;">v3.1</p>
+                <p style="margin: 0; font-weight: 500; color: ${secondaryTextColor};">v3.1</p>
             </div>
         `;
 
