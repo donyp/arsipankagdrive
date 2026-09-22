@@ -47,6 +47,68 @@
             transition: background 0.3s, color 0.3s;
         }
         
+        /* Dark mode styling */
+        html[data-dark-mode="true"] .bg-white {
+            background: var(--color-bg-secondary) !important;
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] .text-gray-900 {
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] .text-gray-500 {
+            color: var(--color-text-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] .text-gray-400 {
+            color: var(--color-text-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] .border-gray-100 {
+            border-color: var(--color-border) !important;
+        }
+
+        html[data-dark-mode="true"] .border-gray-200 {
+            border-color: var(--color-border) !important;
+        }
+
+        html[data-dark-mode="true"] .bg-gray-50 {
+            background: var(--color-bg-primary) !important;
+        }
+
+        html[data-dark-mode="true"] .bg-gray-100 {
+            background: var(--color-bg-tertiary) !important;
+        }
+
+        html[data-dark-mode="true"] .hover\:bg-gray-50:hover {
+            background: var(--color-bg-tertiary) !important;
+        }
+
+        html[data-dark-mode="true"] table td,
+        html[data-dark-mode="true"] table th {
+            color: var(--color-text-primary) !important;
+            border-color: var(--color-border) !important;
+        }
+
+        html[data-dark-mode="true"] tbody tr {
+            background: var(--color-bg-secondary) !important;
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] tbody tr:hover {
+            background: var(--color-bg-tertiary) !important;
+        }
+
+        html[data-dark-mode="true"] thead {
+            background: var(--color-bg-tertiary) !important;
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] .shadow-md {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+        }
+
         html, body { zoom: 0.8; }
     </style>
 </head>
