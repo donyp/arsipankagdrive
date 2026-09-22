@@ -415,6 +415,7 @@
 
         html[data-dark-mode="true"] .pagination {
             border-top-color: var(--color-border);
+            background: transparent;
         }
         
         .pagination-info {
@@ -429,6 +430,42 @@
         .pagination-buttons {
             display: flex;
             gap: 6px;
+        }
+
+        /* Override Tailwind classes that might conflict */
+        html[data-dark-mode="true"] .overflow-hidden {
+            background: var(--color-bg-secondary);
+        }
+
+        /* Main content area background */
+        html[data-dark-mode="true"] > body {
+            background: var(--color-bg-primary);
+        }
+
+        /* Margin-left container */
+        html[data-dark-mode="true"] [style*="margin-left"] {
+            background: var(--color-bg-primary);
+        }
+
+        /* Header section */
+        .gradient-header {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        /* All divs inside main content */
+        html[data-dark-mode="true"] .p-6 {
+            background: var(--color-bg-primary);
+        }
+
+        /* Stat cards container */
+        html[data-dark-mode="true"] .grid {
+            background: transparent;
+        }
+
+        /* Tab container */
+        html[data-dark-mode="true"] .mb-8 {
+            background: transparent;
         }
 
         /* Table styling */
@@ -489,21 +526,98 @@
             color: var(--color-text-primary);
         }
 
-        /* Container styling */
+        /* Table container styling */
         .rounded-lg {
             background: white;
         }
 
         html[data-dark-mode="true"] .rounded-lg {
             background: var(--color-bg-secondary);
+            border-color: var(--color-border);
         }
 
+        /* Shadow styling */
+        .shadow-sm {
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        html[data-dark-mode="true"] .shadow-sm {
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        /* Border gray-200 styling */
         .border-gray-200 {
             border-color: #e5e7eb;
         }
 
         html[data-dark-mode="true"] .border-gray-200 {
             border-color: var(--color-border);
+        }
+
+        /* Inline table styling for dark mode */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        html[data-dark-mode="true"] table {
+            background: var(--color-bg-secondary);
+        }
+
+        table thead {
+            background: #f9fafb;
+        }
+
+        html[data-dark-mode="true"] table thead {
+            background: var(--color-bg-tertiary);
+        }
+
+        table thead tr {
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        html[data-dark-mode="true"] table thead tr {
+            border-bottom-color: var(--color-border);
+        }
+
+        table tbody tr {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        html[data-dark-mode="true"] table tbody tr {
+            background: var(--color-bg-secondary);
+            border-bottom-color: var(--color-border);
+        }
+
+        table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        html[data-dark-mode="true"] table tbody tr:hover {
+            background: var(--color-bg-tertiary);
+        }
+
+        table th,
+        table td {
+            text-align: left;
+            padding: 12px 16px;
+            color: #1f2937;
+        }
+
+        html[data-dark-mode="true"] table th {
+            color: var(--color-text-secondary);
+            background: var(--color-bg-tertiary);
+        }
+
+        html[data-dark-mode="true"] table td {
+            color: var(--color-text-primary);
+            background: transparent;
+        }
+
+        .border-gray-200 {
+            border-color: #e5e7eb;
         }
 
         /* Overflow hidden containers */
@@ -556,6 +670,90 @@
             background: #e74c3c;
             color: white;
             border: none;
+        }
+
+        /* Ensure table rows have proper background in dark mode */
+        html[data-dark-mode="true"] tbody tr {
+            background-color: var(--color-bg-secondary);
+        }
+
+        /* Filter labels in dark mode */
+        html[data-dark-mode="true"] label {
+            color: var(--color-text-primary);
+        }
+
+        /* Placeholder text in dark mode */
+        html[data-dark-mode="true"] ::placeholder {
+            color: var(--color-text-secondary);
+            opacity: 0.7;
+        }
+
+        html[data-dark-mode="true"] input::placeholder {
+            color: var(--color-text-secondary);
+            opacity: 0.7;
+        }
+
+        /* Stat card numbers */
+        html[data-dark-mode="true"] .stat-content {
+            color: var(--color-text-primary);
+        }
+
+        /* Explicit table header styling for dark mode */
+        html[data-dark-mode="true"] table > thead > tr > th {
+            background-color: var(--color-bg-tertiary) !important;
+            color: var(--color-text-secondary) !important;
+            border-bottom-color: var(--color-border) !important;
+        }
+
+        /* Explicit table body styling for dark mode */
+        html[data-dark-mode="true"] table > tbody > tr {
+            background-color: var(--color-bg-secondary) !important;
+            border-bottom-color: var(--color-border) !important;
+        }
+
+        html[data-dark-mode="true"] table > tbody > tr > td {
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] table > tbody > tr:hover {
+            background-color: var(--color-bg-tertiary) !important;
+        }
+
+        /* Main content wrapper background */
+        html[data-dark-mode="true"] {
+            background: var(--color-bg-primary);
+        }
+
+        /* Container with margin-left */
+        html[data-dark-mode="true"] div[style*="margin-left: 16rem"] {
+            background: var(--color-bg-primary);
+        }
+
+        /* Content area padding */
+        html[data-dark-mode="true"] div.p-6 {
+            background: var(--color-bg-primary);
+        }
+
+        /* Rounded container */
+        html[data-dark-mode="true"] div.rounded-lg {
+            background: var(--color-bg-secondary);
+            border-color: var(--color-border);
+        }
+
+        /* Shadow containers */
+        html[data-dark-mode="true"] div.shadow-sm {
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            background: var(--color-bg-secondary);
+        }
+
+        html[data-dark-mode="true"] div.shadow {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        /* Overflow hidden container */
+        html[data-dark-mode="true"] div.overflow-hidden {
+            background: var(--color-bg-secondary);
+            border-color: var(--color-border);
         }
     </style>
 </head>
