@@ -21,27 +21,50 @@
             }
         })();
 
-        // Function to apply dark mode color replacements to inline styles
-        function applyDarkModeInlineStyles(isDarkMode) {
-            // This function is safe to call but most styling is now handled by CSS variables
-            // Keep it simple - just update specific elements that need inline color adjustments
-            if (!isDarkMode) return;
-            
-            // Force update all h2 elements with the light text color
-            document.querySelectorAll('h2').forEach(el => {
-                if (el.style.color === 'var(--color-text-primary)' || !el.style.color) {
-                    el.style.color = '#f1f5f9';
+        // Function to apply dark mode to dynamically created elements
+        function applyDarkModeToPopups() {
+            // Find all newly created popups/modals that might not have proper styling
+            document.querySelectorAll('div[role="dialog"], div.modal, div.popup, .action-menu').forEach(popup => {
+                if (popup.style.position === 'fixed' || popup.style.position === 'absolute') {
+                    if (localStorage.getItem('dark_mode_enabled') === 'true') {
+                        // Dark mode: apply dark background
+                        if (!popup.style.backgroundColor || popup.style.backgroundColor === 'white' || popup.style.backgroundColor === '#ffffff') {
+                            popup.style.backgroundColor = '#1e293b';
+                        }
+                        // Make all text white
+                        popup.querySelectorAll('*').forEach(el => {
+                            if (window.getComputedStyle(el).color === 'rgb(0, 0, 0)' || 
+                                window.getComputedStyle(el).color === '#000000' ||
+                                el.style.color === 'black' ||
+                                el.textContent.trim() && !el.children.length) {
+                                el.style.color = '#f1f5f9';
+                            }
+                        });
+                    }
                 }
             });
+        }
 
-            // Force update invoice title heading specifically
-            const invoiceTitle = document.getElementById('invoice-title-heading');
-            if (invoiceTitle) {
-                invoiceTitle.style.color = '#f1f5f9';
-                invoiceTitle.style.setProperty('color', '#f1f5f9', 'important');
-            }
-            
-            console.log('[DarkMode] Inline styles handler ready');
+        // Watch for dynamically created elements
+        const observer = new MutationObserver(mutations => {
+            applyDarkModeToPopups();
+        });
+
+        // Start observing when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true
+                });
+            });
+        } else {
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true
+            });
         }
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -495,8 +518,52 @@
         }
 
         /* Override with direct attribute selector */
-        html[data-dark-mode="true"] [id="invoice-title-heading"] {
-            color: #f1f5f9 !important;
+        /* Fix dynamically created action menus and popups in dark mode */
+        html[data-dark-mode="true"] [style*="position: fixed"][style*="background: white"],
+        html[data-dark-mode="true"] [style*="position: absolute"][style*="background: white"],
+        html[data-dark-mode="true"] div[style*="background: #fff"],
+        html[data-dark-mode="true"] div[style*="background-color: white"] {
+            background-color: var(--color-bg-secondary) !important;
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] [role="menu"],
+        html[data-dark-mode="true"] [role="dialog"],
+        html[data-dark-mode="true"] .popup,
+        html[data-dark-mode="true"] .action-menu {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] [role="menu"] *,
+        html[data-dark-mode="true"] [role="dialog"] *,
+        html[data-dark-mode="true"] .popup *,
+        html[data-dark-mode="true"] .action-menu * {
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] [role="menuitem"],
+        html[data-dark-mode="true"] [role="menuitem"] a,
+        html[data-dark-mode="true"] .action-menu li,
+        html[data-dark-mode="true"] .action-menu button {
+            background-color: var(--color-bg-secondary) !important;
+            color: var(--color-text-primary) !important;
+        }
+
+        /* CATCH-ALL: Fix any white background in dark mode */
+        html[data-dark-mode="true"] *[style*="background: white"],
+        html[data-dark-mode="true"] *[style*="background: #ffffff"],
+        html[data-dark-mode="true"] *[style*="background: #fff"],
+        html[data-dark-mode="true"] *[style*="background-color: white"],
+        html[data-dark-mode="true"] *[style*="background-color: #ffffff"],
+        html[data-dark-mode="true"] *[style*="background-color: #fff"] {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        /* Fix black text in dark mode */
+        html[data-dark-mode="true"] *[style*="color: black"],
+        html[data-dark-mode="true"] *[style*="color: #000"],
+        html[data-dark-mode="true"] *[style*="color: #000000"] {
+            color: var(--color-text-primary) !important;
         }
 
         /* Fix status badges text color in dark mode */
