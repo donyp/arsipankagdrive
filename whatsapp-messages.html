@@ -5,21 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifikasi Zona - Pusat Arsip Anka</title>
     <!-- DARK MODE - Apply immediately to prevent flash -->
-    <script>
-        (function() {
-            if (localStorage.getItem('dark_mode_enabled') === 'true') {
-                document.documentElement.setAttribute('data-dark-mode', 'true');
-                document.documentElement.style.cssText = `
-                    --color-bg-primary: #0f172a;
-                    --color-bg-secondary: #1e293b;
-                    --color-bg-tertiary: #334155;
-                    --color-text-primary: #f1f5f9;
-                    --color-text-secondary: #cbd5e1;
-                    --color-border: #475569;
-                `;
-            }
-        })();
-    </script>
+    <script src="js/dark-mode-init.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
