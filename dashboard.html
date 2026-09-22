@@ -27,7 +27,13 @@
             // Keep it simple - just update specific elements that need inline color adjustments
             if (!isDarkMode) return;
             
-            // Let CSS variables handle everything - no aggressive color replacement
+            // Force update all h2 elements with the light text color
+            document.querySelectorAll('h2').forEach(el => {
+                if (el.style.color === 'var(--color-text-primary)' || !el.style.color) {
+                    el.style.color = '#f1f5f9';
+                }
+            });
+            
             console.log('[DarkMode] Inline styles handler ready');
         }
     </script>
@@ -342,7 +348,13 @@
             color: var(--color-text-primary) !important;
         }
 
-        html[data-dark-mode="true"] [style*="color: var(--color-text-primary)"] {
+        html[data-dark-mode="true"] h2[style*="color: var(--color-text-primary)"] {
+            color: var(--color-text-primary) !important;
+        }
+
+        /* Explicitly fix the invoice header h2 */
+        html[data-dark-mode="true"] #invoice-embed h2,
+        html[data-dark-mode="true"] [style*="📋 Daftar File Invoice"] {
             color: var(--color-text-primary) !important;
         }
 
