@@ -199,12 +199,8 @@
                 ${navHTML}
             </nav>
 
-            <!-- Footer Area with Dark Mode Toggle -->
+            <!-- Footer Area -->
             <div style="padding: 1rem; border-top: 1px solid ${borderColor}; flex-shrink: 0; font-size: 0.7rem; color: ${secondaryTextColor}; text-align: center; display: flex; flex-direction: column; gap: 1rem;">
-                <button id="dark-mode-toggle" onclick="toggleDarkMode()" style="width: 100%; padding: 0.5rem; background: ${buttonBgColor}; border: 1px solid ${borderColor}; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; color: ${textColor}; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    <span id="dark-mode-icon">🌙</span>
-                    <span id="dark-mode-label">Dark Mode</span>
-                </button>
                 <p style="margin: 0; font-weight: 500; color: ${secondaryTextColor};">v3.1</p>
             </div>
         `;
