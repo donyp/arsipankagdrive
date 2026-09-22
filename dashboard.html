@@ -754,6 +754,30 @@
             color: #f1f5f9 !important;
         }
 
+        /* Fix date and time display in dark mode */
+        html[data-dark-mode="true"] #banner-date,
+        html[data-dark-mode="true"] #current-time {
+            color: #f1f5f9 !important;
+        }
+
+        html[data-dark-mode="true"] span[style*="color: #1f2937"] {
+            color: #f1f5f9 !important;
+        }
+
+        html[data-dark-mode="true"] span[style*="color: #9ca3af"] {
+            color: #cbd5e1 !important;
+        }
+
+        /* Fix table header text color in dark mode */
+        html[data-dark-mode="true"] th[style*="color: var(--color-text-secondary)"] {
+            color: white !important;
+        }
+
+        /* Fix table border colors in dark mode */
+        html[data-dark-mode="true"] tr[style*="border-bottom: 2px solid #e5e7eb"] {
+            border-bottom: 2px solid #475569 !important;
+        }
+
         html[data-dark-mode="true"] [style*="padding: 12px"] td {
             color: #f1f5f9 !important;
         }
@@ -1157,6 +1181,10 @@
         .invoice-table tbody tr {
             transition: all 0.2s ease;
             border-bottom: 1px solid #e5e7eb;
+        }
+
+        html[data-dark-mode="true"] .invoice-table tbody tr {
+            border-bottom: 1px solid #475569 !important;
         }
 
         .invoice-table tbody tr:hover {
@@ -1719,10 +1747,10 @@
                                 <h1 class="text-4xl font-black text-gray-900 mb-3" style="line-height: 1.2;">Selamat <span id="time-greeting" class="text-blue-600">Siang</span>, <span data-user-name class="text-blue-600">User</span>! 👋</h1>
                                 <p class="text-sm text-gray-700 font-semibold flex items-center gap-3">
                                     <i class="far fa-calendar text-blue-600"></i> 
-                                    <span id="banner-date" class="font-bold">...</span>
-                                    <span class="text-gray-300">•</span>
+                                    <span id="banner-date" class="font-bold" style="color: #1f2937;">...</span>
+                                    <span style="color: #9ca3af;">•</span>
                                     <i class="far fa-clock text-blue-600"></i> 
-                                    <span id="current-time" class="font-bold">--:--</span>
+                                    <span id="current-time" class="font-bold" style="color: #1f2937;">--:--</span>
                                 </p>
                             </div>
                             <div class="text-right">
