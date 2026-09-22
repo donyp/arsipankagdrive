@@ -99,6 +99,54 @@
             --color-shadow-lg: rgba(0, 0, 0, 0.12);
         }
         
+        /* LIGHT MODE (DEFAULT) - Explicit overrides when NOT in dark mode */
+        html:not([data-dark-mode="true"]) .bg-white {
+            background-color: #ffffff !important;
+        }
+
+        html:not([data-dark-mode="true"]) td {
+            color: #1f2937 !important;
+            background-color: transparent !important;
+        }
+
+        html:not([data-dark-mode="true"]) table {
+            background-color: transparent !important;
+        }
+
+        html:not([data-dark-mode="true"]) table tr:hover {
+            background-color: #f9fafb !important;
+        }
+
+        html:not([data-dark-mode="true"]) .text-gray-800 {
+            color: #1f2937 !important;
+        }
+
+        html:not([data-dark-mode="true"]) .text-gray-400 {
+            color: #9ca3af !important;
+        }
+
+        html:not([data-dark-mode="true"]) .text-gray-600 {
+            color: #4b5563 !important;
+        }
+
+        html:not([data-dark-mode="true"]) #confirmationModal > div,
+        html:not([data-dark-mode="true"]) #edit-headline-modal > div,
+        html:not([data-dark-mode="true"]) #pdfUploadModal > div,
+        html:not([data-dark-mode="true"]) #buktiBayarUploadModal > div {
+            background-color: #ffffff !important;
+        }
+
+        html:not([data-dark-mode="true"]) #pdfUploadModal h2,
+        html:not([data-dark-mode="true"]) #buktiBayarUploadModal h2,
+        html:not([data-dark-mode="true"]) #edit-headline-modal h2,
+        html:not([data-dark-mode="true"]) #confirmationModal h3 {
+            color: #1f2937 !important;
+        }
+
+        html:not([data-dark-mode="true"]) .invoice-title-heading {
+            color: #1f2937 !important;
+        }
+        
         html[data-dark-mode="true"] {
             /* Backgrounds */
             --color-bg-primary: #0f172a;
