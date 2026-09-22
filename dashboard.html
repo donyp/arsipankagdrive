@@ -529,6 +529,40 @@
             color: white;
             border-color: var(--color-header-border);
         }
+
+        html[data-dark-mode="true"] table td {
+            color: #f1f5f9 !important;
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] table tbody tr td {
+            color: #f1f5f9 !important;
+        }
+
+        html[data-dark-mode="true"] .invoice-table td {
+            color: #f1f5f9 !important;
+        }
+
+        html[data-dark-mode="true"] .invoice-table tbody tr {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] .invoice-table tbody tr:hover {
+            background-color: var(--color-bg-tertiary) !important;
+        }
+
+        /* Force light text in all table cells in dark mode */
+        html[data-dark-mode="true"] td {
+            color: #f1f5f9 !important;
+        }
+
+        html[data-dark-mode="true"] td[style*="color"] {
+            color: #f1f5f9 !important;
+        }
+
+        html[data-dark-mode="true"] [style*="padding: 12px"] td {
+            color: #f1f5f9 !important;
+        }
         
         /* Force visibility and background colors */
         html, body {
