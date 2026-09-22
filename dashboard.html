@@ -215,15 +215,94 @@
             background: rgba(16, 185, 129, 0.1) !important;
         }
 
-        /* Override all element defaults for dark mode */
-        html[data-dark-mode="true"] {
-            background-color: var(--color-bg-primary);
+        /* Override Tailwind classes in dark mode */
+        html[data-dark-mode="true"] .bg-white {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] .bg-white\/80 {
+            background-color: var(--color-bg-secondary) !important;
+            opacity: 0.95;
+        }
+
+        html[data-dark-mode="true"] .text-gray-900 {
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] .text-gray-500 {
+            color: var(--color-text-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] .text-gray-600 {
+            color: var(--color-text-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] .text-gray-400 {
+            color: var(--color-text-tertiary) !important;
+        }
+
+        html[data-dark-mode="true"] .border-gray-100 {
+            border-color: var(--color-border) !important;
+        }
+
+        html[data-dark-mode="true"] .bg-gray-50 {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] .bg-blue-50 {
+            background-color: rgba(59, 130, 246, 0.1) !important;
+        }
+
+        html[data-dark-mode="true"] .bg-red-50 {
+            background-color: rgba(239, 68, 68, 0.1) !important;
+        }
+
+        html[data-dark-mode="true"] .bg-black\/50 {
+            background-color: rgba(0, 0, 0, 0.7) !important;
+        }
+
+        /* Modal styling in dark mode */
+        html[data-dark-mode="true"] .hidden.fixed.inset-0 {
+            background-color: rgba(0, 0, 0, 0.7) !important;
+        }
+
+        /* Fix header in dark mode */
+        html[data-dark-mode="true"] header.sticky {
+            background-color: rgba(30, 41, 59, 0.95) !important;
+            border-bottom-color: var(--color-border) !important;
             color: var(--color-text-primary);
         }
 
-        html[data-dark-mode="true"] body {
-            background-color: var(--color-bg-primary);
-            color: var(--color-text-primary);
+        /* Fix greeting card background and text colors */
+        html[data-dark-mode="true"] [class*="bg-white rounded-2xl"] {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] [class*="bg-white rounded-3xl"] {
+            background-color: var(--color-bg-secondary) !important;
+        }
+
+        /* Ensure all text elements have proper contrast */
+        html[data-dark-mode="true"] .text-blue-600 {
+            color: #60a5fa !important;
+        }
+
+        html[data-dark-mode="true"] h1,
+        html[data-dark-mode="true"] h2,
+        html[data-dark-mode="true"] h3,
+        html[data-dark-mode="true"] h4,
+        html[data-dark-mode="true"] h5,
+        html[data-dark-mode="true"] h6 {
+            color: var(--color-text-primary) !important;
+        }
+
+        /* Fix button backgrounds in dark mode */
+        html[data-dark-mode="true"] button.bg-blue-50 {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+        }
+
+        html[data-dark-mode="true"] button.bg-red-50 {
+            background-color: rgba(239, 68, 68, 0.15) !important;
         }
 
         html[data-dark-mode="true"] input,
@@ -232,6 +311,19 @@
             background-color: var(--color-bg-tertiary);
             color: var(--color-text-primary);
             border-color: var(--color-border);
+        }
+
+        html[data-dark-mode="true"] input::placeholder {
+            color: var(--color-text-tertiary);
+        }
+
+        html[data-dark-mode="true"] input:focus,
+        html[data-dark-mode="true"] select:focus,
+        html[data-dark-mode="true"] textarea:focus {
+            background-color: var(--color-bg-tertiary);
+            color: var(--color-text-primary);
+            border-color: var(--color-focus);
+            box-shadow: 0 0 0 3px var(--color-focus-ring);
         }
 
         html[data-dark-mode="true"] button {
