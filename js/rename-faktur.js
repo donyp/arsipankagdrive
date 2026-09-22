@@ -489,27 +489,22 @@ function displayHistorySection(histories) {
         // Use full_name if available, otherwise use renamed_by
         const displayName = h.full_name || h.renamed_by || 'Unknown';
         
-        // Truncate long filenames
-        const maxLength = 50;
-        const oldFileTrunc = h.old_filename.length > maxLength ? h.old_filename.substring(0, maxLength - 3) + '...' : h.old_filename;
-        const newFileTrunc = h.new_filename.length > maxLength ? h.new_filename.substring(0, maxLength - 3) + '...' : h.new_filename;
-        
         const div = document.createElement('div');
-        div.className = 'history-item flex flex-col gap-2 py-3 px-3 rounded-lg border border-transparent hover:border-red-300 hover:bg-red-50 dark-mode-history transition-all group cursor-pointer';
+        div.className = 'history-item flex flex-col gap-2 py-3 px-3 rounded-lg border border-transparent hover:border-blue-300 hover:bg-blue-50 transition-all group cursor-pointer';
         div.innerHTML = `
             <div class="flex items-center justify-between gap-2">
                 <div class="flex-1 min-w-0 flex items-center gap-2">
-                    <i class="fas fa-exchange-alt text-red-500 flex-shrink-0"></i>
+                    <i class="fas fa-exchange-alt text-blue-500 flex-shrink-0"></i>
                     <div class="flex-1 min-w-0">
-                        <div class="text-xs font-medium text-gray-600 truncate" title="${h.old_filename}">
-                            <span class="text-gray-500">From:</span> <span class="font-mono text-gray-700">${oldFileTrunc}</span>
+                        <div class="text-xs font-medium text-gray-600 break-words">
+                            <span class="text-gray-500">From:</span> <span class="font-mono text-gray-700">${h.old_filename}</span>
                         </div>
-                        <div class="text-xs font-medium text-green-700 mt-1 truncate" title="${h.new_filename}">
-                            <span class="text-green-600">To:</span> <span class="font-mono font-semibold text-green-800">${newFileTrunc}</span>
+                        <div class="text-xs font-medium text-blue-700 mt-1 break-words">
+                            <span class="text-blue-600">To:</span> <span class="font-mono font-semibold text-blue-800">${h.new_filename}</span>
                         </div>
                     </div>
                 </div>
-                <button class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded transition-all opacity-0 group-hover:opacity-100 flex-shrink-0 delete-history-btn" title="Hapus" data-history-id="${h.id}">
+                <button class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-100 rounded transition-all opacity-0 group-hover:opacity-100 flex-shrink-0 delete-history-btn" title="Hapus" data-history-id="${h.id}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
