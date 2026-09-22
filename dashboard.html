@@ -6,10 +6,12 @@
     <title>Dashboard | Pusat Arsip Anka</title>
     <!-- DARK MODE - Apply immediately to prevent flash -->
     <script>
-        (function() {
-            if (localStorage.getItem('dark_mode_enabled') === 'true') {
-                document.documentElement.setAttribute('data-dark-mode', 'true');
-                document.documentElement.style.cssText = `
+        // Function to apply/reset CSS variables based on dark mode
+        window.applyDarkModeInlineStyles = function(isDark) {
+            const root = document.documentElement;
+            if (isDark) {
+                // Apply dark mode CSS variables
+                root.style.cssText = `
                     --color-bg-primary: #0f172a;
                     --color-bg-secondary: #1e293b;
                     --color-bg-tertiary: #334155;
@@ -18,6 +20,16 @@
                     --color-border: #475569;
                     --color-border-dark: #64748b;
                 `;
+            } else {
+                // Reset to light mode CSS variables (or remove inline styles to use :root defaults)
+                root.style.cssText = '';
+            }
+        };
+
+        (function() {
+            if (localStorage.getItem('dark_mode_enabled') === 'true') {
+                document.documentElement.setAttribute('data-dark-mode', 'true');
+                window.applyDarkModeInlineStyles(true);
             }
         })();
 
