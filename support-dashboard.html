@@ -5,21 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Support - Pusat Arsip Anka</title>
     <!-- DARK MODE - Apply immediately to prevent flash -->
-    <script>
-        (function() {
-            if (localStorage.getItem('dark_mode_enabled') === 'true') {
-                document.documentElement.setAttribute('data-dark-mode', 'true');
-                document.documentElement.style.cssText = `
-                    --color-bg-primary: #0f172a;
-                    --color-bg-secondary: #1e293b;
-                    --color-bg-tertiary: #334155;
-                    --color-text-primary: #f1f5f9;
-                    --color-text-secondary: #cbd5e1;
-                    --color-border: #475569;
-                `;
-            }
-        })();
-    </script>
+    <script src="js/dark-mode-init.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -63,6 +49,12 @@
             transition: all 0.2s;
             border: 1px solid #f3f4f6;
         }
+
+        html[data-dark-mode="true"] .stat-card {
+            background: var(--color-bg-secondary);
+            border-color: var(--color-border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
         
         .stat-card:hover {
             transform: translateY(-2px);
@@ -93,11 +85,19 @@
             color: #1f2937;
             margin: 0;
         }
-        
+
+        html[data-dark-mode="true"] .stat-content h3 {
+            color: var(--color-text-primary);
+        }
+
         .stat-content p {
             font-size: 13px;
             color: #6b7280;
             margin: 2px 0 0 0;
+        }
+
+        html[data-dark-mode="true"] .stat-content p {
+            color: var(--color-text-secondary);
         }
         
         .tab-nav {
@@ -107,7 +107,11 @@
             padding: 0 0 0 0;
             margin-bottom: 20px;
         }
-        
+
+        html[data-dark-mode="true"] .tab-nav {
+            border-bottom-color: var(--color-border);
+        }
+
         .tab-btn {
             padding: 12px 16px;
             background: none;
@@ -123,11 +127,19 @@
             align-items: center;
             gap: 6px;
         }
-        
+
+        html[data-dark-mode="true"] .tab-btn {
+            color: var(--color-text-secondary);
+        }
+
         .tab-btn:hover {
             color: #1f2937;
         }
-        
+
+        html[data-dark-mode="true"] .tab-btn:hover {
+            color: var(--color-text-primary);
+        }
+
         .tab-btn.active {
             color: #e74c3c;
             border-bottom-color: #e74c3c;
@@ -144,7 +156,12 @@
             flex-wrap: wrap;
             align-items: center;
         }
-        
+
+        html[data-dark-mode="true"] .filter-bar {
+            background: var(--color-bg-secondary);
+            border-color: var(--color-border);
+        }
+
         .search-input, .filter-select {
             padding: 8px 12px;
             border: 1px solid #d1d5db;
@@ -153,6 +170,13 @@
             background: white;
             font-family: inherit;
             transition: all 0.2s;
+        }
+
+        html[data-dark-mode="true"] .search-input,
+        html[data-dark-mode="true"] .filter-select {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-border);
+            color: var(--color-text-primary);
         }
         
         .search-input:focus, .filter-select:focus {
