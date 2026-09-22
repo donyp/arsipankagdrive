@@ -33,6 +33,13 @@
                     el.style.color = '#f1f5f9';
                 }
             });
+
+            // Force update invoice title heading specifically
+            const invoiceTitle = document.getElementById('invoice-title-heading');
+            if (invoiceTitle) {
+                invoiceTitle.style.color = '#f1f5f9';
+                invoiceTitle.style.setProperty('color', '#f1f5f9', 'important');
+            }
             
             console.log('[DarkMode] Inline styles handler ready');
         }
@@ -367,6 +374,20 @@
         }
 
         html[data-dark-mode="true"] .invoice-title-heading {
+            color: #f1f5f9 !important;
+        }
+
+        html[data-dark-mode="true"] #invoice-title-heading {
+            color: #f1f5f9 !important;
+        }
+
+        html[data-dark-mode="true"] h2#invoice-title-heading {
+            color: #f1f5f9 !important;
+            background: none !important;
+        }
+
+        /* Override with direct attribute selector */
+        html[data-dark-mode="true"] [id="invoice-title-heading"] {
             color: #f1f5f9 !important;
         }
 
@@ -1463,7 +1484,7 @@
                         <!-- Invoice Header -->
                         <div style="padding: 15px 10px; border-bottom: 1px solid var(--color-border);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                                <h2 style="font-size: 24px; font-weight: 700; color: #1f2937; margin: 0;" class="invoice-title-heading">📋 Daftar File Invoice</h2>
+                                <h2 style="font-size: 24px; font-weight: 700; color: #1f2937; margin: 0; --force-light-color: #1f2937;" id="invoice-title-heading" class="invoice-title-heading">📋 Daftar File Invoice</h2>
                             </div>
 
                             <!-- Modern Stats Cards - Clean Design -->
