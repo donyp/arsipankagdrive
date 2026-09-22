@@ -404,15 +404,39 @@ function setCurrentDate() {
         });
     }
 
-    // 4. Current Time Display (for new greeting card)
+    // 4. Current Time Display (for new greeting card) - Auto-refresh every second
     const currentTimeEl = document.getElementById('current-time');
     if (currentTimeEl) {
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
-        currentTimeEl.textContent = `${hours}:${minutes}`;
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        currentTimeEl.textContent = `${hours}:${minutes}:${seconds}`;
         
-        // Update every minute
-        setTimeout(setCurrentDate, 60000);
+        // Update every second for real-time clock
+        if (!window.timeUpdateInterval) {
+            window.timeUpdateInterval = setInterval(() => {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                const currentTimeEl = document.getElementById('current-time');
+                if (currentTimeEl) {
+                    currentTimeEl.textContent = `${hours}:${minutes}:${seconds}`;
+                }
+                
+                // Update greeting when hour changes
+                const greetingEl = document.getElementById('time-greeting');
+                if (greetingEl) {
+                    const hour = now.getHours();
+                    let greeting = 'Selamat Datang';
+                    if (hour >= 3 && hour < 11) greeting = 'Pagi';
+                    else if (hour >= 11 && hour < 15) greeting = 'Siang';
+                    else if (hour >= 15 && hour < 18) greeting = 'Sore';
+                    else greeting = 'Malam';
+                    greetingEl.textContent = greeting;
+                }
+            }, 1000);
+        }
     }
 
     // 5. Auto-fill filter-date-end to today
