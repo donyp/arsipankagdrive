@@ -1714,20 +1714,22 @@
                 <!-- Modern Header Section -->
                 <div class="mb-10">
                     <!-- Greeting Card -->
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-8">
+                    <div class="bg-white rounded-2xl border-2 border-blue-500 shadow-md p-8 mb-8" style="box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);">
                         <div class="flex items-start justify-between">
                             <div class="flex-1">
-                                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">AREA MODERATOR</p>
-                                <h1 class="text-3xl font-black text-gray-900 mb-2">Selamat <span id="time-greeting" class="text-blue-600">datang</span>, <span data-user-name class="text-blue-600">User</span>! 👋</h1>
-                                <p class="text-sm text-gray-600 font-medium">
-                                    <i class="far fa-calendar"></i> <span id="banner-date" class="font-semibold">...</span>
-                                    <span class="text-gray-400 mx-2">•</span>
-                                    <i class="far fa-clock"></i> <span id="current-time" class="font-semibold">--:--</span>
+                                <p class="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">🎯 Area Moderator</p>
+                                <h1 class="text-4xl font-black text-gray-900 mb-3" style="line-height: 1.2;">Selamat <span id="time-greeting" class="text-blue-600">Siang</span>, <span data-user-name class="text-blue-600">User</span>! 👋</h1>
+                                <p class="text-sm text-gray-700 font-semibold flex items-center gap-3">
+                                    <i class="far fa-calendar text-blue-600"></i> 
+                                    <span id="banner-date" class="font-bold">...</span>
+                                    <span class="text-gray-300">•</span>
+                                    <i class="far fa-clock text-blue-600"></i> 
+                                    <span id="current-time" class="font-bold">--:--</span>
                                 </p>
                             </div>
                             <div class="text-right">
-                                <div class="text-3xl mb-2">📊</div>
-                                <p class="text-xs font-bold text-gray-500 uppercase">Dashboard</p>
+                                <div class="text-5xl mb-2">📊</div>
+                                <p class="text-xs font-bold text-gray-600 uppercase tracking-wider">Dashboard</p>
                             </div>
                         </div>
                     </div>
@@ -1861,7 +1863,7 @@
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px;">
                                     <!-- Status filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
-                                        <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Status Bayar</label>
+                                        <label style="font-size: 12px; color: #1f2937; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 6px;"><i class="fas fa-filter text-blue-600"></i>Status Bayar</label>
                                         <div class="custom-dropdown" id="statusDropdown">
                                             <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'statusDropdown')">
                                                 <span class="dropdown-label">Semua Status</span>
@@ -1891,7 +1893,7 @@
                                     
                                     <!-- Kategori filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
-                                        <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Kategori</label>
+                                        <label style="font-size: 12px; color: #1f2937; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 6px;"><i class="fas fa-list text-blue-600"></i>Kategori</label>
                                         <div class="custom-dropdown" id="kategoriDropdown">
                                             <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'kategoriDropdown')">
                                                 <span class="dropdown-label">Semua</span>
@@ -1925,7 +1927,7 @@
                                     
                                     <!-- Toko filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
-                                        <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Toko</label>
+                                        <label style="font-size: 12px; color: #1f2937; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 6px;"><i class="fas fa-store text-blue-600"></i>Toko</label>
                                         <div class="custom-dropdown" id="tokoDropdown">
                                             <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'tokoDropdown')">
                                                 <span class="dropdown-label">Semua Toko</span>
@@ -1955,7 +1957,7 @@
 
                                     <!-- Tahun filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
-                                        <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Tahun</label>
+                                        <label style="font-size: 12px; color: #1f2937; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 6px;"><i class="fas fa-calendar-alt text-blue-600"></i>Tahun</label>
                                         <div class="custom-dropdown" id="tahunDropdown">
                                             <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'tahunDropdown')">
                                                 <span class="dropdown-label">Semua Tahun</span>
@@ -1977,7 +1979,7 @@
 
                                     <!-- Bulan filter - CUSTOM DROPDOWN -->
                                     <div style="display: flex; flex-direction: column;">
-                                        <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Bulan</label>
+                                        <label style="font-size: 12px; color: #1f2937; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 6px;"><i class="fas fa-calendar text-blue-600"></i>Bulan</label>
                                         <div class="custom-dropdown" id="bulanDropdown">
                                             <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'bulanDropdown')">
                                                 <span class="dropdown-label">Semua Bulan</span>
