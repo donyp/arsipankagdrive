@@ -71,7 +71,173 @@
         html[data-dark-mode="true"] .bg-blue-50 {
             background-color: var(--color-bg-tertiary) !important;
         }
-        
+
+        /* History section dark mode */
+        html[data-dark-mode="true"] #historySection {
+            background: linear-gradient(to bottom right, var(--color-bg-secondary), var(--color-bg-tertiary)) !important;
+            border-color: var(--color-border) !important;
+        }
+
+        html[data-dark-mode="true"] #historySection h3 {
+            color: #e879f9 !important;
+        }
+
+        html[data-dark-mode="true"] #historySection .fas {
+            color: #e879f9 !important;
+        }
+
+        html[data-dark-mode="true"] #recentHistoryList > div {
+            background: var(--color-bg-tertiary) !important;
+            border-color: var(--color-border) !important;
+            color: var(--color-text-primary) !important;
+        }
+
+        /* Result section dark mode */
+        html[data-dark-mode="true"] #resultsSection {
+            background: transparent;
+        }
+
+        html[data-dark-mode="true"] #resultsSection h2 {
+            color: var(--color-text-primary) !important;
+        }
+
+        /* File list items dark mode */
+        html[data-dark-mode="true"] #fileList .file-item {
+            background: var(--color-bg-secondary) !important;
+            border-color: var(--color-border) !important;
+        }
+
+        html[data-dark-mode="true"] #fileList .file-item.valid {
+            background: var(--color-bg-tertiary) !important;
+            border-left-color: #a78bfa !important;
+        }
+
+        html[data-dark-mode="true"] #fileList .file-item.error {
+            background: var(--color-bg-secondary) !important;
+            border-left-color: #ef4444 !important;
+        }
+
+        /* Progress section dark mode */
+        html[data-dark-mode="true"] #progressSection {
+            background: transparent;
+        }
+
+        html[data-dark-mode="true"] #progressSection h2 {
+            color: var(--color-text-primary) !important;
+        }
+
+        /* Toast notifications dark mode */
+        html[data-dark-mode="true"] .toast {
+            background: var(--color-bg-secondary) !important;
+            color: var(--color-text-primary) !important;
+            border-color: var(--color-border) !important;
+        }
+
+        /* Info box dark mode */
+        html[data-dark-mode="true"] .bg-blue-50.border.border-blue-200 {
+            background: var(--color-bg-tertiary) !important;
+            border-color: var(--color-border) !important;
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] .text-blue-800 {
+            color: #93c5fd !important;
+        }
+
+        /* Result card dark mode */
+        html[data-dark-mode="true"] .result-card {
+            background: var(--color-bg-secondary) !important;
+            border-color: #a78bfa !important;
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] .error-card {
+            background: var(--color-bg-secondary) !important;
+            border-color: #ef4444 !important;
+            color: var(--color-text-primary) !important;
+        }
+
+        /* Loading modal dark mode */
+        html[data-dark-mode="true"] #loadingModal > div {
+            background: var(--color-bg-secondary) !important;
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] #loadingModal h3 {
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] #loadingModal p {
+            color: var(--color-text-secondary) !important;
+        }
+
+        /* File drop zone dark mode */
+        html[data-dark-mode="true"] .file-drop-zone {
+            border-color: #a78bfa !important;
+            background: transparent !important;
+        }
+
+        html[data-dark-mode="true"] .file-drop-zone:hover {
+            background: rgba(167, 139, 250, 0.05) !important;
+        }
+
+        html[data-dark-mode="true"] .file-drop-zone.dragover {
+            border-color: #c4b5fd !important;
+            background: rgba(167, 139, 250, 0.15) !important;
+        }
+
+        /* Button text dark mode */
+        html[data-dark-mode="true"] button {
+            color: inherit;
+        }
+
+        html[data-dark-mode="true"] .bg-purple-600 {
+            background: #a855f7 !important;
+            color: white;
+        }
+
+        html[data-dark-mode="true"] .bg-purple-600:hover {
+            background: #9333ea !important;
+        }
+
+        html[data-dark-mode="true"] .text-purple-600 {
+            color: #d8b4fe !important;
+        }
+
+        html[data-dark-mode="true"] .text-purple-100 {
+            color: #ede9fe !important;
+        }
+
+        /* Custom component text colors */
+        html[data-dark-mode="true"] .text-gray-700 {
+            color: var(--color-text-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] .text-gray-700:not(label) {
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] label {
+            color: var(--color-text-primary) !important;
+        }
+
+        /* Icon colors dark mode */
+        html[data-dark-mode="true"] .fas {
+            color: inherit;
+        }
+
+        html[data-dark-mode="true"] .fas.fa-check-circle {
+            color: #86efac;
+        }
+
+        html[data-dark-mode="true"] .fas.fa-times-circle {
+            color: #fecaca;
+        }
+
+        html[data-dark-mode="true"] .fas.fa-spinner {
+            color: #a78bfa;
+        }
+
         .gradient-header {
             background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
         }
