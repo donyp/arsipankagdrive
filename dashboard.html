@@ -795,28 +795,37 @@
 
         .dropdown-trigger {
             width: 100%;
-            padding: 11px 14px;
-            border: 2px solid var(--color-border-dark);
+            padding: 12px 14px;
+            border: 2px solid #d1d5db;
             border-radius: 8px;
             background: var(--color-bg-secondary);
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             color: var(--color-text-primary);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
 
         .dropdown-trigger:hover {
-            border-color: var(--color-focus);
+            border-color: #3b82f6;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.15);
+        }
+
+        .dropdown-trigger:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.15);
         }
 
         .dropdown-trigger.active {
-            border-color: var(--color-focus);
+            border-color: #3b82f6;
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 0;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.15);
         }
 
         .dropdown-label {
@@ -841,8 +850,15 @@
             left: 0;
             right: 0;
             background: var(--color-bg-secondary);
-            border: 2px solid var(--color-focus);
+            border: 2px solid #3b82f6;
             border-top: none;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 50;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
             border-bottom-left-radius: 8px;
             border-bottom-right-radius: 8px;
             box-shadow: 0 8px 24px var(--color-shadow-lg);
@@ -1109,40 +1125,52 @@
         .invoice-table {
             width: 100%;
             border-collapse: collapse;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
 
         .invoice-table thead {
-            background: var(--color-header-bg);
+            background: linear-gradient(135deg, #1f2937, #374151);
             color: white;
+            border-bottom: 2px solid #3b82f6;
         }
 
         .invoice-table th {
-            padding: 12px;
+            padding: 14px 12px;
             text-align: left;
             font-weight: 600;
             font-size: 12px;
             text-transform: uppercase;
             white-space: nowrap;
-            border-bottom: 2px solid var(--color-header-border);
+            border-bottom: 2px solid #3b82f6;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
             vertical-align: middle;
-            color: var(--color-text-secondary);
+            color: white;
+            letter-spacing: 0.5px;
+        }
+
+        .invoice-table th:last-child {
+            border-right: none;
         }
 
         .invoice-table tbody tr {
-            transition: background 0.2s;
-            border-bottom: 4px solid var(--color-bg-tertiary);
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         .invoice-table tbody tr:hover {
-            background: var(--color-bg-lighter);
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.05), transparent);
+            box-shadow: inset 0 1px 3px rgba(59, 130, 246, 0.1);
         }
 
         .invoice-table td {
-            padding: 12px;
+            padding: 13px 12px;
             font-size: 13px;
             color: var(--color-text-primary);
-            font-weight: 700;
-            border-right: none;
+            font-weight: 500;
+            border-right: 1px solid #e5e7eb;
             vertical-align: middle;
         }
         
@@ -1718,45 +1746,64 @@
                             <!-- Modern Stats Cards - Clean Design -->
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
                                 <!-- Total Invoice Card -->
-                                <div style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-left: 4px solid #667eea; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.3s ease;">
-                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div style="background: var(--color-bg-secondary); border: 2px solid #667eea; border-left: 5px solid #667eea; padding: 20px; border-radius: 14px; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.12); transition: all 0.3s ease; position: relative; overflow: hidden;">
+                                    <div style="position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), transparent); border-radius: 50%; pointer-events: none;"></div>
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1;">
                                         <div>
                                             <div style="font-size: 11px; color: var(--color-text-tertiary); font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;">Total Invoice</div>
-                                            <div style="font-size: 32px; font-weight: 800; color: var(--color-text-primary); line-height: 1;" data-stat="total" id="statTotal">0</div>
+                                            <div style="font-size: 32px; font-weight: 800; color: #667eea; line-height: 1;" data-stat="total" id="statTotal">0</div>
                                         </div>
-                                        <div style="width: 48px; height: 48px; background: #f3f4f6; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📊</div>
+                                        <div style="width: 52px; height: 52px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(102, 126, 234, 0.05)); border-radius: 12px; border: 2px solid rgba(102, 126, 234, 0.2); display: flex; align-items: center; justify-content: center; font-size: 24px;">📊</div>
                                     </div>
                                 </div>
 
                                 <!-- Lunas Card -->
-                                <div style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-left: 4px solid #10b981; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.3s ease;">
-                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div style="background: var(--color-bg-secondary); border: 2px solid #10b981; border-left: 5px solid #10b981; padding: 20px; border-radius: 14px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12); transition: all 0.3s ease; position: relative; overflow: hidden;">
+                                    <div style="position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), transparent); border-radius: 50%; pointer-events: none;"></div>
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1;">
                                         <div>
                                             <div style="font-size: 11px; color: var(--color-text-tertiary); font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;">Lunas</div>
                                             <div style="font-size: 32px; font-weight: 800; color: #10b981; line-height: 1;" data-stat="uploaded" id="statUploaded">0</div>
                                         </div>
-                                        <div style="width: 48px; height: 48px; background: #ecfdf5; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px;">✅</div>
+                                        <div style="width: 52px; height: 52px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border-radius: 12px; border: 2px solid rgba(16, 185, 129, 0.2); display: flex; align-items: center; justify-content: center; font-size: 24px;">✅</div>
                                     </div>
                                 </div>
 
                                 <!-- Belum Lunas Card -->
-                                <div style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-left: 4px solid #f59e0b; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.3s ease;">
-                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div style="background: var(--color-bg-secondary); border: 2px solid #f59e0b; border-left: 5px solid #f59e0b; padding: 20px; border-radius: 14px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12); transition: all 0.3s ease; position: relative; overflow: hidden;">
+                                    <div style="position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), transparent); border-radius: 50%; pointer-events: none;"></div>
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1;">
                                         <div>
                                             <div style="font-size: 11px; color: var(--color-text-tertiary); font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;">Belum Lunas</div>
                                             <div style="font-size: 32px; font-weight: 800; color: #f59e0b; line-height: 1;" data-stat="pending" id="statPending">0</div>
                                         </div>
-                                        <div style="width: 48px; height: 48px; background: #fffbeb; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px;">⏳</div>
+                                        <div style="width: 52px; height: 52px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05)); border-radius: 12px; border: 2px solid rgba(245, 158, 11, 0.2); display: flex; align-items: center; justify-content: center; font-size: 24px;">⏳</div>
                                     </div>
                                 </div>
                             </div>
 
                             <style>
                                 /* Hover effects for modern stat cards */
-                                [style*="border-left: 4px solid"]:hover {
-                                    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-                                    transform: translateY(-2px) !important;
-                                    border-color: #f3f4f6 !important;
+                                div[style*="border: 2px solid"] {
+                                    cursor: pointer;
+                                }
+                                
+                                div[style*="border: 2px solid #667eea"]:hover {
+                                    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2) !important;
+                                    transform: translateY(-3px) !important;
+                                    border: 2px solid #667eea !important;
+                                }
+                                
+                                div[style*="border: 2px solid #10b981"]:hover {
+                                    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.2) !important;
+                                    transform: translateY(-3px) !important;
+                                    border: 2px solid #10b981 !important;
+                                }
+                                
+                                div[style*="border: 2px solid #f59e0b"]:hover {
+                                    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.2) !important;
+                                    transform: translateY(-3px) !important;
+                                    border: 2px solid #f59e0b !important;
                                 }
                             </style>
                         </div>
@@ -1804,10 +1851,10 @@
                                 }
                             </style>
 
-                            <div style="margin-bottom: 24px; background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid var(--color-border);">
+                            <div style="margin-bottom: 24px; background: #f9fafb; padding: 16px; border-radius: 10px; border: 2px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                                 <!-- Row 1: Search Bar -->
                                 <div style="margin-bottom: 12px;">
-                                    <input type="text" id="filterSearch" placeholder="Cari faktur, nomor, atau kategori..." style="width: 100%; padding: 11px 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: var(--color-bg-secondary); transition: all 0.2s; font-weight: 500;">
+                                    <input type="text" id="filterSearch" placeholder="Cari faktur, nomor, atau kategori..." style="width: 100%; padding: 12px 14px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 13px; background: var(--color-bg-secondary); transition: all 0.2s; font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
                                 </div>
 
                                 <!-- Row 2: Filter Dropdowns -->
