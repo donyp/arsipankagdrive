@@ -305,6 +305,128 @@
             background-color: rgba(239, 68, 68, 0.15) !important;
         }
 
+        /* Fix sidebar in dark mode */
+        html[data-dark-mode="true"] #sidebar {
+            background-color: var(--color-bg-primary) !important;
+            border-right-color: var(--color-border) !important;
+            color: var(--color-text-primary) !important;
+        }
+
+        /* Fix sidebar text colors */
+        html[data-dark-mode="true"] #sidebar p,
+        html[data-dark-mode="true"] #sidebar span,
+        html[data-dark-mode="true"] #sidebar a {
+            color: var(--color-text-secondary) !important;
+        }
+
+        html[data-dark-mode="true"] #sidebar h1,
+        html[data-dark-mode="true"] #sidebar h2,
+        html[data-dark-mode="true"] #sidebar h3 {
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] #sidebar button {
+            background-color: var(--color-bg-secondary) !important;
+            color: var(--color-text-secondary) !important;
+            border-color: var(--color-border) !important;
+        }
+
+        html[data-dark-mode="true"] #dark-mode-toggle {
+            background-color: var(--color-bg-secondary) !important;
+            color: var(--color-text-secondary) !important;
+            border-color: var(--color-border) !important;
+        }
+
+        /* Fix "Daftar File Invoice" heading text color */
+        html[data-dark-mode="true"] h2 {
+            color: var(--color-text-primary) !important;
+        }
+
+        html[data-dark-mode="true"] [style*="color: var(--color-text-primary)"] {
+            color: var(--color-text-primary) !important;
+        }
+
+        /* Fix status badges text color in dark mode */
+        html[data-dark-mode="true"] [style*="color: #10b981"],
+        html[data-dark-mode="true"] [style*="color: #f59e0b"],
+        html[data-dark-mode="true"] [style*="color: #e74c3c"] {
+            color: inherit !important;
+        }
+
+        /* Fix pagination buttons */
+        html[data-dark-mode="true"] #prevPageBtn,
+        html[data-dark-mode="true"] #nextPageBtn {
+            background: var(--color-bg-secondary) !important;
+            color: var(--color-primary) !important;
+            border-color: var(--color-border) !important;
+        }
+
+        html[data-dark-mode="true"] #nextPageBtn {
+            background: var(--color-primary) !important;
+            color: white !important;
+            border-color: var(--color-primary) !important;
+        }
+
+        html[data-dark-mode="true"] #prevPageBtn:hover {
+            background: var(--color-bg-tertiary) !important;
+            border-color: var(--color-primary) !important;
+        }
+
+        html[data-dark-mode="true"] #nextPageBtn:hover {
+            background: var(--color-primary-dark) !important;
+            border-color: var(--color-primary-dark) !important;
+        }
+
+        /* Fix Edit and Logout buttons */
+        html[data-dark-mode="true"] button[onclick*="openEditHeadlineModal"],
+        html[data-dark-mode="true"] button[onclick*="logout"] {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+            color: var(--color-primary) !important;
+            border-color: transparent !important;
+        }
+
+        html[data-dark-mode="true"] button.text-blue-600 {
+            color: #60a5fa !important;
+        }
+
+        html[data-dark-mode="true"] button.text-red-600 {
+            color: #ef4444 !important;
+        }
+
+        html[data-dark-mode="true"] button[onclick*="logout"] {
+            background-color: rgba(239, 68, 68, 0.15) !important;
+            color: #ef4444 !important;
+        }
+
+        html[data-dark-mode="true"] button[onclick*="logout"]:hover {
+            background-color: rgba(239, 68, 68, 0.25) !important;
+        }
+
+        html[data-dark-mode="true"] button.hover\:bg-blue-50 {
+            color: #60a5fa !important;
+        }
+
+        html[data-dark-mode="true"] button.hover\:bg-red-50 {
+            color: #ef4444 !important;
+        }
+
+        /* Fix status badge colors in dark mode */
+        html[data-dark-mode="true"] .status-badge {
+            color: inherit !important;
+        }
+
+        html[data-dark-mode="true"] .status-badge.uploaded {
+            color: var(--color-status-success) !important;
+        }
+
+        html[data-dark-mode="true"] .status-badge.pending {
+            color: var(--color-status-warning) !important;
+        }
+
+        html[data-dark-mode="true"] .status-badge.missing {
+            color: var(--color-status-error) !important;
+        }
+
         html[data-dark-mode="true"] input,
         html[data-dark-mode="true"] select,
         html[data-dark-mode="true"] textarea {
