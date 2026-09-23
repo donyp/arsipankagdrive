@@ -331,6 +331,15 @@
                 console.log('[Bukti Bayar] Checking for duplicates...');
                 let validCount = 0;
                 let invalidCount = 0;
+                
+                // Get token - fallback to localStorage if API not available
+                const getToken = () => {
+                    if (typeof API !== 'undefined' && API.getToken) {
+                        return API.getToken();
+                    }
+                    return localStorage.getItem('access_token') || localStorage.getItem('jwt_token') || '';
+                };
+                const token = getToken();
 
                 for (const file of files) {
                     // Extract faktur from filename
@@ -346,7 +355,7 @@
                         try {
                             // Check if faktur exists
                             const checkRes = await fetch(`/api/invoice/check-faktur/${faktur}`, {
-                                headers: { 'Authorization': `Bearer ${API.getToken()}` }
+                                headers: { 'Authorization': `Bearer ${token}` }
                             });
                             
                             if (checkRes.ok) {
@@ -362,7 +371,7 @@
                                         // Check if file truly exists in GDrive
                                         try {
                                             const fileCheckRes = await fetch(`/api/invoice/check-file/${faktur}/bukti_bayar`, {
-                                                headers: { 'Authorization': `Bearer ${API.getToken()}` }
+                                                headers: { 'Authorization': `Bearer ${token}` }
                                             });
                                             const fileCheckData = await fileCheckRes.json();
                                             
