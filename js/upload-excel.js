@@ -332,8 +332,13 @@ function resetUpload() {
     parsedData = null;
 
     document.getElementById('fileInput').value = '';
+    document.getElementById('fileInfo').style.display = 'none';  // Changed from .classList.remove to .style.display
     document.getElementById('fileInfo').classList.remove('show');
     document.getElementById('btnCheck').disabled = true;
+
+    // Clear file info content
+    document.getElementById('fileName').textContent = '';
+    document.getElementById('fileSize').textContent = '';
 
     document.getElementById('card1').style.display = 'block';
     document.getElementById('card2').style.display = 'none';
