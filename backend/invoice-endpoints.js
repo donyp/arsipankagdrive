@@ -1605,6 +1605,38 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 
                 console.log(`[Invoice PDF] Found invoice: ${invoice.konsumen} (${invoice.toko})`);
                 
+                // AUTO-FIX: If zona_id is missing, populate it from toko
+                if (!invoice.zona_id && invoice.toko) {
+                    try {
+                        console.log(`[Invoice PDF] zona_id is NULL, attempting to populate from toko: ${invoice.toko}`);
+                        const { data: tokoData } = await supabase
+                            .from('toko')
+                            .select('zona_id')
+                            .eq('nama', invoice.toko)
+                            .maybeSingle();
+                        
+                        if (tokoData && tokoData.zona_id) {
+                            // Update invoice with zona_id
+                            const { error: updateError } = await supabase
+                                .from('invoice_file_list')
+                                .update({ zona_id: tokoData.zona_id })
+                                .eq('faktur', faktur);
+                            
+                            if (!updateError) {
+                                invoice.zona_id = tokoData.zona_id;
+                                console.log(`[Invoice PDF] ✅ Auto-populated zona_id: ${tokoData.zona_id}`);
+                            } else {
+                                console.warn(`[Invoice PDF] Failed to auto-populate zona_id:`, updateError);
+                            }
+                        } else {
+                            console.warn(`[Invoice PDF] Could not find zona_id for toko: ${invoice.toko}`);
+                        }
+                    } catch (autoFixErr) {
+                        console.warn(`[Invoice PDF] Auto-populate zona_id failed:`, autoFixErr.message);
+                        // Don't block upload, just log warning
+                    }
+                }
+                
                 // Determine path based on keterangan (PPN/NON PPN)
                 // SAFEGUARD: Check if tanggal exists and is in valid format
                 if (!invoice.tanggal) {
