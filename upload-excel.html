@@ -380,16 +380,16 @@
         }
 
         .step-number {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             background: #ecf0f1;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 18px;
-            margin: 0 auto 10px;
+            font-size: 14px;
+            margin: 0 auto 5px;
             color: #7f8c8d;
             transition: all 0.3s;
         }
@@ -437,118 +437,118 @@
         <div style="margin-left: 16rem; width: calc(100% - 16rem); transition: all 300ms ease;">
             <!-- Header -->
             <div class="gradient-header text-white sticky top-0 z-30 shadow-lg">
-                <div class="px-6 py-8">
+                <div class="px-6 py-4">
                     <div class="flex items-center gap-3">
-                        <div class="bg-white/20 p-3 rounded-lg">
-                            <i class="fas fa-table text-2xl"></i>
+                        <div class="bg-white/20 p-2 rounded-lg">
+                            <i class="fas fa-table text-xl"></i>
                         </div>
                         <div>
-                            <h1 class="text-3xl font-bold">Upload Excel</h1>
-                            <p class="text-blue-100 text-sm mt-1">Upload file Excel untuk membuat daftar invoice dengan validasi otomatis</p>
+                            <h1 class="text-2xl font-bold">Upload Excel</h1>
+                            <p class="text-blue-100 text-xs mt-0.5">Pilih file Excel → Validasi → Preview → Upload</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Main Content Area -->
-            <div class="p-6">
+            <div class="p-4">
                 <!-- Info Box -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <p class="text-blue-800 text-sm">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                    <p class="text-blue-800 text-xs">
                         <i class="fas fa-info-circle mr-2"></i>
                         <strong>Proses:</strong> Pilih file Excel → Validasi → Preview → Upload
                     </p>
                 </div>
 
                 <!-- Steps Indicator -->
-                <div style="display: flex; gap: 20px; margin-bottom: 40px; position: relative;">
+                <div style="display: flex; gap: 12px; margin-bottom: 20px; position: relative;">
                     <div class="step active" id="step1" style="flex: 1; text-align: center; position: relative;">
                         <div class="step-number">1</div>
-                        <div style="font-size: 14px; font-weight: 600; color: #7f8c8d;">Pilih File</div>
+                        <div style="font-size: 11px; font-weight: 600; color: #7f8c8d;">Pilih File</div>
                     </div>
                     <div class="step" id="step2" style="flex: 1; text-align: center; position: relative;">
                         <div class="step-number">2</div>
-                        <div style="font-size: 14px; font-weight: 600; color: #7f8c8d;">Validasi</div>
+                        <div style="font-size: 11px; font-weight: 600; color: #7f8c8d;">Validasi</div>
                     </div>
                     <div class="step" id="step3" style="flex: 1; text-align: center; position: relative;">
                         <div class="step-number">3</div>
-                        <div style="font-size: 14px; font-weight: 600; color: #7f8c8d;">Preview</div>
+                        <div style="font-size: 11px; font-weight: 600; color: #7f8c8d;">Preview</div>
                     </div>
                     <div class="step" id="step4" style="flex: 1; text-align: center; position: relative;">
                         <div class="step-number">4</div>
-                        <div style="font-size: 14px; font-weight: 600; color: #7f8c8d;">Selesai</div>
+                        <div style="font-size: 11px; font-weight: 600; color: #7f8c8d;">Selesai</div>
                     </div>
                 </div>
 
                 <!-- Step 1: File Selection -->
-                <div class="bg-white rounded-lg shadow-md p-8 mb-6" id="card1">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <div class="bg-white rounded-lg shadow-md p-5 mb-4" id="card1">
+                    <h2 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
                         <i class="fas fa-file-excel text-blue-600"></i>
                         Step 1: Pilih File Excel
                     </h2>
 
-                    <div id="dropZone" style="border: 2px dashed #3498db; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s; background: #f0f7ff;">
-                        <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #3498db; margin-bottom: 15px; display: block;"></i>
-                        <p style="margin: 0 0 15px 0; color: #2c3e50; font-weight: 600;">Drag & drop file Excel di sini</p>
-                        <span style="font-size: 14px; color: #7f8c8d;">atau klik untuk memilih file</span>
+                    <div id="dropZone" style="border: 2px dashed #3498db; border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s; background: #f0f7ff;">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 40px; color: #3498db; margin-bottom: 10px; display: block;"></i>
+                        <p style="margin: 0 0 10px 0; color: #2c3e50; font-weight: 600; font-size: 13px;">Drag & drop file Excel di sini</p>
+                        <span style="font-size: 12px; color: #7f8c8d;">atau klik untuk memilih file</span>
                     </div>
 
                     <input type="file" id="fileInput" accept=".xls,.xlsx" style="display: none;">
 
-                    <div id="fileInfo" style="display: none; background: #f0f8f4; border-left: 4px solid #27ae60; padding: 15px; border-radius: 6px; margin: 20px 0;">
-                        <p style="margin: 5px 0; font-size: 14px; color: #2c3e50;"><strong>📁 File:</strong> <span id="fileName">-</span></p>
-                        <p style="margin: 5px 0; font-size: 14px; color: #2c3e50;"><strong>📦 Ukuran:</strong> <span id="fileSize">-</span></p>
+                    <div id="fileInfo" style="display: none; background: #f0f8f4; border-left: 4px solid #27ae60; padding: 10px; border-radius: 6px; margin: 12px 0;">
+                        <p style="margin: 3px 0; font-size: 12px; color: #2c3e50;"><strong>📁 File:</strong> <span id="fileName">-</span></p>
+                        <p style="margin: 3px 0; font-size: 12px; color: #2c3e50;"><strong>📦 Ukuran:</strong> <span id="fileSize">-</span></p>
                     </div>
 
-                    <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition" id="btnCheck" disabled>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px;">
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg transition text-sm" id="btnCheck" disabled>
                             <i class="fas fa-search"></i> Cek Data
                         </button>
                     </div>
                 </div>
 
                 <!-- Step 2: Validation -->
-                <div class="bg-white rounded-lg shadow-md p-8 mb-6" id="card2" style="display: none;">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">Step 2: Validasi Data</h2>
+                <div class="bg-white rounded-lg shadow-md p-5 mb-4" id="card2" style="display: none;">
+                    <h2 class="text-lg font-bold text-gray-800 mb-3">Step 2: Validasi Data</h2>
 
-                    <div id="loadingValidation" style="display: none; text-align: center; padding: 30px;">
+                    <div id="loadingValidation" style="display: none; text-align: center; padding: 20px;">
                         <div class="spinner"></div>
-                        <p style="margin-top: 15px; color: #7f8c8d;">Sedang memvalidasi data...</p>
+                        <p style="margin-top: 10px; color: #7f8c8d; font-size: 12px;">Sedang memvalidasi data...</p>
                     </div>
 
                     <div id="validationResult" style="display: none;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
-                                <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Total Baris</div>
-                                <div style="font-size: 28px; font-weight: 700; color: #3498db;" id="totalRows">0</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+                            <div style="background: #f8f9fa; padding: 12px; border-radius: 6px;">
+                                <div style="font-size: 10px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 3px;">Total Baris</div>
+                                <div style="font-size: 24px; font-weight: 700; color: #3498db;" id="totalRows">0</div>
                             </div>
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
-                                <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Faktur Unik</div>
-                                <div style="font-size: 28px; font-weight: 700; color: #3498db;" id="uniqueFakturs">0</div>
+                            <div style="background: #f8f9fa; padding: 12px; border-radius: 6px;">
+                                <div style="font-size: 10px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 3px;">Faktur Unik</div>
+                                <div style="font-size: 24px; font-weight: 700; color: #3498db;" id="uniqueFakturs">0</div>
                             </div>
                         </div>
-                        <div style="background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #27ae60;">
-                            <p style="margin: 0; color: #27ae60; font-size: 14px;">
+                        <div style="background: white; padding: 12px; border-radius: 6px; border-left: 4px solid #27ae60;">
+                            <p style="margin: 0; color: #27ae60; font-size: 12px;">
                                 ✅ File valid dan siap untuk preview
                             </p>
                         </div>
                     </div>
 
-                    <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
-                        <button class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition" id="btnBack1">
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px;">
+                        <button class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-5 rounded-lg transition text-sm" id="btnBack1">
                             <i class="fas fa-arrow-left"></i> Kembali
                         </button>
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition" id="btnPreview">
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg transition text-sm" id="btnPreview">
                             <i class="fas fa-eye"></i> Lihat Preview
                         </button>
                     </div>
                 </div>
 
                 <!-- Step 3: Preview -->
-                <div class="bg-white rounded-lg shadow-md p-8 mb-6" id="card3" style="display: none;">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">Step 3: Preview Data (5 baris pertama)</h2>
+                <div class="bg-white rounded-lg shadow-md p-5 mb-4" id="card3" style="display: none;">
+                    <h2 class="text-lg font-bold text-gray-800 mb-3">Step 3: Preview Data (5 baris pertama)</h2>
 
-                    <div style="overflow-x: auto; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 20px;">
+                    <div style="overflow-x: auto; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 12px;">
                         <table class="preview-table">
                             <thead>
                                 <tr>
@@ -565,39 +565,39 @@
                         </table>
                     </div>
 
-                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                        <button class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition" id="btnBack2">
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-5 rounded-lg transition text-sm" id="btnBack2">
                             <i class="fas fa-arrow-left"></i> Kembali
                         </button>
-                        <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition" id="btnUpload">
+                        <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg transition text-sm" id="btnUpload">
                             <i class="fas fa-upload"></i> Upload Sekarang
                         </button>
                     </div>
                 </div>
 
                 <!-- Step 4: Success -->
-                <div class="bg-white rounded-lg shadow-md p-8 mb-6" id="card4" style="display: none;">
-                    <div style="background: #d5f4e6; border-left: 4px solid #27ae60; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-                        <i class="fas fa-check-circle" style="color: #27ae60; margin-right: 10px; font-size: 20px;"></i>
-                        <p style="margin: 0; color: #27ae60; font-weight: 600;">✅ File berhasil diupload! Daftar file telah diperbarui di dashboard.</p>
+                <div class="bg-white rounded-lg shadow-md p-5 mb-4" id="card4" style="display: none;">
+                    <div style="background: #d5f4e6; border-left: 4px solid #27ae60; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                        <i class="fas fa-check-circle" style="color: #27ae60; margin-right: 8px; font-size: 16px;"></i>
+                        <p style="margin: 0; color: #27ae60; font-weight: 600; font-size: 12px;">✅ File berhasil diupload! Daftar file telah diperbarui di dashboard.</p>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
-                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Status</div>
-                            <div style="font-size: 20px; font-weight: 700; color: #27ae60;">✓ Berhasil</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 6px;">
+                            <div style="font-size: 10px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 3px;">Status</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #27ae60;">✓ Berhasil</div>
                         </div>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
-                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Invoice Ditambahkan</div>
-                            <div style="font-size: 28px; font-weight: 700; color: #3498db;" id="uploadedCount">0</div>
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 6px;">
+                            <div style="font-size: 10px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 3px;">Invoice Ditambahkan</div>
+                            <div style="font-size: 24px; font-weight: 700; color: #3498db;" id="uploadedCount">0</div>
                         </div>
                     </div>
 
-                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition" onclick="resetUpload()">
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg transition text-sm" onclick="resetUpload()">
                             <i class="fas fa-redo"></i> Upload File Lain
                         </button>
-                        <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition" onclick="goToDashboard()">
+                        <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg transition text-sm" onclick="goToDashboard()">
                             <i class="fas fa-arrow-right"></i> Ke Dashboard
                         </button>
                     </div>
