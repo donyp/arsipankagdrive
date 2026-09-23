@@ -208,7 +208,7 @@ async function getPendingInvoiceNotifications(moderatorId = null) {
         // Transform response
         const grouped = {};
         data.forEach(notif => {
-            const zonaName = notif.zonas.nama;
+            const zonaName = notif.zonas?.nama || `Zona ${notif.zona_id}`;
             if (!grouped[zonaName]) {
                 grouped[zonaName] = [];
             }
@@ -272,7 +272,7 @@ async function getAllInvoiceNotifications(moderatorId = null, status = null) {
         // Transform response
         const grouped = {};
         data.forEach(notif => {
-            const zonaName = notif.zonas.nama;
+            const zonaName = notif.zonas?.nama || `Zona ${notif.zona_id}`;
             if (!grouped[zonaName]) {
                 grouped[zonaName] = [];
             }
