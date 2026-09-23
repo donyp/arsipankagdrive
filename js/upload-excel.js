@@ -186,6 +186,50 @@ async function checkData() {
         parsedData = Object.values(aggregated);
         console.log('[Upload] Parsed:', parsedData.length, 'unique fakturs from', parsed.length, 'total rows');
 
+        // ============================================
+        // NEW: Check for duplicates BEFORE showing validation
+        // ============================================
+        console.log('[Upload] Checking for duplicate fakturs...');
+        const fakturs = parsedData.map(item => item.faktur).filter(Boolean);
+        
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const checkDupResponse = await fetch('/api/invoice/check-duplicate-fakturs', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({ fakturs: fakturs })
+        });
+
+        const dupResult = await checkDupResponse.json();
+        console.log('[Upload] Duplicate check result:', dupResult);
+
+        if (!checkDupResponse.ok) {
+            console.error('[Upload] Duplicate check failed:', dupResult);
+            throw new Error(dupResult.details || 'Gagal memeriksa duplikat');
+        }
+
+        if (checkDupResponse.ok && dupResult.hasDuplicates) {
+            // Found duplicates - show error and reject
+            const dupCount = dupResult.duplicateCount;
+            const dupList = dupResult.duplicates.slice(0, 10).join(', ');
+            const message = dupCount > 10 
+                ? `${dupCount} fakturs sudah ada di database:\n${dupList}... dan ${dupCount - 10} lainnya`
+                : `${dupCount} fakturs sudah ada di database:\n${dupList}`;
+            
+            Toast.error(message, `❌ File Excel Sudah Pernah Diupload`);
+            console.log('[Upload] ⚠️ Validation rejected due to duplicates');
+            
+            // Reset to step 1
+            resetUpload();
+            return;
+        }
+
+        console.log('[Upload] ✅ No duplicates found - proceeding with validation');
+
         // Show validation results
         document.getElementById('totalRows').textContent = parsed.length;
         document.getElementById('uniqueFakturs').textContent = parsedData.length;
@@ -251,47 +295,7 @@ async function uploadData() {
         }
 
         // ============================================
-        // STEP 1: Check for duplicates
-        // ============================================
-        console.log('[Upload] Checking for duplicate fakturs...');
-        const fakturs = parsedData.map(item => item.faktur).filter(Boolean);
-        
-        const checkDupResponse = await fetch('/api/invoice/check-duplicate-fakturs', {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify({ fakturs: fakturs })
-        });
-
-        const dupResult = await checkDupResponse.json();
-        console.log('[Upload] Duplicate check result:', dupResult);
-
-        if (checkDupResponse.ok && dupResult.hasDuplicates) {
-            // Found duplicates - reject upload
-            const dupCount = dupResult.duplicateCount;
-            const dupList = dupResult.duplicates.slice(0, 10).join(', ');
-            const message = dupCount > 10 
-                ? `${dupCount} fakturs sudah ada di database:\n${dupList}... dan ${dupCount - 10} lainnya`
-                : `${dupCount} fakturs sudah ada di database:\n${dupList}`;
-            
-            Toast.error(message, `❌ Upload Ditolak - Duplikat Ditemukan`);
-            console.log('[Upload] ⚠️ Upload rejected due to duplicates');
-            btnUpload.disabled = false;
-            btnUpload.textContent = originalText;
-            return;
-        }
-
-        if (!checkDupResponse.ok) {
-            console.error('[Upload] Duplicate check failed:', dupResult);
-            Toast.error(dupResult.details || 'Gagal memeriksa duplikat', '❌ Kesalahan Validasi');
-            btnUpload.disabled = false;
-            btnUpload.textContent = originalText;
-            return;
-        }
-
-        console.log('[Upload] ✅ No duplicates found - proceeding with upload');
-
-        // ============================================
-        // STEP 2: Upload data
+        // Upload data (duplicate check already done in checkData)
         // ============================================
         const response = await fetch('/api/invoice/upload-excel-data', {
             method: 'POST',
