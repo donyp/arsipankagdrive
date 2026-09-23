@@ -259,9 +259,9 @@ async function getAllInvoiceNotifications(moderatorId = null, status = null) {
         }
         // If status is null, return all records
 
-        if (moderatorId) {
-            query = query.eq('moderator_id', moderatorId);
-        }
+        // NOTE: Do not filter by moderatorId - show all messages for dashboard view
+        // All authenticated users can see all invoice notifications
+        // (Permission checking is done via authenticateToken middleware)
 
         const { data, error } = await query;
 
