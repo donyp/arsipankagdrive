@@ -3002,14 +3002,30 @@ async function renderInvoiceTable(invoices) {
         const actualUploadedCount = inv.actualUploadedCount;
         const statusText = `${actualUploadedCount}/${requiredCount}`;
         
-        // Color based on actual file count
-        let statusStyle = 'background: #fff3cd; color: #000000;'; // Yellow
-        if (actualUploadedCount === requiredCount) {
-            statusStyle = 'background: #d4edda; color: #000000;'; // Green
-        } else if (actualUploadedCount === 0) {
-            statusStyle = 'background: #f8d7da; color: #000000;'; // Red
-        } else if (actualUploadedCount === requiredCount - 1) {
-            statusStyle = 'background: #ffe8cc; color: #000000;'; // Orange
+        // Color based on actual file count - detect dark mode
+        const isDarkMode = document.documentElement.getAttribute('data-dark-mode') === 'true';
+        let statusStyle;
+        
+        if (isDarkMode) {
+            // Dark mode colors
+            statusStyle = 'background: #7c5a0a; color: #fef08a;'; // Yellow
+            if (actualUploadedCount === requiredCount) {
+                statusStyle = 'background: #064e3b; color: #10b981;'; // Green
+            } else if (actualUploadedCount === 0) {
+                statusStyle = 'background: #7f1d1d; color: #fca5a5;'; // Red
+            } else if (actualUploadedCount === requiredCount - 1) {
+                statusStyle = 'background: #92400e; color: #fdba74;'; // Orange
+            }
+        } else {
+            // Light mode colors
+            statusStyle = 'background: #fff3cd; color: #000000;'; // Yellow
+            if (actualUploadedCount === requiredCount) {
+                statusStyle = 'background: #d4edda; color: #000000;'; // Green
+            } else if (actualUploadedCount === 0) {
+                statusStyle = 'background: #f8d7da; color: #000000;'; // Red
+            } else if (actualUploadedCount === requiredCount - 1) {
+                statusStyle = 'background: #ffe8cc; color: #000000;'; // Orange
+            }
         }
         
         // Format date dd/mm/yy

@@ -79,11 +79,15 @@
         }
 
         html[data-dark-mode="true"] #historySection h3 {
-            color: #e879f9 !important;
+            color: #60a5fa !important;
         }
 
         html[data-dark-mode="true"] #historySection .fas {
-            color: #e879f9 !important;
+            color: #60a5fa !important;
+        }
+
+        html[data-dark-mode="true"] #historySection .w-2.h-2.rounded-full {
+            background-color: #60a5fa !important;
         }
 
         html[data-dark-mode="true"] #recentHistoryList > div {
@@ -246,13 +250,13 @@
 
         html[data-dark-mode="true"] .history-item {
             background: var(--color-bg-tertiary) !important;
-            border-color: var(--color-border) !important;
+            border-color: #3b82f6 !important;
             color: var(--color-text-primary) !important;
         }
 
         html[data-dark-mode="true"] .history-item:hover {
             background: var(--color-bg-secondary) !important;
-            border-color: #a78bfa !important;
+            border-color: #60a5fa !important;
         }
 
         html[data-dark-mode="true"] .history-item .text-gray-600 {
@@ -285,7 +289,7 @@
 
         /* Icon colors in history */
         html[data-dark-mode="true"] .history-item .fa-exchange-alt {
-            color: #f87171 !important;
+            color: #60a5fa !important;
         }
 
         html[data-dark-mode="true"] .history-item .fa-user {
@@ -294,6 +298,12 @@
 
         html[data-dark-mode="true"] .history-item .fa-clock {
             color: var(--color-text-secondary) !important;
+        }
+
+        /* Remove truncation for full text display */
+        .history-item {
+            word-break: break-word;
+            white-space: normal;
         }
 
         .gradient-header {
@@ -525,10 +535,10 @@
                 </div>
 
                 <!-- History Section -->
-                <div id="historySection" class="hidden bg-gradient-to-br from-red-50 to-orange-50 rounded-xl shadow-lg p-6 mt-6 border border-red-100">
-                    <h3 class="text-lg font-bold text-red-800 mb-3 flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-red-600"></div>
-                        <i class="fas fa-history text-red-600"></i>
+                <div id="historySection" class="hidden bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 mt-6 border border-blue-200">
+                    <h3 class="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-blue-600"></div>
+                        <i class="fas fa-history text-blue-600"></i>
                         Riwayat Rename Terbaru
                     </h3>
                     <div id="recentHistoryList" class="space-y-0.5 max-h-96 overflow-y-auto"></div>
