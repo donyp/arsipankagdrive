@@ -647,14 +647,8 @@ async function uploadValidFiles() {
                             const waResult = await waResponse.json();
                             if (waResponse.ok && waResult.success) {
                                 console.log('[PDF Bulk] ✓ WhatsApp message generated');
-                                // Accumulate notifications from all files
-                                window.currentInvoiceBatchId = window.currentInvoiceBatchId || ('batch_' + Date.now());
-                                window.whatsappInvoiceNotifications = window.whatsappInvoiceNotifications || {};
-                                // Merge new notifications with existing ones
-                                Object.assign(window.whatsappInvoiceNotifications, waResult.notifications);
-                                console.log('[PDF Bulk] Stored notifications:', Object.keys(window.whatsappInvoiceNotifications).length, 'zonas');
-                                // Display WhatsApp panel (will show all accumulated notifications)
-                                setTimeout(() => displayInvoiceWhatsappNotifications(), 300);
+                                // Messages will appear in Notify Zona dashboard, not on upload page
+                                console.log('[PDF Bulk] Messages saved - view in Notify Zona menu');
                             } else {
                                 console.warn('[PDF Bulk] WhatsApp generation failed:', waResult.error);
                             }
@@ -689,11 +683,7 @@ async function uploadValidFiles() {
         
         console.log('[PDF Bulk] Upload complete - all files processed');
         
-        // Show WhatsApp notifications if any were generated
-        if (window.whatsappInvoiceNotifications && Object.keys(window.whatsappInvoiceNotifications).length > 0) {
-            console.log('[PDF Bulk] Displaying accumulated WhatsApp notifications:', Object.keys(window.whatsappInvoiceNotifications).length, 'zonas');
-            setTimeout(() => displayInvoiceWhatsappNotifications(), 500);
-        }
+        // Note: WhatsApp notifications are now shown only in Notify Zona dashboard
 
         // Refresh invoice list to show updated status with file counts
         if (successCount > 0) {

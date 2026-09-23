@@ -115,52 +115,15 @@
                 <div class="space-y-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h1 class="text-3xl font-bold text-gray-900">Pesan WhatsApp</h1>
-                            <p class="text-gray-500 font-medium mt-1">Kelola dan pantau pesan WhatsApp ke zona</p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                            <p class="text-gray-500 text-sm font-medium mb-2">Total Pesan</p>
-                            <p id="stat-total-messages" class="text-3xl font-bold text-gray-900">0</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                            <p class="text-gray-500 text-sm font-medium mb-2">Sudah Dikirim</p>
-                            <p id="stat-sent-messages" class="text-3xl font-bold text-green-600">0</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                            <p class="text-gray-500 text-sm font-medium mb-2">Pending</p>
-                            <p id="stat-pending-messages" class="text-3xl font-bold text-yellow-600">0</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                            <p class="text-gray-500 text-sm font-medium mb-2">Invoice Messages</p>
-                            <p id="stat-invoice-messages" class="text-3xl font-bold text-blue-600">0</p>
+                            <h1 class="text-3xl font-bold text-gray-900">📱 Pesan WhatsApp</h1>
+                            <p class="text-gray-500 font-medium mt-1">Salin dan kirim pesan WhatsApp per zona</p>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Regular Messages -->
-                        <div class="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
-                            <div class="px-6 py-4 border-b border-gray-200">
-                                <h2 class="text-lg font-bold text-gray-900"><i class="fas fa-comments mr-2 text-blue-600"></i>Notifikasi Upload</h2>
-                            </div>
-                            <div class="overflow-y-auto" style="max-height: 500px;">
-                                <div id="messages-body" class="divide-y divide-gray-200">
-                                    <div class="px-6 py-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin"></i> Memuat pesan...</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Invoice Messages -->
-                        <div class="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
-                            <div class="px-6 py-4 border-b border-gray-200">
-                                <h2 class="text-lg font-bold text-gray-900"><i class="fas fa-file-invoice-dollar mr-2 text-green-600"></i>Notifikasi Invoice</h2>
-                            </div>
-                            <div class="overflow-y-auto" style="max-height: 500px;">
-                                <div id="invoice-messages-body" class="divide-y divide-gray-200">
-                                    <div class="px-6 py-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin"></i> Memuat pesan...</div>
-                                </div>
-                            </div>
+                    <!-- Invoice Messages Only -->
+                    <div class="space-y-4">
+                        <div id="invoice-messages-body" class="space-y-4">
+                            <div class="text-center text-gray-500 py-8"><i class="fas fa-spinner fa-spin"></i> Memuat pesan...</div>
                         </div>
                     </div>
                 </div>
@@ -181,109 +144,104 @@
 
         async function loadMessages() {
             try {
-                const [msgs, invoiceMsgs] = await Promise.all([
-                    API.get('/api/whatsapp/pending-messages').catch(() => ({})),
-                    API.get('/api/whatsapp/pending-invoice-messages').catch(() => ({}))
-                ]);
+                const invoiceMsgs = await API.get('/api/whatsapp/pending-invoice-messages').catch(() => ({}));
                 
                 // Handle both array and object formats
-                currentMessages = Array.isArray(msgs) ? msgs : (msgs.notifications || msgs || []);
                 currentInvoiceMessages = Array.isArray(invoiceMsgs) ? invoiceMsgs : (invoiceMsgs.notifications || invoiceMsgs || []);
                 
-                // Ensure they're arrays
-                if (!Array.isArray(currentMessages)) currentMessages = [];
+                // Ensure it's an array
                 if (!Array.isArray(currentInvoiceMessages)) currentInvoiceMessages = [];
-                
-                // Update stats
-                const totalSent = currentMessages.filter(m => m && m.sent_at).length;
-                const totalPending = currentMessages.filter(m => m && !m.sent_at).length;
-                
-                document.getElementById('stat-total-messages').textContent = currentMessages.length;
-                document.getElementById('stat-sent-messages').textContent = totalSent;
-                document.getElementById('stat-pending-messages').textContent = totalPending;
-                document.getElementById('stat-invoice-messages').textContent = currentInvoiceMessages.length;
                 
                 renderMessages();
             } catch (err) {
                 console.error('Error loading messages:', err);
-                // Show empty state instead of alert
-                document.getElementById('messages-body').innerHTML = '<div class="px-6 py-8 text-center text-gray-500">Gagal memuat pesan</div>';
-                document.getElementById('invoice-messages-body').innerHTML = '<div class="px-6 py-8 text-center text-gray-500">Gagal memuat pesan</div>';
+                document.getElementById('invoice-messages-body').innerHTML = '<div class="text-center text-gray-500 py-8">Gagal memuat pesan</div>';
             }
         }
 
         function renderMessages() {
-            // Regular messages
-            const msgBody = document.getElementById('messages-body');
-            if (currentMessages.length === 0) {
-                msgBody.innerHTML = '<div class="px-6 py-8 text-center text-gray-500">Tidak ada pesan</div>';
-            } else {
-                msgBody.innerHTML = currentMessages.map(msg => `
-                    <div class="px-6 py-4 hover:bg-gray-50 transition">
-                        <div class="flex items-start justify-between mb-2">
-                            <div>
-                                <p class="font-medium text-gray-900">${msg.zona_id || 'Unknown'}</p>
-                                <p class="text-xs text-gray-500">${new Date(msg.created_at).toLocaleString('id-ID')}</p>
-                            </div>
-                            <span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${msg.sent_at ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                ${msg.sent_at ? 'Terkirim' : 'Pending'}
-                            </span>
-                        </div>
-                        <div class="text-sm text-gray-600 mb-3 bg-gray-50 p-3 rounded whitespace-pre-wrap">${msg.message || 'N/A'}</div>
-                        <div class="flex gap-2">
-                            ${!msg.sent_at ? `<button onclick="markMessageSent('${msg.id}')" class="text-xs px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"><i class="fas fa-check mr-1"></i>Tandai Terkirim</button>` : ''}
-                            <button onclick="deleteMessage('${msg.id}')" class="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"><i class="fas fa-trash mr-1"></i>Hapus</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            // Invoice messages
+            // Invoice messages ONLY
             const invMsgBody = document.getElementById('invoice-messages-body');
-            if (currentInvoiceMessages.length === 0) {
-                invMsgBody.innerHTML = '<div class="px-6 py-8 text-center text-gray-500">Tidak ada pesan invoice</div>';
+            if (!currentInvoiceMessages || currentInvoiceMessages.length === 0) {
+                invMsgBody.innerHTML = '<div class="text-center text-gray-500 py-8">Belum ada pesan</div>';
             } else {
-                invMsgBody.innerHTML = currentInvoiceMessages.map(msg => `
-                    <div class="px-6 py-4 hover:bg-gray-50 transition">
-                        <div class="flex items-start justify-between mb-2">
-                            <div>
-                                <p class="font-medium text-gray-900">${msg.zona_id || 'Unknown'}</p>
-                                <p class="text-xs text-gray-500">${new Date(msg.created_at).toLocaleString('id-ID')}</p>
+                // Group by zona
+                const grouped = {};
+                currentInvoiceMessages.forEach(msg => {
+                    const key = msg.zona_id || 'unknown';
+                    if (!grouped[key]) grouped[key] = [];
+                    grouped[key].push(msg);
+                });
+
+                invMsgBody.innerHTML = Object.entries(grouped).map(([zonaId, msgs]) => {
+                    const msg = msgs[0]; // Get first message for this zona
+                    const zonaName = msg.zona_id ? `Zona ${msg.zona_id}` : 'Unknown';
+                    const isPending = !msg.sent_at;
+                    
+                    return `
+                        <div class="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition">
+                            <!-- Header: Zona name + Status -->
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-gray-900">📍 ${zonaName}</h3>
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${isPending ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
+                                    ${isPending ? '⏳ Pending' : '✓ Terkirim'}
+                                </span>
                             </div>
-                            <span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${msg.sent_at ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                ${msg.sent_at ? 'Terkirim' : 'Pending'}
-                            </span>
+
+                            <!-- Message Box -->
+                            <div class="bg-gray-50 rounded-lg p-4 mb-4 border-l-4 border-green-500 font-mono text-sm whitespace-pre-wrap text-gray-800" style="max-height: 200px; overflow-y: auto;">
+${msg.message || 'N/A'}
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex gap-2">
+                                <button onclick="copyMessage('${msg.id}', '${msg.message.replace(/'/g, "\\'")}'); return false;" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
+                                    <i class="fas fa-copy mr-2"></i>Salin Pesan
+                                </button>
+                                ${isPending ? `<button onclick="markInvoiceMessageSent('${msg.id}'); return false;" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
+                                    <i class="fas fa-check mr-2"></i>Tandai Terkirim
+                                </button>` : ''}
+                                <button onclick="deleteInvoiceMessage('${msg.id}'); return false;" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
+                                    <i class="fas fa-trash mr-2"></i>Hapus
+                                </button>
+                            </div>
                         </div>
-                        <div class="text-sm text-gray-600 mb-3 bg-gray-50 p-3 rounded whitespace-pre-wrap">${msg.message || 'N/A'}</div>
-                        <div class="flex gap-2">
-                            ${!msg.sent_at ? `<button onclick="markInvoiceMessageSent('${msg.id}')" class="text-xs px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"><i class="fas fa-check mr-1"></i>Tandai Terkirim</button>` : ''}
-                            <button onclick="deleteInvoiceMessage('${msg.id}')" class="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"><i class="fas fa-trash mr-1"></i>Hapus</button>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
         }
 
-        async function markMessageSent(msgId) {
+        async function copyMessage(msgId, message) {
             try {
-                await API.post('/api/whatsapp/mark-sent', { notificationId: msgId });
-                await loadMessages();
-            } catch (err) { alert('Error: ' + err.message); }
+                await navigator.clipboard.writeText(message);
+                if (typeof Toast !== 'undefined') {
+                    Toast.success('✓ Pesan berhasil disalin!');
+                } else {
+                    alert('Pesan berhasil disalin!');
+                }
+            } catch (err) {
+                if (typeof Toast !== 'undefined') {
+                    Toast.error('Gagal menyalin pesan');
+                } else {
+                    alert('Gagal menyalin: ' + err.message);
+                }
+            }
         }
 
         async function markInvoiceMessageSent(msgId) {
             try {
                 await API.post('/api/whatsapp/mark-invoice-sent', { notificationId: msgId });
                 await loadMessages();
-            } catch (err) { alert('Error: ' + err.message); }
-        }
-
-        async function deleteMessage(msgId) {
-            if (!confirm('Hapus pesan ini?')) return;
-            try {
-                await API.post('/api/whatsapp/delete-message', { notificationId: msgId });
-                await loadMessages();
-            } catch (err) { alert('Error: ' + err.message); }
+                if (typeof Toast !== 'undefined') {
+                    Toast.success('✓ Pesan ditandai terkirim');
+                }
+            } catch (err) {
+                if (typeof Toast !== 'undefined') {
+                    Toast.error('Error: ' + err.message);
+                } else {
+                    alert('Error: ' + err.message);
+                }
+            }
         }
 
         async function deleteInvoiceMessage(msgId) {
@@ -291,7 +249,16 @@
             try {
                 await API.post('/api/whatsapp/delete-invoice-message', { notificationId: msgId });
                 await loadMessages();
-            } catch (err) { alert('Error: ' + err.message); }
+                if (typeof Toast !== 'undefined') {
+                    Toast.success('✓ Pesan dihapus');
+                }
+            } catch (err) {
+                if (typeof Toast !== 'undefined') {
+                    Toast.error('Error: ' + err.message);
+                } else {
+                    alert('Error: ' + err.message);
+                }
+            }
         }
     </script>
 </body>
