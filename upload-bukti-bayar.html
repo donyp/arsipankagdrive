@@ -351,10 +351,12 @@
                             
                             if (checkRes.ok) {
                                 const result = await checkRes.json();
+                                console.log('[Bukti Bayar] Invoice data:', result.data);
                                 if (result.exists && result.data) {
                                     // Get toko name and nominal
                                     tokoName = result.data.konsumen || result.data.toko || '-';
                                     nominal = result.data.total_jumlah_jual || 0;
+                                    console.log('[Bukti Bayar] Toko:', tokoName, 'Nominal:', nominal);
                                     
                                     if (result.data.bukti_bayar_path) {
                                         // Check if file truly exists in GDrive
