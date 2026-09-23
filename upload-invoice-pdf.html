@@ -146,12 +146,18 @@
         }
         
         /* Files list dark mode */
-        html[data-dark-mode="true"] .file-item-status.valid {
+        html[data-dark-mode="true"] .file-item-status {
+            background: var(--color-bg-tertiary) !important;
+            color: var(--color-text-primary) !important;
+        }
+        
+        /* Valid/Invalid badges - target by parent class */
+        html[data-dark-mode="true"] .file-item.valid .file-item-status {
             background: rgba(16, 185, 129, 0.2) !important;
             color: #10b981 !important;
         }
         
-        html[data-dark-mode="true"] .file-item-status.invalid {
+        html[data-dark-mode="true"] .file-item.invalid .file-item-status {
             background: rgba(239, 68, 68, 0.2) !important;
             color: #ef5350 !important;
         }
