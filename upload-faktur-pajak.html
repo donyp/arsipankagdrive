@@ -511,9 +511,14 @@
                                         if (checkData.exists) {
                                             info.isValid = false;
                                             info.errorMsg = 'Faktur Pajak sudah diupload (Duplicate)';
+                                        } else {
+                                            // File path in DB but not in GDrive - allow re-upload
+                                            info.isValid = true;
                                         }
                                     } catch (verifyErr) {
-                                        // If verification fails, assume file is gone
+                                        // If verification fails, assume file is gone - allow re-upload
+                                        console.log('Verification error (allowing re-upload):', verifyErr);
+                                        info.isValid = true;
                                     }
                                 }
                             }
