@@ -153,6 +153,23 @@ if (!document.getElementById('toast-animations')) {
             animation: slideUp 0.3s ease-out;
         }
         
+        html[data-dark-mode="true"] .loading-modal {
+            background: #1e293b;
+            color: #f1f5f9;
+        }
+        
+        html[data-dark-mode="true"] .loading-text {
+            color: #f1f5f9 !important;
+        }
+        
+        html[data-dark-mode="true"] .loading-subtext {
+            color: #cbd5e1 !important;
+        }
+        
+        html[data-dark-mode="true"] .progress-bar-container {
+            background: #334155 !important;
+        }
+        
         .loading-spinner {
             width: 60px;
             height: 60px;
@@ -161,6 +178,11 @@ if (!document.getElementById('toast-animations')) {
             border-top: 4px solid #3498db;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+        }
+        
+        html[data-dark-mode="true"] .loading-spinner {
+            border-color: #334155 !important;
+            border-top-color: #60a5fa !important;
         }
         
         .loading-text {
