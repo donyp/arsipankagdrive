@@ -132,6 +132,7 @@
     </div>
 
     <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/sidebar.js"></script>
@@ -146,15 +147,35 @@
             try {
                 const invoiceMsgs = await API.get('/api/whatsapp/pending-invoice-messages').catch(() => ({}));
                 
-                // Handle both array and object formats
-                currentInvoiceMessages = Array.isArray(invoiceMsgs) ? invoiceMsgs : (invoiceMsgs.notifications || invoiceMsgs || []);
+                console.log('[Notify WA] Response from API:', invoiceMsgs);
                 
-                // Ensure it's an array
-                if (!Array.isArray(currentInvoiceMessages)) currentInvoiceMessages = [];
+                // Response is an object with notifications grouped by zona name (from backend)
+                // notifications: { "Zona Name": [{msg1}, {msg2}], "Another Zona": [...] }
+                // Or it could be { notifications: {...}, count: X, ... }
                 
+                let messagesObj = invoiceMsgs.notifications || invoiceMsgs;
+                console.log('[Notify WA] Extracted messages:', messagesObj);
+                
+                // Convert grouped object to flat array for rendering
+                // messagesObj is: { "Zona Name": [{...}], "Zona 2": [{...}] }
+                if (messagesObj && typeof messagesObj === 'object' && !Array.isArray(messagesObj)) {
+                    currentInvoiceMessages = [];
+                    Object.entries(messagesObj).forEach(([zonaName, msgs]) => {
+                        if (Array.isArray(msgs)) {
+                            currentInvoiceMessages.push(...msgs);
+                        }
+                    });
+                    console.log('[Notify WA] Flattened messages array:', currentInvoiceMessages);
+                } else if (Array.isArray(messagesObj)) {
+                    currentInvoiceMessages = messagesObj;
+                } else {
+                    currentInvoiceMessages = [];
+                }
+                
+                console.log('[Notify WA] Final messages array:', currentInvoiceMessages);
                 renderMessages();
             } catch (err) {
-                console.error('Error loading messages:', err);
+                console.error('[Notify WA] Error loading messages:', err);
                 document.getElementById('invoice-messages-body').innerHTML = '<div class="text-center text-gray-500 py-8">Gagal memuat pesan</div>';
             }
         }
