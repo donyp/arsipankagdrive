@@ -309,17 +309,91 @@
                 let validCount = 0;
                 let invalidCount = 0;
 
+                // First pass: validate extensions
+                const extensionValidated = [];
                 Array.from(files).forEach(file => {
                     const ext = file.name.split('.').pop().toLowerCase();
                     
                     if (validExtensions.includes(ext) && file.size > 0) {
-                        selectedFiles.push(file);
+                        extensionValidated.push(file);
                         validCount++;
                     } else {
                         invalidCount++;
                         console.warn('[Bukti Bayar] Invalid file:', file.name);
                     }
                 });
+
+                // Second pass: check for duplicates on server
+                checkForDuplicates(extensionValidated);
+            }
+
+            async function checkForDuplicates(files) {
+                console.log('[Bukti Bayar] Checking for duplicates...');
+                let validCount = 0;
+                let invalidCount = 0;
+
+                for (const file of files) {
+                    // Extract faktur from filename
+                    const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.'));
+                    const faktur = nameWithoutExt.split('_')[0] || nameWithoutExt;
+                    
+                    let isDuplicate = false;
+                    let errorMsg = '';
+
+                    if (faktur && faktur.trim()) {
+                        try {
+                            // Check if faktur exists
+                            const checkRes = await fetch(`/api/invoice/check-faktur/${faktur}`, {
+                                headers: { 'Authorization': `Bearer ${API.getToken()}` }
+                            });
+                            
+                            if (checkRes.ok) {
+                                const result = await checkRes.json();
+                                if (result.exists && result.data && result.data.bukti_bayar_path) {
+                                    // Check if file truly exists in GDrive
+                                    try {
+                                        const fileCheckRes = await fetch(`/api/invoice/check-file/${faktur}/bukti_bayar`, {
+                                            headers: { 'Authorization': `Bearer ${API.getToken()}` }
+                                        });
+                                        const fileCheckData = await fileCheckRes.json();
+                                        
+                                        if (fileCheckData.exists) {
+                                            isDuplicate = true;
+                                            errorMsg = 'Bukti Bayar sudah diupload (Duplicate)';
+                                            invalidCount++;
+                                        } else {
+                                            // File was deleted from GDrive - allow re-upload
+                                            validCount++;
+                                            selectedFiles.push(file);
+                                        }
+                                    } catch (fileCheckErr) {
+                                        // If check fails, allow re-upload
+                                        console.log('[Bukti Bayar] File check error, allowing:', fileCheckErr.message);
+                                        validCount++;
+                                        selectedFiles.push(file);
+                                    }
+                                } else {
+                                    // No existing path - new upload
+                                    validCount++;
+                                    selectedFiles.push(file);
+                                }
+                            } else {
+                                // Faktur not found - allow upload anyway
+                                validCount++;
+                                selectedFiles.push(file);
+                            }
+                        } catch (err) {
+                            console.log('[Bukti Bayar] Duplicate check error:', err);
+                            // If check fails, allow upload
+                            validCount++;
+                            selectedFiles.push(file);
+                        }
+                    } else {
+                        // No faktur detected
+                        invalidCount++;
+                        errorMsg = 'Format filename salah';
+                    }
+                }
 
                 // Update stats
                 document.getElementById('totalFiles').textContent = files.length;
@@ -334,7 +408,6 @@
                     
                     // Render files list
                     filesContainer.innerHTML = selectedFiles.map((file, idx) => {
-                        // Extract faktur from filename (assuming format like: [faktur]_bukti_bayar.pdf or just [faktur].pdf)
                         const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.'));
                         const faktur = nameWithoutExt.split('_')[0] || nameWithoutExt;
                         
