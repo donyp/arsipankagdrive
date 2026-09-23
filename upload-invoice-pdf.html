@@ -119,6 +119,42 @@
         html[data-dark-mode="true"] .text-e74c3c {
             color: #e74c3c !important;
         }
+        
+        /* Stats cards dark mode */
+        html[data-dark-mode="true"] #stats div[style*="background: #f8f9fa"] {
+            background: var(--color-bg-tertiary) !important;
+        }
+        
+        html[data-dark-mode="true"] #stats div[style*="background: #f8f9fa"] div[style*="font-size: 28px"] {
+            color: inherit !important;
+        }
+        
+        html[data-dark-mode="true"] #totalFiles {
+            color: #60a5fa !important;
+        }
+        
+        html[data-dark-mode="true"] #validFiles {
+            color: #10b981 !important;
+        }
+        
+        html[data-dark-mode="true"] #invalidFiles {
+            color: #ef5350 !important;
+        }
+        
+        html[data-dark-mode="true"] #stats div[style*="color: #7f8c8d"] {
+            color: var(--color-text-secondary) !important;
+        }
+        
+        /* Files list dark mode */
+        html[data-dark-mode="true"] .file-item-status.valid {
+            background: rgba(16, 185, 129, 0.2) !important;
+            color: #10b981 !important;
+        }
+        
+        html[data-dark-mode="true"] .file-item-status.invalid {
+            background: rgba(239, 68, 68, 0.2) !important;
+            color: #ef5350 !important;
+        }
 
         .gradient-header {
             background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
