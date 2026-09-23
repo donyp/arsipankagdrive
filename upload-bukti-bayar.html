@@ -339,6 +339,8 @@
                     
                     let isDuplicate = false;
                     let errorMsg = '';
+                    let tokoName = '';
+                    let nominal = '';
 
                     if (faktur && faktur.trim()) {
                         try {
@@ -349,31 +351,47 @@
                             
                             if (checkRes.ok) {
                                 const result = await checkRes.json();
-                                if (result.exists && result.data && result.data.bukti_bayar_path) {
-                                    // Check if file truly exists in GDrive
-                                    try {
-                                        const fileCheckRes = await fetch(`/api/invoice/check-file/${faktur}/bukti_bayar`, {
-                                            headers: { 'Authorization': `Bearer ${API.getToken()}` }
-                                        });
-                                        const fileCheckData = await fileCheckRes.json();
-                                        
-                                        if (fileCheckData.exists) {
-                                            isDuplicate = true;
-                                            errorMsg = 'Bukti Bayar sudah diupload (Duplicate)';
-                                            invalidCount++;
-                                        } else {
-                                            // File was deleted from GDrive - allow re-upload
+                                if (result.exists && result.data) {
+                                    // Get toko name and nominal
+                                    tokoName = result.data.konsumen || result.data.toko || '-';
+                                    nominal = result.data.total_jumlah_jual || 0;
+                                    
+                                    if (result.data.bukti_bayar_path) {
+                                        // Check if file truly exists in GDrive
+                                        try {
+                                            const fileCheckRes = await fetch(`/api/invoice/check-file/${faktur}/bukti_bayar`, {
+                                                headers: { 'Authorization': `Bearer ${API.getToken()}` }
+                                            });
+                                            const fileCheckData = await fileCheckRes.json();
+                                            
+                                            if (fileCheckData.exists) {
+                                                isDuplicate = true;
+                                                errorMsg = 'Bukti Bayar sudah diupload (Duplicate)';
+                                                invalidCount++;
+                                            } else {
+                                                // File was deleted from GDrive - allow re-upload
+                                                validCount++;
+                                                file.tokoName = tokoName;
+                                                file.nominal = nominal;
+                                                selectedFiles.push(file);
+                                            }
+                                        } catch (fileCheckErr) {
+                                            // If check fails, allow re-upload
+                                            console.log('[Bukti Bayar] File check error, allowing:', fileCheckErr.message);
                                             validCount++;
+                                            file.tokoName = tokoName;
+                                            file.nominal = nominal;
                                             selectedFiles.push(file);
                                         }
-                                    } catch (fileCheckErr) {
-                                        // If check fails, allow re-upload
-                                        console.log('[Bukti Bayar] File check error, allowing:', fileCheckErr.message);
+                                    } else {
+                                        // No existing path - new upload
                                         validCount++;
+                                        file.tokoName = tokoName;
+                                        file.nominal = nominal;
                                         selectedFiles.push(file);
                                     }
                                 } else {
-                                    // No existing path - new upload
+                                    // Faktur not found - allow upload anyway
                                     validCount++;
                                     selectedFiles.push(file);
                                 }
@@ -410,13 +428,15 @@
                     filesContainer.innerHTML = selectedFiles.map((file, idx) => {
                         const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.'));
                         const faktur = nameWithoutExt.split('_')[0] || nameWithoutExt;
+                        const tokoName = file.tokoName || '-';
+                        const nominal = file.nominal ? 'Rp ' + file.nominal.toLocaleString('id-ID') : '-';
                         
                         return `
                             <div style="background: #f8f9fa; padding: 12px 15px; border-radius: 6px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
                                 <div style="font-size: 18px; color: #10b981;">✓</div>
                                 <div style="flex: 1;">
                                     <div style="font-size: 13px; font-weight: 600; color: #2c3e50;">${file.name}</div>
-                                    <div style="font-size: 11px; color: #7f8c8d; margin-top: 2px;">Faktur: ${faktur} | ${(file.size / 1024).toFixed(2)} KB</div>
+                                    <div style="font-size: 11px; color: #7f8c8d; margin-top: 2px;">Faktur: ${faktur} | ${tokoName} | ${nominal}</div>
                                 </div>
                                 <button onclick="removeFile(${idx})" style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">✕ Remove</button>
                             </div>
