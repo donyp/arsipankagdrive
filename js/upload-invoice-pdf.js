@@ -198,6 +198,10 @@ if (!document.getElementById('toast-animations')) {
             margin-bottom: 20px;
         }
         
+        html[data-dark-mode="true"] .loading-subtext {
+            color: #cbd5e1 !important;
+        }
+        
         .progress-bar-container {
             width: 100%;
             height: 6px;
