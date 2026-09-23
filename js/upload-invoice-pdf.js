@@ -645,6 +645,11 @@ async function uploadValidFiles() {
                             const waResult = await waResponse.json();
                             if (waResponse.ok && waResult.success) {
                                 console.log('[PDF Bulk] ✓ WhatsApp message generated');
+                                // Store batch ID and notifications for display
+                                window.currentInvoiceBatchId = 'batch_' + Date.now() + '_' + fileResult.faktur;
+                                window.whatsappInvoiceNotifications = waResult.notifications;
+                                // Display WhatsApp panel
+                                setTimeout(() => displayInvoiceWhatsappNotifications(), 300);
                             } else {
                                 console.warn('[PDF Bulk] WhatsApp generation failed:', waResult.error);
                             }
@@ -747,3 +752,162 @@ document.addEventListener('DOMContentLoaded', () => {
         btnUpload.addEventListener('click', uploadValidFiles);
     }
 });
+
+
+// ============================================================
+// WhatsApp Invoice Notification Display Functions
+// ============================================================
+
+/**
+ * Display generated WhatsApp notifications in the upload panel
+ */
+function displayInvoiceWhatsappNotifications() {
+    const panel = document.getElementById('whatsappPanel');
+    const container = document.getElementById('whatsappMessagesContainer');
+
+    if (!panel || !container) {
+        console.warn('[PDF] WhatsApp UI elements not found');
+        return;
+    }
+
+    // Clear container
+    container.innerHTML = '';
+
+    if (!window.whatsappInvoiceNotifications || Object.keys(window.whatsappInvoiceNotifications).length === 0) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    // Create message card for each zona
+    Object.entries(window.whatsappInvoiceNotifications).forEach(([zonaName, notif]) => {
+        const messageCard = document.createElement('div');
+        messageCard.style.cssText = `
+            background: white;
+            border: 1px solid #10b981;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            position: relative;
+        `;
+
+        const zonaLabel = document.createElement('div');
+        zonaLabel.style.cssText = `
+            font-weight: 600;
+            color: #27ae60;
+            margin-bottom: 8px;
+            font-size: 13px;
+        `;
+        zonaLabel.textContent = `📍 ${zonaName} (${notif.invoice_count} invoice)`;
+
+        const messageText = document.createElement('div');
+        messageText.style.cssText = `
+            background: #f0f8f4;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 120px;
+            overflow-y: auto;
+            border-left: 3px solid #10b981;
+            font-family: 'Courier New', monospace;
+            color: #2c3e50;
+        `;
+        messageText.textContent = notif.message;
+
+        const copyButton = document.createElement('button');
+        copyButton.style.cssText = `
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px;
+            background: #25d366;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: background 0.2s;
+        `;
+        copyButton.textContent = '📋 Salin Pesan';
+        copyButton.addEventListener('mouseover', () => copyButton.style.background = '#20ba58');
+        copyButton.addEventListener('mouseout', () => copyButton.style.background = '#25d366');
+        copyButton.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(notif.message);
+                if (typeof Toast !== 'undefined') {
+                    Toast.success(`Pesan zona ${zonaName} sudah disalin!`);
+                }
+            } catch (error) {
+                console.error('[PDF] Copy error:', error);
+            }
+        });
+
+        messageCard.appendChild(zonaLabel);
+        messageCard.appendChild(messageText);
+        messageCard.appendChild(copyButton);
+        container.appendChild(messageCard);
+    });
+
+    panel.style.display = 'block';
+}
+
+/**
+ * Close WhatsApp panel
+ */
+function closeWhatsappPanel() {
+    const panel = document.getElementById('whatsappPanel');
+    if (panel) {
+        panel.style.display = 'none';
+    }
+}
+
+/**
+ * Mark all invoice WhatsApp notifications as sent
+ */
+async function markAllInvoiceWhatsappAsSent() {
+    if (!window.currentInvoiceBatchId) {
+        if (typeof Toast !== 'undefined') {
+            Toast.warning('Batch ID tidak ditemukan');
+        }
+        return;
+    }
+
+    try {
+        const token = API.getToken() || localStorage.getItem('jwt_token');
+        const headers = { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+
+        console.log('[PDF] Marking invoice batch', window.currentInvoiceBatchId, 'as sent');
+
+        const response = await fetch('/api/whatsapp/mark-invoice-batch-sent', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                batchId: window.currentInvoiceBatchId
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            closeWhatsappPanel();
+            if (typeof Toast !== 'undefined') {
+                Toast.success('✅ Semua pesan sudah ditandai terkirim!');
+            }
+            console.log('[PDF] ✅ Invoice batch marked as sent');
+        } else {
+            if (typeof Toast !== 'undefined') {
+                Toast.error(result.error || 'Gagal menandai sebagai terkirim');
+            }
+        }
+    } catch (error) {
+        console.error('[PDF] Error marking as sent:', error);
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Error: ' + error.message);
+        }
+    }
+}

@@ -317,6 +317,39 @@
                 opacity: 1;
             }
         }
+        
+        /* WhatsApp Panel Dark Mode */
+        html[data-dark-mode="true"] #whatsappPanel {
+            background: #064e3b !important;
+            border-color: #10b981 !important;
+        }
+        
+        html[data-dark-mode="true"] #whatsappPanel h3 {
+            color: #6ee7b7 !important;
+        }
+        
+        html[data-dark-mode="true"] #whatsappMessagesContainer > div {
+            background: #1e293b !important;
+            border-color: #10b981 !important;
+        }
+        
+        html[data-dark-mode="true"] #whatsappMessagesContainer div[style*="color: #27ae60"] {
+            color: #10b981 !important;
+        }
+        
+        html[data-dark-mode="true"] #whatsappMessagesContainer div[style*="background: #f0f8f4"] {
+            background: #0f172a !important;
+            color: #e2e8f0 !important;
+            border-left-color: #10b981 !important;
+        }
+        
+        html[data-dark-mode="true"] #whatsappMessagesContainer button {
+            background: #10b981 !important;
+        }
+        
+        html[data-dark-mode="true"] #whatsappMessagesContainer button:hover {
+            background: #059669 !important;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -415,6 +448,23 @@
                             <i class="fas fa-upload"></i> Upload PDF
                         </button>
                     </div>
+                </div>
+            </div>
+
+            <!-- WhatsApp Messages Panel -->
+            <div id="whatsappPanel" style="display: none; margin-top: 20px; background: #f0f8f4; border: 1px solid #27ae60; border-radius: 8px; padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h3 style="margin: 0; color: #27ae60; font-weight: 600;"><i class="fas fa-whatsapp" style="margin-right: 8px;"></i>Pesan WhatsApp Siap Dikirim</h3>
+                    <button onclick="closeWhatsappPanel()" style="background: none; border: none; cursor: pointer; color: #7f8c8d; font-size: 18px;">&times;</button>
+                </div>
+                <div id="whatsappMessagesContainer" style="max-height: 400px; overflow-y: auto; margin-bottom: 12px;"></div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button onclick="closeWhatsappPanel()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition text-sm">
+                        Tutup
+                    </button>
+                    <button onclick="markAllInvoiceWhatsappAsSent()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition text-sm">
+                        <i class="fas fa-check mr-1"></i>Tandai Semua Terkirim
+                    </button>
                 </div>
             </div>
         </div>
