@@ -252,6 +252,7 @@
     </div>
 
     <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/sidebar.js"></script>
 
@@ -500,7 +501,11 @@
 
             document.getElementById('btnUpload').addEventListener('click', async () => {
                 if (selectedFiles.length === 0) {
-                    alert('Pilih file terlebih dahulu');
+                    if (typeof Toast !== 'undefined') {
+                        Toast.error('Pilih file terlebih dahulu');
+                    } else {
+                        alert('Pilih file terlebih dahulu');
+                    }
                     return;
                 }
 
@@ -531,11 +536,19 @@
                         console.log('[Bukti Bayar] Uploaded:', file.name);
                     }
 
-                    alert('✅ Bukti Bayar berhasil diupload!');
+                    if (typeof Toast !== 'undefined') {
+                        Toast.success('✅ Bukti Bayar berhasil diupload!');
+                    } else {
+                        alert('✅ Bukti Bayar berhasil diupload!');
+                    }
                     window.resetUpload();
                 } catch (error) {
                     console.error('[Bukti Bayar] Upload error:', error);
-                    alert('❌ Upload gagal: ' + error.message);
+                    if (typeof Toast !== 'undefined') {
+                        Toast.error('❌ Upload gagal: ' + error.message);
+                    } else {
+                        alert('❌ Upload gagal: ' + error.message);
+                    }
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = originalText;

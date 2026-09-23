@@ -317,6 +317,9 @@ async function uploadData() {
             document.getElementById('card4').style.display = 'block';
             updateStep(4);
 
+            if (typeof Toast !== 'undefined') {
+                Toast.success(`✅ ${processed} file Excel berhasil diupload!`);
+            }
             console.log('[Upload] ✅ Success!');
         } else {
             Toast.error(result.error || 'Upload failed', '❌ Upload Error');
