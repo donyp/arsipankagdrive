@@ -613,9 +613,11 @@ async function uploadValidFiles() {
                 if (response.ok && result.success) {
                     successCount++;
                     console.log('[PDF Bulk] ✓ Uploaded:', fileResult.faktur);
+                    console.log('[PDF Bulk] Upload result:', result);
                     showNotification(`✓ ${fileResult.faktur}`, 'success', 2000);
                     
                     // Generate WhatsApp message if we have zone data
+                    console.log('[PDF Bulk] Checking for WhatsApp data - zona_id:', result.zona_id, 'tipe:', result.tipe, 'konsumen:', result.konsumen, 'nominal:', result.nominal);
                     if (result.zona_id && result.tipe && result.konsumen && result.nominal) {
                         try {
                             console.log('[PDF Bulk] Generating WhatsApp message for:', {
@@ -645,10 +647,13 @@ async function uploadValidFiles() {
                             const waResult = await waResponse.json();
                             if (waResponse.ok && waResult.success) {
                                 console.log('[PDF Bulk] ✓ WhatsApp message generated');
-                                // Store batch ID and notifications for display
-                                window.currentInvoiceBatchId = 'batch_' + Date.now() + '_' + fileResult.faktur;
-                                window.whatsappInvoiceNotifications = waResult.notifications;
-                                // Display WhatsApp panel
+                                // Accumulate notifications from all files
+                                window.currentInvoiceBatchId = window.currentInvoiceBatchId || ('batch_' + Date.now());
+                                window.whatsappInvoiceNotifications = window.whatsappInvoiceNotifications || {};
+                                // Merge new notifications with existing ones
+                                Object.assign(window.whatsappInvoiceNotifications, waResult.notifications);
+                                console.log('[PDF Bulk] Stored notifications:', Object.keys(window.whatsappInvoiceNotifications).length, 'zonas');
+                                // Display WhatsApp panel (will show all accumulated notifications)
                                 setTimeout(() => displayInvoiceWhatsappNotifications(), 300);
                             } else {
                                 console.warn('[PDF Bulk] WhatsApp generation failed:', waResult.error);
@@ -683,6 +688,12 @@ async function uploadValidFiles() {
         showNotification(message, successCount > 0 ? 'success' : 'error', 5000);
         
         console.log('[PDF Bulk] Upload complete - all files processed');
+        
+        // Show WhatsApp notifications if any were generated
+        if (window.whatsappInvoiceNotifications && Object.keys(window.whatsappInvoiceNotifications).length > 0) {
+            console.log('[PDF Bulk] Displaying accumulated WhatsApp notifications:', Object.keys(window.whatsappInvoiceNotifications).length, 'zonas');
+            setTimeout(() => displayInvoiceWhatsappNotifications(), 500);
+        }
 
         // Refresh invoice list to show updated status with file counts
         if (successCount > 0) {
