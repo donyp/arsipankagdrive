@@ -333,18 +333,22 @@
                     btnUpload.disabled = false;
                     
                     // Render files list
-                    filesContainer.innerHTML = selectedFiles.map((file, idx) => `
-                        <div style="background: #f8f9fa; padding: 12px 15px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                                <i class="fas fa-file" style="font-size: 18px; color: #10b981;"></i>
+                    filesContainer.innerHTML = selectedFiles.map((file, idx) => {
+                        // Extract faktur from filename (assuming format like: [faktur]_bukti_bayar.pdf or just [faktur].pdf)
+                        const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.'));
+                        const faktur = nameWithoutExt.split('_')[0] || nameWithoutExt;
+                        
+                        return `
+                            <div style="background: #f8f9fa; padding: 12px 15px; border-radius: 6px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
+                                <div style="font-size: 18px; color: #10b981;">✓</div>
                                 <div style="flex: 1;">
                                     <div style="font-size: 13px; font-weight: 600; color: #2c3e50;">${file.name}</div>
-                                    <div style="font-size: 11px; color: #7f8c8d; margin-top: 2px;">${(file.size / 1024).toFixed(2)} KB</div>
+                                    <div style="font-size: 11px; color: #7f8c8d; margin-top: 2px;">Faktur: ${faktur} | ${(file.size / 1024).toFixed(2)} KB</div>
                                 </div>
+                                <button onclick="removeFile(${idx})" style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">✕ Remove</button>
                             </div>
-                            <button onclick="removeFile(${idx})" style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">✕ Remove</button>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 } else {
                     stats.style.display = 'none';
                     filesList.style.display = 'none';
