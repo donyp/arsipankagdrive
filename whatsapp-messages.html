@@ -185,66 +185,101 @@
             const invMsgBody = document.getElementById('invoice-messages-body');
             if (!currentInvoiceMessages || currentInvoiceMessages.length === 0) {
                 invMsgBody.innerHTML = '<div class="text-center text-gray-500 py-8">Belum ada pesan</div>';
-            } else {
-                // Group by zona
-                const grouped = {};
-                currentInvoiceMessages.forEach(msg => {
-                    const key = msg.zona_id || 'unknown';
-                    if (!grouped[key]) grouped[key] = [];
-                    grouped[key].push(msg);
-                });
-
-                invMsgBody.innerHTML = Object.entries(grouped).map(([zonaId, msgs]) => {
-                    const msg = msgs[0]; // Get first message for this zona
-                    const zonaName = msg.zona_id ? `Zona ${msg.zona_id}` : 'Unknown';
-                    const isPending = !msg.sent_at;
-                    
-                    return `
-                        <div class="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition">
-                            <!-- Header: Zona name + Status -->
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-bold text-gray-900">📍 ${zonaName}</h3>
-                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${isPending ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
-                                    ${isPending ? '⏳ Pending' : '✓ Terkirim'}
-                                </span>
-                            </div>
-
-                            <!-- Message Box -->
-                            <div class="bg-gray-50 rounded-lg p-4 mb-4 border-l-4 border-green-500 font-mono text-sm whitespace-pre-wrap text-gray-800" style="max-height: 200px; overflow-y: auto;">
-${msg.message || 'N/A'}
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="flex gap-2">
-                                <button onclick="copyMessage('${msg.id}', '${msg.message.replace(/'/g, "\\'")}'); return false;" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
-                                    <i class="fas fa-copy mr-2"></i>Salin Pesan
-                                </button>
-                                ${isPending ? `<button onclick="markInvoiceMessageSent('${msg.id}'); return false;" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
-                                    <i class="fas fa-check mr-2"></i>Tandai Terkirim
-                                </button>` : ''}
-                                <button onclick="deleteInvoiceMessage('${msg.id}'); return false;" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
-                                    <i class="fas fa-trash mr-2"></i>Hapus
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                return;
             }
+
+            // Separate into active (pending) and sent
+            const activeMessages = currentInvoiceMessages.filter(msg => !msg.sent_at);
+            const sentMessages = currentInvoiceMessages.filter(msg => msg.sent_at);
+
+            let html = '';
+
+            // ACTIVE MESSAGES SECTION
+            if (activeMessages.length > 0) {
+                html += `
+                    <div class="mb-8">
+                        <h2 class="text-xl font-bold text-gray-900 mb-4">
+                            <i class="fas fa-paper-plane text-blue-600 mr-2"></i>Pesan Aktif (${activeMessages.length})
+                        </h2>
+                        <div class="space-y-4">
+                            ${activeMessages.map(msg => renderMessageCard(msg)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // SENT MESSAGES SECTION
+            if (sentMessages.length > 0) {
+                html += `
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 mb-4">
+                            <i class="fas fa-check-circle text-green-600 mr-2"></i>Sudah Terkirim (${sentMessages.length})
+                        </h2>
+                        <div class="space-y-4">
+                            ${sentMessages.map(msg => renderMessageCard(msg)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            invMsgBody.innerHTML = html;
+        }
+
+        function renderMessageCard(msg) {
+            const isPending = !msg.sent_at;
+            const zonaName = msg.zonas?.nama || `Zona ${msg.zona_id}`;
+            
+            return `
+                <div class="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition">
+                    <!-- Header: Zona name + Status -->
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-900">📍 ${zonaName}</h3>
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${isPending ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                            ${isPending ? '⏳ Aktif' : '✓ Terkirim'}
+                        </span>
+                    </div>
+
+                    <!-- Message Box -->
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4 border-l-4 border-green-500 font-mono text-sm whitespace-pre-wrap text-gray-800" style="max-height: 200px; overflow-y: auto;">
+${msg.message || 'N/A'}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-2">
+                        <button onclick="copyMessage('${msg.id}', '${msg.message.replace(/'/g, "\\'")}'); return false;" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
+                            <i class="fas fa-copy mr-2"></i>Salin Pesan
+                        </button>
+                        ${isPending ? `<button onclick="markInvoiceMessageSent('${msg.id}'); return false;" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
+                            <i class="fas fa-check mr-2"></i>Tandai Terkirim
+                        </button>` : ''}
+                        <button onclick="deleteInvoiceMessage('${msg.id}'); return false;" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
+                            <i class="fas fa-trash mr-2"></i>Hapus
+                        </button>
+                    </div>
+                </div>
+            `;
         }
 
         async function copyMessage(msgId, message) {
             try {
                 await navigator.clipboard.writeText(message);
+                
+                // Auto-mark as sent when copied
+                await API.post('/api/whatsapp/mark-invoice-sent', { notificationId: msgId });
+                
+                // Reload to show message moved to "Terkirim" section
+                await loadMessages();
+                
                 if (typeof Toast !== 'undefined') {
-                    Toast.success('✓ Pesan berhasil disalin!');
+                    Toast.success('✓ Pesan disalin & ditandai terkirim!');
                 } else {
-                    alert('Pesan berhasil disalin!');
+                    alert('Pesan disalin!');
                 }
             } catch (err) {
                 if (typeof Toast !== 'undefined') {
-                    Toast.error('Gagal menyalin pesan');
+                    Toast.error('Error: ' + err.message);
                 } else {
-                    alert('Gagal menyalin: ' + err.message);
+                    alert('Error: ' + err.message);
                 }
             }
         }
