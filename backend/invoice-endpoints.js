@@ -1317,7 +1317,9 @@ function registerInvoiceEndpoints(app, supabase, createAuth, RcloneStorage) {
                 // STRATEGY 1 ONLY: If DB has a path, check if file really exists
                 if (dbFilePath) {
                     try {
-                        fileExists = await RcloneStorage.checkFileExists(dbFilePath);
+                        // Use NO-CACHE check to ensure we get fresh result from Google Drive
+                        // This prevents stale cache from blocking re-uploads after file deletion
+                        fileExists = await RcloneStorage.checkFileExistsNoCache(dbFilePath);
                         console.log(`[Check File] GDrive check via DB path (${fileType}): ${fileExists ? 'EXISTS' : 'MISSING'}`);
                     } catch (err) {
                         console.warn(`[Check File] Error checking DB path: ${err.message}`);
