@@ -515,12 +515,13 @@
 
                     for (const file of selectedFiles) {
                         const formData = new FormData();
-                        formData.append('bukti_bayar', file);
+                        formData.append('file', file);
+                        formData.append('type', 'bukti_bayar');
 
-                        const response = await fetch('/api/bukti-bayar/upload', {
+                        const response = await fetch('/api/invoice/upload-document', {
                             method: 'POST',
-                            headers: headers,
-                            body: formData
+                            body: formData,
+                            headers: { 'Authorization': `Bearer ${token}` }
                         });
 
                         if (!response.ok) {
