@@ -242,8 +242,9 @@ function toggleDarkMode() {
     const isDark = localStorage.getItem('dark_mode_enabled') === 'true';
     const newState = !isDark;
     
-    // Briefly disable transitions for instant attribute change
+    // Temporarily disable transitions, toggle, then re-enable
     const html = document.documentElement;
+    html.classList.remove('with-transitions');
     html.classList.add('no-transition');
     
     localStorage.setItem('dark_mode_enabled', newState ? 'true' : 'false');
@@ -261,9 +262,10 @@ function toggleDarkMode() {
         window.applyDarkModeInlineStyles(newState);
     }
     
-    // Re-enable transitions after attribute changes
+    // Re-enable transitions after a brief moment
     setTimeout(() => {
         html.classList.remove('no-transition');
+        html.classList.add('with-transitions');
     }, 10);
     
     console.log('[DarkMode] Toggled to:', newState ? 'Dark' : 'Light');

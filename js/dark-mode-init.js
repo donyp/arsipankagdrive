@@ -4,10 +4,9 @@
  * Include this in the head of any page that needs dark mode support
  * 
  * Features:
- * - Smooth transitions between dark/light mode (300ms)
+ * - Smooth transitions between dark/light mode (1s)
  * - No flickering or jumping on page load
  * - Global CSS variables for consistent theming
- * - Automatic body/document background transition
  * - Prevents FOUC (Flash of Unstyled Content)
  */
 
@@ -24,37 +23,27 @@
                DARK MODE SMOOTH TRANSITIONS
                ======================================== */
             
-            /* Disable transitions on page load and during toggle */
+            /* Disable transitions on page load */
             html.no-transition,
             html.no-transition * {
                 transition: none !important;
             }
             
-            /* Enable smooth transitions after load */
-            html:not(.no-transition) {
-                background-color: #ffffff;
-                color: #1f2937;
-                transition: background-color 1s ease, color 1s ease;
-            }
-            
-            html:not(.no-transition) body {
-                background-color: #f5f7fa;
-                color: #1f2937;
-                transition: background-color 1s ease, color 1s ease;
-            }
-            
-            html:not(.no-transition) * {
+            /* Enable smooth transitions with-transitions class */
+            html.with-transitions,
+            html.with-transitions body,
+            html.with-transitions * {
                 transition: background-color 1s ease, 
                            color 1s ease, 
                            border-color 1s ease,
                            box-shadow 1s ease,
                            fill 1s ease,
-                           stroke 1s ease;
+                           stroke 1s ease !important;
             }
             
             /* Prevent transition animations from blocking interactions */
             * {
-                pointer-events: auto;
+                pointer-events: auto !important;
             }
             
             /* ========================================
@@ -102,22 +91,6 @@
                 background-color: #0f172a;
                 color: #f1f5f9;
             }
-            
-            /* Specific smooth transitions for common elements */
-            input:not(.no-transition),
-            select:not(.no-transition),
-            textarea:not(.no-transition) {
-                transition: background-color 1s ease, 
-                           color 1s ease, 
-                           border-color 1s ease;
-            }
-            
-            button:not(.no-transition),
-            [role="button"]:not(.no-transition) {
-                transition: background-color 1s ease, 
-                           color 1s ease, 
-                           border-color 1s ease;
-            }
         `;
         document.head.insertBefore(style, document.head.firstChild);
     }
@@ -160,16 +133,18 @@
         window.applyDarkModeInlineStyles(false);
     }
     
-    // Remove no-transition class after page load to enable transitions
+    // Remove no-transition class and add with-transitions after page load to enable transitions
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 document.documentElement.classList.remove('no-transition');
+                document.documentElement.classList.add('with-transitions');
             }, 50);
         });
     } else {
         setTimeout(() => {
             document.documentElement.classList.remove('no-transition');
+            document.documentElement.classList.add('with-transitions');
         }, 50);
     }
 
