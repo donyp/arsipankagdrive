@@ -45,6 +45,7 @@ dirsToCreate.forEach(dir => {
     }
 });
 const ResumableUpload = require('./resumableUploadHandler');
+const compression = require('./compression');  // Masalah 4: Auto-compression
 const { initializeAlist } = require('./alistStartupHandler');
 const { initializeRcloneConnectivity, verifyRcloneConnectivity } = require('./rcloneConnectivityHandler');
 const { runBackendInitialization } = require('./backendInitializer');
@@ -1567,17 +1568,57 @@ async function streamFileDownload(req, res) {
             return res.status(500).json({ error: 'Gagal mendownload file dari Google Drive.' });
         }
 
-        res.setHeader('Content-Type', 'application/octet-stream');
-        res.setHeader('Content-Disposition', `attachment; filename="${file.nama_file}"`);
-        if (file.ukuran_bytes) {
-            res.setHeader('Content-Length', file.ukuran_bytes);
+        // Masalah 4: Handle decompression for compressed files
+        // If file was compressed (gzipped), automatically decompress for download
+        const isCompressed = file.storage_path && file.storage_path.endsWith('.gz');
+        
+        if (isCompressed) {
+            console.log(`[Download] 📂 Decompressing: ${file.nama_file}`);
+            
+            // Convert stream to buffer for decompression
+            const chunks = [];
+            fileStream.on('data', chunk => chunks.push(chunk));
+            fileStream.on('end', async () => {
+                try {
+                    const compressedBuffer = Buffer.concat(chunks);
+                    const decompressResult = await compression.decompressIfNeeded(compressedBuffer, file.nama_file);
+                    
+                    if (decompressResult.wasCompressed) {
+                        console.log(`[Download] ✅ Decompression successful: ${(decompressResult.data.length / 1024 / 1024).toFixed(2)}MB`);
+                    } else {
+                        console.log(`[Download] ℹ️  File not gzipped, serving as-is`);
+                    }
+                    
+                    res.setHeader('Content-Type', 'application/octet-stream');
+                    res.setHeader('Content-Disposition', `attachment; filename="${file.nama_file}"`);
+                    res.setHeader('Content-Length', decompressResult.data.length);
+                    res.end(decompressResult.data);
+                } catch (decompressErr) {
+                    console.error('[Download] Decompression failed, serving compressed:', decompressErr.message);
+                    res.setHeader('Content-Type', 'application/octet-stream');
+                    res.setHeader('Content-Disposition', `attachment; filename="${file.nama_file}.gz"`);
+                    res.setHeader('Content-Length', Buffer.concat(chunks).length);
+                    res.end(Buffer.concat(chunks));
+                }
+            });
+            fileStream.on('error', (err) => {
+                console.error('[Download Stream Error]', err);
+                res.status(500).json({ error: 'Gagal download file dari Google Drive.' });
+            });
+        } else {
+            // Normal uncompressed file - stream directly
+            res.setHeader('Content-Type', 'application/octet-stream');
+            res.setHeader('Content-Disposition', `attachment; filename="${file.nama_file}"`);
+            if (file.ukuran_bytes) {
+                res.setHeader('Content-Length', file.ukuran_bytes);
+            }
+
+            fileStream.pipe(res);
+
+            fileStream.on('error', (err) => {
+                console.error('[Stream Error]', err);
+            });
         }
-
-        fileStream.pipe(res);
-
-        fileStream.on('error', (err) => {
-            console.error('[Stream Error]', err);
-        });
 
     } catch (err) {
         console.error('Download File Error:', err);
@@ -1640,21 +1681,58 @@ app.get('/api/files/:id/view', authenticateToken, async (req, res) => {
             
             const fileStream = await RcloneStorage.getStream(file.storage_path);
             
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'inline; filename="' + file.nama_file + '"');
-            res.setHeader('Cache-Control', 'no-cache');
+            // Masalah 4: Handle decompression for compressed PDFs
+            const isCompressed = file.storage_path && file.storage_path.endsWith('.gz');
             
-            console.log('[Files:View] ✅ Streaming PDF:', file.nama_file);
-            
-            // Handle stream errors
-            fileStream.on('error', (err) => {
-                console.error('[Files:View] Stream error:', err.message);
-                if (!res.headersSent) {
-                    res.status(500).json({ error: 'Gagal membaca file dari Google Drive' });
-                }
-            });
-            
-            fileStream.pipe(res);
+            if (isCompressed) {
+                console.log(`[Files:View] 📂 Decompressing PDF: ${file.nama_file}`);
+                
+                // Buffer the entire stream for decompression
+                const chunks = [];
+                fileStream.on('data', chunk => chunks.push(chunk));
+                fileStream.on('end', async () => {
+                    try {
+                        const compressedBuffer = Buffer.concat(chunks);
+                        const decompressResult = await compression.decompressIfNeeded(compressedBuffer, file.nama_file);
+                        
+                        if (decompressResult.wasCompressed) {
+                            console.log(`[Files:View] ✅ Decompression successful for preview`);
+                        }
+                        
+                        res.setHeader('Content-Type', 'application/pdf');
+                        res.setHeader('Content-Disposition', 'inline; filename="' + file.nama_file + '"');
+                        res.setHeader('Cache-Control', 'no-cache');
+                        res.setHeader('Content-Length', decompressResult.data.length);
+                        res.end(decompressResult.data);
+                    } catch (decompressErr) {
+                        console.error('[Files:View] Decompression failed:', decompressErr.message);
+                        res.status(500).json({ error: 'Gagal membaca file terkompresi.' });
+                    }
+                });
+                fileStream.on('error', (err) => {
+                    console.error('[Files:View] Stream error:', err.message);
+                    if (!res.headersSent) {
+                        res.status(500).json({ error: 'Gagal membaca file dari Google Drive' });
+                    }
+                });
+            } else {
+                // Normal uncompressed PDF - stream directly
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', 'inline; filename="' + file.nama_file + '"');
+                res.setHeader('Cache-Control', 'no-cache');
+                
+                console.log('[Files:View] ✅ Streaming PDF (uncompressed):', file.nama_file);
+                
+                // Handle stream errors
+                fileStream.on('error', (err) => {
+                    console.error('[Files:View] Stream error:', err.message);
+                    if (!res.headersSent) {
+                        res.status(500).json({ error: 'Gagal membaca file dari Google Drive' });
+                    }
+                });
+                
+                fileStream.pipe(res);
+            }
             
         } catch (streamErr) {
             console.error('[Files:View] Failed to stream from Google Drive:', streamErr.message);
@@ -2482,10 +2560,37 @@ app.post('/api/files/upload', authenticateToken, requireUploadPermission, upload
         
         // Secondary: Try Rclone/Google Drive for backup (fire and forget).
         // Now using ResumableUpload with chunking for 30-40% faster uploads (Masalah 2)
+        // Masalah 4: Add compression before upload for optimal transfer speed
         setImmediate(async () => {
             try {
                 console.log(`[ChunkedBackgroundUpload] Starting chunked async upload for: ${req.file.originalname}`);
                 console.log(`[ChunkedBackgroundUpload] File size: ${(fileBuffer.length / 1024 / 1024).toFixed(2)}MB`);
+                
+                // Masalah 4: Compress file if beneficial
+                let uploadBuffer = fileBuffer;
+                let compressionMetadata = null;
+                
+                try {
+                    const compressionResult = await compression.compressFile(
+                        fileBuffer,
+                        req.file.mimetype || 'application/octet-stream',
+                        req.file.originalname
+                    );
+                    
+                    uploadBuffer = compressionResult.compressed;
+                    compressionMetadata = compressionResult.metadata;
+                    
+                    if (!compressionResult.skipped && compressionMetadata) {
+                        console.log(`[ChunkedBackgroundUpload] 📦 Compression applied:`);
+                        console.log(`[ChunkedBackgroundUpload] Original: ${(fileBuffer.length / 1024 / 1024).toFixed(2)}MB → Compressed: ${(uploadBuffer.length / 1024 / 1024).toFixed(2)}MB`);
+                        console.log(`[ChunkedBackgroundUpload] Savings: ${compressionMetadata.spaceSavingsPercent}% (${(compressionMetadata.spaceSavings / 1024 / 1024).toFixed(2)}MB)`);
+                    } else if (compressionResult.skipped) {
+                        console.log(`[ChunkedBackgroundUpload] ⏭️  Compression skipped: ${compressionMetadata.compressionDecision}`);
+                    }
+                } catch (compErr) {
+                    console.error(`[ChunkedBackgroundUpload] Compression error (falling back to uncompressed): ${compErr.message}`);
+                    // Continue with uncompressed upload
+                }
                 
                 // Initialize resumable upload handler
                 const uploader = new ResumableUpload({
@@ -2497,13 +2602,14 @@ app.post('/api/files/upload', authenticateToken, requireUploadPermission, upload
                 });
 
                 // Perform chunked upload
-                const uploadState = await uploader.upload(fileBuffer, storagePath, {
+                const uploadState = await uploader.upload(uploadBuffer, storagePath, {
                     userId: req.user.userId,
                     originalName: req.file.originalname,
                     zona_id: parseInt(zona_id),
                     toko_id: toko_id ? parseInt(toko_id) : null,
                     category: folderCategory,
-                    batch_id: finalBatchId
+                    batch_id: finalBatchId,
+                    compressionMetadata  // Masalah 4: Track compression info
                 });
 
                 if (uploadState.success) {
@@ -2512,7 +2618,8 @@ app.post('/api/files/upload', authenticateToken, requireUploadPermission, upload
                         totalChunks: uploadState.totalChunks,
                         uploadedChunks: uploadState.uploadedChunks,
                         completionTime: `${uploadState.completionTime.toFixed(2)}s`,
-                        averageSpeed: `${(fileBuffer.length / uploadState.completionTime / 1024 / 1024).toFixed(2)}MB/s`
+                        averageSpeed: `${(uploadBuffer.length / uploadState.completionTime / 1024 / 1024).toFixed(2)}MB/s`,
+                        compression: compressionMetadata ? `${compressionMetadata.spaceSavingsPercent}% saved` : 'none'
                     });
                 } else {
                     console.error(`[ChunkedBackgroundUpload] FAILED for ${req.file.originalname}:`, uploadState.error);
@@ -2706,10 +2813,37 @@ app.post('/api/files/upload-piutang', authenticateToken, requireUploadPermission
         }
 
         // Background upload to Google Drive (fire and forget) using chunked upload (Masalah 2)
+        // Masalah 4: Add compression before upload for optimal transfer speed
         setImmediate(async () => {
             try {
                 console.log(`[PIUTANG ChunkedBackground] Starting chunked async upload for: ${req.file.originalname}`);
                 console.log(`[PIUTANG ChunkedBackground] File size: ${(fileBuffer.length / 1024 / 1024).toFixed(2)}MB`);
+                
+                // Masalah 4: Compress file if beneficial
+                let uploadBuffer = fileBuffer;
+                let compressionMetadata = null;
+                
+                try {
+                    const compressionResult = await compression.compressFile(
+                        fileBuffer,
+                        req.file.mimetype || 'application/octet-stream',
+                        req.file.originalname
+                    );
+                    
+                    uploadBuffer = compressionResult.compressed;
+                    compressionMetadata = compressionResult.metadata;
+                    
+                    if (!compressionResult.skipped && compressionMetadata) {
+                        console.log(`[PIUTANG ChunkedBackground] 📦 Compression applied:`);
+                        console.log(`[PIUTANG ChunkedBackground] Original: ${(fileBuffer.length / 1024 / 1024).toFixed(2)}MB → Compressed: ${(uploadBuffer.length / 1024 / 1024).toFixed(2)}MB`);
+                        console.log(`[PIUTANG ChunkedBackground] Savings: ${compressionMetadata.spaceSavingsPercent}% (${(compressionMetadata.spaceSavings / 1024 / 1024).toFixed(2)}MB)`);
+                    } else if (compressionResult.skipped) {
+                        console.log(`[PIUTANG ChunkedBackground] ⏭️  Compression skipped: ${compressionMetadata.compressionDecision}`);
+                    }
+                } catch (compErr) {
+                    console.error(`[PIUTANG ChunkedBackground] Compression error (falling back to uncompressed): ${compErr.message}`);
+                    // Continue with uncompressed upload
+                }
                 
                 // Initialize resumable upload handler
                 const uploader = new ResumableUpload({
@@ -2721,12 +2855,13 @@ app.post('/api/files/upload-piutang', authenticateToken, requireUploadPermission
                 });
 
                 // Perform chunked upload
-                const uploadState = await uploader.upload(fileBuffer, storagePath, {
+                const uploadState = await uploader.upload(uploadBuffer, storagePath, {
                     userId: req.user.userId,
                     originalName: req.file.originalname,
                     zona_id: defaultZonaId,
                     toko_id: parsedTokoId,
-                    category: 'PIUTANG'
+                    category: 'PIUTANG',
+                    compressionMetadata  // Masalah 4: Track compression info
                 });
 
                 if (uploadState.success) {
@@ -2735,7 +2870,8 @@ app.post('/api/files/upload-piutang', authenticateToken, requireUploadPermission
                         totalChunks: uploadState.totalChunks,
                         uploadedChunks: uploadState.uploadedChunks,
                         completionTime: `${uploadState.completionTime.toFixed(2)}s`,
-                        averageSpeed: `${(fileBuffer.length / uploadState.completionTime / 1024 / 1024).toFixed(2)}MB/s`
+                        averageSpeed: `${(uploadBuffer.length / uploadState.completionTime / 1024 / 1024).toFixed(2)}MB/s`,
+                        compression: compressionMetadata ? `${compressionMetadata.spaceSavingsPercent}% saved` : 'none'
                     });
                 } else {
                     console.error(`[PIUTANG ChunkedBackground] FAILED for ${req.file.originalname}:`, uploadState.error);
