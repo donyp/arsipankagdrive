@@ -886,6 +886,28 @@
                         <input type="text" id="filterSearch" placeholder="Cari faktur atau konsumen..." onkeydown="if(event.key==='Enter') { event.preventDefault(); applyFilters(); }">
                     </div>
 
+                    <!-- Toko (Konsumen) Dropdown -->
+                    <div class="filter-group">
+                        <label>Toko (Konsumen)</label>
+                        <div class="custom-dropdown" id="tokoDropdown">
+                            <button class="dropdown-trigger" onclick="toggleCustomDropdown(event, 'tokoDropdown')">
+                                <span class="dropdown-label">Semua Toko</span>
+                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-options">
+                                    <div class="dropdown-option selected" onclick="selectOption(event, 'tokoDropdown', '', 'Semua Toko')">
+                                        <span class="checkmark">✓</span>
+                                        <span>Semua Toko</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="filterToko" value="">
+                    </div>
+
                     <!-- Supplier Dropdown -->
                     <div class="filter-group">
                         <label>Supplier</label>
@@ -1285,6 +1307,18 @@
                 });
                 monthOptions.innerHTML = monthHTML;
 
+                // Populate toko (konsumen) dropdown
+                const tokoList = [...new Set(invoices.map(inv => inv.konsumen).filter(Boolean))].sort();
+                const tokoDropdown = document.getElementById('tokoDropdown');
+                const tokoOptions = tokoDropdown.querySelector('.dropdown-options');
+                
+                let tokoHTML = '<div class="dropdown-option selected" onclick="selectOption(event, \'tokoDropdown\', \'\', \'Semua Toko\')"><span class="checkmark">✓</span><span>Semua Toko</span></div>';
+                tokoList.forEach(toko => {
+                    const escaped = toko.replace(/'/g, "\\'");
+                    tokoHTML += `<div class="dropdown-option" onclick="selectOption(event, 'tokoDropdown', '${escaped}', '${escaped}')"><span class="checkmark"></span><span>${toko}</span></div>`;
+                });
+                tokoOptions.innerHTML = tokoHTML;
+
                 // Populate supplier dropdown
                 const suppliers = [...new Set(invoices.map(inv => inv.toko).filter(Boolean))].sort();
                 const supplierDropdown = document.getElementById('supplierDropdown');
@@ -1406,6 +1440,7 @@
         async function loadInvoices() {
             try {
                 const supplier = document.getElementById('filterSupplier')?.value;
+                const toko = document.getElementById('filterToko')?.value;
                 const keterangan = document.getElementById('filterKeterangan')?.value;
                 const year = document.getElementById('filterYear')?.value;
                 const month = document.getElementById('filterMonth')?.value;
@@ -1428,8 +1463,8 @@
                 let invoices = res.data || [];
                 totalCount = res.count || 0;
 
-                // Apply client-side filtering by year/month
-                if (year || month) {
+                // Apply client-side filtering by year/month/toko
+                if (year || month || toko) {
                     invoices = invoices.filter(inv => {
                         if (!inv.tanggal) return false;
                         const date = new Date(inv.tanggal);
@@ -1438,6 +1473,7 @@
 
                         if (year && invYear !== year) return false;
                         if (month && invMonth !== month) return false;
+                        if (toko && inv.konsumen !== toko) return false;
                         return true;
                     });
                     
@@ -1602,6 +1638,7 @@
             const year = document.getElementById('filterYear')?.value;
             const month = document.getElementById('filterMonth')?.value;
             const supplier = document.getElementById('filterSupplier')?.value;
+            const toko = document.getElementById('filterToko')?.value;
             const keterangan = document.getElementById('filterKeterangan')?.value;
 
             if (!year && !month) {
@@ -1624,6 +1661,7 @@
             
             // Reset hidden inputs
             document.getElementById('filterSupplier').value = '';
+            document.getElementById('filterToko').value = '';
             document.getElementById('filterKeterangan').value = '';
             document.getElementById('filterYear').value = '';
             document.getElementById('filterMonth').value = '';
@@ -1631,6 +1669,9 @@
             // Reset custom dropdown displays
             const supplierTrigger = document.querySelector('#supplierDropdown .dropdown-label');
             if (supplierTrigger) supplierTrigger.textContent = 'Semua Supplier';
+
+            const tokoTrigger = document.querySelector('#tokoDropdown .dropdown-label');
+            if (tokoTrigger) tokoTrigger.textContent = 'Semua Toko';
             
             const keteranganTrigger = document.querySelector('#keteranganDropdown .dropdown-label');
             if (keteranganTrigger) keteranganTrigger.textContent = 'Semua';
