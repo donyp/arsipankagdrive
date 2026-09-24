@@ -246,16 +246,42 @@ ${msg.message || 'N/A'}
 
                     <!-- Action Buttons -->
                     <div class="flex gap-2">
-                        <button onclick="copyMessage('${msg.id}', '${msg.message.replace(/'/g, "\\'")}'); return false;" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
+                        <button class="btn-copy flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center" data-msg-id="${msg.id}" data-message="${escapeHtml(msg.message)}">
                             <i class="fas fa-copy mr-2"></i>Salin Pesan
                         </button>
-                        <button onclick="deleteInvoiceMessage('${msg.id}'); return false;" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
+                        <button class="btn-delete flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center" data-msg-id="${msg.id}">
                             <i class="fas fa-trash mr-2"></i>Hapus
                         </button>
                     </div>
                 </div>
             `;
         }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Event listeners for buttons
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-copy')) {
+                const btn = e.target.closest('.btn-copy');
+                const msgId = btn.getAttribute('data-msg-id');
+                const message = btn.getAttribute('data-message');
+                copyMessage(msgId, message);
+            }
+            if (e.target.closest('.btn-delete')) {
+                const btn = e.target.closest('.btn-delete');
+                const msgId = btn.getAttribute('data-msg-id');
+                deleteInvoiceMessage(msgId);
+            }
+        });
 
         async function copyMessage(msgId, message) {
             try {
