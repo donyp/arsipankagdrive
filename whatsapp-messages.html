@@ -96,6 +96,45 @@
         }
 
         html, body { zoom: 0.8; }
+
+        /* TAB STYLING */
+        .tab-btn {
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+            color: #6b7280;
+        }
+
+        .tab-btn:hover {
+            color: #1f2937;
+        }
+
+        .tab-active {
+            color: #ef4444;
+            border-bottom: 3px solid #ef4444;
+            margin-bottom: -1px;
+        }
+
+        .tab-inactive {
+            color: #6b7280;
+        }
+
+        .tab-content {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -192,37 +231,57 @@
             const activeMessages = currentInvoiceMessages.filter(msg => !msg.sent_at);
             const sentMessages = currentInvoiceMessages.filter(msg => msg.sent_at);
 
-            let html = '';
+            // Determine active tab
+            const activeTab = sessionStorage.getItem('whatsappTab') || 'active';
 
-            // ACTIVE MESSAGES SECTION
-            if (activeMessages.length > 0) {
-                html += `
-                    <div class="mb-8">
-                        <h2 class="text-xl font-bold text-gray-900 mb-4">
-                            <i class="fas fa-paper-plane text-blue-600 mr-2"></i>Pesan Aktif (${activeMessages.length})
-                        </h2>
-                        <div class="space-y-4">
-                            ${activeMessages.map(msg => renderMessageCard(msg)).join('')}
-                        </div>
-                    </div>
-                `;
+            let html = `
+                <!-- TAB NAVIGATION -->
+                <div class="flex gap-0 mb-6 border-b border-gray-300">
+                    <button class="tab-btn ${activeTab === 'active' ? 'tab-active' : 'tab-inactive'}" data-tab="active">
+                        <i class="fas fa-paper-plane"></i> Pesan Aktif (${activeMessages.length})
+                    </button>
+                    <button class="tab-btn ${activeTab === 'sent' ? 'tab-active' : 'tab-inactive'}" data-tab="sent">
+                        <i class="fas fa-check-circle"></i> Sudah Terkirim (${sentMessages.length})
+                    </button>
+                </div>
+
+                <!-- TAB CONTENT -->
+                <div class="tab-content">
+            `;
+
+            // ACTIVE MESSAGES TAB
+            if (activeTab === 'active') {
+                if (activeMessages.length === 0) {
+                    html += '<div class="text-center text-gray-500 py-8">Semua pesan sudah terkirim</div>';
+                } else {
+                    html += `<div class="space-y-4">
+                        ${activeMessages.map(msg => renderMessageCard(msg)).join('')}
+                    </div>`;
+                }
             }
 
-            // SENT MESSAGES SECTION
-            if (sentMessages.length > 0) {
-                html += `
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-900 mb-4">
-                            <i class="fas fa-check-circle text-green-600 mr-2"></i>Sudah Terkirim (${sentMessages.length})
-                        </h2>
-                        <div class="space-y-4">
-                            ${sentMessages.map(msg => renderMessageCard(msg)).join('')}
-                        </div>
-                    </div>
-                `;
+            // SENT MESSAGES TAB
+            if (activeTab === 'sent') {
+                if (sentMessages.length === 0) {
+                    html += '<div class="text-center text-gray-500 py-8">Belum ada pesan yang terkirim</div>';
+                } else {
+                    html += `<div class="space-y-4">
+                        ${sentMessages.map(msg => renderMessageCard(msg)).join('')}
+                    </div>`;
+                }
             }
+
+            html += `</div>`;
 
             invMsgBody.innerHTML = html;
+
+            // Add tab click listeners
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    sessionStorage.setItem('whatsappTab', this.getAttribute('data-tab'));
+                    renderMessages();
+                });
+            });
         }
 
         function renderMessageCard(msg) {
