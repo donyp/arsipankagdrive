@@ -135,6 +135,11 @@
             border-bottom-right-radius: 0;
         }
 
+        .dropdown-trigger:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .dropdown-label {
             flex: 1;
             text-align: left;
@@ -549,6 +554,11 @@
             outline: none;
             border-color: var(--color-accent);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .filter-group input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .filter-actions-row {
@@ -1162,6 +1172,11 @@
             // Close dropdown
             if (menu) menu.style.display = 'none';
             dropdown.querySelector('.dropdown-trigger').classList.remove('active');
+            
+            // Update filter state if month was selected
+            if (dropdownId === 'monthDropdown') {
+                updateFilterState();
+            }
         }
 
         // Close dropdowns when clicking outside
@@ -1632,6 +1647,63 @@
         }
 
         // ============================================
+        // FILTER STATE MANAGEMENT
+        // ============================================
+        function updateFilterState() {
+            const monthValue = document.getElementById('filterMonth')?.value;
+            const isMonthSelected = monthValue && monthValue.trim() !== '';
+            
+            // Filter IDs that should be disabled until month selected
+            const dependentFilters = [
+                'yearDropdown',
+                'tokoDropdown', 
+                'supplierDropdown',
+                'keteranganDropdown',
+                'filterSearch'
+            ];
+            
+            dependentFilters.forEach(filterId => {
+                const element = document.getElementById(filterId);
+                if (!element) return;
+                
+                if (filterId === 'filterSearch') {
+                    // For input element
+                    element.disabled = !isMonthSelected;
+                    element.style.pointerEvents = isMonthSelected ? 'auto' : 'none';
+                    element.style.opacity = isMonthSelected ? '1' : '0.5';
+                    element.style.cursor = isMonthSelected ? 'text' : 'not-allowed';
+                } else {
+                    // For dropdown divs
+                    const button = element.querySelector('.dropdown-trigger');
+                    const menu = element.querySelector('.dropdown-menu');
+                    
+                    if (button) {
+                        button.disabled = !isMonthSelected;
+                        button.style.pointerEvents = isMonthSelected ? 'auto' : 'none';
+                        button.style.opacity = isMonthSelected ? '1' : '0.5';
+                        button.style.cursor = isMonthSelected ? 'pointer' : 'not-allowed';
+                    }
+                    if (menu) {
+                        menu.style.pointerEvents = isMonthSelected ? 'auto' : 'none';
+                    }
+                }
+            });
+            
+            // Update apply/reset button state too
+            const applyBtn = document.querySelector('.btn-apply');
+            const resetBtn = document.querySelector('.btn-reset');
+            
+            if (applyBtn) {
+                applyBtn.disabled = !isMonthSelected;
+                applyBtn.style.opacity = isMonthSelected ? '1' : '0.5';
+                applyBtn.style.cursor = isMonthSelected ? 'pointer' : 'not-allowed';
+            }
+            if (resetBtn) {
+                resetBtn.style.opacity = '1';
+                resetBtn.style.cursor = 'pointer';
+            }
+        }
+
         // FILTER MANAGEMENT
         // ============================================
         function applyFilters() {
@@ -1707,6 +1779,9 @@
             currentPage = 1;
             showEmptyState();
             updatePagination();
+            
+            // Re-disable filters after reset
+            updateFilterState();
         }
 
         // ============================================
@@ -1805,6 +1880,9 @@
                 initializeDarkMode();
                 loadAdminZonaFilterState();
                 showEmptyState();
+                
+                // Disable all filters except month on page load
+                updateFilterState();
 
                 await initAuth();
 
