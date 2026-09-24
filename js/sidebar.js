@@ -239,15 +239,20 @@
 // ============================================================
 
 function toggleDarkMode() {
+function toggleDarkMode() {
     const isDark = localStorage.getItem('dark_mode_enabled') === 'true';
     const newState = !isDark;
+    
+    // Briefly disable transitions for instant attribute change
+    const html = document.documentElement;
+    html.classList.add('no-transition');
     
     localStorage.setItem('dark_mode_enabled', newState ? 'true' : 'false');
     
     if (newState) {
-        document.documentElement.setAttribute('data-dark-mode', 'true');
+        html.setAttribute('data-dark-mode', 'true');
     } else {
-        document.documentElement.removeAttribute('data-dark-mode');
+        html.removeAttribute('data-dark-mode');
     }
     
     updateDarkModeUI();
@@ -257,7 +262,13 @@ function toggleDarkMode() {
         window.applyDarkModeInlineStyles(newState);
     }
     
+    // Re-enable transitions after attribute changes
+    setTimeout(() => {
+        html.classList.remove('no-transition');
+    }, 10);
+    
     console.log('[DarkMode] Toggled to:', newState ? 'Dark' : 'Light');
+}
 }
 
 function updateDarkModeUI() {
@@ -269,6 +280,8 @@ function updateDarkModeUI() {
     if (icon) icon.textContent = isDark ? '☀️' : '🌙';
     if (label) label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
     if (toggle) {
+        // Use CSS transitions for smooth color changes
+        toggle.style.transition = 'background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease';
         toggle.style.background = isDark ? '#334155' : '#f3f4f6';
         toggle.style.color = isDark ? '#cbd5e1' : '#6b7280';
         toggle.style.borderColor = isDark ? '#475569' : '#e5e7eb';
