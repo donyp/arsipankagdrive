@@ -702,7 +702,7 @@ async function uploadValidFiles() {
                 } catch (refreshErr) {
                     console.error('[PDF Bulk] Error refreshing list:', refreshErr);
                 }
-            }, 300);
+            }, 2000);
         }
 
         // Reset if all successful
