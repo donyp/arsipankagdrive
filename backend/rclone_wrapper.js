@@ -10,6 +10,7 @@ const { retryWithBackoff, shouldRetryError } = require('./retryLogic');
 const StorageErrorLogger = require('./storageErrorLogger');
 const LocalStorage = require('./local_storage');
 const ParallelDownloader = require('./parallelDownloadHandler');
+const ResumableUpload = require('./resumableUploadHandler');
 
 // Configuration for Google Drive via Rclone
 let rcloneConfig = {
@@ -672,9 +673,8 @@ const RcloneStorage = {
         console.log(`[Background Upload] Starting upload for ${originalName}`);
         console.log(`[Background Upload] Storage path: ${storagePath}`);
         console.log(`[Background Upload] TokoKode: ${tokoKode}${tokoNamaOriginal ? ` (original nama: ${tokoNamaOriginal})` : ''}`);
-        console.log(`[Background Upload] File size: ${fileBuffer.length} bytes`);
-        console.log(`[Background Upload] Rclone path: ${rclonePath}`);
-        console.log(`[Background Upload] Rclone config: ${configPath}`);
+        console.log(`[Background Upload] File size: ${(fileBuffer.length / 1024 / 1024).toFixed(2)}MB`);
+        console.log(`[Background Upload] Using ResumableUpload (Masalah 2 optimization)`);
         enqueueSyncJob({ storagePath, originalName, size: fileBuffer.length });
         
         // Log operation start
@@ -682,90 +682,138 @@ const RcloneStorage = {
             filename: originalName,
             storagePath: storagePath,
             fileSize: fileBuffer.length,
-            rclonePath: rclonePath,
-            configPath: configPath,
+            uploadMethod: 'ResumableUpload (chunked)',
             status: 'QUEUED'
         });
         
-        // Use retryWithBackoff to handle transient failures with exponential delays
-        const result = await retryWithBackoff(
-            () => this.uploadDirect(fileBuffer, originalName, storagePath, tokoNamaOriginal),
-            {
-                maxAttempts: 10,
-                baseDelay: 5000, // 5 seconds
-                shouldRetry: shouldRetryError,
-                onRetry: (attemptNumber, delay, error) => {
-                    // Log at start of retry attempt (before waiting)
-                    const attemptMsg = `[Background Upload] ATTEMPT ${attemptNumber} for ${originalName}`;
-                    console.log(attemptMsg);
-                    
-                    // Classify error for context
-                    const errorType = error.code || error.message || 'Unknown';
-                    const isTransient = shouldRetryError(error);
-                    
-                    // Log to error logger for comprehensive tracking
-                    errorLogger.logError('background_upload_retry', error, {
-                        filename: originalName,
-                        storagePath: storagePath,
-                        attemptNumber: attemptNumber,
-                        maxAttempts: 3,
-                        nextRetryDelayMs: delay,
-                        nextRetryIn: `${(delay / 1000).toFixed(1)}s`,
-                        isTransient: isTransient,
-                        context: `Retrying due to ${isTransient ? 'transient' : 'unknown'} error`
-                    });
+        try {
+            // Initialize resumable upload handler with chunking
+            const uploader = new ResumableUpload({
+                chunkSize: 10 * 1024 * 1024,  // 10MB chunks
+                maxConcurrent: 3,              // 3 parallel chunks
+                maxRetries: 4,
+                retryDelayMs: 1000,
+                verbose: true
+            });
+
+            // Perform chunked upload with retry logic
+            const uploadState = await retryWithBackoff(
+                () => uploader.upload(fileBuffer, storagePath, {
+                    fileName: originalName,
+                    storagePath: storagePath,
+                    uploadMethod: 'ResumableUpload',
+                    zonaKode: zonaKode,
+                    tokoKode: tokoKode,
+                    category: category,
+                    tokoNamaOriginal: tokoNamaOriginal
+                }),
+                {
+                    maxAttempts: 10,
+                    baseDelay: 5000, // 5 seconds
+                    shouldRetry: shouldRetryError,
+                    onRetry: (attemptNumber, delay, error) => {
+                        const attemptMsg = `[Background Upload] ATTEMPT ${attemptNumber} for ${originalName}`;
+                        console.log(attemptMsg);
+                        
+                        const isTransient = shouldRetryError(error);
+                        errorLogger.logError('background_upload_retry', error, {
+                            filename: originalName,
+                            storagePath: storagePath,
+                            attemptNumber: attemptNumber,
+                            nextRetryDelayMs: delay,
+                            nextRetryIn: `${(delay / 1000).toFixed(1)}s`,
+                            isTransient: isTransient,
+                            context: `Retrying chunked upload due to ${isTransient ? 'transient' : 'unknown'} error`
+                        });
+                    }
                 }
+            );
+
+            if (uploadState.success) {
+                // Success after retry(ies)
+                const successMsg = `[Background Upload] ✅ SUCCESS for ${originalName}`;
+                console.log(successMsg);
+                console.log(`[Background Upload] Stats:`, {
+                    totalChunks: uploadState.totalChunks,
+                    uploadedChunks: uploadState.uploadedChunks,
+                    completionTime: `${uploadState.completionTime.toFixed(2)}s`,
+                    averageSpeed: `${(fileBuffer.length / uploadState.completionTime / 1024 / 1024).toFixed(2)}MB/s`
+                });
+                
+                updateSyncJob(storagePath, {
+                    primaryStatus: 'verified',
+                    lastError: null,
+                    nextAttemptAt: new Date().toISOString()
+                });
+                processSyncQueue().catch(err => console.warn('[Sync Queue] Post-upload backup failed:', err.message));
+                
+                // Log successful completion
+                errorLogger.logOperation('background_upload_success', {
+                    filename: originalName,
+                    storagePath: storagePath,
+                    uploadMethod: 'ResumableUpload',
+                    totalChunks: uploadState.totalChunks,
+                    uploadedChunks: uploadState.uploadedChunks,
+                    completionTime: `${uploadState.completionTime.toFixed(2)}s`,
+                    averageSpeed: `${(fileBuffer.length / uploadState.completionTime / 1024 / 1024).toFixed(2)}MB/s`,
+                    status: 'SUCCESS'
+                });
+                
+                return {
+                    success: true,
+                    storagePath,
+                    size: fileBuffer.length,
+                    syncAttempts: uploadState.attempts || 1,
+                    syncError: null,
+                    uploadStats: {
+                        totalChunks: uploadState.totalChunks,
+                        completionTime: uploadState.completionTime
+                    }
+                };
+            } else {
+                // Upload failed
+                const failureMsg = `[Background Upload] FAILED for ${originalName}: ${uploadState.error || 'Unknown error'}`;
+                console.error(failureMsg);
+                
+                errorLogger.logError('background_upload_failed', new Error(uploadState.error), {
+                    filename: originalName,
+                    storagePath: storagePath,
+                    uploadMethod: 'ResumableUpload',
+                    context: 'Chunked upload failed'
+                });
+                
+                updateSyncStatus(storagePath, {
+                    primaryStatus: 'failed',
+                    backupStatus: 'pending',
+                    attempts: 1,
+                    lastError: uploadState.error || 'Unknown error',
+                    nextAttemptAt: new Date(Date.now() + 30 * 60 * 1000).toISOString()
+                });
+                
+                return {
+                    success: false,
+                    storagePath,
+                    size: fileBuffer.length,
+                    syncAttempts: 1,
+                    syncError: uploadState.error || 'Unknown error'
+                };
             }
-        );
-        
-        if (result.success) {
-            // Success after retry(ies)
-            const successMsg = `[Background Upload] SUCCESS for ${originalName} after ${result.attempts} attempts`;
-            console.log(successMsg);
-            updateSyncJob(storagePath, {
-                primaryStatus: 'verified',
-                lastError: null,
-                nextAttemptAt: new Date().toISOString()
-            });
-            processSyncQueue().catch(err => console.warn('[Sync Queue] Post-upload backup failed:', err.message));
+        } catch (err) {
+            // Unexpected error in upload process
+            console.error(`[Background Upload] Unexpected error for ${originalName}:`, err.message);
             
-            // Log successful completion
-            errorLogger.logOperation('background_upload_success', {
+            errorLogger.logError('background_upload_error', err, {
                 filename: originalName,
                 storagePath: storagePath,
-                attempts: result.attempts,
-                totalDelayMs: result.totalDelay,
-                totalDelay: `${(result.totalDelay / 1000).toFixed(1)}s`,
-                status: 'SUCCESS'
+                uploadMethod: 'ResumableUpload',
+                context: 'Unexpected error during chunked upload'
             });
             
-            return {
-                success: true,
-                storagePath,
-                size: fileBuffer.length,
-                syncAttempts: result.attempts,
-                syncError: null
-            };
-        } else {
-            // Failure after all retries exhausted
-            const failureMsg = `[Background Upload] FAILED for ${originalName} after ${result.attempts} attempts: ${result.lastError?.message || 'Unknown error'}`;
-            console.error(failureMsg);
-            
-            // Log failure with comprehensive error context
-            errorLogger.logError('background_upload_failed', result.lastError, {
-                filename: originalName,
-                storagePath: storagePath,
-                attemptsFailed: result.attempts,
-                maxAttempts: 3,
-                totalDelayMs: result.totalDelay,
-                totalDelay: `${(result.totalDelay / 1000).toFixed(1)}s`,
-                context: 'All retry attempts exhausted'
-            });
             updateSyncStatus(storagePath, {
                 primaryStatus: 'failed',
                 backupStatus: 'pending',
-                attempts: result.attempts,
-                lastError: result.lastError?.message || 'Unknown error',
+                attempts: 1,
+                lastError: err.message,
                 nextAttemptAt: new Date(Date.now() + 30 * 60 * 1000).toISOString()
             });
             
@@ -773,8 +821,8 @@ const RcloneStorage = {
                 success: false,
                 storagePath,
                 size: fileBuffer.length,
-                syncAttempts: result.attempts,
-                syncError: result.lastError?.message || 'Unknown error'
+                syncAttempts: 1,
+                syncError: err.message
             };
         }
     },
