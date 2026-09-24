@@ -239,7 +239,6 @@
 // ============================================================
 
 function toggleDarkMode() {
-function toggleDarkMode() {
     const isDark = localStorage.getItem('dark_mode_enabled') === 'true';
     const newState = !isDark;
     
@@ -268,7 +267,6 @@ function toggleDarkMode() {
     }, 10);
     
     console.log('[DarkMode] Toggled to:', newState ? 'Dark' : 'Light');
-}
 }
 
 function updateDarkModeUI() {

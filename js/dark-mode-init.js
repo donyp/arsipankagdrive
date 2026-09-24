@@ -24,33 +24,37 @@
                DARK MODE SMOOTH TRANSITIONS
                ======================================== */
             
-            /* Base smooth transitions for all elements */
-            * {
-                transition: background-color 0.3s ease, 
-                           color 0.3s ease, 
-                           border-color 0.3s ease,
-                           box-shadow 0.3s ease,
-                           fill 0.3s ease,
-                           stroke 0.3s ease !important;
-            }
-            
             /* Disable transitions on page load and during toggle */
             html.no-transition,
             html.no-transition * {
                 transition: none !important;
             }
             
-            /* Prevent FOUC on page load */
-            html {
+            /* Enable smooth transitions after load */
+            html:not(.no-transition) {
                 background-color: #ffffff;
                 color: #1f2937;
-                transition: none;
+                transition: background-color 0.3s ease, color 0.3s ease;
             }
             
-            body {
+            html:not(.no-transition) body {
                 background-color: #f5f7fa;
                 color: #1f2937;
                 transition: background-color 0.3s ease, color 0.3s ease;
+            }
+            
+            html:not(.no-transition) * {
+                transition: background-color 0.3s ease, 
+                           color 0.3s ease, 
+                           border-color 0.3s ease,
+                           box-shadow 0.3s ease,
+                           fill 0.3s ease,
+                           stroke 0.3s ease;
+            }
+            
+            /* Prevent transition animations from blocking interactions */
+            * {
+                pointer-events: auto;
             }
             
             /* ========================================
@@ -66,6 +70,15 @@
                 --color-text-tertiary: #9ca3af;
                 --color-border: #e5e7eb;
                 --color-border-dark: #d1d5db;
+            }
+            
+            html {
+                background-color: #ffffff;
+            }
+            
+            body {
+                background-color: #f5f7fa;
+                color: #1f2937;
             }
             
             /* ========================================
@@ -90,26 +103,20 @@
                 color: #f1f5f9;
             }
             
-            /* Ensure smooth transitions work for common Tailwind classes */
-            .bg-white { transition: background-color 0.3s ease !important; }
-            .bg-gray-50 { transition: background-color 0.3s ease !important; }
-            .bg-gray-100 { transition: background-color 0.3s ease !important; }
-            .text-gray-900 { transition: color 0.3s ease !important; }
-            .text-gray-500 { transition: color 0.3s ease !important; }
-            .border-gray-200 { transition: border-color 0.3s ease !important; }
-            
-            /* Input transitions */
-            input, select, textarea {
+            /* Specific smooth transitions for common elements */
+            input:not(.no-transition),
+            select:not(.no-transition),
+            textarea:not(.no-transition) {
                 transition: background-color 0.3s ease, 
                            color 0.3s ease, 
-                           border-color 0.3s ease !important;
+                           border-color 0.3s ease;
             }
             
-            /* Button transitions */
-            button, [role="button"] {
+            button:not(.no-transition),
+            [role="button"]:not(.no-transition) {
                 transition: background-color 0.3s ease, 
                            color 0.3s ease, 
-                           border-color 0.3s ease !important;
+                           border-color 0.3s ease;
             }
         `;
         document.head.insertBefore(style, document.head.firstChild);
