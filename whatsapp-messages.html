@@ -261,17 +261,24 @@ ${msg.message || 'N/A'}
             try {
                 await navigator.clipboard.writeText(message);
                 
-                // Only show copy success toast, don't auto-mark as sent
+                // Show copy success toast
                 if (typeof Toast !== 'undefined') {
                     Toast.success('✓ Pesan berhasil disalin ke clipboard');
                 } else {
                     alert('Pesan berhasil disalin!');
                 }
+                
+                // Auto-mark as sent
+                await API.post('/api/whatsapp/mark-invoice-sent', { notificationId: msgId });
+                
+                // Reload messages to show moved to "Sudah Terkirim"
+                await loadMessages();
+                
             } catch (err) {
                 if (typeof Toast !== 'undefined') {
-                    Toast.error('Gagal menyalin: ' + err.message);
+                    Toast.error('Error: ' + err.message);
                 } else {
-                    alert('Gagal menyalin: ' + err.message);
+                    alert('Error: ' + err.message);
                 }
             }
         }
