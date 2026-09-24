@@ -249,9 +249,6 @@ ${msg.message || 'N/A'}
                         <button onclick="copyMessage('${msg.id}', '${msg.message.replace(/'/g, "\\'")}'); return false;" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
                             <i class="fas fa-copy mr-2"></i>Salin Pesan
                         </button>
-                        ${isPending ? `<button onclick="markInvoiceMessageSent('${msg.id}'); return false;" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
-                            <i class="fas fa-check mr-2"></i>Tandai Terkirim
-                        </button>` : ''}
                         <button onclick="deleteInvoiceMessage('${msg.id}'); return false;" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center">
                             <i class="fas fa-trash mr-2"></i>Hapus
                         </button>
@@ -264,44 +261,22 @@ ${msg.message || 'N/A'}
             try {
                 await navigator.clipboard.writeText(message);
                 
-                // Auto-mark as sent when copied
-                await API.post('/api/whatsapp/mark-invoice-sent', { notificationId: msgId });
-                
-                // Reload to show message moved to "Terkirim" section
-                await loadMessages();
-                
+                // Only show copy success toast, don't auto-mark as sent
                 if (typeof Toast !== 'undefined') {
-                    Toast.success('✓ Pesan disalin & ditandai terkirim!');
+                    Toast.success('✓ Pesan berhasil disalin ke clipboard');
                 } else {
-                    alert('Pesan disalin!');
+                    alert('Pesan berhasil disalin!');
                 }
             } catch (err) {
                 if (typeof Toast !== 'undefined') {
-                    Toast.error('Error: ' + err.message);
+                    Toast.error('Gagal menyalin: ' + err.message);
                 } else {
-                    alert('Error: ' + err.message);
-                }
-            }
-        }
-
-        async function markInvoiceMessageSent(msgId) {
-            try {
-                await API.post('/api/whatsapp/mark-invoice-sent', { notificationId: msgId });
-                await loadMessages();
-                if (typeof Toast !== 'undefined') {
-                    Toast.success('✓ Pesan ditandai terkirim');
-                }
-            } catch (err) {
-                if (typeof Toast !== 'undefined') {
-                    Toast.error('Error: ' + err.message);
-                } else {
-                    alert('Error: ' + err.message);
+                    alert('Gagal menyalin: ' + err.message);
                 }
             }
         }
 
         async function deleteInvoiceMessage(msgId) {
-            if (!confirm('Hapus pesan ini?')) return;
             try {
                 await API.post('/api/whatsapp/delete-invoice-message', { notificationId: msgId });
                 await loadMessages();
