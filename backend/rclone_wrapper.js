@@ -1871,7 +1871,7 @@ const RcloneStorage = {
         }
         
         logOperation('downloadFile', {
-            action: 'Downloading file from Google Drive',
+            action: 'Downloading file from Google Drive (OPTIMIZED - direct streaming)',
             operation_type: 'download',
             originalPath: remotePath,
             normalizedPath: normalizedPath
@@ -1879,42 +1879,60 @@ const RcloneStorage = {
 
         try {
             const remoteFilePath = `${PRIMARY_REMOTE}:${normalizedPath}`;
-            console.log(`[downloadFile] Downloading: ${remoteFilePath}`);
+            console.log(`[downloadFile] 📡 Direct streaming: ${remoteFilePath}`);
 
-            // Create temp file to download to
-            const tempDir = path.join(__dirname, '..', 'temp');
-            if (!fs.existsSync(tempDir)) {
-                fs.mkdirSync(tempDir, { recursive: true });
-            }
-            const tempFilePath = path.join(tempDir, `download_${Date.now()}_${path.basename(normalizedPath)}`);
-
-            try {
-                // Download file using rclone copyto
-                await rcloneExec(['copyto', remoteFilePath, tempFilePath]);
-
-                // Read file into buffer
-                const fileBuffer = fs.readFileSync(tempFilePath);
+            // OPTIMIZATION (Masalah 1): Use rclone cat for direct streaming
+            // OLD: Download to temp file, then read → 2 I/O operations
+            // NEW: Stream directly from rclone stdout → 1 I/O operation
+            
+            return new Promise((resolve, reject) => {
+                const configPath = process.env.RCLONE_CONFIG_PATH || rcloneConfig.configPath;
+                const streamCmd = ['cat', remoteFilePath, '--config', configPath, '--timeout=30m', '--retries=3'];
                 
-                console.log(`[downloadFile] ✅ Downloaded ${fileBuffer.length} bytes`);
-
-                logOperation('downloadFile', {
-                    status: '✅ Download successful',
-                    path: normalizedPath,
-                    size: fileBuffer.length
+                const child = spawn(rclonePath, streamCmd, {
+                    stdio: ['ignore', 'pipe', 'pipe']
                 });
-
-                return fileBuffer;
-
-            } finally {
-                // Clean up temp file
-                try {
-                    if (fs.existsSync(tempFilePath)) {
-                        fs.unlinkSync(tempFilePath);
+                
+                const chunks = [];
+                let totalBytes = 0;
+                let stderr = '';
+                
+                child.on('error', (err) => {
+                    console.error('[downloadFile] Failed to spawn rclone:', err.message);
+                    reject(new Error(`rclone not found or failed: ${err.message}`));
+                });
+                
+                child.stderr.on('data', (chunk) => {
+                    stderr += chunk.toString();
+                    console.warn('[downloadFile] rclone stderr:', chunk.toString().trim());
+                });
+                
+                // Collect chunks from stdout
+                child.stdout.on('data', (chunk) => {
+                    chunks.push(chunk);
+                    totalBytes += chunk.length;
+                });
+                
+                child.on('close', (code) => {
+                    if (code !== 0) {
+                        console.error('[downloadFile] rclone cat failed (code:', code, '):', stderr);
+                        reject(new Error(`rclone cat failed: ${stderr || 'Unknown error'}`));
+                        return;
                     }
-                } catch (e) {
-                    console.warn(`[downloadFile] Temp file cleanup warning:`, e.message);
-                }
-            }
+                    
+                    const fileBuffer = Buffer.concat(chunks);
+                    console.log(`[downloadFile] ✅ Downloaded ${fileBuffer.length} bytes via direct streaming`);
+                    
+                    logOperation('downloadFile', {
+                        status: '✅ Download successful (direct streaming)',
+                        path: normalizedPath,
+                        size: fileBuffer.length,
+                        method: 'rclone_cat'
+                    });
+                    
+                    resolve(fileBuffer);
+                });
+            });
 
         } catch (err) {
             logOperation('downloadFile', {
