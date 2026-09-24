@@ -5109,7 +5109,6 @@ app.get('/api/ads-media/:id/download', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Media tidak ditemukan.' });
         }
 
-        const localPath = await RcloneStorage.download(media.storage_path);
         const ext = path.extname(media.nama_file).toLowerCase();
         const mimeMap = {
             '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
@@ -5125,7 +5124,8 @@ app.get('/api/ads-media/:id/download', authenticateToken, async (req, res) => {
             'Content-Disposition': `attachment; filename="${encodeURIComponent(media.nama_file)}"`,
         });
 
-        const stream = fs.createReadStream(localPath);
+        // OPTIMASI Masalah 1: Direct streaming tanpa temp file via getStream()
+        const stream = await RcloneStorage.getStream(media.storage_path);
         stream.pipe(res);
         stream.on('end', () => {
             try { fs.unlinkSync(localPath); } catch (_) { }
