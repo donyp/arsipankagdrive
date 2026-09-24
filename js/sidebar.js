@@ -279,7 +279,7 @@ function updateDarkModeUI() {
     if (label) label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
     if (toggle) {
         // Use CSS transitions for smooth color changes
-        toggle.style.transition = 'background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease';
+        toggle.style.transition = 'background-color 1s ease, color 1s ease, border-color 1s ease';
         toggle.style.background = isDark ? '#334155' : '#f3f4f6';
         toggle.style.color = isDark ? '#cbd5e1' : '#6b7280';
         toggle.style.borderColor = isDark ? '#475569' : '#e5e7eb';

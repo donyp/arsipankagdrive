@@ -34,22 +34,22 @@
             html:not(.no-transition) {
                 background-color: #ffffff;
                 color: #1f2937;
-                transition: background-color 0.5s ease, color 0.5s ease;
+                transition: background-color 1s ease, color 1s ease;
             }
             
             html:not(.no-transition) body {
                 background-color: #f5f7fa;
                 color: #1f2937;
-                transition: background-color 0.5s ease, color 0.5s ease;
+                transition: background-color 1s ease, color 1s ease;
             }
             
             html:not(.no-transition) * {
-                transition: background-color 0.5s ease, 
-                           color 0.5s ease, 
-                           border-color 0.5s ease,
-                           box-shadow 0.5s ease,
-                           fill 0.5s ease,
-                           stroke 0.5s ease;
+                transition: background-color 1s ease, 
+                           color 1s ease, 
+                           border-color 1s ease,
+                           box-shadow 1s ease,
+                           fill 1s ease,
+                           stroke 1s ease;
             }
             
             /* Prevent transition animations from blocking interactions */
@@ -107,16 +107,16 @@
             input:not(.no-transition),
             select:not(.no-transition),
             textarea:not(.no-transition) {
-                transition: background-color 0.5s ease, 
-                           color 0.5s ease, 
-                           border-color 0.5s ease;
+                transition: background-color 1s ease, 
+                           color 1s ease, 
+                           border-color 1s ease;
             }
             
             button:not(.no-transition),
             [role="button"]:not(.no-transition) {
-                transition: background-color 0.5s ease, 
-                           color 0.5s ease, 
-                           border-color 0.5s ease;
+                transition: background-color 1s ease, 
+                           color 1s ease, 
+                           border-color 1s ease;
             }
         `;
         document.head.insertBefore(style, document.head.firstChild);
