@@ -71,6 +71,24 @@ const ERROR_PATTERNS = {
         type: 'TERABOX_QUOTA',
         classification: 'PERMANENT',
         suggestion: 'Terabox account issue: quota exceeded or account suspended. Check Terabox account status'
+    },
+    RATE_LIMIT_EXCEEDED: {
+        patterns: ['429', 'too many requests', 'rate limit exceeded', 'user rate limit', 'ratelimitexceeded'],
+        type: 'RATE_LIMIT_EXCEEDED',
+        classification: 'TRANSIENT',
+        suggestion: 'Google Drive API rate limit hit. Apply exponential backoff and retry. Consider spreading requests over time or upgrading API quota'
+    },
+    QUOTA_EXCEEDED: {
+        patterns: ['403', 'forbidden', 'quota exceeded', 'user account quota exceeded', 'accountquotaexceeded'],
+        type: 'QUOTA_EXCEEDED',
+        classification: 'TRANSIENT',
+        suggestion: 'Google Drive account quota exceeded or rate limit quota hit. Wait 60+ seconds and retry, or upgrade storage quota'
+    },
+    SERVICE_UNAVAILABLE: {
+        patterns: ['503', 'service unavailable', 'backend error', 'internal error'],
+        type: 'SERVICE_UNAVAILABLE',
+        classification: 'TRANSIENT',
+        suggestion: 'Google Drive service temporarily unavailable. Apply exponential backoff and retry after delay'
     }
 };
 

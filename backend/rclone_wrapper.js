@@ -11,6 +11,7 @@ const StorageErrorLogger = require('./storageErrorLogger');
 const LocalStorage = require('./local_storage');
 const ParallelDownloader = require('./parallelDownloadHandler');
 const ResumableUpload = require('./resumableUploadHandler');
+const RateLimitProtector = require('./rateLimitProtection');
 
 // Configuration for Google Drive via Rclone
 let rcloneConfig = {
@@ -34,6 +35,17 @@ const errorLogger = new StorageErrorLogger({
     enableFileLogging: true,
     enableConsoleLogging: true
 });
+
+// Initialize rate limit protector (Masalah 3: Rate Limit Protection)
+const rateLimitProtector = new RateLimitProtector({
+    quotaPerMinute: 1000000,           // Google Drive: 1M units/min per project
+    quotaPerUserPerMinute: 325000,     // Google Drive: 325K units/min per user
+    warningThreshold: 0.80,             // 80% = warning
+    criticalThreshold: 0.95,            // 95% = critical
+    processingInterval: 100             // 100ms between requests
+});
+
+console.log('[RateLimitProtector] ✅ Initialized with Google Drive API quota limits');
 
 const createdDirsCache = new Set();
 const syncQueuePath = process.env.SYNC_QUEUE_PATH || path.resolve(__dirname, '..', 'data', 'storage-sync-queue.json');
@@ -217,7 +229,11 @@ async function backupLocalFile(storagePath) {
     if (!LocalStorage.fileExists(storagePath)) {
         throw new Error('Salinan lokal tidak ditemukan untuk backup.');
     }
-    await rcloneExec(['copyto', LocalStorage.getPath(storagePath), `${BACKUP_REMOTE}:${storagePath}`]);
+    // Masalah 3: Wrap with rate limit protection (upload operation)
+    await rateLimitProtector.executeWithRateLimit(
+        () => rcloneExec(['copyto', LocalStorage.getPath(storagePath), `${BACKUP_REMOTE}:${storagePath}`]),
+        { operation: 'upload', resource: storagePath }
+    );
     return true;
 }
 
@@ -239,7 +255,11 @@ async function remoteFileExists(storagePath) {
     const checkPromise = (async () => {
         const remotePath = `${PRIMARY_REMOTE}:${storagePath}`;
         try {
-            await rcloneExec(['ls', remotePath]);
+            // Masalah 3: Wrap with rate limit protection (read operation)
+            await rateLimitProtector.executeWithRateLimit(
+                () => rcloneExec(['ls', remotePath]),
+                { operation: 'read', resource: storagePath }
+            );
             const result = true;
             setCachedFileExistence(storagePath, result);
             return result;
@@ -266,8 +286,28 @@ async function processSyncQueue() {
     if (syncQueueWorkerRunning) return;
     syncQueueWorkerRunning = true;
     try {
+        // Masalah 3: Check quota usage before processing jobs
+        const quotaUsagePercent = rateLimitProtector.getQuotaUsagePercentage();
+        const quotaStatus = rateLimitProtector.getQuotaStatus();
+        
+        console.log(`[Sync Queue] Quota status: ${quotaStatus} (${quotaUsagePercent.toFixed(1)}%)`);
+        
+        // If at critical quota level (95%+), pause queue for 60 seconds
+        if (quotaUsagePercent >= rateLimitProtector.criticalThreshold * 100) {
+            console.warn(`[Sync Queue] ⚠️ CRITICAL QUOTA: ${quotaUsagePercent.toFixed(1)}% used. Pausing queue for 60s.`);
+            return; // Don't process any jobs, wait for quota reset
+        }
+        
+        // If at warning level (80%+), slow down processing (only process 1 job instead of 3)
+        const maxJobsToProcess = quotaUsagePercent >= rateLimitProtector.warningThreshold * 100 ? 1 : 3;
+        
+        if (maxJobsToProcess < 3) {
+            console.warn(`[Sync Queue] ⚠️ HIGH QUOTA: ${quotaUsagePercent.toFixed(1)}% used. Processing ${maxJobsToProcess} job(s) instead of 3.`);
+        }
+        
         const queue = readSyncQueue();
-        const dueJobs = queue.filter(isDue).slice(0, 3);
+        const dueJobs = queue.filter(isDue).slice(0, maxJobsToProcess);
+        
         for (const job of dueJobs) {
             try {
                 console.log(`[Sync Queue] Processing job: ${job.storagePath}`);
@@ -287,11 +327,25 @@ async function processSyncQueue() {
                 current.attempts = Number(current.attempts || 0) + 1;
                 current.primaryStatus = current.primaryStatus === 'verified' ? 'verified' : 'failed';
                 current.lastError = err.message;
-                current.nextAttemptAt = new Date(Date.now() + retryDelayForSyncJob(current.attempts, err)).toISOString();
+                
+                // Masalah 3: Apply quota-aware backoff instead of fixed delays
+                let nextRetryDelay = retryDelayForSyncJob(current.attempts, err);
+                
+                // If rate limit error detected, apply additional backoff
+                if (err.classification && err.classification.type === 'RATE_LIMIT_EXCEEDED') {
+                    console.warn(`[Sync Queue] 🔄 Rate limit detected. Applying exponential backoff.`);
+                    nextRetryDelay = Math.max(nextRetryDelay, 60000); // At least 60s for rate limit
+                } else if (quotaUsagePercent >= 80) {
+                    // If quota is high, add extra buffer to retry delay
+                    nextRetryDelay = Math.max(nextRetryDelay, Math.ceil((quotaUsagePercent / 100) * 60000)); // 0-60s extra
+                    console.warn(`[Sync Queue] ⏱️ High quota usage (${quotaUsagePercent.toFixed(1)}%). Adding buffer to retry delay.`);
+                }
+                
+                current.nextAttemptAt = new Date(Date.now() + nextRetryDelay).toISOString();
                 current.updatedAt = new Date().toISOString();
                 writeSyncQueue(currentQueue);
                 updateSyncStatus(job.storagePath, current);
-                console.warn(`[Sync Queue] Deferred ${job.originalName}: ${err.message}`);
+                console.warn(`[Sync Queue] Deferred ${job.originalName}: ${err.message} (retry in ${(nextRetryDelay / 1000).toFixed(0)}s)`);
             }
         }
     } finally {
@@ -332,6 +386,56 @@ const BASE_PATH = process.env.RCLONE_BASE_PATH || '/ARSIP ANKA';
 const isWindows = process.platform === 'win32';
 const rclonePath = process.env.RCLONE_BIN || 'rclone';  // Use PATH in Railway, local binary path in local dev
 const configPath = process.env.RCLONE_CONFIG || path.resolve(__dirname, '..', 'rclone.conf');
+
+/**
+ * Classify rclone error from stderr output (Masalah 3: Rate Limit Protection)
+ * Detects Google Drive API error codes (429, 403, 503) from rclone stderr
+ * 
+ * Rclone outputs Google Drive errors in formats like:
+ * - "error: 429 Too Many Requests - User rate limit exceeded"
+ * - "error: 403 Forbidden - Rate limit exceeded"
+ * - "error: 503 Service Unavailable"
+ * 
+ * @param {string} stderrOutput - Rclone stderr output
+ * @returns {Object} Classification object with type, classification, suggestion
+ */
+function classifyRcloneError(stderrOutput) {
+    const errorMsg = (stderrOutput || '').toLowerCase();
+    
+    // Rate Limit Exceeded (429)
+    if (errorMsg.includes('429') || errorMsg.includes('too many requests') || errorMsg.includes('user rate limit')) {
+        return {
+            type: 'RATE_LIMIT_EXCEEDED',
+            classification: 'TRANSIENT',
+            suggestion: 'Rate limit hit. Apply exponential backoff and retry. Consider spreading requests over time.'
+        };
+    }
+    
+    // Quota Exceeded / Forbidden (403)
+    if (errorMsg.includes('403') || errorMsg.includes('forbidden') || errorMsg.includes('quota exceeded')) {
+        return {
+            type: 'QUOTA_EXCEEDED',
+            classification: 'TRANSIENT',
+            suggestion: 'Quota exceeded or rate limit quota hit. Wait 60+ seconds before retrying. Check quota usage.'
+        };
+    }
+    
+    // Service Unavailable (503)
+    if (errorMsg.includes('503') || errorMsg.includes('service unavailable') || errorMsg.includes('backend error')) {
+        return {
+            type: 'SERVICE_UNAVAILABLE',
+            classification: 'TRANSIENT',
+            suggestion: 'Google Drive service temporarily unavailable. Apply exponential backoff and retry.'
+        };
+    }
+    
+    // Default: unknown error (but still classify as transient for generic errors)
+    return {
+        type: 'UNKNOWN_ERROR',
+        classification: 'UNKNOWN',
+        suggestion: 'Review error details and logs for more information'
+    };
+}
 
 /**
  * Execute an rclone command and return a promise.
@@ -417,13 +521,25 @@ function rcloneExec(args, timeoutMs = 30000) {
             }
             
             if (error) {
+                // Masalah 3: Parse stderr for Google Drive API error codes (429, 403, 503)
+                const errorMsg = stderr || error.message || '';
+                const errorClassification = classifyRcloneError(errorMsg);
+                
                 console.error('[Rclone Exec Error]', {
                   code: error.code,
                   signal: error.signal,
                   stderr: stderr,
-                  message: error.message
+                  message: error.message,
+                  classification: errorClassification.type,
+                  suggestion: errorClassification.suggestion
                 });
-                return reject(new Error(stderr || error.message));
+                
+                // Create error with classification attached
+                const err = new Error(stderr || error.message);
+                err.classification = errorClassification;
+                err.rcloneError = true;
+                
+                return reject(err);
             }
             console.log(`[Rclone Exec Success] Completed with output length:`, stdout.length);
             resolve(stdout.trim());
@@ -1140,7 +1256,11 @@ const RcloneStorage = {
                     path: parentFolderPath 
                 });
                 try {
-                    await rcloneExec(['mkdir', `${PRIMARY_REMOTE}:${parentFolderPath}`]);
+                    // Masalah 3: Wrap with rate limit protection (create directory operation)
+                    await rateLimitProtector.executeWithRateLimit(
+                        () => rcloneExec(['mkdir', `${PRIMARY_REMOTE}:${parentFolderPath}`]),
+                        { operation: 'write', resource: parentFolderPath }
+                    );
                     createdDirsCache.add(parentFolderPath);
                 } catch (err) {
                     const errMsg = err.message || '';
@@ -1206,12 +1326,19 @@ const RcloneStorage = {
      */
     async createMediaFolder(category) {
         const primaryDest = `${PRIMARY_REMOTE}:/ads-media/${category}`;
-        await rcloneExec(['mkdir', primaryDest]);
+        // Masalah 3: Wrap with rate limit protection (create directory operation)
+        await rateLimitProtector.executeWithRateLimit(
+            () => rcloneExec(['mkdir', primaryDest]),
+            { operation: 'write', resource: `/ads-media/${category}` }
+        );
         console.log(`[Rclone] Category folder created: ${primaryDest}`);
 
         // Backup
         const backupDest = `${BACKUP_REMOTE}:/ads-media/${category}`;
-        rcloneExec(['mkdir', backupDest]).catch(() => { });
+        rateLimitProtector.executeWithRateLimit(
+            () => rcloneExec(['mkdir', backupDest]),
+            { operation: 'write', resource: `/ads-media/${category}` }
+        ).catch(() => { });
     },
 
     /**
@@ -1483,7 +1610,11 @@ const RcloneStorage = {
             });
 
             // Use 120 second timeout for Google Drive delete (much slower than upload)
-            await rcloneExec(['delete', remotePath], 120000);
+            // Masalah 3: Wrap with rate limit protection (delete operation)
+            await rateLimitProtector.executeWithRateLimit(
+                () => rcloneExec(['delete', remotePath], 120000),
+                { operation: 'delete', resource: cleanPath }
+            );
             
             console.log(`[RcloneStorage.deleteFile] ✅ Delete successful: ${remotePath}`);
             logOperation('deleteFile', { 
@@ -1529,7 +1660,11 @@ const RcloneStorage = {
             
             try {
                 // Force a fresh check from Google Drive
-                await rcloneExec(['ls', remotePath]);
+                // Masalah 3: Wrap with rate limit protection (read operation)
+                await rateLimitProtector.executeWithRateLimit(
+                    () => rcloneExec(['ls', remotePath]),
+                    { operation: 'read', resource: storagePath }
+                );
                 console.log(`[checkFileExistsNoCache] ✅ File EXISTS (fresh check): ${storagePath}`);
                 // Update cache with fresh result
                 setCachedFileExistence(storagePath, true);
@@ -1624,8 +1759,15 @@ const RcloneStorage = {
         if (!fs.existsSync(localPath)) {
             throw new Error('Berkas backup lokal tidak ditemukan.');
         }
-        await rcloneExec(['copyto', localPath, `${BACKUP_REMOTE}:${remotePath}`]);
-        const remoteListing = await rcloneExec(['lsjson', '--files-only', `${BACKUP_REMOTE}:${remotePath}`]);
+        // Masalah 3: Wrap with rate limit protection (upload/write operations)
+        await rateLimitProtector.executeWithRateLimit(
+            () => rcloneExec(['copyto', localPath, `${BACKUP_REMOTE}:${remotePath}`]),
+            { operation: 'upload', resource: remotePath }
+        );
+        const remoteListing = await rateLimitProtector.executeWithRateLimit(
+            () => rcloneExec(['lsjson', '--files-only', `${BACKUP_REMOTE}:${remotePath}`]),
+            { operation: 'list', resource: remotePath }
+        );
         let remoteFiles;
         try {
             remoteFiles = JSON.parse(remoteListing || '[]');
@@ -1644,7 +1786,11 @@ const RcloneStorage = {
 
     async verifyBackupStorage() {
         try {
-            await rcloneExec(['lsjson', '--max-depth', '1', `${BACKUP_REMOTE}:`]);
+            // Masalah 3: Wrap with rate limit protection (list operation)
+            await rateLimitProtector.executeWithRateLimit(
+                () => rcloneExec(['lsjson', '--max-depth', '1', `${BACKUP_REMOTE}:`]),
+                { operation: 'list', resource: '/' }
+            );
             return { healthy: true, detail: `Storage cadangan ${BACKUP_REMOTE} dapat dibaca.` };
         } catch (err) {
             return { healthy: false, detail: `Storage cadangan ${BACKUP_REMOTE} gagal diverifikasi: ${err.message}` };
@@ -1672,7 +1818,11 @@ const RcloneStorage = {
 
         try {
             const remotePath = `${PRIMARY_REMOTE}:${cleanPath}`;
-            const output = await rcloneExec(['lsjson', remotePath]);
+            // Masalah 3: Wrap with rate limit protection (list operation)
+            const output = await rateLimitProtector.executeWithRateLimit(
+                () => rcloneExec(['lsjson', remotePath]),
+                { operation: 'list', resource: cleanPath }
+            );
             
             let files = [];
             try {
@@ -1749,7 +1899,11 @@ const RcloneStorage = {
                 for (const part of pathParts) {
                     currentPath = currentPath ? `${currentPath}/${part}` : part;
                     try {
-                        await rcloneExec(['mkdir', `${PRIMARY_REMOTE}:${currentPath}`]);
+                        // Masalah 3: Wrap with rate limit protection (create directory operation)
+                        await rateLimitProtector.executeWithRateLimit(
+                            () => rcloneExec(['mkdir', `${PRIMARY_REMOTE}:${currentPath}`]),
+                            { operation: 'write', resource: currentPath }
+                        );
                     } catch (mkErr) {
                         console.log(`[uploadInvoicePDF] Dir exists or created: ${currentPath}`);
                     }
@@ -1767,7 +1921,11 @@ const RcloneStorage = {
                     readable: fs.constants.R_OK
                 });
                 
-                await rcloneExec(['copyto', tempFilePath, remoteFilePath]);
+                // Masalah 3: Wrap with rate limit protection (upload operation)
+                await rateLimitProtector.executeWithRateLimit(
+                    () => rcloneExec(['copyto', tempFilePath, remoteFilePath]),
+                    { operation: 'upload', resource: remoteFilePath }
+                );
                 
                 console.log('[uploadInvoicePDF] Upload complete (verification skipped - trusting rclone)');
                 
@@ -1847,7 +2005,11 @@ const RcloneStorage = {
                     currentPath = currentPath ? `${currentPath}/${part}` : part;
                     try {
                         const remoteCurrentPath = `${PRIMARY_REMOTE}:${currentPath}`;
-                        await rcloneExec(['mkdir', remoteCurrentPath]);
+                        // Masalah 3: Wrap with rate limit protection (create directory operation)
+                        await rateLimitProtector.executeWithRateLimit(
+                            () => rcloneExec(['mkdir', remoteCurrentPath]),
+                            { operation: 'write', resource: currentPath }
+                        );
                     } catch (mkErr) {
                         console.log(`[uploadDocumentFile] Dir exists or created: ${currentPath}`);
                     }
@@ -1857,7 +2019,11 @@ const RcloneStorage = {
                 const remoteFilePath = `${PRIMARY_REMOTE}:${storagePath}`;
                 console.log(`[uploadDocumentFile] Uploading file: ${filename}`);
 
-                await rcloneExec(['copyto', tempFilePath, remoteFilePath]);
+                // Masalah 3: Wrap with rate limit protection (upload operation)
+                await rateLimitProtector.executeWithRateLimit(
+                    () => rcloneExec(['copyto', tempFilePath, remoteFilePath]),
+                    { operation: 'upload', resource: remoteFilePath }
+                );
                 
                 console.log('[uploadDocumentFile] Upload complete');
                 
